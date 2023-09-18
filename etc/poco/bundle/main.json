@@ -1,10 +1,9 @@
 {
   "allow": [
     {
-      "description": "Open version and healthcheck endpoints",
+      "description": "Open version and deepcheck endpoints",
       "paths": [
         "/version",
-        "/healthcheck",
         "/deepcheck"
       ],
       "methods": [
@@ -16,17 +15,34 @@
         }
       }
     },
+		{
+			"description": "Healthcheck endpoints",
+			"paths": [
+				"/healthcheck",
+				"/healthcheck/**"
+			],
+			"methods": [
+				"GET", "POST"
+			],
+			"principals": {
+				"open": {
+					"reason": "Allow requests for healthcheck endpoints"
+				}
+			}
+		},
     {
       "description": "Open all endpoints used in the App logic",
       "paths": [
         "/",
         "/github/**",
-        "/github-manifest",
         "/create-branch-options",
         "/jira",
         "/jira/**",
         "/maintenance",
         "/public/**",
+				"/spa",
+				"/spa/**",
+				"/rest/**",
         "/session",
         "/session/**",
         "/error",
@@ -48,7 +64,8 @@
         "/api/**"
       ],
       "methods": [
-        "*"
+        "GET",
+				"POST"
       ],
       "principals": {
         "staff": {
@@ -69,7 +86,7 @@
 			"principals": {
 				"staff": {
 					"groups": [
-						"enterprise-cloud-support-all"
+						"micros-sv--github-for-jira-dl-safe-logging-read"
 					]
 				}
 			}

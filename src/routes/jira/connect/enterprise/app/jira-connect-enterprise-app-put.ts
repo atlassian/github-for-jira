@@ -3,6 +3,7 @@ import { GitHubServerApp } from "~/src/models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 import { validateApiKeyInputsAndReturnErrorIfAny } from "utils/api-key-validator";
+import { errorStringFromUnknown } from "~/src/util/error-string-from-unknown";
 
 export const JiraConnectEnterpriseAppPut = async (
 	req: Request,
@@ -37,23 +38,27 @@ export const JiraConnectEnterpriseAppPut = async (
 				: null
 		}, jiraHost);
 
-		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
-			name: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
-			source: AnalyticsTrackSource.GitHubEnterprise,
+		await sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
+			action: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
+			actionSubject: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise
+		}, {
 			success: true
 		});
 
 		res.status(202).send();
 		req.log.debug("Jira Connect Enterprise App updated successfully.");
-	} catch (error) {
+	} catch (error: unknown) {
 
-		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
-			name: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
-			source: AnalyticsTrackSource.GitHubEnterprise,
+		await sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
+			action: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
+			actionSubject: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise
+		}, {
 			success: false
 		});
 
 		res.status(404).send({ message: "Failed to update GitHub App." });
-		return next(new Error(`Failed to update GitHub app: ${error}`));
+		return next(new Error(`Failed to update GitHub app: ${errorStringFromUnknown(error)}`));
 	}
 };

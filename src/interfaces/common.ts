@@ -5,6 +5,12 @@ export enum EnvironmentEnum {
 	e2e = "e2e",
 }
 
+export enum MicrosEnvTypeEnum {
+	dev = "dev",
+	staging = "staging",
+	prod = "prod",
+}
+
 export enum BooleanEnum {
 	true = "true",
 	false = "false",
@@ -47,7 +53,10 @@ export enum AnalyticsTrackEventsEnum {
 	ManualRestartBackfillTrackEventName = "manualRestartBackfill",
 	RemoveGitHubServerTrackEventName = "removeGitHubServer",
 	CommitsPushedTrackEventName = "commitsPushed",
-	BackfullSyncOperationEventName = "backfillSync"
+	BackfullSyncOperationEventName = "backfillSync",
+	GitHubSecurityConfiguredEventName = "gitHubSecurityConfigured",
+	GitHubSecurityVulnerabilitiesSubmittedEventName = "gitHubSecurityVulnerabilitiesSubmitted",
+
 }
 
 export enum AnalyticsTrackSource {
@@ -88,12 +97,7 @@ export interface Config {
 		 * globs that are used in the `mapEnvironment()` function to match a given environment with one
 		 * of the valid Jira environment types.
 		 */
-		environmentMapping?: {
-			development?: string[];
-			testing?: string[];
-			staging?: string[];
-			production?: string[];
-		}
+		environmentMapping?: Record<string, string[] | undefined | null>
 
 		services?: {
 			ids?: string[];

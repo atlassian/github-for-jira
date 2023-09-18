@@ -32,9 +32,11 @@ const sendErrorMetricAndAnalytics = (jiraHost: string, errorCode: ErrorResponseC
 	}
 	statsd.increment(metricError.gheServerUrlError, errorCodeAndStatusObj, { jiraHost });
 
-	sendAnalytics(AnalyticsEventTypes.TrackEvent, {
-		name: AnalyticsTrackEventsEnum.GitHubServerUrlErrorTrackEventName,
-		source: AnalyticsTrackSource.CreateBranch,
+	sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
+		action: AnalyticsTrackEventsEnum.GitHubServerUrlErrorTrackEventName,
+		actionSubject: AnalyticsTrackEventsEnum.GitHubServerUrlErrorTrackEventName,
+		source: AnalyticsTrackSource.CreateBranch
+	}, {
 		jiraHost,
 		...errorCodeAndStatusObj
 	});
@@ -67,9 +69,9 @@ export const JiraConnectEnterprisePost = async (
 	// inside the handler
 	const TIMEOUT_PERIOD_MS = parseInt(process.env.JIRA_CONNECT_ENTERPRISE_POST_TIMEOUT_MSEC || "30000");
 
-	const gheServerURL = req.body.gheServerURL?.trim();
-	const apiKeyHeaderName = req.body.apiKeyHeaderName?.trim();
-	const apiKeyValue = req.body.apiKeyValue?.trim();
+	const gheServerURL: string = req.body.gheServerURL?.trim() ?? "undefined";
+	const apiKeyHeaderName: string | undefined = req.body.apiKeyHeaderName?.trim();
+	const apiKeyValue: string | undefined = req.body.apiKeyValue?.trim();
 
 	const { id: installationId } = res.locals.installation;
 
@@ -122,7 +124,7 @@ export const JiraConnectEnterprisePost = async (
 
 	try {
 		const client = await createAnonymousClient(gheServerURL, jiraHost, { trigger: "jira-connect-enterprise-post" }, req.log,
-			apiKeyHeaderName
+			apiKeyHeaderName && apiKeyValue !== undefined
 				? {
 					headerName: apiKeyHeaderName,
 					apiKeyGenerator: () => Promise.resolve(apiKeyValue)
@@ -144,15 +146,17 @@ export const JiraConnectEnterprisePost = async (
 					reason: "Received OK, but the host is not GitHub Enterprise server"
 				}]
 			});
-			sendErrorMetricAndAnalytics(jiraHost, ErrorResponseCode.CANNOT_CONNECT, "" + response.status);
+			sendErrorMetricAndAnalytics(jiraHost, ErrorResponseCode.CANNOT_CONNECT, response?.status?.toString() ?? "undefined");
 			return;
 		}
 
 		await saveTempConfigAndRespond200(res, gitHubConnectConfig, installationId);
 
-		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
-			name: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
-			source: AnalyticsTrackSource.GitHubEnterprise,
+		await sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
+			action: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
+			actionSubject: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise
+		}, {
 			jiraHost: jiraHost
 		});
 	} catch (err) {
@@ -162,15 +166,17 @@ export const JiraConnectEnterprisePost = async (
 		if (isResponseFromGhe(req.log, axiosError.response)) {
 			req.log.info({ err }, "Server is reachable, but responded with a status different from 200/202");
 			await saveTempConfigAndRespond200(res, gitHubConnectConfig, installationId);
-			sendAnalytics(AnalyticsEventTypes.TrackEvent, {
-				name: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
-				source: AnalyticsTrackSource.GitHubEnterprise,
-				jiraHost: jiraHost
+			await sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
+				action: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
+				actionSubject: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
+				source: AnalyticsTrackSource.GitHubEnterprise
+			}, {
+				jiraHost
 			});
 			return;
 		}
 
-		const codeOrStatus = "" + (axiosError.code || axiosError.response?.status);
+		const codeOrStatus = (axiosError.code || axiosError.response?.status?.toString() || "undefined");
 		req.log.warn({ err, gheServerURL }, `Couldn't access GHE host`);
 
 		const reasons = [err.message];

@@ -4,7 +4,7 @@ import { Subscription } from "models/subscription";
 import { getLogger } from "config/logger";
 import { RepoSyncState } from "models/reposyncstate";
 import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
 
 jest.mock("config/feature-flags");
 
@@ -22,16 +22,13 @@ describe("scheduler", () => {
 			delete newRepoSyncState["commitStatus"];
 			delete newRepoSyncState["branchStatus"];
 			newRepoSyncState["repoId"] = repoSyncState.repoId + newRepoStateNo;
-			newRepoSyncState["repoName"] = repoSyncState.repoName + newRepoStateNo;
-			newRepoSyncState["repoFullName"] = repoSyncState.repoFullName + newRepoStateNo;
+			newRepoSyncState["repoName"] = repoSyncState.repoName + newRepoStateNo.toString();
+			newRepoSyncState["repoFullName"] = repoSyncState.repoFullName + newRepoStateNo.toString();
 			newRepoSyncStatesData.push(newRepoSyncState);
 		}
 		await RepoSyncState.bulkCreate(newRepoSyncStatesData);
 
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_SUBTASKS_FOR_BACKFILL,
-			expect.anything()
-		).mockResolvedValue(false);
+		when(numberFlag).calledWith(NumberFlags.BACKFILL_MAX_SUBTASKS, 0, expect.anything()).mockResolvedValue(100);
 	});
 
 	const configureRateLimit = (coreQuotaRemainig: number, graphQlQuotaRemaining: number) => {
@@ -58,20 +55,7 @@ describe("scheduler", () => {
 		expect(nextTasks.mainTask!.task).toEqual("repository");
 	});
 
-	it("first (main) task is always same (deterministic), when FF off", async () => {
-		const firstExecutionResult = await getNextTasks(subscription, [], getLogger("test"));
-
-		for (let i = 0; i < 10; i++) {
-			const nextExecutionResult = await getNextTasks(subscription, [], getLogger("test"));
-			expect(nextExecutionResult).toEqual(firstExecutionResult);
-		}
-	});
-
-	it("first (main) task is always same (deterministic), when FF on", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_SUBTASKS_FOR_BACKFILL,
-			expect.anything()
-		).mockResolvedValue(true);
+	it("first (main) task is always same (deterministic)", async () => {
 
 		configureRateLimit(10000, 10000);
 
@@ -91,11 +75,6 @@ describe("scheduler", () => {
 	});
 
 	it("uses smallest quota between core and graphql to determine number of subtasks", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_SUBTASKS_FOR_BACKFILL,
-			expect.anything()
-		).mockResolvedValue(true);
-
 		configureRateLimit(100000, 2000);
 
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
@@ -105,26 +84,25 @@ describe("scheduler", () => {
 		expect(tasks.otherTasks.length).toEqual(3);
 	});
 
-	it("number of tasks never exceeds some limit", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_SUBTASKS_FOR_BACKFILL,
-			expect.anything()
-		).mockResolvedValue(true);
+	it("number of tasks never exceeds limit from FF", async () => {
 
 		configureRateLimit(100000, 100000);
 
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		const tasks = await getNextTasks(subscription, [], getLogger("test"));
 		expect(tasks.mainTask).toBeDefined();
-		// 100 is the max number of subtasks
 		expect(tasks.otherTasks.length).toEqual(100);
 	});
 
+	it("should only return mask task when number of subtasks is set to 0 in FF", async () => {
+		when(numberFlag).calledWith(NumberFlags.BACKFILL_MAX_SUBTASKS, 0, expect.anything()).mockResolvedValue(0);
+
+		const tasks = await getNextTasks(subscription, [], getLogger("test"));
+		expect(tasks.mainTask).toBeDefined();
+		expect(tasks.otherTasks.length).toStrictEqual(0);
+	});
+
 	it("does not blow up when quota is higher than available number of tasks", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_SUBTASKS_FOR_BACKFILL,
-			expect.anything()
-		).mockResolvedValue(true);
 
 		configureRateLimit(100000, 100000);
 
@@ -141,10 +119,6 @@ describe("scheduler", () => {
 	});
 
 	it("shuffles the tail", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_SUBTASKS_FOR_BACKFILL,
-			expect.anything()
-		).mockResolvedValue(true);
 
 		configureRateLimit(10000, 10000);
 
@@ -155,11 +129,6 @@ describe("scheduler", () => {
 	});
 
 	it("should return main task only when rate-limiting endpoint errors out", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_SUBTASKS_FOR_BACKFILL,
-			expect.anything()
-		).mockResolvedValue(true);
-
 		githubNock
 			.persist()
 			.get(`/rate_limit`)
@@ -172,11 +141,6 @@ describe("scheduler", () => {
 	});
 
 	it("subtasks are picked only from tasks that would become main tasks soon", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_SUBTASKS_FOR_BACKFILL,
-			expect.anything()
-		).mockResolvedValue(true);
-
 		configureRateLimit(2000, 10000);
 
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
@@ -188,29 +152,19 @@ describe("scheduler", () => {
 	});
 
 	it("all returned tasks are unique", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_SUBTASKS_FOR_BACKFILL,
-			expect.anything()
-		).mockResolvedValue(true);
-
 		configureRateLimit(10000, 10000);
 
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		const tasks = await getNextTasks(subscription, [], getLogger("test"));
 		const repoIdsAndTaskType = new Set<string>();
 		tasks.otherTasks.forEach(task => {
-			repoIdsAndTaskType.add("" + task.repositoryId + task.task);
+			repoIdsAndTaskType.add("" + task.repositoryId.toString() + task.task);
 		});
-		repoIdsAndTaskType.add("" + tasks.mainTask!.repositoryId + tasks.mainTask!.task);
+		repoIdsAndTaskType.add("" + tasks.mainTask!.repositoryId.toString() + tasks.mainTask!.task);
 		expect(tasks.otherTasks.length + 1).toEqual(repoIdsAndTaskType.size);
 	});
 
 	it("all returned other tasks are within some pool", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_SUBTASKS_FOR_BACKFILL,
-			expect.anything()
-		).mockResolvedValue(true);
-
 		configureRateLimit(10000, 10000);
 
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
@@ -218,7 +172,7 @@ describe("scheduler", () => {
 		for (let i = 0; i < 50; i++) {
 			const tasks = await getNextTasks(subscription, [], getLogger("test"));
 			tasks.otherTasks.forEach(task => {
-				otherTasksAndTaskTypes.add("" + task.repositoryId);
+				otherTasksAndTaskTypes.add("" + task.repositoryId.toString());
 			});
 		}
 		// The pool size should be 100:
@@ -245,11 +199,6 @@ describe("scheduler", () => {
 	});
 
 	it("returns empty when all tasks are finished with FF ON", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_SUBTASKS_FOR_BACKFILL,
-			expect.anything()
-		).mockResolvedValue(true);
-
 		const repoSyncStats = await RepoSyncState.findAllFromSubscription(subscription);
 		await Promise.all(repoSyncStats.map((record) => {
 			record.branchStatus = "complete";
@@ -265,11 +214,6 @@ describe("scheduler", () => {
 	});
 
 	it("returns empty when all tasks are finished with FF ON and quota provided", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_SUBTASKS_FOR_BACKFILL,
-			expect.anything()
-		).mockResolvedValue(true);
-
 		configureRateLimit(10000, 10000);
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
@@ -288,11 +232,6 @@ describe("scheduler", () => {
 	});
 
 	it("filters by provided tasks", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_SUBTASKS_FOR_BACKFILL,
-			expect.anything()
-		).mockResolvedValue(true);
-
 		configureRateLimit(10000, 10000);
 
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
@@ -300,6 +239,84 @@ describe("scheduler", () => {
 		expect(tasks.mainTask!.task).toEqual("commit");
 		tasks.otherTasks.forEach(task => {
 			expect(task.task).toEqual("commit");
+		});
+	});
+	it("should filter dependabot alerts task if ENABLE_GITHUB_SECURITY_IN_JIRA FF is off", async () => {
+		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(false);
+		configureRateLimit(10000, 10000);
+		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription);
+		await Promise.all(repoSyncStates.map((record) => {
+			record.dependabotAlertStatus = "pending";
+			return record.save();
+		}));
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		const tasks = await getNextTasks(subscription, ["dependabotAlert"], getLogger("test"));
+		expect(tasks.mainTask).toBeUndefined();
+		expect(tasks.otherTasks.length).toEqual(0);
+	});
+
+	it("should not filter dependabot alerts task if ENABLE_GITHUB_SECURITY_IN_JIRA FF is on and security permissions accepted", async () => {
+		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+		configureRateLimit(10000, 10000);
+		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription);
+		await Promise.all(repoSyncStates.map((record) => {
+			record.dependabotAlertStatus = "pending";
+			return record.save();
+		}));
+		await subscription.update({ isSecurityPermissionsAccepted: true });
+
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		const tasks = await getNextTasks(subscription, ["dependabotAlert"], getLogger("test"));
+		expect(tasks.mainTask!.task).toEqual("dependabotAlert");
+		tasks.otherTasks.forEach(task => {
+			expect(task.task).toEqual("dependabotAlert");
+		});
+	});
+
+	it("should filter dependabot alerts task if only ENABLE_GITHUB_SECURITY_IN_JIRA FF is on and security permissions are not accepted", async () => {
+		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+		configureRateLimit(10000, 10000);
+		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription);
+		await Promise.all(repoSyncStates.map((record) => {
+			record.dependabotAlertStatus = "pending";
+			return record.save();
+		}));
+
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		const tasks = await getNextTasks(subscription, ["dependabotAlert"], getLogger("test"));
+		expect(tasks.mainTask).toBeUndefined();
+		expect(tasks.otherTasks.length).toEqual(0);
+	});
+
+
+	it("should filter secret scanning alerts task if ENABLE_GITHUB_SECURITY_IN_JIRA FF is off", async () => {
+		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(false);
+		configureRateLimit(10000, 10000);
+		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription);
+		await Promise.all(repoSyncStates.map((record) => {
+			record.secretScanningAlertStatus = "pending";
+			return record.save();
+		}));
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		const tasks = await getNextTasks(subscription, ["secretScanningAlert"], getLogger("test"));
+		expect(tasks.mainTask).toBeUndefined();
+		expect(tasks.otherTasks.length).toEqual(0);
+	});
+	it("should not filter secret scanning alerts task if ENABLE_GITHUB_SECURITY_IN_JIRA FF is on", async () => {
+		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+		configureRateLimit(10000, 10000);
+		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription);
+		await Promise.all(repoSyncStates.map((record) => {
+			record.secretScanningAlertStatus = "pending";
+			return record.save();
+		}));
+		await subscription.update({ isSecurityPermissionsAccepted: true });
+
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		const tasks = await getNextTasks(subscription, ["secretScanningAlert"], getLogger("test"));
+		expect(tasks.mainTask!.task).toEqual("secretScanningAlert");
+		tasks.otherTasks.forEach(task => {
+			expect(task.task).toEqual("secretScanningAlert");
 		});
 	});
 });

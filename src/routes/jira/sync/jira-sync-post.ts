@@ -4,8 +4,8 @@ import { NextFunction, Request, Response } from "express";
 import { findOrStartSync } from "~/src/sync/sync-utils";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
-import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
 import { TaskType, SyncType } from "~/src/sync/sync.types";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const JiraSyncPost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { installationId: gitHubInstallationId, appId: gitHubAppId, syncType: syncTypeFromReq, source } = req.body;
@@ -14,7 +14,10 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 	const commitsFromDate = req.body.commitsFromDate ? new Date(req.body.commitsFromDate) : undefined;
 	Sentry.setExtra("Body", req.body);
 
-	req.log.info("Received sync request");
+	const logAdditionalData = await booleanFlag(BooleanFlags.VERBOSE_LOGGING, res.locals.installation.jiraHost);
+
+	logAdditionalData ? req.log.info({ gitHubInstallationId }, "verbose logging - Received sync request")
+		: req.log.info("Received sync request");
 
 	try {
 		const subscription = await Subscription.getSingleInstallation(res.locals.installation.jiraHost, gitHubInstallationId, gitHubAppId);
@@ -32,13 +35,15 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 			return;
 		}
 
-		const { syncType, targetTasks } = await determineSyncTypeAndTargetTasks(res.locals.jiraHost, syncTypeFromReq, subscription);
+		const { syncType, targetTasks } = await determineSyncTypeAndTargetTasks(syncTypeFromReq, subscription);
 		await findOrStartSync(subscription, req.log, syncType, commitsFromDate || subscription.backfillSince, targetTasks, { source });
 
-		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
-			name: AnalyticsTrackEventsEnum.ManualRestartBackfillTrackEventName,
+		await sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
+			action: AnalyticsTrackEventsEnum.ManualRestartBackfillTrackEventName,
+			actionSubject: AnalyticsTrackEventsEnum.ManualRestartBackfillTrackEventName,
+			source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise
+		}, {
 			success: true,
-			source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
 			withStartingTime: commitsFromDate !== undefined,
 			startTimeInDaysAgo: getStartTimeInDaysAgo(commitsFromDate)
 		});
@@ -46,10 +51,12 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 		res.sendStatus(202);
 	} catch (error) {
 
-		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
-			name: AnalyticsTrackEventsEnum.ManualRestartBackfillTrackEventName,
+		await sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
+			action: AnalyticsTrackEventsEnum.ManualRestartBackfillTrackEventName,
+			actionSubject: AnalyticsTrackEventsEnum.ManualRestartBackfillTrackEventName,
+			source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise
+		}, {
 			success: false,
-			source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
 			withStartingTime: commitsFromDate !== undefined,
 			startTimeInDaysAgo: getStartTimeInDaysAgo(commitsFromDate)
 		});
@@ -69,8 +76,7 @@ type SyncTypeAndTargetTasks = {
 	targetTasks: TaskType[] | undefined,
 };
 
-const determineSyncTypeAndTargetTasks = async (jiraHost: string, syncTypeFromReq: string, subscription: Subscription): Promise<SyncTypeAndTargetTasks> => {
-
+const determineSyncTypeAndTargetTasks = async (syncTypeFromReq: string, subscription: Subscription): Promise<SyncTypeAndTargetTasks> => {
 	if (syncTypeFromReq === "full") {
 		return { syncType: "full", targetTasks: undefined };
 	}
@@ -79,9 +85,5 @@ const determineSyncTypeAndTargetTasks = async (jiraHost: string, syncTypeFromReq
 		return { syncType: "full", targetTasks: undefined };
 	}
 
-	if (!await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost)) {
-		return { syncType: "full", targetTasks: undefined };
-	}
-
-	return { syncType: "partial", targetTasks: ["pull", "branch", "commit", "build", "deployment"] };
+	return { syncType: "partial", targetTasks: ["pull", "branch", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert", "codeScanningAlert"] };
 };

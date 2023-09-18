@@ -1,4 +1,5 @@
 import { AxiosError, AxiosResponse } from "axios";
+import { ErrorCode } from "rest-interfaces";
 
 export class GithubClientError extends Error {
 	cause: AxiosError;
@@ -6,21 +7,24 @@ export class GithubClientError extends Error {
 
 	status?: number;
 	code?: string;
+	uiErrorCode: ErrorCode;
 
 	constructor(message: string, cause: AxiosError) {
 		super(message);
 
 		this.status = cause.response?.status;
 		this.code = cause.code;
+		this.uiErrorCode = "UNKNOWN";
 
 		this.cause = { ...cause };
-		this.stack = this.stack?.split("\n").slice(0, 2).join("\n") + "\n" + cause.stack;
+		this.stack = (this.stack?.split("\n").slice(0, 2).join("\n") ?? "Missing Stack") + "\n" + (cause.stack ?? "Missing Stack");
 	}
 }
 
 export class GithubClientTimeoutError extends GithubClientError {
 	constructor(cause: AxiosError) {
 		super("Timeout", cause);
+		this.uiErrorCode = "TIMEOUT";
 	}
 }
 
@@ -32,6 +36,7 @@ export class GithubClientRateLimitingError extends GithubClientError {
 
 	constructor(cause: AxiosError) {
 		super("Rate limiting error", cause);
+		this.uiErrorCode = "RATELIMIT";
 		const rateLimitResetHeaderValue: string = cause.response?.headers?.["x-ratelimit-reset"] || "";
 		this.rateLimitReset = parseInt(rateLimitResetHeaderValue) || ((Date.now() / 1000) + ONE_HOUR_IN_SECONDS);
 		this.isRetryable = false;
@@ -41,19 +46,29 @@ export class GithubClientRateLimitingError extends GithubClientError {
 export class GithubClientBlockedIpError extends GithubClientError {
 	constructor(cause: AxiosError) {
 		super("Blocked by GitHub allowlist", cause);
+		this.uiErrorCode = "IP_BLOCKED";
 		this.isRetryable = false;
+	}
+}
+
+export class GithubClientSSOLoginError extends GithubClientError {
+	constructor(cause: AxiosError) {
+		super("SSO Login required", cause);
+		this.uiErrorCode = "SSO_LOGIN";
 	}
 }
 
 export class GithubClientInvalidPermissionsError extends GithubClientError {
 	constructor(cause: AxiosError) {
 		super("Resource not accessible by integration", cause);
+		this.uiErrorCode = "INSUFFICIENT_PERMISSION";
 	}
 }
 
 export class GithubClientNotFoundError extends GithubClientError {
 	constructor(cause: AxiosError) {
 		super("Not found", cause);
+		this.uiErrorCode = "RESOURCE_NOT_FOUND";
 	}
 }
 
@@ -72,10 +87,10 @@ export type GraphQLError = {
 		[key: string]: any;
 	};
 	locations?:
-		{
-			line: number;
-			column: number;
-		}[];
+	{
+		line: number;
+		column: number;
+	}[];
 };
 
 export const buildAxiosStubErrorForGraphQlErrors = (response: AxiosResponse) => {
@@ -102,6 +117,7 @@ export class GithubClientGraphQLError extends GithubClientError {
 			buildAxiosStubErrorForGraphQlErrors(response)
 		);
 		this.errors = errors;
+		this.uiErrorCode = "UNKNOWN";
 		this.isRetryable = !!errors.find(
 			(error) =>
 				"MAX_NODE_LIMIT_EXCEEDED" == error.type ||

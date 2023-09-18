@@ -3,6 +3,7 @@ import { GitHubServerApp } from "models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { resolveIntoConnectConfig } from "utils/ghe-connect-config-temp-storage";
+import { errorStringFromUnknown } from "~/src/util/error-string-from-unknown";
 
 export const JiraConnectEnterpriseAppsGet = async (
 	req: Request,
@@ -12,7 +13,7 @@ export const JiraConnectEnterpriseAppsGet = async (
 	try {
 		req.log.debug("Received Jira Connect Enterprise App page request");
 
-		const tempConnectConfigUuidOrServerUuid = req.params.tempConnectConfigUuidOrServerUuid as string;
+		const tempConnectConfigUuidOrServerUuid = req.params.tempConnectConfigUuidOrServerUuid ;
 		const isNew = req.query.new;
 		const installationId = res.locals.installation.id;
 
@@ -32,7 +33,7 @@ export const JiraConnectEnterpriseAppsGet = async (
 			// `identifier` is the githubAppName for the GH server app
 			const serverApps = gheServers.map(server => ({ identifier: server.gitHubAppName, uuid: server.uuid }));
 
-			sendScreenAnalytics({ isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubAppsListScreenEventName });
+			await sendScreenAnalytics({ jiraHost: res.locals.jiraHost, isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubAppsListScreenEventName });
 			res.render("jira-select-server-app.hbs", {
 				list: serverApps,
 				pathNameForAddNew: "github-app-creation-page", // lol, this actually references the same endpoint, but with new flag :mindpop:
@@ -44,21 +45,22 @@ export const JiraConnectEnterpriseAppsGet = async (
 				serverUrl: baseUrl
 			});
 		} else {
-			sendScreenAnalytics({ isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubAppsCreationScreenEventName });
+			await sendScreenAnalytics({ jiraHost: res.locals.jiraHost, isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubAppsCreationScreenEventName });
 			res.render("jira-select-app-creation.hbs", {
 				connectConfigUuid: tempConnectConfigUuidOrServerUuid
 			});
 		}
 
 		req.log.debug("Jira Connect Enterprise App page rendered successfully.");
-	} catch (error) {
-		return next(new Error(`Failed to render Jira Connect Enterprise App page: ${error}`));
+	} catch (error: unknown) {
+		return next(new Error(`Failed to render Jira Connect Enterprise App page: ${errorStringFromUnknown(error)}`));
 	}
 };
 
-const sendScreenAnalytics = ({ isNew, gheServers, name }) => {
-	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
-		name,
+const sendScreenAnalytics = async ({ jiraHost, isNew, gheServers, name }) => {
+	await sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {
+		name
+	}, {
 		createNew: isNew,
 		existingServerAppsCount: gheServers?.length || 0
 	});

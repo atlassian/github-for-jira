@@ -61,11 +61,6 @@ describe("Jira Utils", () => {
 			["2PAC-123", "42-123"].forEach(value => expect(jiraIssueKeyParser(value)).toEqual([]));
 		});
 
-		// unskip once FF is removed
-		it.skip("should not extract jira issue key with number starting with 0", () => {
-			expect(jiraIssueKeyParser("PAC-001")).toEqual([]);
-		});
-
 		it("should extract jira issue key with number(s) in it that's not the first character", () => {
 			expect(jiraIssueKeyParser("J42-123")).toEqual(["J42-123"]);
 			expect(jiraIssueKeyParser("b4l-123")).toEqual(["B4L-123"]);
@@ -108,6 +103,21 @@ describe("Jira Utils", () => {
 
 		it("should extract multiple issue keys in a single string", () => {
 			expect(jiraIssueKeyParser("JRA-123 Jra-456-jra-901\n[bah-321]")).toEqual(["JRA-123", "JRA-456", "JRA-901", "BAH-321"]);
+		});
+
+		describe.each([
+			["JIRA-123", "JIRA-123"],
+			["abcd JIRA-123", "JIRA-123"],
+			["abcd-JIRA-123", "JIRA-123"],
+			["JIRA-123-abcd", "JIRA-123"],
+			["JIRA-123 abcd", "JIRA-123"],
+			["JIRA-123 JIRA-456 abcd", "JIRA-123", "JIRA-456"],
+			["JIRA-123abcd"],
+			["JIRA-123abcd JIRA-456 abcd", "JIRA-456"]
+		])("matching with whole word", (full, ...issueKeys) => {
+			it(`should match "${full}" to "${issueKeys.toString()}"`, () => {
+				expect(jiraIssueKeyParser(full)).toEqual(issueKeys ? issueKeys : []);
+			});
 		});
 	});
 

@@ -11,8 +11,9 @@ import { GitHubServerApp } from "models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { Errors } from "config/errors";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { errorStringFromUnknown } from "~/src/util/error-string-from-unknown";
 
 interface FailedConnection {
 	id: number;
@@ -73,6 +74,7 @@ const getInstallation = async (subscription: Subscription, gitHubAppId: number |
 		const response = await gitHubAppClient.getInstallation(gitHubInstallationId);
 		return {
 			...response.data,
+			subscriptionId: subscription.id,
 			syncStatus: mapSyncStatus(subscription.syncStatus),
 			syncWarning: subscription.syncWarning,
 			totalNumberOfRepos: subscription.totalNumberOfRepos,
@@ -126,8 +128,6 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 
 	const { jiraHost, nonce } = res.locals;
 
-	const isIncrementalBackfillEnabled = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost);
-
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	const gheServers: GitHubServerApp[] = await GitHubServerApp.findForInstallationId(res.locals.installation.id) || [];
 
@@ -163,27 +163,35 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 
 	const hasConnections =  !!(installations.total || gheServers?.length);
 
-	res.render("jira-configuration.hbs", {
-		host: jiraHost,
-		isIncrementalBackfillEnabled,
-		gheServers: groupedGheServers,
-		ghCloud: { successfulCloudConnections, failedCloudConnections },
-		hasCloudAndEnterpriseServers: !!((successfulCloudConnections.length || failedCloudConnections.length) && gheServers.length),
-		hasCloudServers: !!(successfulCloudConnections.length || failedCloudConnections.length),
-		hasConnections,
-		APP_URL: process.env.APP_URL,
-		csrfToken: req.csrfToken(),
-		nonce
-	});
+	const useNewSPAExperience = await booleanFlag(BooleanFlags.USE_NEW_5KU_SPA_EXPERIENCE, jiraHost);
+	if (useNewSPAExperience && !hasConnections) {
+		res.redirect("/spa?from=homepage");
+	} else {
+		res.render("jira-configuration.hbs", {
+			host: jiraHost,
+			gheServers: groupedGheServers,
+			ghCloud: { successfulCloudConnections, failedCloudConnections },
+			hasCloudAndEnterpriseServers: !!((successfulCloudConnections.length || failedCloudConnections.length) && gheServers.length),
+			hasCloudServers: !!(successfulCloudConnections.length || failedCloudConnections.length),
+			hasConnections,
+			useNewSPAExperience,
+			APP_URL: process.env.APP_URL,
+			enableRepoConnectedPage: await booleanFlag(BooleanFlags.ENABLE_CONNECTED_REPOS_VIEW, jiraHost),
+			csrfToken: req.csrfToken(),
+			nonce
+		});
+	}
 
 	const successfulServerConnections = gheServersWithConnections
-		.reduce((acc, obj) => acc + obj.successfulConnections?.length, 0);
+		.reduce((acc: number, obj: any) => acc + (obj.successfulConnections?.length as number), 0);
 	const allSuccessfulConnections = [...successfulCloudConnections, ...gheServersWithConnections];
 	const completeConnections = allSuccessfulConnections.filter(connection => connection.syncStatus === "FINISHED");
 
-	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
-		name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName,
+	await sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {
+		name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName
+	}, {
 		jiraHost,
+		pageExperience: useNewSPAExperience ? "spa" : "",
 		connectedOrgCountCloudCount: successfulCloudConnections.length,
 		connectedOrgCountServerCount: successfulServerConnections,
 		totalOrgCount: successfulCloudConnections.length + successfulServerConnections,
@@ -197,9 +205,6 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 };
 
 const getRetryableFailedSyncErrors = async (subscription: Subscription) => {
-	if (!(await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL))){
-		return undefined;
-	}
 	const RETRYABLE_ERROR_CODES = ["PERMISSIONS_ERROR", "CONNECTION_ERROR"];
 	const failedSyncs = await RepoSyncState.getFailedFromSubscription(subscription);
 	const errorCodes = failedSyncs.map(sync => sync.failedCode);
@@ -228,7 +233,7 @@ export const JiraGet = async (
 
 		await renderJiraCloudAndEnterpriseServer(res, req);
 		req.log.debug("Jira configuration rendered successfully.");
-	} catch (error) {
-		return next(new Error(`Failed to render Jira configuration: ${error}`));
+	} catch (error: unknown) {
+		return next(new Error(`Failed to render Jira configuration: ${errorStringFromUnknown(error)}`));
 	}
 };

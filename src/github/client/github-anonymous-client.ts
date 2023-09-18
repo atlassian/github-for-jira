@@ -16,7 +16,7 @@ export interface CreatedGitHubAppResponse {
  * A GitHub client without any authentication
  */
 export class GitHubAnonymousClient extends GitHubClient {
-	constructor(githubConfig: GitHubConfig, jiraHost: string, metrics: Metrics, logger: Logger) {
+	constructor(githubConfig: GitHubConfig, jiraHost: string | undefined, metrics: Metrics, logger: Logger) {
 		super(githubConfig, jiraHost, metrics, logger);
 	}
 
@@ -86,7 +86,7 @@ export class GitHubAnonymousClient extends GitHubClient {
 		// In case of invalid or expired refresh token, GitHub API returns status code 200 with res.data object contains error fields,
 		// so adding check for presence of access token to make sure that new access token has been generated.
 		if (!res.data?.access_token) {
-			throw new Error(`Failed to renew access token ${res.data?.error}`);
+			throw new Error(`Failed to renew access token ${res.data?.error as string}`);
 		}
 		return {
 			accessToken: res.data.access_token,

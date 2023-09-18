@@ -35,7 +35,8 @@ const getErrorMessages = (statusCode: number): string => {
 
 export const GithubCreateBranchPost = async (req: Request, res: Response): Promise<void> => {
 	const { gitHubAppConfig, jiraHost } = res.locals;
-	const { owner, repo, sourceBranchName, newBranchName } = req.body;
+	const { owner, repo, sourceBranchName } = req.body;
+	const newBranchName: string = req.body.newBranchName;
 	const logger = getLogger("github-create-branch-options-get", {
 		fields: req.log?.fields
 	});
@@ -47,7 +48,7 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 	}
 
 	try {
-		const subscription = await Subscription.findForRepoOwner(owner, jiraHost);
+		const subscription = await Subscription.findForRepoOwner(owner, jiraHost, !!gitHubAppConfig.gitHubAppId);
 
 		if (!subscription) {
 			logger.error(Errors.MISSING_SUBSCRIPTION);
@@ -65,7 +66,7 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 		res.sendStatus(200);
 
 		logger.info("Branch create successful.");
-		sendTrackEventAnalytics(AnalyticsTrackEventsEnum.CreateBranchSuccessTrackEventName, jiraHost);
+		await sendTrackEventAnalytics(AnalyticsTrackEventsEnum.CreateBranchSuccessTrackEventName, jiraHost);
 		const tags = {
 			name: newBranchName,
 			gitHubProduct: getCloudOrServerFromGitHubAppId(gitHubAppConfig.githubAppId)
@@ -74,17 +75,19 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 	} catch (err) {
 		logger.error({ err }, getErrorMessages(err.status));
 		res.status(err.status).json({ error: getErrorMessages(err.status) });
-		sendTrackEventAnalytics(AnalyticsTrackEventsEnum.CreateBranchErrorTrackEventName, jiraHost);
+		await sendTrackEventAnalytics(AnalyticsTrackEventsEnum.CreateBranchErrorTrackEventName, jiraHost);
 		statsd.increment(metricCreateBranch.failed, {
 			name: newBranchName
 		}, { jiraHost });
 	}
 };
 
-const sendTrackEventAnalytics = (name: string, jiraHost: string) => {
-	sendAnalytics(AnalyticsEventTypes.TrackEvent, {
-		name,
-		source: AnalyticsTrackSource.CreateBranch,
+const sendTrackEventAnalytics = async (name: string, jiraHost: string) => {
+	await sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
+		action: name,
+		actionSubject: name,
+		source: AnalyticsTrackSource.CreateBranch
+	}, {
 		jiraHost
 	});
 };

@@ -179,7 +179,6 @@ const knownSafe = new Set([
 	"public-key-pins-report-only",
 	"push-policy",
 	"range",
-	"referer",
 	"referrer-policy",
 	"refresh",
 	"report-to",
@@ -246,7 +245,7 @@ const knownSafe = new Set([
 	"x-xss-protection"
 ]);
 
-const knownSensitive = new Set([
+export const knownSensitiveHttpHeaders = new Set([
 	"arc-authentication-results",
 	"authentication-results",
 	"authorization",
@@ -254,6 +253,7 @@ const knownSensitive = new Set([
 	"proxy-authenticate",
 	"proxy-authorization",
 	"www-authenticate",
+	"referer", // might contain UGC
 
 	"cookie",
 	"cookie2",
@@ -292,12 +292,12 @@ export const isUniquelyGitHubServerHeader = (httpHeader: string) => {
  * !Important: the returned headers are trimmed and in lower-case!
  */
 export const getAllKnownHeaders = () => {
-	return [...knownSafe, ...knownGitHubSafe, ...knownSensitive];
+	return [...knownSafe, ...knownGitHubSafe, ...knownSensitiveHttpHeaders];
 };
 
 export const canBeUsedAsApiKeyHeader = (httpHeader: string) => {
 	const sanitisedHeader = httpHeader.trim().toLowerCase();
-	const knownHeader = knownSafe.has(sanitisedHeader) || knownSensitive.has(sanitisedHeader) || knownGitHubSafe.has(sanitisedHeader);
+	const knownHeader = knownSafe.has(sanitisedHeader) || knownSensitiveHttpHeaders.has(sanitisedHeader) || knownGitHubSafe.has(sanitisedHeader);
 	return !knownHeader;
 };
 

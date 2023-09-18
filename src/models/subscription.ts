@@ -25,6 +25,10 @@ export interface Repository {
 	updated_at: string; // TODO: is this a date object or a timestamp?  Different places uses different things
 }
 
+export const gitHubAppIdCondition = (isServer: boolean): string => {
+	return isServer ? "AND s.\"gitHubAppId\" IS NOT NULL" : "AND s.\"gitHubAppId\" IS NULL";
+};
+
 export class Subscription extends Model {
 	id: number;
 	gitHubInstallationId: number;
@@ -41,7 +45,9 @@ export class Subscription extends Model {
 	numberOfSyncedRepos?: number;
 	repositoryCursor?: string;
 	repositoryStatus?: TaskStatus;
-	gitHubAppId: number | undefined;
+	gitHubAppId: number | undefined; // the primary key (id) of GitHubServerApp
+	avatarUrl: string | undefined;
+	isSecurityPermissionsAccepted: boolean;
 
 	static async getAllForHost(jiraHost: string, gitHubAppId?: number): Promise<Subscription[]> {
 		return this.findAll({
@@ -150,14 +156,17 @@ export class Subscription extends Model {
 		});
 	}
 
-	static async findForRepoNameAndOwner(repoName: string, repoOwner: string, jiraHost: string): Promise<Subscription | null> {
+
+
+	static async findForRepoNameAndOwner(repoName: string, repoOwner: string, jiraHost: string, isServer: boolean): Promise<Subscription | null> {
 		const results = await this.sequelize!.query(
 			"SELECT * " +
 			"FROM \"Subscriptions\" s " +
 			"LEFT JOIN \"RepoSyncStates\" rss on s.\"id\" = rss.\"subscriptionId\" " +
 			"WHERE s.\"jiraHost\" = :jiraHost " +
 			"AND rss.\"repoName\" = :repoName " +
-			"AND rss.\"repoOwner\" = :repoOwner",
+			"AND rss.\"repoOwner\" = :repoOwner " +
+			gitHubAppIdCondition(isServer),
 			{
 				replacements: { jiraHost, repoName, repoOwner },
 				type: QueryTypes.SELECT
@@ -166,13 +175,14 @@ export class Subscription extends Model {
 		return results[0] as Subscription;
 	}
 
-	static async findForRepoOwner(repoOwner: string, jiraHost: string): Promise<Subscription | null> {
+	static async findForRepoOwner(repoOwner: string, jiraHost: string, isServer: boolean): Promise<Subscription | null> {
 		const results = await this.sequelize!.query(
 			"SELECT * " +
 			"FROM \"Subscriptions\" s " +
 			"LEFT JOIN \"RepoSyncStates\" rss on s.\"id\" = rss.\"subscriptionId\" " +
 			"WHERE s.\"jiraHost\" = :jiraHost " +
-			"AND rss.\"repoOwner\" = :repoOwner",
+			"AND rss.\"repoOwner\" = :repoOwner " +
+			gitHubAppIdCondition(isServer),
 			{
 				replacements: { jiraHost, repoOwner },
 				type: QueryTypes.SELECT
@@ -191,6 +201,7 @@ export class Subscription extends Model {
 				gitHubAppId: payload.gitHubAppId || null
 			},
 			defaults: {
+				avatarUrl: payload.avatarUrl || null,
 				plainClientKey: null //TODO: Need an admin api to restore plain key on this from installations table
 			}
 		});
@@ -225,6 +236,19 @@ export class Subscription extends Model {
 	async uninstall(): Promise<void> {
 		await this.destroy();
 	}
+
+
+	static async findAllForSubscriptionIds(
+		subscriptionIds: number[]
+	): Promise<Subscription[]> {
+		return this.findAll({
+			where: {
+				id: {
+					[Op.in]: uniq(subscriptionIds)
+				}
+			}
+		});
+	}
 }
 
 Subscription.init({
@@ -254,13 +278,19 @@ Subscription.init({
 	gitHubAppId: {
 		type: DataTypes.INTEGER,
 		allowNull: true
-	}
+	},
+	avatarUrl: {
+		type: DataTypes.STRING,
+		allowNull: true
+	},
+	isSecurityPermissionsAccepted: DataTypes.BOOLEAN
 }, { sequelize });
 
 export interface SubscriptionPayload {
 	installationId: number;
 	host: string;
 	gitHubAppId: number | undefined;
+	avatarUrl?: string;
 }
 
 export interface SubscriptionInstallPayload extends SubscriptionPayload {

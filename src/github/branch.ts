@@ -1,7 +1,7 @@
 import { transformBranch } from "../transforms/transform-branch";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { isEmpty } from "lodash";
-import { WebhookPayloadCreate, WebhookPayloadDelete } from "@octokit/webhooks";
+import type { CreateEvent, DeleteEvent } from "@octokit/webhooks-types";
 import { sqsQueues } from "../sqs/queues";
 import Logger from "bunyan";
 import { getJiraClient } from "../jira/client/jira-client";
@@ -10,10 +10,11 @@ import { JiraBranchBulkSubmitData } from "interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
+import { shouldSendAll } from "config/feature-flags";
 
-export const createBranchWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
+export const createBranchWebhookHandler = async (context: WebhookContext<CreateEvent>, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 
-	const webhookPayload: WebhookPayloadCreate = context.payload;
+	const webhookPayload = context.payload;
 
 	await sqsQueues.branch.sendMessage({
 		jiraHost: jiraClient.baseURL,
@@ -28,7 +29,7 @@ export const createBranchWebhookHandler = async (context: WebhookContext, jiraCl
 export const processBranch = async (
 	github: GitHubInstallationClient,
 	webhookId: string,
-	webhookPayload: WebhookPayloadCreate,
+	webhookPayload: CreateEvent,
 	webhookReceivedDate: Date,
 	jiraHost: string,
 	gitHubInstallationId: number,
@@ -42,21 +43,27 @@ export const processBranch = async (
 		webhookReceived: webhookReceivedDate
 	});
 
-	const jiraPayload: JiraBranchBulkSubmitData | undefined = await transformBranch(github, webhookPayload, logger);
+	const alwaysSend = await shouldSendAll("branches", jiraHost, logger);
+	const jiraPayload: JiraBranchBulkSubmitData | undefined = await transformBranch(github, webhookPayload, alwaysSend, logger);
 
 	if (!jiraPayload) {
 		logger.info("Halting further execution for createBranch since jiraPayload is empty");
 		return;
 	}
-
-	logger.info(`Sending jira update for create branch event`);
-
 	const jiraClient = await getJiraClient(
 		jiraHost,
 		gitHubInstallationId,
 		gitHubAppId,
 		logger
 	);
+
+	if (!jiraClient) {
+		logger.info("Halting further execution for createBranch as JiraClient is empty for this installation");
+		return;
+	}
+
+	logger.info(`Sending jira update for create branch event`);
+
 
 	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
 
@@ -70,8 +77,8 @@ export const processBranch = async (
 	);
 };
 
-export const deleteBranchWebhookHandler = async (context: WebhookContext, jiraClient): Promise<void> => {
-	const payload: WebhookPayloadDelete = context.payload;
+export const deleteBranchWebhookHandler = async (context: WebhookContext<DeleteEvent>, jiraClient): Promise<void> => {
+	const payload = context.payload;
 	const issueKeys = jiraIssueKeyParser(payload.ref);
 
 	if (isEmpty(issueKeys)) {

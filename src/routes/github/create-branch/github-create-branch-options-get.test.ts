@@ -1,34 +1,40 @@
-import express, { Application } from "express";
+import { Application } from "express";
 import supertest from "supertest";
-import { getLogger } from "config/logger";
 import { getFrontendApp } from "~/src/app";
 import { generateSignedSessionCookieHeader } from "test/utils/cookies";
 import { Subscription } from "models/subscription";
 import { GitHubServerApp } from "models/github-server-app";
 import { v4 as newUUID } from "uuid";
+import { Installation } from "models/installation";
+import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
 jest.mock("config/feature-flags");
 
 describe("GitHub Create Branch Options Get", () => {
 	let app: Application;
-	beforeEach(() => {
-		const tenantUrl = jiraHost.replace("https://", "");
-		app = express();
-		app.use((req, _, next) => {
-			req.log = getLogger("test");
-			req.query = { issueKey: "1", issueSummary: "random-string", tenantUrl };
-			req.csrfToken = jest.fn();
-			next();
-		});
-		app.use(getFrontendApp());
+	let installation: Installation;
+
+	beforeEach(async () => {
+		app = getFrontendApp();
+		const result = await (new DatabaseStateCreator().create());
+		installation = result.installation;
+		await result.subscription.destroy();
+	});
+
+	it("401 if no session/JWT", async () => {
+		await supertest(app)
+			.get("/create-branch-options?issueKey=TEST-123&jiraHost=" + encodeURIComponent(installation.jiraHost))
+			.expect(res => {
+				expect(res.status).toBe(401);
+			});
 	});
 
 	it("No connection - should open the no-configuration page", async () => {
 		await supertest(app)
-			.get("/create-branch-options").set(
+			.get("/create-branch-options?issueKey=TEST-123").set(
 				"Cookie",
 				generateSignedSessionCookieHeader({
-					jiraHost,
+					jiraHost: installation.jiraHost,
 					githubToken: "random-token"
 				}))
 			.expect(res => {
@@ -39,21 +45,22 @@ describe("GitHub Create Branch Options Get", () => {
 
 	it("With one cloud connection - should open the create-branch page", async () => {
 		await Subscription.install({
-			host: jiraHost,
+			host: installation.jiraHost,
 			installationId: 1234,
 			hashedClientKey: "key-123",
 			gitHubAppId: undefined
 		});
+
 		await supertest(app)
-			.get("/create-branch-options").set(
+			.get("/create-branch-options?issueKey=TEST-123").set(
 				"Cookie",
 				generateSignedSessionCookieHeader({
-					jiraHost,
+					jiraHost: installation.jiraHost,
 					githubToken: "random-token"
 				}))
 			.expect(res => {
-				expect(res.status).toBe(302);
-				expect(res.text).toBe("Found. Redirecting to /github/create-branch&jiraHost=https%3A%2F%2Ftest-atlassian-instance.atlassian.net");
+				expect(res.status).toBe(307);
+				expect(res.text).toBe("Temporary Redirect. Redirecting to /github/create-branch?issueKey=TEST-123");
 			});
 	});
 
@@ -69,23 +76,24 @@ describe("GitHub Create Branch Options Get", () => {
 			webhookSecret: "mywebhooksecret",
 			privateKey: "myprivatekey",
 			installationId: 1
-		}, jiraHost);
+		}, installation.jiraHost);
 		await Subscription.install({
-			host: jiraHost,
+			host: installation.jiraHost,
 			installationId: 1234,
 			hashedClientKey: "key-123",
 			gitHubAppId: serverApp.id
 		});
+
 		await supertest(app)
-			.get("/create-branch-options").set(
+			.get("/create-branch-options?issueKey=TEST-123").set(
 				"Cookie",
 				generateSignedSessionCookieHeader({
-					jiraHost,
+					jiraHost: installation.jiraHost,
 					githubToken: "random-token"
 				}))
 			.expect(res => {
-				expect(res.status).toBe(302);
-				expect(res.text).toBe(`Found. Redirecting to /github/${uuid}/create-branch&jiraHost=https%3A%2F%2Ftest-atlassian-instance.atlassian.net`);
+				expect(res.status).toBe(307);
+				expect(res.text).toBe(`Temporary Redirect. Redirecting to /github/${uuid}/create-branch?issueKey=TEST-123`);
 			});
 	});
 
@@ -102,7 +110,7 @@ describe("GitHub Create Branch Options Get", () => {
 			webhookSecret: "mywebhooksecret",
 			privateKey: "myprivatekey",
 			installationId: 1
-		}, jiraHost);
+		}, installation.jiraHost);
 		const serverApp2 = await GitHubServerApp.install({
 			uuid: uuid2,
 			appId: 234,
@@ -113,25 +121,25 @@ describe("GitHub Create Branch Options Get", () => {
 			webhookSecret: "mywebhooksecret",
 			privateKey: "myprivatekey",
 			installationId: 1
-		}, jiraHost);
+		}, installation.jiraHost);
 		await Subscription.install({
-			host: jiraHost,
+			host: installation.jiraHost,
 			installationId: 123,
 			hashedClientKey: "key-123",
 			gitHubAppId: serverApp.id
 		});
 		await Subscription.install({
-			host: jiraHost,
+			host: installation.jiraHost,
 			installationId: 234,
 			hashedClientKey: "key-123",
 			gitHubAppId: serverApp2.id
 		});
 
 		await supertest(app)
-			.get("/create-branch-options").set(
+			.get("/create-branch-options?issueKey=TEST-123").set(
 				"Cookie",
 				generateSignedSessionCookieHeader({
-					jiraHost,
+					jiraHost: installation.jiraHost,
 					githubToken: "random-token"
 				}))
 			.expect(res => {
@@ -151,25 +159,25 @@ describe("GitHub Create Branch Options Get", () => {
 			webhookSecret: "mywebhooksecret",
 			privateKey: "myprivatekey",
 			installationId: 1
-		}, jiraHost);
+		}, installation.jiraHost);
 		await Subscription.install({
-			host: jiraHost,
+			host: installation.jiraHost,
 			installationId: 1234,
 			hashedClientKey: "key-123",
 			gitHubAppId: serverApp.id
 		});
 		await Subscription.install({
-			host: jiraHost,
+			host: installation.jiraHost,
 			installationId: 1234,
 			hashedClientKey: "key-123",
 			gitHubAppId: undefined
 		});
 
 		await supertest(app)
-			.get("/create-branch-options").set(
+			.get("/create-branch-options?issueKey=TEST-123").set(
 				"Cookie",
 				generateSignedSessionCookieHeader({
-					jiraHost,
+					jiraHost: installation.jiraHost,
 					githubToken: "random-token"
 				}))
 			.expect(res => {

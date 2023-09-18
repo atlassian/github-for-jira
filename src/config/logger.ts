@@ -1,6 +1,6 @@
 import Logger, { createLogger, LogLevel, Serializers, Stream } from "bunyan";
 import { isArray, isString, merge, omit, mapKeys } from "lodash";
-import { SafeRawLogStream, UnsafeRawLogStream } from "utils/logger-utils";
+import { SafeRawLogStream } from "utils/logger-utils";
 import { createHashWithSharedSecret } from "utils/encryption";
 import { canLogHeader } from "utils/http-headers";
 
@@ -40,7 +40,7 @@ const GIT_REF_URL_REGEX = /^(.*)\/git\/ref\/([^/]+)$/;
 const isGitRefUrl = (url: string) => url.match(GIT_REF_URL_REGEX);
 
 const removeGitRefFromUrl = (url: string) =>
-	url.replace(GIT_REF_URL_REGEX, (_, prefix, gitRef) =>
+	url.replace(GIT_REF_URL_REGEX, (_, prefix: string, gitRef) =>
 		`${prefix}/git/ref/${createHashWithSharedSecret(decodeURIComponent(gitRef))}`
 	);
 
@@ -62,7 +62,7 @@ const REST_DEVINFO_BRANCH_URL_REGEX = /^\/rest\/devinfo\/([^/]+)\/repository\/([
 const isDevInfoBranchUrl = (url: string) => url.match(REST_DEVINFO_BRANCH_URL_REGEX);
 
 const removeBranchFromDevInfoUrl = (url: string) =>
-	url.replace(REST_DEVINFO_BRANCH_URL_REGEX, (_, version, repoNo, branchaName, updateSequenceId) =>
+	url.replace(REST_DEVINFO_BRANCH_URL_REGEX, (_, version, repoNo, branchaName, updateSequenceId: string) =>
 		[
 			"/rest/devinfo",
 			version,
@@ -78,6 +78,32 @@ const CENSORED_SEARCH_URL = "/search/repositories?q=CENSORED&order=updated";
 
 const isSearchRepoUrl = (url: string) => url.match(SEARCH_URL_REGEX);
 
+const CREATE_BRANCH_PAGE_BRANCHES_URL_REGEX = /^(.*)\/owners\/([^/]+)\/repos\/([^/]+)\/branches(.*)$/;
+const isCreateBranchPageBranchesUrl = (url: string) => url.match(CREATE_BRANCH_PAGE_BRANCHES_URL_REGEX);
+
+const JIRA_HOST_QUERY_PARAM_REGEX = /jiraHost=(https%3A%2F%2F[\w-]+\.atlassian\.net)/;
+
+const maybeCensorJiraHostInQueryParams = (url: string) => {
+	if (url.match(JIRA_HOST_QUERY_PARAM_REGEX)) {
+		return url.replace(JIRA_HOST_QUERY_PARAM_REGEX, (_, jiraHostEncoded) =>
+			`jiraHost=${createHashWithSharedSecret(decodeURIComponent(jiraHostEncoded))}`);
+	}
+	return url;
+};
+
+
+const removeOwnersAndReposFromUrl = (url: string) =>
+	url.replace(CREATE_BRANCH_PAGE_BRANCHES_URL_REGEX, (_, prefix, owners, repos, suffix) =>
+		[
+			prefix,
+			"owners",
+			createHashWithSharedSecret(decodeURIComponent(owners)),
+			"repos",
+			createHashWithSharedSecret(decodeURIComponent(repos)),
+			"branches"
+		].join("/") + (suffix as string)
+	);
+
 const censorUrl = (url) => {
 	if (!url) {
 		return url;
@@ -88,7 +114,11 @@ const censorUrl = (url) => {
 			return censoredUrl.substr(1);
 		}
 
-		const censoredUrl = maybeRemoveOrgAndRepo(url);
+		const censoredUrl =
+			maybeCensorJiraHostInQueryParams(
+				maybeRemoveOrgAndRepo(
+					url
+				));
 
 		if (isCompareUrl(censoredUrl)) {
 			return removeBranchesFromCompareUrl(censoredUrl);
@@ -104,6 +134,9 @@ const censorUrl = (url) => {
 
 		} else if (isSearchRepoUrl(censoredUrl)) {
 			return CENSORED_SEARCH_URL;
+
+		} else if (isCreateBranchPageBranchesUrl(censoredUrl)) {
+			return removeOwnersAndReposFromUrl(censoredUrl);
 		}
 
 		return censoredUrl;
@@ -256,12 +289,6 @@ const loggerStreamSafe = (): Logger.Stream => ({
 	closeOnExit: false
 });
 
-const loggerStreamUnsafe = (): Logger.Stream => ({
-	type: "raw",
-	stream: new UnsafeRawLogStream(),
-	closeOnExit: false
-});
-
 interface LoggerOptions {
 	fields?: Record<string, unknown>;
 	streams?: Stream[];
@@ -270,15 +297,13 @@ interface LoggerOptions {
 	serializers?: Serializers;
 	src?: boolean;
 	filterHttpRequests?: boolean;
-	unsafe?: boolean;
 }
 
 export const getLogger = (name: string, options: LoggerOptions = {}): Logger => {
 	return createLogger(merge<Logger.LoggerOptions, LoggerOptions>({
 		name,
 		streams: [
-			loggerStreamSafe(),
-			loggerStreamUnsafe()
+			loggerStreamSafe()
 		],
 		level: defaultLogLevel,
 		serializers: {

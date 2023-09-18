@@ -66,7 +66,7 @@ const newId = () => {
 
 describe("Encrypted model", () => {
 	beforeEach(() => {
-		EncryptionClient.encrypt = jest.fn((_, p) => "encrypted:" + p) as any;
+		EncryptionClient.encrypt = jest.fn((_, p) => `encrypted:${p as string}`) as any;
 		EncryptionClient.decrypt = jest.fn((c) => c.substring("encrypted".length)) as any;
 	});
 

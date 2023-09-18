@@ -7,15 +7,17 @@ import { Repository, Subscription } from "models/subscription";
 import Logger from "bunyan";
 import { getLogger } from "config/logger";
 import { envVars } from "config/env";
+import { RepoSyncState } from "models/reposyncstate";
 const MAX_REPOS_RETURNED = 20;
 
 export const GithubCreateBranchGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const {
-		gitHubAppConfig,
-		jiraHost
-	} = res.locals;
+	const gitHubAppConfig = res.locals.gitHubAppConfig;
+	const jiraHost: string = res.locals.jiraHost;
 	const logger = getLogger("github-create-branch-get", {
-		fields: req.log?.fields
+		fields: {
+			...req.log?.fields,
+			jiraHost
+		}
 	});
 
 	if (!jiraHost) {
@@ -43,8 +45,9 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 			configurationUrl: `${jiraHost}/plugins/servlet/ac/${envVars.APP_KEY}/github-select-product-page`
 		});
 
-		sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
-			name: AnalyticsScreenEventsEnum.NotConfiguredScreenEventName,
+		await sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {
+			name: AnalyticsScreenEventsEnum.NotConfiguredScreenEventName
+		}, {
 			jiraHost
 		});
 		return;
@@ -69,8 +72,9 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 
 	req.log.debug(`Github Create Branch Page rendered page`);
 
-	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
-		name: AnalyticsScreenEventsEnum.CreateBranchScreenEventName,
+	await sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {
+		name: AnalyticsScreenEventsEnum.CreateBranchScreenEventName
+	}, {
 		jiraHost
 	});
 };
@@ -109,8 +113,12 @@ const getReposBySubscriptions = async (subscriptions: Subscription[], logger: Lo
 	const repoTasks = subscriptions.map(async (subscription) => {
 		try {
 			const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, { trigger: "github-create-branch" }, logger, subscription.gitHubAppId);
-			const response = await gitHubInstallationClient.getRepositoriesPage(MAX_REPOS_RETURNED, undefined, "UPDATED_AT");
-			return response.viewer.repositories.edges;
+			const response = await gitHubInstallationClient.getRepositoriesPage(100, undefined, "UPDATED_AT");
+			// The app can be installed in a GitHub org but that org might not be connected to Jira, therefore we must filter them out, or
+			// the next steps (e.g. get repo branches to branch of) will fail
+			const repoOwners = await RepoSyncState.findAllRepoOwners(subscription);
+			const filteredRepos =  response.viewer.repositories.edges.filter(edge => repoOwners.has(edge.node.owner.login));
+			return filteredRepos.slice(0, MAX_REPOS_RETURNED);
 		} catch (err) {
 			logger.error({ err }, "Create branch - Failed to fetch repos for installation");
 			throw err;

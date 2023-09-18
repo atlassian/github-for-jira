@@ -13,7 +13,7 @@ import { getBuildTask } from "./build";
 import { getDeploymentTask } from "./deployment";
 import { metricSyncStatus, metricTaskStatus } from "config/metric-names";
 import { repoCountToBucket } from "config/metric-helpers";
-import { isBlocked, numberFlag, NumberFlags } from "config/feature-flags";
+import { isBlocked, numberFlag, NumberFlags, booleanFlag, BooleanFlags } from "config/feature-flags";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import { getRedisInfo } from "config/redis-info";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
@@ -25,6 +25,9 @@ import { Task, TaskResultPayload, TaskProcessors, TaskType } from "./sync.types"
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
 import { getNextTasks } from "~/src/sync/scheduler";
+import { getDependabotAlertTask } from "./dependabot-alerts";
+import { getSecretScanningAlertTask } from "./secret-scanning-alerts";
+import { getCodeScanningAlertTask } from "~/src/sync/code-scanning-alerts";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -32,10 +35,13 @@ const tasks: TaskProcessors = {
 	branch: getBranchTask,
 	commit: getCommitTask,
 	build: getBuildTask,
-	deployment: getDeploymentTask
+	deployment: getDeploymentTask,
+	dependabotAlert: getDependabotAlertTask,
+	secretScanningAlert: getSecretScanningAlertTask,
+	codeScanningAlert: getCodeScanningAlertTask
 };
 
-const allTaskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment"];
+const allTaskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert", "codeScanningAlert"];
 const allTasksExceptBranch = without(allTaskTypes, "branch");
 
 export const getTargetTasks = (targetTasks?: TaskType[]): TaskType[] => {
@@ -75,7 +81,8 @@ export const updateTaskStatusAndContinue = async (
 	taskResultPayload: TaskResultPayload,
 	task: Task,
 	logger: Logger,
-	sendBackfillMessage: (message, delaySecs, logger) => Promise<unknown>
+	sendBackfillMessage: (message, delaySecs, logger) => Promise<unknown>,
+	jiraHost?: string
 ): Promise<void> => {
 	// Get a fresh subscription instance
 	const subscription = await findSubscriptionForMessage(data);
@@ -92,6 +99,27 @@ export const updateTaskStatusAndContinue = async (
 	const status = isComplete ? "complete" : "pending";
 
 	logger.info({ status }, "Updating job status");
+
+	if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost)) {
+		edges?.forEach((edge) => {
+			if (edge?.node?.associatedPullRequests) {
+				const { name, associatedPullRequests } = edge.node;
+				logger.info({ name, associatedPullRequests }, "Sending branch data");
+			}
+
+			if (edge["workflow_runs"]) {
+				edge["workflow_runs"].forEach((workflow) => {
+					const { repository, event } = workflow;
+					logger.info({ repositoryName: repository.name, eventType: event }, "Workflow run event");
+				});
+			}
+
+			if (edge.state) {
+				const { state, title, number, locked, auto_merge } = edge.state;
+				logger.info({ state, title, number, locked, auto_merge }, "Sending PR data");
+			}
+		});
+	}
 
 	const updateRepoSyncFields: { [x: string]: string | Date} = { [getStatusKey(task.task)]: status };
 
@@ -114,7 +142,7 @@ export const updateTaskStatusAndContinue = async (
 			logger.warn({ task }, "Fail to find startime in mainNextTask for metrics purpose");
 		}
 	} else {
-		updateRepoSyncFields[getCursorKey(task.task)] = edges![edges!.length - 1].cursor;
+		updateRepoSyncFields[getCursorKey(task.task)] = edges[edges.length - 1].cursor;
 		if (task.startTime) {
 			statsd.histogram(metricTaskStatus.pending, Date.now() - task.startTime, { type: task.task, gitHubProduct }, { jiraHost: subscription.jiraHost });
 		} else {
@@ -178,12 +206,12 @@ const markSyncAsCompleteAndStop = async (data: BackfillMessagePayload, subscript
 			gitHubProduct,
 			repos: repoCountToBucket(subscription.totalNumberOfRepos)
 		}, { jiraHost: subscription.jiraHost });
-		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
-			...data.metricTags,
-			name: AnalyticsTrackEventsEnum.BackfullSyncOperationEventName,
-			source: data.metricTags?.source || "worker",
+		await sendAnalytics(subscription.jiraHost, AnalyticsEventTypes.TrackEvent, {
 			actionSubject: AnalyticsTrackEventsEnum.BackfullSyncOperationEventName,
 			action: "complete",
+			source: data.metricTags?.source || "worker"
+		}, {
+			...data.metricTags,
 			gitHubProduct,
 			durationInMinute: Math.ceil(timeDiff / (60 * 1000)),
 			durationPerRepoInMinute: subscription.totalNumberOfRepos ? Math.ceil(timeDiff / (60 * 1000 * subscription.totalNumberOfRepos)) : undefined,
@@ -209,6 +237,14 @@ const sendPayloadToJira = async (task: TaskType, jiraClient, jiraPayload, reposi
 					preventTransitions: true,
 					operationType: "BACKFILL"
 				});
+				break;
+			case "dependabotAlert":
+			case "secretScanningAlert":
+			case "codeScanningAlert": {
+				await jiraClient.security.submitVulnerabilities(jiraPayload, {
+					operationType: "BACKFILL"
+				});
+			}
 				break;
 			default:
 				await jiraClient.devinfo.repository.update(jiraPayload, {
@@ -295,7 +331,8 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 				taskPayload,
 				nextTask,
 				logger,
-				sendBackfillMessage
+				sendBackfillMessage,
+				jiraHost
 			);
 		} catch (err) {
 			logger.warn({ err }, "Error while executing the task, rethrowing");
@@ -303,7 +340,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		}
 	};
 
-	const executors = [nextTasks.mainTask!, ...nextTasks.otherTasks].map((nextTask, index) => taskExecutor(nextTask,
+	const executors = [nextTasks.mainTask, ...nextTasks.otherTasks].map((nextTask, index) => taskExecutor(nextTask,
 		isMainTask(index)
 			// Only the first task is responsible for error handling, the other tasks are best-effort and not
 			// supposed to schedule anything
@@ -348,14 +385,8 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 	const failedCode = getFailedCode(err);
 	log.warn({ failedCode }, "Backfill task failed.");
 
-	const isDeployment = mainNextTask.task === "deployment";
-	const newStatus = isDeployment ? "complete" : "failed";
-	if (isDeployment) {
-		log.warn("Mapping failed status to complete until we fix deployment backfilling in ARC-2119");
-	}
-
 	// marking the current task as failed
-	await updateRepo(subscription, mainNextTask.repositoryId, { [getStatusKey(mainNextTask.task)]: newStatus, failedCode });
+	await updateRepo(subscription, mainNextTask.repositoryId, { [getStatusKey(mainNextTask.task)]: "failed", failedCode });
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
 	if (isPermissionError) {
@@ -371,6 +402,7 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 	}
 
 	if (mainNextTask.task === "repository") {
+		log.warn("Cannot finish discovery task: marking the subscription as FAILED");
 		await subscription.update({ syncStatus: SyncStatus.FAILED });
 		return;
 	}
@@ -423,7 +455,7 @@ export const processInstallation = (sendBackfillMessage: (message: BackfillMessa
 		logger.child({ gitHubInstallationId: installationId, jiraHost });
 
 		try {
-			if (await isBlocked(installationId, logger)) {
+			if (await isBlocked(jiraHost, installationId, logger)) {
 				logger.warn("blocking installation job");
 				return;
 			}
@@ -452,37 +484,49 @@ export const processInstallation = (sendBackfillMessage: (message: BackfillMessa
 				})
 			);
 
+			const logAdditionalData = await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost);
+
 			switch (result) {
 				case DeduplicatorResult.E_OK:
-					logger.info("Job was executed by deduplicator");
+					logAdditionalData ? logger.info({ installationId }, "Job was executed by deduplicator")
+						: logger.info("Job was executed by deduplicator");
 					if (hasNextMessage) {
-						nextMessageLogger!.info("Sending off a new message");
+						logAdditionalData ? nextMessageLogger!.info({ installationId }, "Sending off a new message")
+							: nextMessageLogger!.info("Sending off a new message");
 						await sendBackfillMessage(nextMessage!, nextMessageDelaySecs!, nextMessageLogger!);
 					}
 					break;
 				case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {
-					logger.warn("Possible duplicate job was detected, rescheduling");
+					logAdditionalData ? logger.info({ installationId }, "Possible duplicate job was detected, rescheduling")
+						: logger.info("Possible duplicate job was detected, rescheduling");
 					await sendBackfillMessage(data, RETRY_DELAY_BASE_SEC, logger);
 					break;
 				}
 				case DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB: {
-					logger.warn("Duplicate job was detected, rescheduling");
-					// There could be one case where we might be losing the message even if we are sure that another worker is doing the work:
-					// Worker A - doing a long-running task
-					// Redis/SQS - reports that the task execution takes too long and sends it to another worker
-					// Worker B - checks the status of the task and sees that the Worker A is actually doing work, drops the message
-					// Worker A dies (e.g. node is rotated).
-					// In this situation we have a staled job since no message is on the queue an noone is doing the processing.
-					//
-					// Always rescheduling should be OK given that only one worker is working on the task right now: even if we
-					// gather enough messages at the end of the queue, they all will be processed very quickly once the sync
-					// is finished.
-					await sendBackfillMessage(data, RETRY_DELAY_BASE_SEC + RETRY_DELAY_BASE_SEC * Math.random(), logger);
-					break;
+					if (await booleanFlag(BooleanFlags.DELETE_MESSAGE_ON_BACKFILL_WHEN_OTHERS_WORKING_ON_IT, jiraHost)) {
+						logger.warn("Duplicate job was detected, ff [delete_message_on_backfill_when_others_working_on_it] is ON, so deleting the message instead of rescheduling it");
+						//doing nothing and return normally will endup delete the message.
+						break;
+					} else {
+						logAdditionalData ? logger.info({ installationId }, "Duplicate job was detected, rescheduling")
+							: logger.info("Duplicate job was detected, rescheduling");
+						// There could be one case where we might be losing the message even if we are sure that another worker is doing the work:
+						// Worker A - doing a long-running task
+						// Redis/SQS - reports that the task execution takes too long and sends it to another worker
+						// Worker B - checks the status of the task and sees that the Worker A is actually doing work, drops the message
+						// Worker A dies (e.g. node is rotated).
+						// In this situation we have a staled job since no message is on the queue an noone is doing the processing.
+						//
+						// Always rescheduling should be OK given that only one worker is working on the task right now: even if we
+						// gather enough messages at the end of the queue, they all will be processed very quickly once the sync
+						// is finished.
+						await sendBackfillMessage(data, RETRY_DELAY_BASE_SEC + RETRY_DELAY_BASE_SEC * Math.random(), logger);
+						break;
+					}
 				}
 			}
 		} catch (err) {
-			logger.error({ err }, "Process installation failed.");
+			logger.error({ err, installationId }, "Process installation failed.");
 			throw err;
 		}
 	};

@@ -4,7 +4,7 @@ import { getJiraClient } from "../jira/client/jira-client";
 import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { JiraCommit, JiraCommitFile, JiraCommitFileChangeTypeEnum } from "interfaces/jira";
-import { isBlocked } from "config/feature-flags";
+import { isBlocked, shouldSendAll } from "config/feature-flags";
 import { sqsQueues } from "../sqs/queues";
 import { GitHubAppConfig, PushQueueMessagePayload } from "~/src/sqs/sqs.types";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
@@ -32,7 +32,7 @@ const mapFile = (
 		unchanged: JiraCommitFileChangeTypeEnum.UNKNOWN
 	};
 
-	const fallbackUrl = `https://github.com/${repoOwner}/${repoName}/blob/${commitHash}/${githubFile.filename}`;
+	const fallbackUrl = `https://github.com/${repoOwner ?? "undefined"}/${repoName}/blob/${commitHash}/${githubFile.filename}`;
 
 	if (isEmpty(githubFile.filename)) {
 		return undefined;
@@ -47,7 +47,7 @@ const mapFile = (
 	};
 };
 
-export const createJobData = (payload: GitHubPushData, jiraHost: string, gitHubAppConfig?: GitHubAppConfig): PushQueueMessagePayload => {
+export const createJobData = async (payload: GitHubPushData, jiraHost: string, logger: Logger, gitHubAppConfig?: GitHubAppConfig): Promise<PushQueueMessagePayload> => {
 	// Store only necessary repository data in the queue
 	const { id, name, full_name, html_url, owner } = payload.repository;
 
@@ -60,9 +60,10 @@ export const createJobData = (payload: GitHubPushData, jiraHost: string, gitHubA
 	};
 
 	const shas: { id: string, issueKeys: string[] }[] = [];
+	const alwaysSend = await shouldSendAll("commits", jiraHost, logger);
 	for (const commit of payload.commits) {
 		const issueKeys = jiraIssueKeyParser(commit.message);
-		if (!isEmpty(issueKeys)) {
+		if (!isEmpty(issueKeys) || alwaysSend) {
 			// Only store the sha and issue keys. All other data will be requested from GitHub as part of the job
 			// Creates an array of shas for the job processor to work on
 			shas.push({ id: commit.id, issueKeys });
@@ -80,8 +81,8 @@ export const createJobData = (payload: GitHubPushData, jiraHost: string, gitHubA
 	};
 };
 
-export const enqueuePush = async (payload: GitHubPushData, jiraHost: string, gitHubAppConfig?: GitHubAppConfig) =>
-	await sqsQueues.push.sendMessage(createJobData(payload, jiraHost, gitHubAppConfig));
+export const enqueuePush = async (payload: GitHubPushData, jiraHost: string, logger: Logger, gitHubAppConfig?: GitHubAppConfig) =>
+	await sqsQueues.push.sendMessage(await createJobData(payload, jiraHost, logger, gitHubAppConfig));
 
 export const processPush = async (github: GitHubInstallationClient, payload: PushQueueMessagePayload, rootLogger: Logger) => {
 	const {
@@ -92,7 +93,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		jiraHost
 	} = payload;
 
-	if (await isBlocked(gitHubInstallationId, rootLogger)) {
+	if (await isBlocked(jiraHost, gitHubInstallationId, rootLogger)) {
 		rootLogger.warn({ gitHubInstallationId }, "blocking processing of push message because installationId is on the blocklist");
 		return;
 	}
@@ -131,6 +132,10 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 			gitHubAppId,
 			log
 		);
+		if (!jiraClient) {
+			log.info("Halting further execution for push as JiraClient is empty for this installation");
+			return;
+		}
 
 		const recentShas = shas.slice(0, MAX_COMMIT_HISTORY);
 		const commits: JiraCommit[] = await Promise.all(
@@ -196,7 +201,6 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 			log.info("Sending data to Jira");
 			try {
 				const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
-
 				webhookReceived && emitWebhookProcessedMetrics(
 					webhookReceived,
 					"push",
@@ -213,5 +217,6 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		log.info("Push has succeeded");
 	} catch (err) {
 		log.warn({ err }, "Push has failed");
+		throw err;
 	}
 };

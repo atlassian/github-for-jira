@@ -12,7 +12,7 @@ import noKeysBuildFixture from "fixtures/api/build-no-keys.json";
 import compareReferencesFixture from "fixtures/api/compare-references.json";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { when } from "jest-when";
-import { numberFlag, NumberFlags, booleanFlag, BooleanFlags } from "config/feature-flags";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 import { RepoSyncState } from "models/reposyncstate";
 import { getBuildTask } from "./build";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
@@ -318,10 +318,6 @@ describe("sync/builds", () => {
 
 		let repoSyncState: RepoSyncState;
 		beforeEach(async () => {
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL,
-				jiraHost
-			).mockResolvedValue(true);
 			const dbState = await new DatabaseStateCreator()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForDeployments()

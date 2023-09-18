@@ -3,8 +3,16 @@ import express, { Application, NextFunction, Request, Response } from "express";
 import { noop } from "lodash";
 import supertest from "supertest";
 import { getLogger } from "~/src/config/logger";
-import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
+import {
+	checkGenericContainerActionUrl,
+	getTokenType,
+	jiraSymmetricJwtMiddleware
+} from "~/src/middleware/jira-symmetric-jwt-middleware";
 import { Installation } from "~/src/models/installation";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { generateSignedSessionCookieHeader } from "test/utils/cookies";
+
 
 jest.mock("config/feature-flags");
 const testSharedSecret = "test-secret";
@@ -205,6 +213,205 @@ describe("jiraSymmetricJwtMiddleware", () => {
 			.expect(200);
 	});
 
+	describe("Util - checkGenericContainerActionUrl",  () => {
+		let installation;
+
+		beforeEach(async () => {
+			app = createApp();
+
+			installation = await Installation.install({
+				clientKey: "jira-client-key",
+				host: jiraHost,
+				sharedSecret: testSharedSecret
+			});
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
+			).mockResolvedValue(true);
+		});
+
+		it("should return true for search workspaces", async () => {
+			const generateJwt = async (query: any = {}) => {
+				return encodeSymmetric({
+					qsh: createQueryStringHash({
+						method: "GET",
+						pathname: "/jira/workspaces/search",
+						query
+					}, false),
+					iss: installation.plainClientKey
+				}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
+			};
+
+			await supertest(app)
+				.get("/jira/workspaces/search")
+				.set({
+					authorization: `JWT ${await generateJwt()}`
+				});
+
+			expect(await checkGenericContainerActionUrl(
+				"https://test-github-app-instance.com/jira/workspaces/search"))
+				.toBeTruthy();
+		});
+
+		it("should return true for search repositories", async () => {
+			const generateJwt = async (query: any = {}) => {
+				return encodeSymmetric({
+					qsh: createQueryStringHash({
+						method: "GET",
+						pathname: "/jira/workspaces/repositories/search",
+						query
+					}, false),
+					iss: installation.plainClientKey
+				}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
+			};
+
+			await supertest(app)
+				.get("/jira/workspaces/repositories/search?searchQuery=atlas")
+				.set({
+					authorization: `JWT ${await generateJwt(
+						{
+							searchQuery: "atlas"
+						}
+					)}`
+				});
+
+			expect(await checkGenericContainerActionUrl(
+				"https://test-github-app-instance.com/jira/workspaces/repositories/search?searchQuery=atlas"))
+				.toBeTruthy();
+		});
+
+		it("should return true for associate repository", async () => {
+			const generateJwt = async (query: any = {}) => {
+				return encodeSymmetric({
+					qsh: createQueryStringHash({
+						method: "POST",
+						pathname: "/jira/workspaces/repositories/associate",
+						query
+					}, false),
+					iss: installation.plainClientKey
+				}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
+			};
+
+			await supertest(app)
+				.post("/jira/workspaces/repositories/associate")
+				.set({
+					authorization: `JWT ${await generateJwt()}`
+				});
+
+			expect(await checkGenericContainerActionUrl("https://test-github-app-instance.com/jira/workspaces/repositories/associate")).toBeTruthy();
+		});
+
+		it("should return false for create branch", async () => {
+			await supertest(app)
+				.get("/create-branch-options").set(
+					"Cookie",
+					generateSignedSessionCookieHeader({
+						jiraHost,
+						githubToken: "random-token"
+					}));
+
+			expect(await checkGenericContainerActionUrl(
+				"https://test-github-app-instance.com/create-branch-options"))
+				.toBeFalsy();
+		});
+	});
+
+	describe("Util - getTokenType",  () => {
+		let installation;
+
+		beforeEach(async () => {
+			app = createApp();
+
+			installation = await Installation.install({
+				clientKey: "jira-client-key",
+				host: jiraHost,
+				sharedSecret: testSharedSecret
+			});
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
+			).mockResolvedValue(true);
+		});
+
+		it("should return normal tokenType for search workspaces", async () => {
+			const generateJwt = async (query: any = {}) => {
+				return encodeSymmetric({
+					qsh: createQueryStringHash({
+						method: "GET",
+						pathname: "/jira/workspaces/search",
+						query
+					}, false),
+					iss: installation.plainClientKey
+				}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
+			};
+
+			await supertest(app)
+				.get("/jira/workspaces/search")
+				.set({
+					authorization: `JWT ${await generateJwt()}`
+				});
+
+			expect(await getTokenType("/jira/workspaces/search", "GET", jiraHost)).toEqual("normal");
+		});
+
+		it("should return normal tokenType for search repositories", async () => {
+			const generateJwt = async (query: any = {}) => {
+				return encodeSymmetric({
+					qsh: createQueryStringHash({
+						method: "GET",
+						pathname: "/jira/workspaces/repositories/search",
+						query
+					}, false),
+					iss: installation.plainClientKey
+				}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
+			};
+
+			await supertest(app)
+				.get("/jira/workspaces/repositories/search?searchQuery=atlas")
+				.set({
+					authorization: `JWT ${await generateJwt(
+						{
+							searchQuery: "atlas"
+						}
+					)}`
+				});
+
+			expect(await getTokenType("/jira/workspaces/repositories/search?searchQuery=atlas", "GET", jiraHost)).toEqual("normal");
+		});
+
+		it("should return normal tokenType for associate repository", async () => {
+			const generateJwt = async (query: any = {}) => {
+				return encodeSymmetric({
+					qsh: createQueryStringHash({
+						method: "POST",
+						pathname: "/jira/workspaces/repositories/associate",
+						query
+					}, false),
+					iss: installation.plainClientKey
+				}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
+			};
+
+			await supertest(app)
+				.post("/jira/workspaces/repositories/associate")
+				.set({
+					authorization: `JWT ${await generateJwt()}`
+				});
+
+			expect(await getTokenType("/jira/workspaces/repositories/associate", "POST", jiraHost)).toEqual("normal");
+		});
+
+		it("should return context tokenType for create branch", async () => {
+			await supertest(app)
+				.get("/create-branch-options").set(
+					"Cookie",
+					generateSignedSessionCookieHeader({
+						jiraHost,
+						githubToken: "random-token"
+					}));
+
+			expect(await getTokenType("/create-branch-options", "GET", jiraHost)).toEqual("context");
+		});
+	});
 
 	const createApp = () => {
 		const app = express();

@@ -17,7 +17,7 @@ import branchNodesFixture from "fixtures/api/graphql/branch-ref-nodes.json";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { JiraClientError } from "~/src/jira/client/axios";
 import { when } from "jest-when";
-import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 import { GithubClientNotFoundError } from "~/src/github/client/github-client-errors";
 import { cloneDeep } from "lodash";
 
@@ -104,6 +104,18 @@ describe("sync/installation", () => {
 				uuid: UUID()
 			}
 		};
+
+		when(numberFlag).calledWith(
+			NumberFlags.BACKFILL_MAX_SUBTASKS,
+			0,
+			jiraHost
+		).mockResolvedValue(0);
+
+		when(numberFlag).calledWith(
+			NumberFlags.BACKFILL_PAGE_SIZE,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(20);
 	});
 
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -288,7 +300,7 @@ describe("sync/installation", () => {
 				err = caught;
 			}
 			expect(err!).toBeInstanceOf(TaskError);
-			expect(err!.task!.task).toEqual("branch");
+			expect(err!.task.task).toEqual("branch");
 			expect(err!.cause).toBeInstanceOf(GithubClientNotFoundError);
 		});
 
@@ -310,15 +322,15 @@ describe("sync/installation", () => {
 				err = caught;
 			}
 			expect(err!).toBeInstanceOf(TaskError);
-			expect(err!.task!.task).toEqual("branch");
+			expect(err!.task.task).toEqual("branch");
 			expect(err!.cause).toBeInstanceOf(JiraClientError);
 		});
 	});
 
 	describe("getTargetTasks", () => {
 		it("should return all tasks if no target tasks present", async () => {
-			expect(getTargetTasks()).toEqual(["pull", "branch", "commit", "build", "deployment"]);
-			expect(getTargetTasks([])).toEqual(["pull", "branch", "commit", "build", "deployment"]);
+			expect(getTargetTasks()).toEqual(["pull", "branch", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert", "codeScanningAlert"]);
+			expect(getTargetTasks([])).toEqual(["pull", "branch", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert", "codeScanningAlert"]);
 		});
 
 		it("should return single target task", async () => {
@@ -342,7 +354,7 @@ describe("sync/installation", () => {
 			const sendMessageMock = jest.fn();
 			await markCurrentTaskAsFailedAndContinue({
 				...MESSAGE_PAYLOAD,
-				installationId: MESSAGE_PAYLOAD.installationId + 1
+				installationId: (MESSAGE_PAYLOAD.installationId as number) + 1
 			}, TASK, false, sendMessageMock, getLogger("test"), mockError);
 
 			const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
@@ -361,21 +373,7 @@ describe("sync/installation", () => {
 			expect(refreshedSubscription?.get({ plain: true })).toStrictEqual(subscription?.get({ plain: true }));
 		});
 
-		it("maps failed deployment to complete (until we fix it :allethings: in ARC-2119)", async () => {
-			repoSyncState.deploymentStatus = "pending";
-			await repoSyncState.save();
-
-			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, {
-				...TASK,
-				task: "deployment"
-			}, false, jest.fn(), getLogger("test"), mockError);
-
-			const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
-			const refreshedSubscription = await Subscription.findByPk(subscription?.id);
-			expect(refreshedRepoSyncState?.deploymentStatus).toEqual("complete");
-			expect(refreshedSubscription?.get({ plain: true })).toStrictEqual(subscription?.get({ plain: true }));
-		});
-
+		// TODO: bgvozdev to finish off before enabling the FF for everyone
 		describe("parallel sync", () => {
 			let MESSAGE_PAYLOAD_BRANCHES_ONLY;
 
@@ -403,10 +401,11 @@ describe("sync/installation", () => {
 				}
 				await RepoSyncState.bulkCreate(newRepoSyncStatesData);
 
-				when(booleanFlag).calledWith(
-					BooleanFlags.USE_SUBTASKS_FOR_BACKFILL,
-					expect.anything()
-				).mockResolvedValue(true);
+				when(numberFlag).calledWith(
+					NumberFlags.BACKFILL_MAX_SUBTASKS,
+					0,
+					jiraHost
+				).mockResolvedValue(100);
 
 				// That would give 2 tasks: one main and one subtask
 				configureRateLimit(1000, 1000);
@@ -454,7 +453,7 @@ describe("sync/installation", () => {
 				const updatedRows = await RepoSyncState.findAll({ where: {
 					branchCursor: "MQ"
 				} });
-				expect(updatedRows!.length).toEqual(2);
+				expect(updatedRows.length).toEqual(2);
 			});
 
 			it("for multiple tasks ignores failures of non-main tasks", async () => {
@@ -483,7 +482,7 @@ describe("sync/installation", () => {
 				const updatedRows = await RepoSyncState.findAll({ where: {
 					branchCursor: "MQ"
 				} });
-				expect(updatedRows!.length).toEqual(1);
+				expect(updatedRows.length).toEqual(1);
 			});
 		});
 
@@ -564,9 +563,12 @@ describe("sync/installation", () => {
 			expect(repoSync.pullFrom).toBeNull();
 			expect(repoSync.buildFrom).toBeNull();
 			expect(repoSync.deploymentFrom).toBeNull();
+			expect(repoSync.dependabotAlertFrom).toBeNull();
 		});
 
-		describe.each(["pull", "commit", "build", "deployment"] as TaskType[])("Update jobs status for each tasks", (taskType: TaskType) => {
+		describe.each(
+			["pull", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert", "codeScanningAlert"] as TaskType[]
+		)("Update jobs status for each tasks", (taskType: TaskType) => {
 			const colTaskFrom = `${taskType}From`;
 			const task: Task = {
 				task: taskType,

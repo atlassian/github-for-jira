@@ -5,7 +5,7 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { transformWorkflow } from "../transforms/transform-workflow";
 import { GitHubWorkflowPayload } from "~/src/interfaces/github";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
-import { numberFlag, NumberFlags, booleanFlag, BooleanFlags } from "config/feature-flags";
+import { numberFlag, NumberFlags, shouldSendAll } from "config/feature-flags";
 import { fetchNextPagesInParallel } from "~/src/sync/parallel-page-fetcher";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
 import { PageSizeAwareCounterCursor } from "~/src/sync/page-counter-cursor";
@@ -13,11 +13,10 @@ import { PageSizeAwareCounterCursor } from "~/src/sync/page-counter-cursor";
 type BuildWithCursor = { cursor: string } & Octokit.ActionsListRepoWorkflowRunsResponse;
 
 // TODO: add types
-const getTransformedBuilds = async (workflowRun, gitHubInstallationClient, logger) => {
-
+const getTransformedBuilds = async (workflowRun, gitHubInstallationClient, alwaysSend: boolean, logger) => {
 	const transformTasks = workflowRun.map(workflow => {
 		const workflowItem = { workflow_run: workflow, workflow: { id: workflow.id } } as GitHubWorkflowPayload;
-		return transformWorkflow(gitHubInstallationClient, workflowItem, logger);
+		return transformWorkflow(gitHubInstallationClient, workflowItem, alwaysSend, logger);
 	});
 
 	const transformedBuilds = await Promise.all(transformTasks);
@@ -39,9 +38,9 @@ export const getBuildTask = async (
 	const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
 	const numberOfPagesToFetchInParallel = await numberFlag(NumberFlags.NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL, 0, jiraHost);
 	if (!numberOfPagesToFetchInParallel || numberOfPagesToFetchInParallel <= 1) {
-		return doGetBuildTask(logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
+		return doGetBuildTask(logger, gitHubInstallationClient, repository, smartCursor, messagePayload);
 	} else {
-		return doGetBuildTaskInParallel(numberOfPagesToFetchInParallel, logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
+		return doGetBuildTaskInParallel(numberOfPagesToFetchInParallel, logger, gitHubInstallationClient, repository, smartCursor, messagePayload);
 	}
 };
 
@@ -49,7 +48,6 @@ const doGetBuildTaskInParallel = (
 	numberOfPagesToFetchInParallel: number,
 	logger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
-	jiraHost: string,
 	repository: Repository,
 	pageSizeAwareCursor: PageSizeAwareCounterCursor,
 	messagePayload: BackfillMessagePayload
@@ -60,7 +58,6 @@ const doGetBuildTaskInParallel = (
 		doGetBuildTask(
 			logger,
 			gitHubInstallationClient,
-			jiraHost,
 			repository,
 			pageCursor,
 			messagePayload
@@ -68,20 +65,22 @@ const doGetBuildTaskInParallel = (
 );
 
 const doGetBuildTask = async (
-	logger: Logger,
+	parentLogger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
-	jiraHost: string,
 	repository: Repository,
 	pageSizeAwareCursor: PageSizeAwareCounterCursor,
 	messagePayload: BackfillMessagePayload
 ) => {
+	const logger = parentLogger.child({ backfillTask: "Build" });
+	const startTime = Date.now();
 
-	const useIncrementalBackfill = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost);
-	const fromDate = useIncrementalBackfill && messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
+	logger.info({ startTime }, "Backfill task started");
+	const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 	const { data } = await gitHubInstallationClient.listWorkflowRuns(repository.owner.login, repository.name, pageSizeAwareCursor.perPage, pageSizeAwareCursor.pageNo);
 	const { workflow_runs } = data;
 
 	if (areAllBuildsEarlierThanFromDate(workflow_runs, fromDate)) {
+		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
 		return {
 			edges: [],
 			jiraPayload: undefined
@@ -93,6 +92,7 @@ const doGetBuildTask = async (
 	const edgesWithCursor: BuildWithCursor[] = [{ total_count: data.total_count, workflow_runs, cursor: nextPageCursorStr }];
 
 	if (!workflow_runs?.length) {
+		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
 		return {
 			edges: [],
 			jiraPayload: undefined
@@ -102,11 +102,12 @@ const doGetBuildTask = async (
 	logger.info(`Found ${workflow_runs.length} workflow_runs`);
 	logger.info(`First workflow_run.updated_at=${workflow_runs[0].updated_at}`);
 
-	const builds = await getTransformedBuilds(workflow_runs, gitHubInstallationClient, logger);
-	logger.info("Syncing Builds: finished");
+	const alwaysSend = await shouldSendAll("builds-backfill", messagePayload.jiraHost, logger);
+	const builds = await getTransformedBuilds(workflow_runs, gitHubInstallationClient, alwaysSend, logger);
 
 	// When there are no valid builds return early with undefined JiraPayload so that no Jira calls are made
 	if (!builds?.length) {
+		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
 		return {
 			edges: edgesWithCursor,
 			jiraPayload: undefined
@@ -118,6 +119,7 @@ const doGetBuildTask = async (
 		builds
 	};
 
+	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload.builds?.length }, "Backfill task complete");
 	return {
 		edges: edgesWithCursor,
 		jiraPayload

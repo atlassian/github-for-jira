@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // eslint-disable-next-line import/no-duplicates
-import { transformDeployment, mapEnvironment } from "./transform-deployment";
+import { mapEnvironment, mapState, transformDeployment } from "./transform-deployment";
 import { getLogger } from "config/logger";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getInstallationId, InstallationId } from "../github/client/installation-id";
@@ -9,8 +9,13 @@ import deployment_status_staging from "fixtures/deployment_status_staging.json";
 import { getRepoConfig } from "services/user-config-service";
 import { when } from "jest-when";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
+import { booleanFlag, BooleanFlags, shouldSendAll } from "config/feature-flags";
+import { cacheSuccessfulDeploymentInfo } from "services/deployment-cache-service";
+import { Config } from "interfaces/common";
+import { cloneDeep } from "lodash";
 
 jest.mock("services/user-config-service");
+jest.mock("config/feature-flags");
 
 const mockConfig = {
 	deployments: {
@@ -28,6 +33,19 @@ const mockConfig = {
 	}
 };
 
+const mockConfigNoServices = {
+	deployments: {
+		environmentMapping: {
+			development: [
+				"foo*" // nonsense pattern to make sure that we're hitting it in the tests below
+			]
+		},
+		services: {
+			ids: []
+		}
+	}
+};
+
 const mockGetRepoConfig = () => {
 	when(getRepoConfig).calledWith(
 		expect.anything(),
@@ -37,6 +55,17 @@ const mockGetRepoConfig = () => {
 		expect.anything(),
 		expect.anything()
 	).mockResolvedValue(mockConfig);
+};
+
+const mockGetRepoConfigNoServices = () => {
+	when(getRepoConfig).calledWith(
+		expect.anything(),
+		expect.anything(),
+		expect.anything(),
+		expect.anything(),
+		expect.anything(),
+		expect.anything()
+	).mockResolvedValue(mockConfigNoServices);
 };
 
 const buildJiraPayload = (displayName="testing", associations) => {
@@ -65,7 +94,38 @@ const buildJiraPayload = (displayName="testing", associations) => {
 	};
 };
 
+describe.each([
+	["success", "successful"],
+	["SUCCESS", "successful"],
+	["error", "failed"],
+	["ERROR", "failed"],
+	["FAILURE", "failed"],
+	["failure", "failed"],
+	["queued", "pending"],
+	["QUEUED", "pending"],
+	["WAITING", "pending"],
+	["pending", "in_progress"],
+	["PENDING", "in_progress"],
+	["IN_PROGRESS", "in_progress"],
+	["in_progress", "in_progress"],
+	["INACTIVE", "unknown"],
+	["whatever", "unknown"]
+])("deployment state mapping", (src, dest) => {
+	it(`should map origin state ${src} to ${dest}`, () => {
+		expect(mapState(src)).toBe(dest);
+	});
+});
+
 describe("deployment environment mapping", () => {
+
+	it("pass with null env mapping correctly", () => {
+
+		const userConfig = { deployments: { environmentMapping: { development: null, staging: "stg" } } };
+
+		// match
+		expect(mapEnvironment("stg", userConfig as any)).toBe("staging");
+
+	});
 
 	it("falls back to hardcoded config when user config doesn't match", () => {
 		const userConfig = {
@@ -117,6 +177,7 @@ describe("deployment environment mapping", () => {
 		expect(mapEnvironment("staging")).toBe("staging");
 		expect(mapEnvironment("stage")).toBe("staging");
 		expect(mapEnvironment("stg")).toBe("staging");
+		expect(mapEnvironment("sta")).toBe("staging");
 		expect(mapEnvironment("preprod")).toBe("staging");
 		expect(mapEnvironment("model")).toBe("staging");
 		expect(mapEnvironment("internal")).toBe("staging");
@@ -154,6 +215,19 @@ describe("deployment environment mapping", () => {
 		expect(mapEnvironment("internet")).toBe("unmapped");
 		expect(mapEnvironment("製造")).toBe("unmapped");
 	});
+
+	it("classifies unknown user config entries as 'unmapped'", () => {
+		const userConfig = {
+			deployments: {
+				environmentMapping: {
+					// "prod" is not a valid key, it should be "production"
+					prod: ["prod-*"]
+				}
+			}
+		} as Config;
+
+		expect(mapEnvironment("prod-us-west-1", userConfig)).toBe("unmapped");
+	});
 });
 
 describe("transform GitHub webhook payload to Jira payload", () => {
@@ -166,6 +240,62 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			gitHubClient = new GitHubInstallationClient(getInstallationId(DatabaseStateCreator.GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
 
 			await new DatabaseStateCreator().create();
+		});
+
+		it(`transforms deployments without issue keys`, async () => {
+			when(shouldSendAll).calledWith("deployments", expect.anything(), expect.anything())
+				.mockResolvedValue(true);
+			const deploymentPayload = cloneDeep(deployment_status_staging.payload) as any;
+			deploymentPayload.deployment.ref = "not-a-issue-key";
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+
+			// Mocking all GitHub API Calls
+			// Get commit
+			githubNock.get(`/repos/${owner.login}/${repoName}/commits/${deployment_status.payload.deployment.sha}`)
+				.reply(200, {
+					...owner,
+					commit: {
+						message: "testing"
+					}
+				});
+
+			// List deployments
+			githubNock.get(`/repos/${owner.login}/${repoName}/deployments?environment=foo42&per_page=10`)
+				.reply(200,
+					[
+						{
+							id: 1,
+							environment: "foo42",
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc"
+						}
+					]
+				);
+
+			// List deployments statuses
+			githubNock.get(`/repos/${owner.login}/${repoName}/deployments/1/statuses?per_page=100`)
+				.reply(200, [
+					{
+						id: 1,
+						state: "pending"
+					},
+					{
+						id: 2,
+						state: "success"
+					}
+				]);
+
+			// Compare commits
+			githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deploymentPayload.deployment.sha as string}`)
+				.reply(200, { commits: [] });
+
+			mockGetRepoConfigNoServices();
+
+			const jiraPayload = await transformDeployment(gitHubClient, deploymentPayload, jiraHost, "webhook", getLogger("deploymentLogger"), undefined);
+
+			expect(jiraPayload?.deployments[0].associations).toStrictEqual([]);
 		});
 
 		it(`uses user config to associate services`, async () => {
@@ -232,7 +362,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 
 			mockGetRepoConfig();
 
-			const jiraPayload = await transformDeployment(gitHubClient, deployment_status_staging.payload as any, jiraHost, { trigger: "test" }, getLogger("deploymentLogger"), undefined);
+			const jiraPayload = await transformDeployment(gitHubClient, deployment_status_staging.payload as any, jiraHost, "webhook", getLogger("deploymentLogger"), undefined);
 
 
 			expect(jiraPayload?.deployments[0].associations).toStrictEqual(
@@ -323,9 +453,78 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 					]
 				});
 
-			const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, { trigger: "test" }, getLogger("deploymentLogger"), undefined);
+			const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, "webhook", getLogger("deploymentLogger"), undefined);
 
 			expect(jiraPayload).toMatchObject(buildJiraPayload("Q4ua5dPnvDaW8CQgbnC7IiOQ8emND4bTv6ibK2Vh5LsGukmAF7VFE7MWZBwiPWON2fbqWL9q1jyjilgOMmt79WgMgDbT2opGlh6at5WfTYlYQVV77FXiLtPIOs8szN02ldD4slvScLRRynPQpzShisQpVfYU4PL5vCl2OzIYBIJ3zJJIY9g3EMSxtwe0rGaDBuINFBBgWYS2WOh8UAZxSR0w2wetYgq1Adv11Qy85rffGG3GkRHpFNvQ22n6Jqp",  [
+				{
+					associationType: "issueIdOrKeys",
+					values: ["ABC-1", "ABC-2"]
+				},
+				{
+					associationType: "commit",
+					values: [
+						{
+							commitHash: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1",
+							repositoryId: "65"
+						},
+						{
+							commitHash: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2",
+							repositoryId: "65"
+						}
+					]
+				}
+			]));
+		});
+
+		it(`supports branch and merge workflows, sending related commits in deploymentfor Cloud -- with dynamodb and ff`, async () => {
+
+			when(booleanFlag)
+				.calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, expect.anything())
+				.mockResolvedValue(true);
+
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+
+			await cacheSuccessfulDeploymentInfo({
+				gitHubBaseUrl: gitHubClient.baseUrl,
+				repositoryId: deployment_status.payload.repository.id,
+				commitSha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc",
+				env: "Production",
+				createdAt: new Date(new Date(deployment_status.payload.deployment_status.created_at).getTime() - 1000)
+			}, getLogger("deploymentLogger"));
+
+			// Mocking all GitHub API Calls
+			// Get commit
+			githubNock.get(`/repos/${owner.login}/${repoName}/commits/${deployment_status.payload.deployment.sha}`)
+				.reply(200, {
+					...owner,
+					commit: {
+						message: "testing"
+					}
+				});
+
+			// Compare commits
+			githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
+				.reply(200, {
+					commits: [
+						{
+							commit: {
+								message: "ABC-1"
+							},
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
+						},
+						{
+							commit: {
+								message: "ABC-2"
+							},
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2"
+						}
+					]
+				});
+
+			const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, "webhook", getLogger("deploymentLogger"), undefined);
+
+			expect(jiraPayload).toMatchObject(buildJiraPayload("testing",  [
 				{
 					associationType: "issueIdOrKeys",
 					values: ["ABC-1", "ABC-2"]
@@ -408,7 +607,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 					]
 				});
 
-			const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, { trigger: "test" }, getLogger("deploymentLogger"), undefined);
+			const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, "webhook", getLogger("deploymentLogger"), undefined);
 
 			expect(jiraPayload).toMatchObject(buildJiraPayload("testing",  [
 				{
@@ -495,10 +694,10 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 						]
 					});
 
-				const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, { trigger: "test" }, getLogger("deploymentLogger"), undefined);
+				const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, "webhook", getLogger("deploymentLogger"), undefined);
 
 				// make expected issue id array
-				const expectedIssueIds = [...Array(500).keys()].map(number => "ABC-" + (number + 1));
+				const expectedIssueIds = [...Array(500).keys()].map(number => "ABC-" + (number + 1).toString());
 
 				expect(jiraPayload).toMatchObject(buildJiraPayload("testing", [
 					{
@@ -527,14 +726,14 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 
 				mockGetRepoConfig();
 
-				const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, { trigger: "test" }, getLogger("deploymentLogger"), undefined);
+				const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, "webhook", getLogger("deploymentLogger"), undefined);
 
 				// make expected issue id array
 
 				expect(jiraPayload).toMatchObject(buildJiraPayload("testing", [
 					{
 						associationType: "issueIdOrKeys",
-						values: [...Array(499).keys()].map(number => "ABC-" + (number + 1))
+						values: [...Array(499).keys()].map(number => "ABC-" + (number + 1).toString())
 					},
 					{
 						associationType: "serviceIdOrKeys",
@@ -575,12 +774,12 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 					expect.anything()
 				).mockResolvedValue(mockConfig);
 
-				const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, { trigger: "test" }, getLogger("deploymentLogger"), undefined);
+				const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, "webhook", getLogger("deploymentLogger"), undefined);
 
 				expect(jiraPayload).toMatchObject(buildJiraPayload("testing", [
 					{
 						associationType: "issueIdOrKeys",
-						values: [...Array(497).keys()].map(number => "ABC-" + (number + 1))
+						values: [...Array(497).keys()].map(number => "ABC-" + (number + 1).toString())
 					},
 					{
 						associationType: "serviceIdOrKeys",
@@ -663,7 +862,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 
 			mockGetRepoConfig();
 
-			const jiraPayload = await transformDeployment(gitHubClient, deployment_status_staging.payload as any, jiraHost, { trigger: "test" }, getLogger("deploymentLogger"), undefined);
+			const jiraPayload = await transformDeployment(gitHubClient, deployment_status_staging.payload as any, jiraHost, "webhook", getLogger("deploymentLogger"), undefined);
 			expect(jiraPayload?.deployments[0].environment.type).toBe("development");
 		});
 
@@ -755,7 +954,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 					]
 				});
 
-			const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, { trigger: "test" }, getLogger("deploymentLogger"), undefined);
+			const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, "webhook", getLogger("deploymentLogger"), undefined);
 
 			expect(jiraPayload).toMatchObject(buildJiraPayload("testing", [
 				{

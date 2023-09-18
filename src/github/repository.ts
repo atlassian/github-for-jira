@@ -3,13 +3,12 @@ import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import { findOrStartSync } from "~/src/sync/sync-utils";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const repositoryWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number, subscription: Subscription): Promise<void> => {
 	if (context.action === "deleted") {
 		return deleteRepositoryWebhookHandler(context, jiraClient, gitHubInstallationId, subscription);
 	}
-	if (context.action === "created" && await booleanFlag(BooleanFlags.REPO_CREATED_EVENT, jiraClient.baseURL)) {
+	if (context.action === "created") {
 		return createRepositoryWebhookHandler(context, gitHubInstallationId, subscription);
 	}
 };
@@ -56,7 +55,7 @@ export const deleteRepositoryWebhookHandler = async (context: WebhookContext, ji
 		return;
 	}
 
-	context.log.info(`Deleting dev info for repo ${context.payload.repository?.id}`);
+	context.log.info(`Deleting dev info for repo ${context.payload.repository?.id as number}`);
 
 	const { id: repositoryId } = context.payload.repository;
 

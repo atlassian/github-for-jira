@@ -16,21 +16,30 @@ export enum BooleanFlags {
 	INNO_DRAFT_PR = "inno-draft-pr",
 	VERBOSE_LOGGING = "verbose-logging",
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
-	USE_BACKFILL_ALGORITHM_INCREMENTAL = "backfill-algorithm-incremental",
-	REPO_CREATED_EVENT = "repo-created-event",
-	USE_SUBTASKS_FOR_BACKFILL = "use-subtasks-for-backfill",
 	JIRA_ADMIN_CHECK = "jira-admin-check",
 	REMOVE_STALE_MESSAGES = "remove-stale-messages",
-	ENABLE_API_KEY_FEATURE = "enable-api-key-feature"
+	USE_NEW_PULL_ALGO = "use-new-pull-algo",
+	USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK = "use-dynamodb-for-deployment-webhook",
+	USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL = "use-dynamodb-for-deployment-backfill",
+	LOG_CURLV_OUTPUT = "log-curlv-output",
+	SKIP_REQUESTED_REVIEWERS = "skip-requested-reviewers",
+	ENABLE_SUBSCRIPTION_DEFERRED_INSTALL = "enable-subscription-deferred-install",
+	EARLY_EXIT_ON_VALIDATION_FAILED = "early-exit-on-validation-failed",
+	ENABLE_CONNECTED_REPOS_VIEW="enable-connected-repos-view",
+	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery-again",
+	ENABLE_GENERIC_CONTAINERS = "enable-generic-containers",
+	ENABLE_GITHUB_SECURITY_IN_JIRA = "enable-github-security-in-jira",
+	DELETE_MESSAGE_ON_BACKFILL_WHEN_OTHERS_WORKING_ON_IT = "delete-message-on-backfill-when-others-working-on-it",
+	USE_NEW_5KU_SPA_EXPERIENCE = "enable-5ku-experience--cloud-connect",
+	USE_INSTALLATION_CLIENT_CHECK_PERMISSION = "use-installation-client-to-check-permission",
+	USE_CUSTOM_ROOT_CA_BUNDLE = "use-custom-root-ca-bundle"
 }
 
 export enum StringFlags {
-	GITHUB_SCOPES = "github-scopes",
 	BLOCKED_INSTALLATIONS = "blocked-installations",
 	LOG_LEVEL = "log-level",
-	OUTBOUND_PROXY_SKIPLIST = "outbound-proxy-skiplist",
 	HEADERS_TO_ENCRYPT = "headers-to-encrypt",
-	GHE_API_KEY = "ghe-encrypted-api-key"
+	SEND_ALL = "send-all"
 }
 
 export enum NumberFlags {
@@ -40,6 +49,7 @@ export enum NumberFlags {
 	NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL = "number-of-pr-pages-to-fetch-in-parallel",
 	NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL = "number-of-build-to-fetch-in-parallel",
 	BACKFILL_PAGE_SIZE = "backfill-page-size",
+	BACKFILL_MAX_SUBTASKS = "backfill-max-subtasks",
 	INSTALLATION_TOKEN_CACHE_MAX_SIZE = "installation-token-cache-max-size"
 }
 
@@ -67,9 +77,10 @@ const getLaunchDarklyValue = async <T = boolean | string | number>(flag: Boolean
 };
 
 // Include jiraHost for any FF that needs to be rolled out in stages
-export const booleanFlag = async (flag: BooleanFlags, key?: string): Promise<boolean> =>
+export const booleanFlag = async (flag: BooleanFlags, key?: string): Promise<boolean> => {
 	// Always use the default value as false to prevent issues
-	await getLaunchDarklyValue(flag, false, key);
+	return await getLaunchDarklyValue(flag, false, key);
+};
 
 export const stringFlag = async <T = string>(flag: StringFlags, defaultValue: T, key?: string): Promise<T> =>
 	await getLaunchDarklyValue<T>(flag, defaultValue, key);
@@ -81,11 +92,28 @@ export const onFlagChange = (flag: BooleanFlags | StringFlags | NumberFlags, lis
 	launchdarklyClient.on(`update:${flag}`, listener);
 };
 
-export const isBlocked = async (installationId: number, logger: Logger): Promise<boolean> => {
+type ShouldSendAllStringTypes =
+	"branches-backfill" | "builds-backfill" | "commits-backfill" | "deployments-backfill" | "prs-backfill" |
+	"branches" | "builds" | "commits" | "deployments" | "prs";
+
+export const shouldSendAll = async (type: ShouldSendAllStringTypes, jiraHost: string, logger: Logger): Promise<boolean> => {
 	try {
-		const blockedInstallationsString = await stringFlag(StringFlags.BLOCKED_INSTALLATIONS, "[]");
+		// Full set:
+		// ["branches-backfill", "builds-backfill", "commits-backfill", "deployments-backfill", "prs-backfill", "branches", "builds", "commits", "deployments", "prs"]
+		const sendAllString = await stringFlag(StringFlags.SEND_ALL, "[]", jiraHost);
+		const sendAllArray: string[] = JSON.parse(sendAllString);
+		return Array.isArray(sendAllArray) && sendAllArray.includes(type);
+	} catch (e) {
+		logger.error({ err: e, type }, "Cannot define if should send all");
+		return false;
+	}
+};
+
+export const isBlocked = async (jiraHost: string, installationId: number, logger: Logger): Promise<boolean> => {
+	try {
+		const blockedInstallationsString = await stringFlag(StringFlags.BLOCKED_INSTALLATIONS, "[]", jiraHost);
 		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString);
-		return blockedInstallations.includes(installationId);
+		return Array.isArray(blockedInstallations) && blockedInstallations.includes(installationId);
 	} catch (e) {
 		logger.error({ err: e, installationId }, "Cannot define if isBlocked");
 		return false;

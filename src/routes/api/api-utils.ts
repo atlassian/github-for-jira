@@ -4,6 +4,8 @@ import { Installation } from "models/installation";
 import Logger from "bunyan";
 import { NextFunction, Request, Response } from "express";
 import { validationResult } from "express-validator";
+import { getLogger } from "config/logger";
+import { BooleanFlags, booleanFlag } from "config/feature-flags";
 
 // TODO: add tests
 type SerializedSubscription = Pick<Subscription, "gitHubInstallationId" | "jiraHost" | "createdAt" | "updatedAt" | "syncStatus">;
@@ -37,14 +39,20 @@ export const serializeJiraInstallation = async (jiraInstallation: Installation, 
 /**
  * Finds the validation errors in this request and wraps them in an object with handy functions
  */
-export const returnOnValidationError = (
+export const returnOnValidationError = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
-): void => {
+): Promise<void> => {
 	const errors = validationResult(req);
 	if (!errors.isEmpty()) {
 		res.status(422).json({ errors: errors.array() });
+
+		if (await booleanFlag(BooleanFlags.EARLY_EXIT_ON_VALIDATION_FAILED)) {
+			(req.log || getLogger("requestValidator")).warn({ errors: errors.array(), paramUuid: req.params?.uuid }, "Fail on validator request, skip with 422");
+			return;
+		}
+
 	}
 	next();
 };

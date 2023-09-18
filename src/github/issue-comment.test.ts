@@ -50,30 +50,6 @@ describe("Issue Comment Webhook", () => {
 						}
 					});
 
-				jiraNock
-					.post("/rest/api/latest/issue/TEST-123/comment", {
-						body: "Test example comment with linked Jira issue: [TEST-123] - some-comment-url",
-						properties: [
-							{
-								key: "gitHubId",
-								value: {
-									gitHubId: `${ISSUE_ID}`
-								}
-							}
-						]
-					})
-					.reply(201);
-
-				// Mocks for updating GitHub with a linked Jira ticket
-				jiraNock
-					.get("/rest/api/latest/issue/TEST-123?fields=summary")
-					.reply(200, {
-						key: "TEST-123",
-						fields: {
-							summary: "Example Issue"
-						}
-					});
-
 				await expect(app.receive(issueCommentBasic as any)).toResolve();
 			});
 

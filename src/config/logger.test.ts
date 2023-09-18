@@ -237,6 +237,7 @@ describe("logger behaviour", () => {
 						name: "GraphQLError",
 						response: { }
 					},
+					uiErrorCode: "UNKNOWN",
 					errors: [
 						{
 							locations: [
@@ -453,6 +454,35 @@ describe("logger behaviour", () => {
 			expect(JSON.parse(ringBuffer.records[0]).requestPath).toEqual(
 				`/repos/${hash(TEST_ORG_NAME)}/${hash(TEST_REPO_NAME)}/contents/.jira/config.yml`
 			);
+		});
+
+		it("Should remove owners and repos from create-branch/branches URL", () => {
+			const logger = getLogger("test case");
+			logger.addStream({ stream: ringBuffer as Stream });
+			logger.error({
+				req: {
+					path: "/owners/OWNERS/repos/REPOS/branches",
+					url: "/github/create-branch/owners/OWNERS/repos/REPOS/branches?asd=qwe"
+				}
+			});
+
+			expect(JSON.parse(ringBuffer.records[0]).req.path).toEqual(
+				`/owners/${hash("OWNERS")}/repos/${hash("REPOS")}/branches`);
+			expect(JSON.parse(ringBuffer.records[0]).req.url).toEqual(
+				`/github/create-branch/owners/${hash("OWNERS")}/repos/${hash("REPOS")}/branches?asd=qwe`);
+		});
+
+		it("Should remove jiraHost from query params", () => {
+			const logger = getLogger("test case");
+			logger.addStream({ stream: ringBuffer as Stream });
+			logger.error({
+				req: {
+					path: "/mypath?jiraHost=https%3A%2F%2Fsupersecretjira.atlassian.net"
+				}
+			});
+
+			expect(JSON.parse(ringBuffer.records[0]).req.path).toEqual(
+				`/mypath?jiraHost=` + hash("https://supersecretjira.atlassian.net"));
 		});
 	});
 

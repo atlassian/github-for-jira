@@ -32,7 +32,7 @@ export interface GetRepositoriesResponse {
 }
 
 export interface SearchedRepositoriesResponse {
-	items: RepositoryNode[]
+	items: Repository[]
 }
 
 export interface UserOrganizationsResponse {
@@ -68,38 +68,208 @@ export const GetRepositoriesQuery = `query ($per_page: Int!, $order_by: Reposito
   }
 }`;
 
+export type pullRequestNode = {
+	number: number;
+	id: string;
+	state: string;
+	mergedAt?: string;
+	updatedAt: string;
+	createdAt: string;
+	title: string;
+	body: string;
+	url: string;
+	draft: boolean;
+	headRefName: string; // is defined even if the ref was deleted
+	baseRefName: string; // is defined even if the ref was deleted
+	headRef?: {
+		id: string;
+		name: string;
+		repository: {
+			url: string;
+			name: string;
+			owner: {
+				login: string;
+			};
+		};
+		target: {
+			oid: string;
+			author: {
+				login: string;
+				avatarUrl: string;
+				url: string;
+				name?: string;
+				email?: string;
+			};
+		};
+	};
+	comments: {
+		totalCount: number;
+	};
+	author?: {
+		login: string;
+		avatarUrl: string;
+		url: string;
+		name?: string;
+		email?: string;
+	};
+	commits: {
+		nodes: {
+			commit: {
+				author: {
+					user: {
+						login: string;
+						email: string;
+						avatarUrl: string;
+						name?: string;
+						url: string;
+					};
+				};
+			};
+		}[];
+	};
+	reviews: {
+		nodes: {
+			submittedAt: string;
+			state: string;
+			author: {
+				login: string;
+				avatarUrl: string;
+				url: string;
+				name?: string;
+				email?: string;
+			};
+		}[];
+	};
+	reviewRequests: {
+		nodes: {
+			author: {
+				login: string;
+				avatarUrl: string;
+				url: string;
+				name?: string;
+				email?: string;
+			};
+		}[];
+	};
+};
+
+export type pullRequestQueryResponse = {
+	repository: {
+		pullRequests: {
+			edges: {
+				createdAt: string;
+				cursor: string,
+				node: pullRequestNode;
+			}[]
+		};
+	};
+};
+
 export const getPullRequests = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
-    repository(owner: $owner, name: $repo){
-      pullRequests(first: $per_page, orderBy: {field: CREATED_AT, direction: DESC}, after: $cursor) {
-        edges {
-          cursor
-          node {
-            author {
-              avatarUrl
-              login
-              url
+  repository(owner: $owner, name: $repo) {
+
+		pullRequests(first: $per_page, orderBy: {field: CREATED_AT, direction: DESC}, after: $cursor) {
+      edges {
+      	cursor
+				node {
+					number
+					id
+					state
+					mergedAt
+					createdAt
+					updatedAt
+					title
+					body
+					url
+					baseRefName,
+					headRefName,
+					headRef {
+						id
+						name
+						repository {
+							name
+							owner {
+								login
+							}
+						}
+						target {
+							oid
+							... on Commit {
+                author {
+                  user {
+                    login
+                    email
+                    avatarUrl
+                    name
+                    url
+                  }
+                }
+              }
+						}
+					}
+					comments {
+						totalCount
+					}
+					author {
+						login
+						avatarUrl
+						url
+						... on User {
+							name
+							email
+						}
+					}
+					commits(last: 1) {
+						nodes {
+							commit {
+								author {
+									user {
+										login
+										email
+										avatarUrl
+										name
+										url
+									}
+								}
+							}
+						}
+					}
+					reviews(first: 100) {
+						nodes {
+              submittedAt
+              state
+							author {
+								login
+								avatarUrl
+								url
+								... on User {
+									name
+									email
+								}
+							}
+						}
+					}
+					reviewRequests(first: 100) {
+            nodes {
+              requestedReviewer {
+                __typename
+                ... on User {
+                  login
+                  avatarUrl
+                  url
+                  ... on User {
+                    name
+                    email
+                  }
+                }
+              }
             }
-            databaseId
-            repository {
-              url
-            }
-            baseRef {
-              name
-            }
-            headRef {
-              name
-            }
-            number
-            state
-            title
-            body
-            updatedAt
-            url
           }
-        }
-      }
+				}
+			}
     }
-  }`;
+  }
+}`;
 
 export type CommitQueryNode = {
 	cursor: string,
@@ -365,6 +535,7 @@ export type DeploymentQueryNode = {
 	cursor: string,
 	node: {
 		createdAt: string,
+		updatedAt?: string,
 		repository: Repository,
 		databaseId: string,
 		commitOid: string,
@@ -375,11 +546,20 @@ export type DeploymentQueryNode = {
 		},
 		environment: string,
 		description: string,
+		statuses?: {
+			nodes: {
+				createdAt: string,
+				updatedAt: string,
+				state: string,
+				logUrl: string
+			}[]
+		},
 		latestStatus: {
 			environmentUrl: string,
 			logUrl: string,
 			state: string,
 			id: string,
+			createdAt: string,
 			updatedAt: string
 		}
 	}
@@ -422,6 +602,53 @@ export const getDeploymentsQuery = `query ($owner: String!, $repo: String!, $per
             logUrl
             state
             id
+						createdAt
+            updatedAt
+          }
+        }
+      }
+    }
+  }
+}`;
+
+export const getDeploymentsQueryWithStatuses = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+  repository(owner: $owner, name: $repo){
+    deployments(first: $per_page, after: $cursor, orderBy: { direction: DESC, field: CREATED_AT }) {
+      edges {
+        cursor
+        node {
+					createdAt
+          repository {
+            id: databaseId
+            node_id: id
+            name
+            owner {
+              login
+            }
+          }
+          databaseId
+          commitOid
+          task
+          ref {
+            name
+            id
+          }
+          environment
+          description
+          statuses(last: 5) {
+            nodes {
+              createdAt
+              updatedAt
+              state
+							logUrl
+            }
+          }
+          latestStatus {
+            environmentUrl
+            logUrl
+            state
+            id
+						createdAt
             updatedAt
           }
         }

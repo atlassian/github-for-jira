@@ -43,7 +43,7 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 				}
 				: undefined
 		);
-		const gitHubAppConfig = await gitHubClient.createGitHubApp("" + req.query.code);
+		const gitHubAppConfig = await gitHubClient.createGitHubApp(req.query.code.toString());
 		await GitHubServerApp.install({
 			uuid,
 			appId: gitHubAppConfig.id,
@@ -60,9 +60,12 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 
 		await tempStorage.delete(uuid, res.locals.installation.id);
 
-		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
-			name: AnalyticsTrackEventsEnum.AutoCreateGitHubServerAppTrackEventName,
-			source: AnalyticsTrackSource.GitHubEnterprise,
+		await sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
+			action: AnalyticsTrackEventsEnum.AutoCreateGitHubServerAppTrackEventName,
+			actionSubject: AnalyticsTrackEventsEnum.AutoCreateGitHubServerAppTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise
+		}, {
+			withApiKey: !!connectConfig.apiKeyHeaderName,
 			success: true
 		});
 
@@ -76,9 +79,12 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 		 * And the rest of the queryParameters are simply forwarded to the new `retryUrl`
 		 */
 
-		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
-			name: AnalyticsTrackEventsEnum.AutoCreateGitHubServerAppTrackEventName,
-			source: AnalyticsTrackSource.GitHubEnterprise,
+		await sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
+			action: AnalyticsTrackEventsEnum.AutoCreateGitHubServerAppTrackEventName,
+			actionSubject: AnalyticsTrackEventsEnum.AutoCreateGitHubServerAppTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise
+		}, {
+			withApiKey: !!connectConfig.apiKeyHeaderName,
 			success: false
 		});
 

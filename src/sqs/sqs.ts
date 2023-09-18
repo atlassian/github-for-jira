@@ -82,7 +82,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 
 		const sendMessageResult = await this.sqs.sendMessage(params)
 			.promise();
-		logger.info({ delaySeconds: delaySec, newMessageId: sendMessageResult.MessageId }, `Successfully added message to sqs queue messageId: ${sendMessageResult.MessageId}`);
+		logger.info({ delaySeconds: delaySec, newMessageId: sendMessageResult.MessageId }, `Successfully added message to sqs queue messageId: ${sendMessageResult.MessageId ?? "undefinded"}`);
 		statsd.increment(sqsQueueMetrics.sent, this.metricsTags, { jiraHost: payload.jiraHost });
 		return sendMessageResult;
 	}
@@ -282,6 +282,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 
 		const receiveCount = Number(message.Attributes?.ApproximateReceiveCount || "1");
 
+		const lastAttempt = receiveCount >= this.maxAttempts;
 		const context: SQSMessageContext<MessagePayload> = {
 			message,
 			payload,
@@ -292,10 +293,12 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 				jiraHost: payload?.jiraHost,
 				installationId: payload?.installationId,
 				gitHubAppId: payload?.gitHubAppConfig?.gitHubAppId,
-				webhookId: payload?.webhookId
+				webhookId: payload?.webhookId,
+				receiveCount,
+				lastAttempt
 			}),
 			receiveCount,
-			lastAttempt: receiveCount >= this.maxAttempts
+			lastAttempt
 		};
 
 		context.log.info(`SQS message received. Receive count: ${receiveCount}`);
@@ -336,9 +339,8 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 	}
 
 	private async handleSqsMessageExecutionError(err, context: SQSMessageContext<MessagePayload>) {
-		const unsafeLogger = getLogger("message-error-handler-unsafe", { level: "warn", unsafe: true });
 		try {
-			unsafeLogger.warn({ err, context }, "Failed message");
+			context.log.warn({ err }, "Failed message");
 			const errorHandlingResult = await this.errorHandler(err, context);
 
 			if (errorHandlingResult.isFailure) {
@@ -358,11 +360,10 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 				context.log.warn("Deleting the message because it has reached the maximum amount of retries");
 				await this.deleteMessage(context);
 			} else {
-				unsafeLogger.error({ errorHandlingResult, err, context }, "SQS message visibility timeout changed");
+				context.log.warn({ err }, "SQS message visibility timeout changed");
 				await this.changeVisibilityTimeoutIfNeeded(errorHandlingResult, context.message, context.log);
 			}
 		} catch (errorHandlingException) {
-			unsafeLogger.error({ err: errorHandlingException, originalError: err , context }, "Error while performing error handling on SQS message");
 			context.log.error({ err: errorHandlingException, originalError: err }, "Error while performing error handling on SQS message");
 		}
 	}
@@ -381,7 +382,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 
 	public async changeVisibilityTimeout(message: Message, timeoutSec: number, logger: Logger): Promise<void> {
 		if (!message.ReceiptHandle) {
-			logger.error(`No ReceiptHandle in message with ID = ${message.MessageId}`);
+			logger.error(`No ReceiptHandle in message with ID = ${message.MessageId ?? ""}`);
 			return;
 		}
 

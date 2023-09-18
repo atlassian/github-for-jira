@@ -7,13 +7,9 @@ import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
 import { getLogger } from "config/logger";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { GitHubServerApp } from "models/github-server-app";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import path from "path";
 
 jest.setTimeout(20000);
-
-jest.mock("config/feature-flags");
 
 declare global {
 	interface Window {
@@ -113,20 +109,6 @@ describe("jira-connect-enterprise-get.frontend(jira-server-url.hbs + jira-server
 		await fileInput.setInputFiles(filePath);
 	};
 
-	it.each([true, false])("when FF %s validates github app name", async (flagValue) => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.ENABLE_API_KEY_FEATURE,
-			jiraHost
-		).mockResolvedValue(flagValue);
-
-		await page.goto(`http://localhost:3000/jira/connect/enterprise/${gitHubServerApp.uuid}/app/new?jwt=${await generateJwt()}`);
-		expect(await getAppNameInputError()).toBeNull();
-
-		await submitForm();
-
-		expect(await getAppNameInputError()).toStrictEqual(`<ul><li><span class="aui-icon aui-icon-small aui-iconfont-error aui-icon-notification">This is a required field</span>This is a required field</li></ul>`);
-	});
-
 	const mockAp = async () => {
 		await page.evaluate(
 			(jwt) => {
@@ -149,80 +131,60 @@ describe("jira-connect-enterprise-get.frontend(jira-server-url.hbs + jira-server
 		);
 	};
 
-	describe("with FF ON", () => {
-		beforeEach(async () => {
-			when(booleanFlag).calledWith(
-				BooleanFlags.ENABLE_API_KEY_FEATURE,
-				jiraHost
-			).mockResolvedValue(true);
+	beforeEach(async () => {
+		await page.goto(`http://localhost:3000/jira/connect/enterprise/${gitHubServerApp.uuid}/app/new?jwt=${await generateJwt()}`);
 
-			await page.goto(`http://localhost:3000/jira/connect/enterprise/${gitHubServerApp.uuid}/app/new?jwt=${await generateJwt()}`);
-
-			await mockAp();
-		});
-
-		it("known HTTP headers cannot be used as an API key header", async () => {
-			expect(await getApiKeyHeaderNameInputError()).toBeNull();
-			await enterApiKeyHeaderName("authorization");
-
-			await submitForm();
-
-			expect(await getApiKeyHeaderNameInputError()).toStrictEqual("<ul><li><span class=\"aui-icon aui-icon-small aui-iconfont-error aui-icon-notification\">authorization is a reserved string and cannot be used.</span>authorization is a reserved string and cannot be used.</li></ul>");
-		});
-
-		it("API key value cannot be used without API key header", async () => {
-			expect(await getApiKeyValueInputError()).toBeNull();
-			await enterApiKeyHeaderName("x-foo");
-
-			await submitForm();
-
-			expect(await getApiKeyValueInputError()).toStrictEqual("<ul><li><span class=\"aui-icon aui-icon-small aui-iconfont-error aui-icon-notification\">Cannot be empty.</span>Cannot be empty.</li></ul>");
-		});
-
-		it("submits data and creates the page", async () => {
-			await enterAppName("foo");
-			await enterWebhookSecret("myWebhookSecret");
-			await enterAppId("12321");
-			await enterClientId("myclientid");
-			await enterClientSecret("myclientsecret");
-			await enterApiKeyHeaderName("x-foo");
-			await enterApiKeyValue("myapikey");
-			await uploadPrivateKey(path.resolve(__dirname, "../../../../../../test/setup/test-key.pem"));
-
-			await submitForm();
-
-			const childWindow = (await new Promise(resolve => page.once("popup", resolve)))!;
-			const childWindowUrl = (childWindow as any).url();
-
-			const apps = await GitHubServerApp.findAll({ where: { installationId: installation.id } });
-			const newApp = apps.filter(app => app.uuid !== gitHubServerApp.uuid)[0];
-
-			expect(childWindowUrl).toStrictEqual(`http://localhost:3000/session/github/${newApp.uuid}/configuration?ghRedirect=to`);
-			expect(newApp.apiKeyHeaderName).toStrictEqual("x-foo");
-			expect(newApp.encryptedApiKeyValue).toStrictEqual("encrypted:myapikey");
-		});
+		await mockAp();
 	});
 
-	// TODO: delete when FF is removed
-	describe("with FF OFF", () => {
-		it("submits data", async () => {
-			await enterAppName("foo");
-			await enterWebhookSecret("myWebhookSecret");
-			await enterAppId("12321");
-			await enterClientId("myclientid");
-			await enterClientSecret("myclientsecret");
-			await uploadPrivateKey(path.resolve(__dirname, "../../../../../../test/setup/test-key.pem"));
+	it("validates GitHub name", async () => {
+		expect(await getAppNameInputError()).toBeNull();
 
-			await submitForm();
+		await submitForm();
 
-			const childWindow = (await new Promise(resolve => page.once("popup", resolve)))!;
-			const childWindowUrl = (childWindow as any).url();
+		expect(await getAppNameInputError()).toStrictEqual(`<ul><li><span class="aui-icon aui-icon-small aui-iconfont-error aui-icon-notification">This is a required field</span>This is a required field</li></ul>`);
+	});
 
-			const apps = await GitHubServerApp.findAll({ where: { installationId: installation.id } });
-			const newApp = apps.filter(app => app.uuid !== gitHubServerApp.uuid)[0];
 
-			expect(childWindowUrl).toStrictEqual(`http://localhost:3000/session/github/${newApp.uuid}/configuration?ghRedirect=to`);
-		});
+	it("known HTTP headers cannot be used as an API key header", async () => {
+		expect(await getApiKeyHeaderNameInputError()).toBeNull();
+		await enterApiKeyHeaderName("authorization");
+
+		await submitForm();
+
+		expect(await getApiKeyHeaderNameInputError()).toStrictEqual("<ul><li><span class=\"aui-icon aui-icon-small aui-iconfont-error aui-icon-notification\">authorization is a reserved string and cannot be used.</span>authorization is a reserved string and cannot be used.</li></ul>");
+	});
+
+	it("API key value cannot be used without API key header", async () => {
+		expect(await getApiKeyValueInputError()).toBeNull();
+		await enterApiKeyHeaderName("x-foo");
+
+		await submitForm();
+
+		expect(await getApiKeyValueInputError()).toStrictEqual("<ul><li><span class=\"aui-icon aui-icon-small aui-iconfont-error aui-icon-notification\">Cannot be empty.</span>Cannot be empty.</li></ul>");
+	});
+
+	it("submits data and creates the page", async () => {
+		await enterAppName("foo");
+		await enterWebhookSecret("myWebhookSecret");
+		await enterAppId("12321");
+		await enterClientId("myclientid");
+		await enterClientSecret("myclientsecret");
+		await enterApiKeyHeaderName("x-foo");
+		await enterApiKeyValue("myapikey");
+		await uploadPrivateKey(path.resolve(__dirname, "../../../../../../test/setup/test-key.pem"));
+
+		await submitForm();
+
+		const childWindow = (await new Promise(resolve => page.once("popup", resolve)))!;
+		const childWindowUrl = (childWindow as any).url();
+
+		const apps = await GitHubServerApp.findAll({ where: { installationId: installation.id } });
+		const newApp = apps.filter(app => app.uuid !== gitHubServerApp.uuid)[0];
+
+		expect(childWindowUrl).toStrictEqual(`http://localhost:3000/session/github/${newApp.uuid}/configuration?ghRedirect=to`);
+		expect(newApp.apiKeyHeaderName).toStrictEqual("x-foo");
+		expect(newApp.encryptedApiKeyValue).toStrictEqual("encrypted:myapikey");
 	});
 
 

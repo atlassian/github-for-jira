@@ -1,23 +1,23 @@
-import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { NextFunction, Request, Response } from "express";
 import { getInstallations, InstallationResults } from "routes/jira/jira-get";
 import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { Errors } from "config/errors";
 import Logger from "bunyan";
 import { AppInstallation } from "config/interfaces";
 import { envVars } from "config/env";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { isUserAdminOfOrganization } from "utils/github-utils";
-import { GithubClientBlockedIpError } from "~/src/github/client/github-client-errors";
-import {
-	createInstallationClient,
-	createUserClient
-} from "~/src/util/get-github-client-config";
+import { GithubClientBlockedIpError, GithubClientSSOLoginError } from "~/src/github/client/github-client-errors";
+import { createInstallationClient, createUserClient } from "~/src/util/get-github-client-config";
 import { GitHubServerApp } from "models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
+import {
+	registerSubscriptionDeferredInstallPayloadRequest,
+	SubscriptionDeferredInstallPayload
+} from "services/subscription-deferred-install-service";
+import { errorStringFromUnknown } from "~/src/util/error-string-from-unknown";
 
 interface ConnectedStatus {
 	// TODO: really need to type this sync status
@@ -37,7 +37,7 @@ const getConnectedStatus = (
 			account: installation.account
 		}));
 
-interface MergedInstallation extends InstallationWithAdmin {
+export interface MergedInstallation extends InstallationWithAdmin {
 	syncStatus?: string;
 }
 
@@ -49,7 +49,7 @@ const mergeByLogin = (installationsWithAdmin: InstallationWithAdmin[], connected
 		...installation
 	})) : installationsWithAdmin;
 
-const installationConnectedStatus = async (
+export const installationConnectedStatus = async (
 	jiraHost: string,
 	installationsWithAdmin: InstallationWithAdmin[],
 	log: Logger,
@@ -65,13 +65,15 @@ const installationConnectedStatus = async (
 	return mergeByLogin(installationsWithAdmin, connectedStatuses);
 };
 
-const getInstallationsWithAdmin = async (
+export const getInstallationsWithAdmin = async (
+	installationIdPk: number,
 	gitHubUserClient: GitHubUserClient,
 	log: Logger,
 	login: string,
 	installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[] = [],
 	jiraHost: string,
-	gitHubAppId: number | undefined
+	gitHubAppId: number | undefined,
+	gitHubAppUuid: string | undefined
 ): Promise<InstallationWithAdmin[]> => {
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
@@ -83,9 +85,12 @@ const getInstallationsWithAdmin = async (
 		});
 
 		// See if we can get the membership for this user
-		// TODO: instead of calling each installation org to see if the current user is admin, you could just ask for all orgs the user is a member of and cross reference with the installation org
+		// TODO: instead of calling each installation org to see if the current user is admin, you could just ask for
+		//  all orgs the user is a member of and cross reference with the installation org
 		const checkAdmin = isUserAdminOfOrganization(
 			gitHubUserClient,
+			jiraHost,
+			gitHubClient,
 			installation.account.login,
 			login,
 			installation.target_type,
@@ -95,13 +100,30 @@ const getInstallationsWithAdmin = async (
 			return false;
 		});
 		const [isAdmin, numberOfRepos] = await Promise.all([checkAdmin, numberOfReposPromise]);
-		log.info("Number of repos in the org received via GraphQL: " + numberOfRepos);
+		log.info(`Number of repos in the org received via GraphQL: ${numberOfRepos}`);
+
+		let deferredInstallUrl: string | undefined;
+
+		// TODO: we should register the request in a separate POST endpoint. Short-cutting corners now for the spike,
+		// TODO: but must be addressed before rolling out for everyone, to avoid polluting redis
+		if (await booleanFlag(BooleanFlags.ENABLE_SUBSCRIPTION_DEFERRED_INSTALL, jiraHost) && !isAdmin) {
+			const payload: SubscriptionDeferredInstallPayload = {
+				installationIdPk,
+				gitHubInstallationId: installation.id,
+				orgName: installation.account.login,
+				gitHubServerAppIdPk: gitHubAppId
+			};
+			const requestId = await registerSubscriptionDeferredInstallPayloadRequest(payload);
+			deferredInstallUrl = `${envVars.APP_URL}/github/${gitHubAppUuid ? (gitHubAppUuid + "/") : ""}subscription-deferred-install/request/${requestId}`;
+		}
 
 		return {
 			...installation,
 			numberOfRepos,
 			isAdmin,
-			isIPBlocked: !!errors.find(err => err instanceof GithubClientBlockedIpError)
+			requiresSsoLogin: errors.some(err=>err instanceof GithubClientSSOLoginError),
+			isIPBlocked: errors.some(err=>err instanceof GithubClientBlockedIpError),
+			deferredInstallUrl
 		};
 	}));
 };
@@ -117,9 +139,9 @@ const removeFailedConnectionsFromDb = async (logger: Logger, installations: Inst
 					host: jiraHost,
 					gitHubAppId
 				});
-			} catch (err) {
-				const deleteSubscriptionError = `Failed to delete subscription: ${err}`;
-				logger.error(deleteSubscriptionError);
+			} catch (err: unknown) {
+				const deleteSubscriptionError = `Failed to delete subscription: ${errorStringFromUnknown(err)}`;
+				logger.error({ err }, deleteSubscriptionError);
 			}
 		}));
 };
@@ -136,11 +158,8 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 	const log = req.log.child({ jiraHost });
 
-	if (!githubToken) {
-		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
-	}
-
-	const { gitHubAppId, uuid: gitHubAppUuid } = gitHubAppConfig;
+	const { uuid: gitHubAppUuid } = gitHubAppConfig;
+	const gitHubAppId: number = gitHubAppConfig.gitHubAppId;
 
 	gitHubAppId ? req.log.debug(`Displaying orgs that have GitHub Enterprise app ${gitHubAppId} installed.`)
 		: req.log.debug("Displaying orgs that have GitHub Cloud app installed.");
@@ -149,41 +168,20 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, `Request for type ${gitHubProduct}`);
 
-	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
-		name: AnalyticsScreenEventsEnum.ConnectAnOrgScreenEventName,
+	await sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {
+		name: AnalyticsScreenEventsEnum.ConnectAnOrgScreenEventName
+	},
+	{
 		jiraHost,
 		gitHubProduct
 	});
 
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, { trigger: "github-configuration-get" }, log, gitHubAppId);
 
-	req.log.debug("found github token");
-
-	if (!jiraHost) {
-		req.log.warn({ req, res }, Errors.MISSING_JIRA_HOST);
-		res.status(400).send(Errors.MISSING_JIRA_HOST);
-		return next();
-	}
-
-	req.log.debug(`found jira host: ${jiraHost}`);
-
 	const { data: { login } } = await gitHubUserClient.getUser();
-
 	req.log.debug(`got login name: ${login}`);
 
 	try {
-
-		// we can get the jira client Key from the JWT's `iss` property
-		// so we'll decode the JWT here and verify it's the right key before continuing
-		const installation = await Installation.getForHost(jiraHost);
-		if (!installation) {
-			req.log.debug(`missing installation`);
-			log.warn({ req, res }, "Missing installation");
-			res.status(404).send(`Missing installation for host '${jiraHost}'`);
-			return;
-		}
-
-		req.log.debug(`found installation in DB with id ${installation.id}`);
 
 		const { data: { installations }, headers } = await gitHubUserClient.getInstallations();
 
@@ -193,7 +191,10 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 		req.log.debug(`got user's installations from GitHub`);
 
-		const installationsWithAdmin = await getInstallationsWithAdmin(gitHubUserClient, log, login, installations, jiraHost, gitHubAppId);
+		const installationsWithAdmin = await getInstallationsWithAdmin(
+			res.locals.installation.id,
+			gitHubUserClient, log, login, installations, jiraHost, gitHubAppId, gitHubAppConfig.uuid
+		);
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost)) {
 			log.info(`verbose logging: installationsWithAdmin: ${JSON.stringify(installationsWithAdmin)}`);
@@ -223,7 +224,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			installations: sortedInstallation,
 			jiraHost,
 			nonce: res.locals.nonce,
-			clientKey: installation.clientKey,
+			clientKey: res.locals.installation.clientKey,
 			login,
 			repoUrl: envVars.GITHUB_REPO_URL,
 			gitHubServerApp: gitHubAppId ? await GitHubServerApp.getForGitHubServerAppId(gitHubAppId) : null,
@@ -245,5 +246,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 interface InstallationWithAdmin extends Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem {
 	numberOfRepos: number;
 	isAdmin: boolean;
+	requiresSsoLogin: boolean;
 	isIPBlocked: boolean;
+	deferredInstallUrl?: string;
 }

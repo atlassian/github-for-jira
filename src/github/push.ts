@@ -5,10 +5,10 @@ import { updateRepoConfig } from "services/user-config-service";
 import { GitHubPushData } from "interfaces/github";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { Subscription } from "models/subscription";
-import { getInstallationId } from "./client/installation-id";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 import { getCloudOrServerFromGitHubAppId } from "../util/get-cloud-or-server";
+import { createInstallationClient } from "utils/get-github-client-config";
 
 
 export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number, subscription: Subscription): Promise<void> => {
@@ -33,9 +33,11 @@ export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _u
 	const jiraHost = jiraClient.baseURL;
 	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(context.gitHubAppConfig?.gitHubAppId);
-	sendAnalytics(AnalyticsEventTypes.TrackEvent, {
-		name: AnalyticsTrackEventsEnum.CommitsPushedTrackEventName,
-		source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
+	await sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
+		action: AnalyticsTrackEventsEnum.CommitsPushedTrackEventName,
+		actionSubject: AnalyticsTrackEventsEnum.CommitsPushedTrackEventName,
+		source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise
+	}, {
 		gitHubProduct,
 		jiraHost,
 		totalCommitCount: context.payload?.commits?.length || 0,
@@ -51,7 +53,8 @@ export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _u
 		const modifiedFiles = context.payload?.commits?.reduce((acc, commit) =>
 			([...acc, ...commit.added, ...commit.modified, ...commit.removed]), []);
 		// TODO: this call must be updated to support GitHub Server events
-		await updateRepoConfig(subscription, payload.repository.id, getInstallationId(gitHubInstallationId), modifiedFiles);
+		const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, { trigger: "webhook", subTrigger: "push" }, context.log, gitHubAppId);
+		await updateRepoConfig(subscription, payload.repository.id, gitHubInstallationClient, context.log, modifiedFiles);
 	} else {
 		context.log.warn("could not load user config because subscription does not exist");
 	}
@@ -65,5 +68,5 @@ export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _u
 	}
 
 	context.log.info("Enqueueing push event");
-	await enqueuePush(payload, jiraClient.baseURL, context.gitHubAppConfig);
+	await enqueuePush(payload, jiraClient.baseURL, context.log, context.gitHubAppConfig);
 };

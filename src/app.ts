@@ -7,6 +7,7 @@ import { elapsedTimeMetrics } from "config/statsd";
 import sslify from "express-sslify";
 import helmet from "helmet";
 import { RootRouter } from "routes/router";
+import { proxyLocalUIForDev } from "~/src/spa-proxy";
 
 export const setupFrontendApp = (app: Express): Express => {
 
@@ -19,6 +20,11 @@ export const setupFrontendApp = (app: Express): Express => {
 	app.set("views", viewPath);
 	registerHandlebarsPartials(path.resolve(viewPath, "partials"));
 	registerHandlebarsHelpers();
+	/**
+	 * Proxy server for running SPA locally,
+	 * Only for Dev environments for hot reload
+	 */
+	proxyLocalUIForDev(app);
 	// Add all routes
 	app.use(RootRouter);
 
@@ -38,7 +44,7 @@ const secureHeaders = (app: Express) => {
 			defaultSrc: ["'self'"],
 			// Allow <script> tags hosted by ourselves and from atlassian when inserted into an iframe
 			scriptSrc: ["'self'", process.env.APP_URL, "https://*.atlassian.net", "https://*.jira.com", "https://connect-cdn.atl-paas.net/",
-				"'unsafe-inline'", "'strict-dynamic'", (_: Request, res: Response): string => `'nonce-${res.locals.nonce}'`],
+				"'unsafe-inline'", "'strict-dynamic'", (_: Request, res: Response): string => `'nonce-${res.locals.nonce as string}'`],
 			// Allow XMLHttpRequest/fetch requests
 			connectSrc: ["'self'", process.env.APP_URL],
 			// Allow <style> tags hosted by ourselves as well as style="" attributes

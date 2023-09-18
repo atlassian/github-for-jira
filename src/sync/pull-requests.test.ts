@@ -7,7 +7,7 @@ import pullRequestList from "fixtures/api/pull-request-list.json";
 import pullRequest from "fixtures/api/pull-request.json";
 import { GitHubServerApp } from "models/github-server-app";
 import { when } from "jest-when";
-import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { RepoSyncState } from "models/reposyncstate";
@@ -150,12 +150,7 @@ describe("sync/pull-request", () => {
 				const modifiedList = _.cloneDeep(pullRequestList);
 				modifiedList[0].title = title;
 				modifiedList[0].head.ref = head;
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID).persist();
 				githubNock
 					.get("/repos/integrations/test-repo-name/pulls?per_page=20&page=21&state=all&sort=created&direction=desc")
 					.reply(200, modifiedList)
@@ -163,6 +158,8 @@ describe("sync/pull-request", () => {
 					.reply(200, pullRequest)
 					.get("/repos/integrations/test-repo-name/pulls/51/reviews")
 					.reply(200, reviewsPayload)
+					.get("/repos/integrations/test-repo-name/pulls/51/requested_reviewers")
+					.reply(200, { users: [], teams: [] })
 					.get("/users/test-pull-request-reviewer-login")
 					.reply(200, {
 						login: "test-pull-request-reviewer-login",
@@ -202,15 +199,15 @@ describe("sync/pull-request", () => {
 				expect.anything()
 			).mockResolvedValue(2);
 
-			for (let i = 0; i < 12; i++) {
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			}
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID).persist();
 
 			githubNock
 				.get("/repos/integrations/test-repo-name/pulls/51").times(2)
 				.reply(200, pullRequest)
 				.get("/repos/integrations/test-repo-name/pulls/51/reviews").times(2)
 				.reply(200, reviewsPayload)
+				.get("/repos/integrations/test-repo-name/pulls/51/requested_reviewers").times(2)
+				.reply(200, { users: [], teams: [] })
 				.get("/users/test-pull-request-reviewer-login").times(2)
 				.reply(200, {
 					login: "test-pull-request-reviewer-login",
@@ -336,12 +333,7 @@ describe("sync/pull-request", () => {
 			removeInterceptor(interceptor);
 		});
 
-		it("should only use pull requests that are later than fromDate is supplied -- when ff is on", async () => {
-
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL,
-				jiraHost
-			).mockResolvedValue(true);
+		it("should only use pull requests that are later than fromDate is supplied", async () => {
 
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
@@ -407,12 +399,7 @@ describe("sync/pull-request", () => {
 			const modifiedList = _.cloneDeep(pullRequestList);
 			modifiedList[0].title = "[TES-15] Evernote Test";
 			modifiedList[0].head.ref = "Evernote Test";
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID).persist();
 			gheApiNock
 				.get("/repos/integrations/test-repo-name/pulls")
 				.query(true)
@@ -421,6 +408,8 @@ describe("sync/pull-request", () => {
 				.reply(200, pullRequest)
 				.get("/repos/integrations/test-repo-name/pulls/51/reviews")
 				.reply(200, reviewsPayload)
+				.get("/repos/integrations/test-repo-name/pulls/51/requested_reviewers")
+				.reply(200, { users: [], teams: [] })
 				.get("/users/test-pull-request-reviewer-login")
 				.reply(200, {
 					login: "test-pull-request-reviewer-login",
@@ -464,10 +453,6 @@ describe("sync/pull-request", () => {
 
 		let repoSyncState: RepoSyncState;
 		beforeEach(async () => {
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL,
-				jiraHost
-			).mockResolvedValue(true);
 			const dbState = await new DatabaseStateCreator()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForDeployments()

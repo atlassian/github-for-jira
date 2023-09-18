@@ -4,6 +4,8 @@ description: Connect app for integrating GitHub into Jira
 organization: Engineering-DevOps
 notifications:
   email: fusion-arc@atlassian.com
+tags:
+  brahmos: enabled
 
 compose:
   pgbouncer:
@@ -41,6 +43,8 @@ links:
   source:
     url: git@bitbucket.org:atlassian/github-jira-integration.git
 
+httpRedirect: true
+
 cleanup: false
 
 serviceProxy:
@@ -48,6 +52,9 @@ serviceProxy:
   ingress:
     authentication:
       enabled: true
+  egress:
+    dependencies:
+      - name: brahmos-wiremock
   plugins:
     auth:
       logLevel: info
@@ -65,6 +72,8 @@ lifecycleEvents:
   timeout: 30
 
 resources:
+  - type: slauth-gateway # needed for "atlas slauth curl" calls, see https://hello.atlassian.net/wiki/spaces/MICROS/pages/1463433257/Network+Segmentation+for+Micros+EC2+compute#Add-a-slauth-gateway-resource
+    name: ingress
   - type: redisx
     name: cache
     attributes:
@@ -137,7 +146,7 @@ resources:
       connectionLimit: 150 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE.
         # For ddev and staging we have scaling policy different from prod: up to 5 Worker and up to 5 WebServer nodes.
         # Therefore, when all the nodes are running, we might have up to "PGBOUNCER_DEFAULT_POOL_SIZE * 10" number
-        # of connections.
+      # of connections.
       dataType:
         - UGC/Label                # name of GitHub org / Jira site
         - PII/IndirectConfidential # name of GitHub org
@@ -148,6 +157,18 @@ resources:
         service: github-for-jira
         # Name of the RDS resource from above
         resource: rds
+
+  - name: deployment-history-cache
+    type: dynamo-db
+    attributes: &table-attributes
+      HashKeyName: Id
+      HashKeyType: "S"
+      RangeKeyName: CreatedAt
+      RangeKeyType: "N"
+      ReadWriteCapacityMode: ON_DEMAND
+      TTLAttributeName: ExpiredAfter
+      dataType:
+        - UGC/PrimaryIdentifier    # Sha of a commit that point to user's code
 
 scaling:
   instance: t2.small
@@ -198,6 +219,14 @@ alarms:
     HighSeverityAlarmWhenTooManyELB5xxErrors: null
     LowSeverityAlarmWhenTooManyBackend5xxErrors: null
     LowSeverityAlarmWhenTooManyELB5xxErrors: null
+    UnHealthyHostCount:
+      EvaluationPeriods: 4
+      Period: 60
+      Threshold: 2
+    ManyUnHealthyHostCount:
+      EvaluationPeriods: 8
+      Period: 60
+      Threshold: 3
 
 config:
   environmentVariables:
@@ -214,6 +243,7 @@ config:
     PRIVATE_KEY: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-private-key-stg
     GITHUB_CLIENT_SECRET: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-client-secret-stg
     WEBHOOK_SECRETS: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-webhook-secrets-stg
+    COOKIE_SESSION_KEY: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-cookie-session-key-stg
 
     CRYPTOR_URL: http://cryptor:26272
     CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE: "6CF9E6A52167B58CBB0DED180CC8B848" # https://developer.atlassian.com/platform/cryptor/integration/integrating-sidecar/#enabling-ssrf-protection
@@ -223,9 +253,9 @@ config:
     # WEBHOOK_SECRET: the webhook secret configured in the GitHub app
     PGBOUNCER_POOL_MODE: "session"
     PGBOUNCER_DEFAULT_POOL_SIZE: "15" # Max scale up:
-                      #   (15 web servers + 15 workers) * 15 pool size  = 450 connections (See postgres-db connections limit)
-                      # Normal business:
-                      #   (5 web servers + 3 workers) * 15 pool size = 120 connections
+      #   (30 web servers + 15 workers) * 10 pool size  = 675 connections (See postgres-db connections limit)
+      # Normal business:
+    #   (5 web servers + 3 workers) * 15 pool size = 120 connections
     PGBOUNCER_SERVER_IDLE_TIMEOUT: "60"
     PGBOUNCER_MAX_CLIENT_CONN: "1000"
 
@@ -249,7 +279,7 @@ workers:
             # Scale up if max value from queues, cpu and memory is over 80 for 3 consecutive periods of 60 seconds
             Upper: 80
           Metrics:
-            - Expression: "MAX([cpuUsage, memoryUsage, (pushQueueMessages/250)*100, (backfillQueueMessages/20)*100, (branchQueueMessages/250)*100, (deploymentQueueMessages/250)*100])"
+            - Expression: "MAX([cpuUsage, memoryUsage, (pushQueueMessages/250)*100, (backfillQueueMessages/10)*100, (branchQueueMessages/250)*100, (deploymentQueueMessages/250)*100])"
               Id: "combinedCpuRamAndQueues"
               Label: "Scaling based on Queue Sizes and CPU and Memory consumption"
             - MetricStat:
@@ -314,16 +344,16 @@ workers:
 
 environmentOverrides:
   ddev:
-#  Uncomment lines 140-149 if you want remote debugging in ddev
-#    loadBalancer:
-#      type: ELB # needed for remote debugging, default is "ALB"
-#    compose:
-#      microservice:
-#        ports:
-#          - 8080:8080
-#          - 5005:5005 # remote debugging port (has to be 5005 because that is hard coded into Micros)
-#    links:
-#      remoteDebug: true
+    #  Uncomment lines 140-149 if you want remote debugging in ddev
+    #    loadBalancer:
+    #      type: ELB # needed for remote debugging, default is "ALB"
+    #    compose:
+    #      microservice:
+    #        ports:
+    #          - 8080:8080
+    #          - 5005:5005 # remote debugging port (has to be 5005 because that is hard coded into Micros)
+    #    links:
+    #      remoteDebug: true
     config:
       environmentVariables:
         APP_URL: https://github-for-jira.dev.services.atlassian.com
@@ -337,6 +367,7 @@ environmentOverrides:
         PRIVATE_KEY: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-private-key-ddev
         GITHUB_CLIENT_SECRET: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-client-secret-ddev
         WEBHOOK_SECRETS: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-webhook-secrets-ddev
+        COOKIE_SESSION_KEY: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-cookie-session-key-ddev
     scaling:
       instance: t2.small
       min: 1
@@ -385,6 +416,12 @@ environmentOverrides:
               - github-for-jira
             decryptingServices:
               - github-for-jira
+
+      - name: deployment-history-cache
+        type: dynamo-db
+        attributes:
+          <<: *table-attributes
+
     alarms:
       overrides:
         LatencyHigh: null
@@ -452,22 +489,22 @@ environmentOverrides:
     alarms:
       overrides:
         LatencyHigh: null
-#TODO Uncomment when we stop doing hourly deployments
-#        ElbResponseTimeAlert:
-#          Namespace: AWS/ApplicationELB
-#          MetricName: TargetResponseTime
-#          Description: "Response latency is too high. Runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1283532004/HOWTO+Investigate+High+CPU+Memory+or+Latency+Alarms"
-#          Dimensions:
-#            - Name: LoadBalancer
-#              Value: { "Fn::GetAtt": ["EnvironmentStack", "LoadBalancerName"] }
-#            - Name: TargetGroup
-#              Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
-#          Threshold: 5
-#          Priority: Low
-#          EvaluationPeriods: 5
-#          Period: 180
-#          ComparisonOperator: GreaterThanThreshold
-#          Statistic: Average
+    #TODO Uncomment when we stop doing hourly deployments
+    #        ElbResponseTimeAlert:
+    #          Namespace: AWS/ApplicationELB
+    #          MetricName: TargetResponseTime
+    #          Description: "Response latency is too high. Runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1283532004/HOWTO+Investigate+High+CPU+Memory+or+Latency+Alarms"
+    #          Dimensions:
+    #            - Name: LoadBalancer
+    #              Value: { "Fn::GetAtt": ["EnvironmentStack", "LoadBalancerName"] }
+    #            - Name: TargetGroup
+    #              Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
+    #          Threshold: 5
+    #          Priority: Low
+    #          EvaluationPeriods: 5
+    #          Period: 180
+    #          ComparisonOperator: GreaterThanThreshold
+    #          Statistic: Average
     workers:
       - name: Worker
         scaling:
@@ -483,6 +520,11 @@ environmentOverrides:
             # Adding read replica in staging as it's not enabled by default so we can read state
             ReadReplica: true
 
+      - name: deployment-history-cache
+        type: dynamo-db
+        attributes:
+          <<: *table-attributes
+
       - type: globaledge
         name: proxy
         attributes:
@@ -494,10 +536,13 @@ environmentOverrides:
           routes: *blackholeSpammingIPs
 
       - *cryptorGithubServerAppSecrets
-
       - *cryptorJiraInstanceSecrets
 
   prod:
+    serviceProxy:
+      egress:
+        dependencies:
+          - name: brahmos-wiremock
     config:
       environmentVariables:
         APP_URL:  https://github.atlassian.com
@@ -509,11 +554,12 @@ environmentOverrides:
         PRIVATE_KEY: vault://secret/data/builds/micros-sv--github-for-jira-dl-vault-compliant/github-app-private-key
         GITHUB_CLIENT_SECRET: vault://secret/data/builds/micros-sv--github-for-jira-dl-vault-compliant/github-app-client-secret
         WEBHOOK_SECRETS: vault://secret/data/builds/micros-sv--github-for-jira-dl-vault-compliant/github-app-webhook-secrets
+        COOKIE_SESSION_KEY: vault://secret/data/builds/micros-sv--github-for-jira-dl-vault-compliant/github-app-cookie-session-key
         CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE: "D92A2D7364AC3057D2A90BA9512D8CA0"
     scaling:
       instance: c5.2xlarge
-      min: 5
-      max: 15 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
+      min: 15
+      max: 30 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
       metrics: *CpuMemAlbScalingRules
     workers:
       - name: Worker
@@ -525,22 +571,22 @@ environmentOverrides:
     alarms:
       overrides:
         LatencyHigh: null
-#TODO Uncomment when we stop doing hourly deployments
-#        ElbResponseTimeAlert:
-#          Namespace: AWS/ApplicationELB
-#          MetricName: TargetResponseTime
-#          Description: "Response latency is too high. Runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1283532004/HOWTO+Investigate+High+CPU+Memory+or+Latency+Alarms"
-#          Dimensions:
-#            - Name: LoadBalancer
-#              Value: { "Fn::GetAtt": ["EnvironmentStack", "LoadBalancerName"] }
-#            - Name: TargetGroup
-#              Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
-#          Threshold: 5
-#          Priority: Low
-#          EvaluationPeriods: 5
-#          Period: 180
-#          ComparisonOperator: GreaterThanThreshold
-#          Statistic: Average
+    #TODO Uncomment when we stop doing hourly deployments
+    #        ElbResponseTimeAlert:
+    #          Namespace: AWS/ApplicationELB
+    #          MetricName: TargetResponseTime
+    #          Description: "Response latency is too high. Runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1283532004/HOWTO+Investigate+High+CPU+Memory+or+Latency+Alarms"
+    #          Dimensions:
+    #            - Name: LoadBalancer
+    #              Value: { "Fn::GetAtt": ["EnvironmentStack", "LoadBalancerName"] }
+    #            - Name: TargetGroup
+    #              Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
+    #          Threshold: 5
+    #          Priority: Low
+    #          EvaluationPeriods: 5
+    #          Period: 180
+    #          ComparisonOperator: GreaterThanThreshold
+    #          Statistic: Average
     resources:
       - type: redisx
         name: cache
@@ -562,7 +608,7 @@ environmentOverrides:
         type: postgres-db
         attributes:
           connectionLimit: 675 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE.
-            # Should be set to Max Connections can be used by nodes + some room if we have to scale even more manually. PGBOUNCER_DEFAULT_POOL_SIZE*N*1.5
+          # Should be set to Max Connections can be used by nodes + some room if we have to scale even more manually. PGBOUNCER_DEFAULT_POOL_SIZE*N*1.5
 
       - name: rds
         type: dedicated-rds
@@ -572,8 +618,13 @@ environmentOverrides:
             AllocatedStorage: 40 # GB
             MaxAllocatedStorage: 100
             ConnectionAlarm: 900 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE * 2 * N (cause two stacks can work
-                                 # together during the deploy)
+            # together during the deploy)
             TransactionLogsDiskUsageAlarm: 4000000000 # approximately 4GB
+
+      - name: deployment-history-cache
+        type: dynamo-db
+        attributes:
+          <<: *table-attributes
 
       - type: globaledge
         name: proxy
@@ -592,12 +643,12 @@ environmentOverrides:
             MetricName: ApproximateNumberOfMessagesVisible
             Namespace: AWS/SQS
             Description: "Message count for backfill queue too high! Follow the runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1550488861/HOWTO+Respond+to+Too+Many+Messages+on+the+Queue+Alert"
-            Threshold: 40 #~ Autoscaling Threshold x 2. So we'll be alerted if autoscaling failed to fix the piling messages
+            Threshold: 3000 #~ Autoscaling Threshold x 5. So we'll be alerted if autoscaling failed to fix the piling messages
             Priority: High
             Dimensions:
               - Name: QueueName
                 Value: { "Ref": "QueueName" }
-            EvaluationPeriods: 5
+            EvaluationPeriods: 6
             Period: 600
             ComparisonOperator: GreaterThanThreshold
             Statistic: Maximum

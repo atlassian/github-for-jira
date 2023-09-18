@@ -19,9 +19,18 @@ module.exports = {
 		"json",
 		"node"
 	],
+	"modulePathIgnorePatterns": ["<rootDir>/spa"],
 	"testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.tsx?$",
 	"collectCoverage": true,
 	"coverageDirectory": "coverage",
+	"coverageThreshold": {
+		"global": {
+			"branches": 70,
+			"functions": 85,
+			"lines": 85,
+			"statements": 85,
+		}
+	},
 	"collectCoverageFrom": [
 		"src/**/*.{ts,tsx}",
 		"!src/**/*.d.ts"

@@ -1,10 +1,10 @@
 import Logger from "bunyan";
 import { Request, Response } from "express";
 import { createAppClient, createInstallationClient } from "utils/get-github-client-config";
-import { RepositoryNode } from "~/src/github/client/github-queries";
-import { Subscription } from "~/src/models/subscription";
+import { Subscription, Repository } from "~/src/models/subscription";
 import { sendError } from "~/src/jira/util/jwt";
 import { Errors } from "config/errors";
+import { RepoSyncState } from "models/reposyncstate";
 const MAX_REPOS_RETURNED = 20;
 
 export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<void> => {
@@ -13,7 +13,7 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 	const repoName = req.query?.repoName as string;
 	const jiraHost = jiraHostLocals || jiraHostParam;
 
-	const log = req.log.child({ jiraHost });
+	const log = req.log.child({ jiraHost, repoName });
 
 	if (!jiraHost) {
 		log.warn(Errors.MISSING_JIRA_HOST);
@@ -28,31 +28,30 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 	}
 
 	try {
+		log.info("Start searching for repos");
 		const repositories = await searchInstallationAndUserRepos(repoName, jiraHost, gitHubAppConfig.gitHubAppId || null, log);
 		res.send({
 			repositories
 		});
 	} catch (err) {
 		log.error({ err }, "Error fetching repositories");
-		res.status(500).send({
+		res.status(200).send({
 			repositories: []
 		});
 	}
 };
 
-export const searchInstallationAndUserRepos = async (repoName, jiraHost, gitHubAppId, logger) => {
-	try {
-		const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppId);
-		const repos = await getReposBySubscriptions(repoName, subscriptions, jiraHost, logger);
-		return repos || [];
-	} catch (err) {
-		logger.log.error({ err }, "Failed to get repos for subscription");
-		return [];
-	}
+const searchInstallationAndUserRepos = async (repoName: string, jiraHost: string, gitHubAppId: number | undefined, logger: Logger) => {
+	const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppId);
+	const repos = await getReposBySubscriptions(repoName, subscriptions, jiraHost, logger);
+	const ret = repos || [];
+	logger.info({ reposLength: ret.length, subscriptionsLength: subscriptions.length }, ret.length === 0 ? "Couldn't find any match repos" : "Found match repos");
+	return ret;
 };
 
-const getReposBySubscriptions = async (repoName: string, subscriptions: Subscription[], jiraHost: string, logger: Logger): Promise<RepositoryNode[]> => {
+const getReposBySubscriptions = async (repoName: string, subscriptions: Subscription[], jiraHost: string, loggerParent: Logger): Promise<Repository[]> => {
 	const repoTasks = subscriptions.map(async (subscription) => {
+		const logger = loggerParent.child({ subscriptionId: subscription.id });
 		try {
 			const metrics = { trigger: "github-repo-get" };
 			const [orgName, gitHubInstallationClient] = await Promise.all([
@@ -63,7 +62,7 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 				createInstallationClient(subscription.gitHubInstallationId, jiraHost, metrics, logger, subscription.gitHubAppId)
 			]);
 
-			const searchQueryInstallationString = `${repoName} org:${orgName} in:name`;
+			const searchQueryInstallationString = `${repoName} org:${orgName} in:full_name`;
 
 			const installationSearch = await gitHubInstallationClient.searchRepositories(searchQueryInstallationString, "updated")
 				.then(responseInstallationSearch => {
@@ -79,10 +78,15 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 					return [];
 				});
 
-			return installationSearch;
+			// We don't want to return repos that are not in Database, otherwise we won't be able to fetch branches to branch from later
+			// The app can be installed in a GitHub org but that org might not be connected to Jira, therefore we must filter them out, or
+			// the next step (e.g. get repo branches to branch of) will fail
+			const subscriptionOwners = await RepoSyncState.findAllRepoOwners(subscription);
+			return installationSearch.filter(repo => subscriptionOwners.has(repo.owner.login));
+
 		} catch (err) {
 			logger.error({ err }, "Create branch - Failed to search repos for installation");
-			throw err;
+			return [];
 		}
 	});
 	const repos = (await Promise.all(repoTasks))

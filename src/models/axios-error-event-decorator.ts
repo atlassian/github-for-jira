@@ -71,7 +71,7 @@ export class AxiosErrorEventDecorator {
 		return [
 			"{{ default }}",
 			this.response?.status,
-			`${this.request?.method} ${pathname}`
+			`${this.request?.method as string} ${pathname ?? "undefined"}`
 		];
 	}
 

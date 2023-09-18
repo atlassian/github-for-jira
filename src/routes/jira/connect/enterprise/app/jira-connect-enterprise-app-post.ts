@@ -12,21 +12,22 @@ export const JiraConnectEnterpriseAppPost = async (
 
 	const { installation, jiraHost } = res.locals;
 
-	try {
-		req.log.debug("Received Jira Connect Enterprise App POST request");
+	req.log.debug("Received Jira Connect Enterprise App POST request");
 
-		const {
-			uuid,
-			appId,
-			gitHubAppName,
-			gitHubBaseUrl,
-			gitHubClientId,
-			gitHubClientSecret,
-			webhookSecret,
-			privateKey,
-			apiKeyHeaderName,
-			apiKeyValue
-		} = req.body;
+	const {
+		uuid,
+		appId,
+		gitHubAppName,
+		gitHubBaseUrl,
+		gitHubClientId,
+		gitHubClientSecret,
+		webhookSecret,
+		privateKey,
+		apiKeyHeaderName,
+		apiKeyValue
+	} = req.body;
+
+	try {
 
 		const existing = await GitHubServerApp.findForUuid(uuid);
 		if (existing && existing.installationId != installation.id) {
@@ -58,9 +59,12 @@ export const JiraConnectEnterpriseAppPost = async (
 
 		await new GheConnectConfigTempStorage().delete(uuid, installation.id);
 
-		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
-			name: AnalyticsTrackEventsEnum.CreateGitHubServerAppTrackEventName,
-			source: AnalyticsTrackSource.GitHubEnterprise,
+		await sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
+			action: AnalyticsTrackEventsEnum.CreateGitHubServerAppTrackEventName,
+			actionSubject: AnalyticsTrackEventsEnum.CreateGitHubServerAppTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise
+		}, {
+			withApiKey: !!apiKeyValue,
 			success: true
 		});
 
@@ -69,9 +73,12 @@ export const JiraConnectEnterpriseAppPost = async (
 		req.log.debug("Jira Connect Enterprise App added successfully.");
 	} catch (err) {
 
-		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
-			name: AnalyticsTrackEventsEnum.CreateGitHubServerAppTrackEventName,
-			source: AnalyticsTrackSource.GitHubEnterprise,
+		await sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
+			action: AnalyticsTrackEventsEnum.CreateGitHubServerAppTrackEventName,
+			actionSubject: AnalyticsTrackEventsEnum.CreateGitHubServerAppTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise
+		}, {
+			withApiKey: !!apiKeyValue,
 			success: false
 		});
 
