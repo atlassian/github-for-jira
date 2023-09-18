@@ -54,7 +54,7 @@ describe("DependabotAlertWebhookHandler", () => {
 	beforeEach(() => {
 		jiraClient = {
 			baseURL: jiraHost,
-			security: { submitVulnerabilities: jest.fn(() =>({ status: 200 })) }
+			security: { submitVulnerabilities: jest.fn(() => ({ status: 200 })) }
 		} as unknown as JiraClient;
 		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
 	});
@@ -109,14 +109,57 @@ describe("DependabotAlertWebhookHandler", () => {
 					security_advisory: {
 						summary: SAMPLE_SECURITY_ADVISORY_SUMMARY,
 						description: SAMPLE_SECURITY_ADVISORY_DESCRIPTION,
-						identifiers: [],
-						references: []
+						severity: HIGH,
+						cvss: {
+							score: "7.4"
+						},
+						identifiers: [{
+							value: "GHSA-jf85-cpcp-j695",
+							type: "GHSA"
+						}, {
+							value: "CVE-2019-10744",
+							type: "CVE"
+						}],
+						references: [{
+							url: "https://github.com/lodash/lodash/pull/4336"
+						},
+						{
+							url: "https://nvd.nist.gov/vuln/detail/CVE-2019-10744"
+						},
+						{
+							url: "https://snyk.io/vuln/SNYK-JS-LODASH-450202"
+						},
+						{
+							url: "https://www.npmjs.com/advisories/1065"
+						},
+						{
+							url: "https://access.redhat.com/errata/RHSA-2019:3024"
+						},
+						{
+							url: "https://security.netapp.com/advisory/ntap-20191004-0005/"
+						},
+						{
+							url: "https://support.f5.com/csp/article/K47105354?utm_source=f5support&amp;utm_medium=RSS"
+						},
+						{
+							url: "https://www.oracle.com/security-alerts/cpujan2021.html"
+						},
+						{
+							url: "https://www.oracle.com/security-alerts/cpuoct2020.html"
+						},
+						{
+							url: "https://github.com/advisories/GHSA-jf85-cpcp-j695"
+						}
+						]
 					},
 					html_url: SAMPLE_SECURITY_URL,
 					created_at: SAMPLE_SECURITY_CREATED_DATE,
 					updated_at: SAMPLE_SECURITY_UPDATED_DATE,
 					security_vulnerability: {
-						severity: HIGH
+						severity: HIGH,
+						first_patched_version: {
+							identifier: "4.17.12"
+						}
 					},
 					dependency: {
 						manifest_path: PATH_TO_MANIFEST
@@ -157,7 +200,7 @@ describe("DependabotAlertWebhookHandler", () => {
 					updateSequenceNumber: Date.now(),
 					containerId: "456",
 					displayName: SAMPLE_SECURITY_ADVISORY_SUMMARY,
-					description: SAMPLE_SECURITY_ADVISORY_DESCRIPTION,
+					description: "**Vulnerability:** Sample security advisory summary\n\n**Impact:** Sample security advisory description\n\n**Severity:** High - 7.4\n\nGitHub uses  [Common Vulnerability Scoring System (CVSS)](https://www.atlassian.com/trust/security/security-severity-levels) data to calculate security severity.\n\n**State:** Open\n\n**Patched version:** 4.17.12\n\n**Identifiers:**\n\n- [GHSA-jf85-cpcp-j695](https://github.com/advisories/GHSA-jf85-cpcp-j695)\n- [CVE-2019-10744](https://nvd.nist.gov/vuln/detail/CVE-2019-10744)\n\nVisit the vulnerability’s [dependabot alert page](https://github.com/user/repo/security/advisories/123) in GitHub to learn more about and see remediation options.",
 					url: SAMPLE_SECURITY_URL,
 					type: "sca",
 					introducedDate: SAMPLE_SECURITY_CREATED_DATE,
@@ -165,7 +208,13 @@ describe("DependabotAlertWebhookHandler", () => {
 					severity: {
 						level: HIGH
 					},
-					identifiers: [],
+					identifiers: [{
+						"displayName": "GHSA-jf85-cpcp-j695",
+						"url": "https://github.com/advisories/GHSA-jf85-cpcp-j695"
+					}, {
+						"displayName": "CVE-2019-10744",
+						"url": "https://nvd.nist.gov/vuln/detail/CVE-2019-10744"
+					}],
 					status: JIRA_VULNERABILITY_STATUS_ENUM_OPEN,
 					additionalInfo: {
 						content: PATH_TO_MANIFEST
