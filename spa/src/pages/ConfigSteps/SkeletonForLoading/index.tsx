@@ -3,7 +3,7 @@ import Step from "../../../components/Step";
 import Skeleton from "@atlaskit/skeleton";
 import { css } from "@emotion/react";
 
-const constentStyle = css`
+const contentStyle = css`
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -26,7 +26,7 @@ const SkeletonForLoading = () => <>
 			isShimmering
 		/>
 	</Step>
-	<div css={constentStyle}>
+	<div css={contentStyle}>
 		<Skeleton
 			width="60%"
 			height="24px"

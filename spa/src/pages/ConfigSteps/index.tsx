@@ -23,10 +23,6 @@ import OrganizationsList from "../ConfigSteps/OrgsContainer";
 import SkeletonForLoading from "../ConfigSteps/SkeletonForLoading";
 import OauthManager from "../../services/oauth-manager";
 
-type GitHubOptionType = {
-	selectedOption: number;
-	optionKey: number;
-};
 type HostUrlType = {
 	jiraHost: string;
 };
@@ -50,10 +46,10 @@ const tooltipContainerStyle = css`
 		cursor: pointer;
 	}
 `;
-const GitHubOption = styled.div<GitHubOptionType>`
-	background: ${props => props.optionKey === props.selectedOption ? token("color.background.selected") : token("color.background.accent.gray.subtlest")};
-	font-weight: ${props => props.optionKey === props.selectedOption ? 600 : 400};
-	color: ${props => props.optionKey === props.selectedOption ? token("color.text.selected") : token("color.text")};
+const gitHubOptionStyle = css`
+	background: ${token("color.background.accent.gray.subtlest")};
+	font-weight: 400;
+	color: ${token("color.text")};
 	padding: ${token("space.100")} ${token("space.200")};
 	margin-right: ${token("space.100")};
 	border-radius: 100px;
@@ -69,6 +65,13 @@ const GitHubOption = styled.div<GitHubOptionType>`
 		margin-right: ${token("space.100")};
 	}
 `;
+
+const gitHubSelectedOptionStyle = css`
+	background: ${token("color.background.selected")};
+	font-weight: 600;
+	color: ${token("color.text.selected")};
+`;
+
 const InlineDialog = styled(TooltipPrimitive)`
 	background: white;
 	border-radius: ${token("space.050")};
@@ -373,9 +376,8 @@ const ConfigSteps = () => {
 					: <Step title="Select your GitHub product">
 						<>
 							<div css={gitHubOptionContainerStyle}>
-									<GitHubOption
-										optionKey={1}
-										selectedOption={selectedOption}
+									<div
+										css={selectedOption === 1 ? [gitHubOptionStyle, gitHubSelectedOptionStyle]: [gitHubOptionStyle]}
 										onClick={() => {
 											setSelectedOption(1);
 											analyticsClient.sendUIEvent({ actionSubject: "authorizeTypeGitHubCloud", action: "clicked" });
@@ -383,10 +385,9 @@ const ConfigSteps = () => {
 									>
 										<img src="/public/assets/cloud.svg" alt=""/>
 										<span>GitHub Cloud</span>
-									</GitHubOption>
-									<GitHubOption
-										optionKey={2}
-										selectedOption={selectedOption}
+									</div>
+									<div
+										css={selectedOption === 2 ? [gitHubOptionStyle, gitHubSelectedOptionStyle]: [gitHubOptionStyle]}
 										onClick={() => {
 											setSelectedOption(2);
 											analyticsClient.sendUIEvent({ actionSubject: "authorizeTypeGitHubEnt", action: "clicked" });
@@ -394,7 +395,7 @@ const ConfigSteps = () => {
 									>
 										<img src="/public/assets/server.svg" alt=""/>
 										<span>GitHub Enterprise Server</span>
-									</GitHubOption>
+									</div>
 								</div>
 								<div css={tooltipContainerStyle}>
 									<Tooltip
