@@ -99,9 +99,9 @@ export const shouldSendAll = async (type: ShouldSendAllStringTypes, jiraHost: st
 	try {
 		// Full set:
 		// ["branches-backfill", "builds-backfill", "commits-backfill", "deployments-backfill", "prs-backfill", "branches", "builds", "commits", "deployments", "prs"]
-		const sendAllString: string = await stringFlag(StringFlags.SEND_ALL, "[]", jiraHost);
+		const sendAllString = await stringFlag(StringFlags.SEND_ALL, "[]", jiraHost);
 		const sendAllArray: string[] = JSON.parse(sendAllString);
-		return sendAllArray.includes(type);
+		return Array.isArray(sendAllArray) && sendAllArray.includes(type);
 	} catch (e) {
 		logger.error({ err: e, type }, "Cannot define if should send all");
 		return false;
@@ -112,7 +112,7 @@ export const isBlocked = async (jiraHost: string, installationId: number, logger
 	try {
 		const blockedInstallationsString = await stringFlag(StringFlags.BLOCKED_INSTALLATIONS, "[]", jiraHost);
 		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString);
-		return blockedInstallations.includes(installationId);
+		return Array.isArray(blockedInstallations) && blockedInstallations.includes(installationId);
 	} catch (e) {
 		logger.error({ err: e, installationId }, "Cannot define if isBlocked");
 		return false;

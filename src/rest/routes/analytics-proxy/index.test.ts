@@ -15,7 +15,7 @@ describe("AnalyticsProxyHandler", () => {
 		iss = "jira-client-key",
 		exp = Date.now() / 1000 + 10000,
 		qsh = "context-qsh",
-		sub = "myAccount" } = {}): any => {
+		sub = "myAccount" } = {}): string => {
 		return encodeSymmetric({
 			qsh,
 			iss,

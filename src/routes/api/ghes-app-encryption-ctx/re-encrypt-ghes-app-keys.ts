@@ -111,6 +111,7 @@ export const ReEncryptGitHubServerAppKeysPost = async (req: Request, res: Respon
 			count++;
 
 		} catch (wrapE) {
+			// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
 			const msg = `Skipping app ${app.id}, found error ${safeJsonStringify(wrapE)}\n`;
 			log.error(msg);
 			res.write(msg);

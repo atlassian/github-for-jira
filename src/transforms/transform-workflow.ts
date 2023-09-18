@@ -83,7 +83,7 @@ export const transformWorkflow = async (
 		logger
 	) : "";
 
-	const issueKeys = jiraIssueKeyParser(`${head_branch}\n${payload.workflow_run.head_commit?.message}\n${commitMessages}`);
+	const issueKeys = jiraIssueKeyParser(`${head_branch}\n${payload.workflow_run.head_commit?.message ?? ""}\n${commitMessages}`);
 	if (!issueKeys.length && !alwaysSend) {
 		return undefined;
 	}

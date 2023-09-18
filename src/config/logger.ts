@@ -40,7 +40,7 @@ const GIT_REF_URL_REGEX = /^(.*)\/git\/ref\/([^/]+)$/;
 const isGitRefUrl = (url: string) => url.match(GIT_REF_URL_REGEX);
 
 const removeGitRefFromUrl = (url: string) =>
-	url.replace(GIT_REF_URL_REGEX, (_, prefix, gitRef) =>
+	url.replace(GIT_REF_URL_REGEX, (_, prefix: string, gitRef) =>
 		`${prefix}/git/ref/${createHashWithSharedSecret(decodeURIComponent(gitRef))}`
 	);
 
@@ -62,7 +62,7 @@ const REST_DEVINFO_BRANCH_URL_REGEX = /^\/rest\/devinfo\/([^/]+)\/repository\/([
 const isDevInfoBranchUrl = (url: string) => url.match(REST_DEVINFO_BRANCH_URL_REGEX);
 
 const removeBranchFromDevInfoUrl = (url: string) =>
-	url.replace(REST_DEVINFO_BRANCH_URL_REGEX, (_, version, repoNo, branchaName, updateSequenceId) =>
+	url.replace(REST_DEVINFO_BRANCH_URL_REGEX, (_, version, repoNo, branchaName, updateSequenceId: string) =>
 		[
 			"/rest/devinfo",
 			version,
@@ -101,7 +101,7 @@ const removeOwnersAndReposFromUrl = (url: string) =>
 			"repos",
 			createHashWithSharedSecret(decodeURIComponent(repos)),
 			"branches"
-		].join("/") + suffix
+		].join("/") + (suffix as string)
 	);
 
 const censorUrl = (url) => {

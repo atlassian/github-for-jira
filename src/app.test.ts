@@ -6,7 +6,7 @@ describe("app", () => {
 		it("please review routes and update snapshot when adding or modifying the routes!", async () => {
 			const app = getFrontendApp();
 
-			const appRoutes: Array<any> = [];
+			const appRoutes: Array<{method: string, path: string, exec: string[]}> = [];
 			const collectRoutes = (stack, parentPath = "", parentMiddlewares: Array<any> = []) => {
 				const ROOT_REGEX = parentPath + sanitizeRegexStr("^\\/?(?=\\/|$)");
 				const pathMiddlewares = {};
@@ -51,7 +51,7 @@ describe("app", () => {
 			collectRoutes(app._router.stack);
 
 			const allRoutes = appRoutes.map(route =>
-				":" + route.method.toUpperCase() + " " + route.path + "\n\t" + route.exec.join(",")
+				`:${route.method.toUpperCase()} ${route.path}\n\t${route.exec.join(",")}`
 			).join("\n");
 
 			expect(allRoutes).toMatchSnapshot();

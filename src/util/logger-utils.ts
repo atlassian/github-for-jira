@@ -40,7 +40,8 @@ class RawLogStream extends Writable {
 			return next();
 		}
 
-		const chunk = safeJsonStringify(record) + "\n";
+		// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+		const chunk = `${safeJsonStringify(record)}\n`;
 		this.writeStream.write(chunk, encoding);
 		next();
 	}

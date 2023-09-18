@@ -60,7 +60,7 @@ const isStateChangeBranchCreateOrDeploymentAction = (action) =>
 const extractWebhookEventNameFromContext = (context: WebhookContext): string => {
 	let webhookEvent = context.name;
 	if (context.payload?.action) {
-		webhookEvent = `${webhookEvent}.${context.payload.action}`;
+		webhookEvent = `${webhookEvent}.${context.payload.action as string}`;
 	}
 	return webhookEvent;
 };
@@ -116,7 +116,7 @@ export const GithubWebhookMiddleware = (
 			fields: {
 				webhookId,
 				gitHubInstallationId,
-				gitHubServerAppIdPk: "" + gitHubAppId,
+				gitHubServerAppIdPk: gitHubAppId?.toString() ?? "undefined",
 				event: webhookEvent,
 				webhookReceived,
 				repoName,
@@ -181,7 +181,7 @@ export const GithubWebhookMiddleware = (
 
 		context.sentry?.setTag(
 			"transaction",
-			`webhook:${context.name}.${context.payload.action}`
+			`webhook:${context.name}.${context.payload.action as string}`
 		);
 
 		for (const subscription of subscriptions) {

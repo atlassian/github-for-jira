@@ -58,6 +58,7 @@ export const RecoverCommitsFromDatePost = async (req: Request, res: Response): P
 
 	} catch (e) {
 		log.error({ err: e }, "Error happen when recovering commits from date");
+		// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
 		res.end(`Error happen when recovering commits from date: ${safeJsonStringify(e)}`);
 	}
 };

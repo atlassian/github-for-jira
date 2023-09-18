@@ -54,7 +54,7 @@ export const issueCommentWebhookHandler = async (
 		);
 	}
 
-	context.log.info(`Updating comment in GitHub with ID ${comment.id}`);
+	context.log.info(`Updating comment in GitHub with ID ${comment.id as number}`);
 	const updatedIssueComment: GitHubIssueCommentData = {
 		body: linkifiedBody,
 		owner,
@@ -83,7 +83,10 @@ export const issueCommentWebhookHandler = async (
 
 const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext, gitHubInstallationClient: GitHubInstallationClient) => {
 	const { comment, repository, issue } = context.payload;
-	const { body: gitHubMessage, id: gitHubId, html_url: gitHubCommentUrl } = comment;
+	const { id: gitHubId } = comment;
+	const gitHubLogin: string = comment.user?.login ?? "undefined";
+	const gitHubMessage: string = comment.body ?? "undefined";
+	const gitHubCommentUrl: string = comment.html_url ?? "undefined";
 	const pullRequest = await gitHubInstallationClient.getPullRequest(repository.owner.login, repository.name, issue.number);
 	// Note: we are only considering the branch name here. Should we also check for pr titles?
 	const issueKey = jiraIssueKeyParser(pullRequest.data.head.ref)[0] || "";
@@ -106,7 +109,7 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 				"content": [
 					{
 						"type": "text",
-						"text": `${comment.user.login}`,
+						"text": `${gitHubLogin}`,
 						"marks": [
 							{
 								"type": "strong"

@@ -6,6 +6,7 @@ import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { resolveIntoConnectConfig } from "utils/ghe-connect-config-temp-storage";
 import { getAllKnownHeaders } from "utils/http-headers";
+import { errorStringFromUnknown } from "~/src/util/error-string-from-unknown";
 
 export const JiraConnectEnterpriseAppCreateOrEditGet = async (
 	req: Request,
@@ -79,7 +80,7 @@ export const JiraConnectEnterpriseAppCreateOrEditGet = async (
 			knownHttpHeadersLowerCase: getAllKnownHeaders()
 		});
 		req.log.debug("Jira create or edit app page rendered successfully.");
-	} catch (error) {
-		return next(new Error(`Failed to render Jira create or edit app page: ${error}`));
+	} catch (error: unknown) {
+		return next(new Error(`Failed to render Jira create or edit app page: ${errorStringFromUnknown(error)}`));
 	}
 };

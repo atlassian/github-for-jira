@@ -33,7 +33,8 @@ const getRedirectUrl = async (res: Response, state: string) => {
 	}
 	const scopes = ["user", "repo"];
 
-	const { hostname, clientId } = res.locals.gitHubAppConfig;
+	const hostname: string = res.locals.gitHubAppConfig.hostname;
+	const clientId: string = res.locals.gitHubAppConfig.clientId;
 	const callbackURI = `${appUrl}${callbackPath}`;
 	return `${hostname}/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
 };

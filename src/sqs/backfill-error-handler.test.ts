@@ -57,7 +57,7 @@ describe("backfillErrorHandler", () => {
 				"date": "Fri, 04 Mar 2022 21:09:27 GMT",
 				"x-ratelimit-limit": "8900",
 				"x-ratelimit-remaining": "0",
-				"x-ratelimit-reset": "" + resetTime,
+				"x-ratelimit-reset": "" + resetTime.toString(),
 				"x-ratelimit-resource": "core",
 				"x-ratelimit-used": "2421"
 			});

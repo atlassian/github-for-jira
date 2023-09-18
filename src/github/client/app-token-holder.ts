@@ -58,7 +58,7 @@ export class AppTokenHolder {
 		if (!currentToken || currentToken.isAboutToExpire()) {
 			const key = await keyLocator(ghsaId, jiraHost);
 			if (!key) {
-				throw new Error(`No private key found for GitHub app ${appId.toString}`);
+				throw new Error(`No private key found for GitHub app ${appId.toString()}`);
 			}
 			currentToken = AppTokenHolder.createAppJwt(key, appId.appId.toString());
 			this.appTokenCache.set(appId.toString(), currentToken);
