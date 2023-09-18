@@ -26,9 +26,9 @@ const transforms: Transforms<EnvVars> = {
 	MICROS_ENV: (value?: string) => EnvironmentEnum[value || EnvironmentEnum.development],
 	MICROS_GROUP: (value?: string) => value || "",
 	NODE_ENV: () => nodeEnv,
-	S3_COREDUMPS_BUCKET_NAME: (value?: string) => value ?? "",
-	S3_COREDUMPS_BUCKET_PATH: (value?: string) => value ?? "",
-	S3_COREDUMPS_BUCKET_REGION: (value?: string) => value ?? "",
+	S3_DUMPS_BUCKET_NAME: (value?: string) => value ?? "",
+	S3_DUMPS_BUCKET_PATH: (value?: string) => value ?? "",
+	S3_DUMPS_BUCKET_REGION: (value?: string) => value ?? "",
 	PROXY: () => {
 		const proxyHost = process.env.EXTERNAL_ONLY_PROXY_HOST;
 		const proxyPort = process.env.EXTERNAL_ONLY_PROXY_PORT;
@@ -160,7 +160,7 @@ export interface EnvVars {
 
 	JIRA_TEST_SITES: string;
 
-	S3_COREDUMPS_BUCKET_NAME: string;
-	S3_COREDUMPS_BUCKET_PATH: string;
-	S3_COREDUMPS_BUCKET_REGION: string;
+	S3_DUMPS_BUCKET_NAME: string;
+	S3_DUMPS_BUCKET_PATH: string;
+	S3_DUMPS_BUCKET_REGION: string;
 }

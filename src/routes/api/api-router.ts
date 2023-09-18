@@ -25,6 +25,7 @@ import { RecoverCommitsFromDatePost } from "./commits-from-date/recover-commits-
 import { ResetFailedAndPendingDeploymentCursorPost } from "./commits-from-date/reset-failed-and-pending-deployment-cursors";
 import { ApiRecryptPost } from "./api-recrypt-post";
 import { GenerateOnceCoredumpGenerator } from "services/generate-once-coredump-generator";
+import { GenerateOncePerNodeHeadumpGenerator } from "services/generate-once-per-node-headump-generator";
 
 export const ApiRouter = Router();
 
@@ -103,24 +104,38 @@ ApiRouter.post("/ping", ApiPingPost);
 /**
  * Workable parameters for ddev (250Mb heap):
  *
- * to occupy 25% of mem and generate coredump:
+ * to occupy ~25% of mem and generate coredump:
  * 	- ?arraySize=20000&nIter=400&pctThreshold=75
  *
  * to generate coredump straight away, without occupying any extra mem:
  * 	- ?arraySize=1 &nIter=1&pcThreshold=100
+ *
+ * to generate heapdump:
+ * 	- ?arraySize=20000&nIter=400&pctThreshold=75&heap=true
+ *
+ * If you are generating heapdumps, you'll need to ssh to the instance and delete the lock file, because
+ * in production only one heapdump is allowed per node due to extremely high CPU/mem usage!
+ *
  */
 const FillMemAndGenerateCoreDump = (req: Request, res: Response) => {
 	const nIter = parseInt(req.query?.nIter?.toString() || "0");
 	const arraySize = parseInt(req.query?.arraySize?.toString() || "10");
 	const pctThreshold = parseInt(req.query?.pctThreshold?.toString() || "50");
-	const generator = new GenerateOnceCoredumpGenerator({
-		logger: req.log,
-		lowHeapAvailPct: pctThreshold
-	});
-	let coreDumpGenerated = false;
+	const heap = !!req.query?.heap;
+
+	const generator: GenerateOncePerNodeHeadumpGenerator | GenerateOnceCoredumpGenerator =
+		heap ? new GenerateOncePerNodeHeadumpGenerator({
+			logger: req.log,
+			lowHeapAvailPct: pctThreshold
+		}) : new GenerateOnceCoredumpGenerator({
+			logger: req.log,
+			lowHeapAvailPct: pctThreshold
+		});
+
+	let dumpGenerated = false;
 	const allocate = (iter: number) => {
-		if (generator.maybeGenerateCoredump()) {
-			coreDumpGenerated = true;
+		if (generator.maybeGenerateDump()) {
+			dumpGenerated = true;
 			return [];
 		}
 		const arr = new Array(arraySize).fill(`${Math.random()} This is a test string. ${Math.random()}`);
@@ -131,7 +146,7 @@ const FillMemAndGenerateCoreDump = (req: Request, res: Response) => {
 		}
 		return arr;
 	};
-	res.json({ allocated: allocate(0).length, coreDumpGenerated });
+	res.json({ allocated: allocate(0).length, dumpGenerated: dumpGenerated });
 };
 
 ApiRouter.post("/fill-mem-and-generate-coredump", FillMemAndGenerateCoreDump);

@@ -9,28 +9,48 @@ import AWS from "aws-sdk";
 import { v4 as UUID } from "uuid";
 import { envVars } from "config/env";
 import { GenerateOnceCoredumpGenerator } from "services/generate-once-coredump-generator";
+import { GenerateOncePerNodeHeadumpGenerator } from "services/generate-once-per-node-headump-generator";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 const CONF_SHUTDOWN_MSG = "shutdown";
 
 export const startMonitorOnWorker = (parentLogger: Logger, workerConfig: {
 	iAmAliveInervalMsec: number,
-	coredumpIntervalMsec: number,
+	dumpIntervalMsec: number,
 	lowHeapAvailPct: number,
 }) => {
 	const logger = parentLogger.child({ isWorker: true });
 	logger.info({ workerConfig }, "worker config");
-
-	// eslint-disable-next-line @typescript-eslint/no-var-requires
-	logger.info({ memStats: require("v8").getHeapStatistics() });
 
 	const coreDumpGenerator = new GenerateOnceCoredumpGenerator({
 		logger,
 		lowHeapAvailPct: workerConfig.lowHeapAvailPct
 	});
 
+	let dumpsFlagValue = true; // to simplify testing, let's enable it by default; it will switch to false quickly
+
+	// Not invoking inline because "maybeGenerateDump()" are synchronous calls, don't want to make it asynchronous just
+	// because of the flag: much more difficult to test.
+	const flagInterval = setInterval(async () => {
+		dumpsFlagValue = await booleanFlag(BooleanFlags.GENERATE_CORE_HEAP_DUMPS_ON_LOW_MEM);
+	}, 1000);
+
 	const coredumpInterval = setInterval(() => {
-		coreDumpGenerator.maybeGenerateCoredump();
-	}, workerConfig.coredumpIntervalMsec);
+		if (dumpsFlagValue) {
+			coreDumpGenerator.maybeGenerateDump();
+		}
+	}, workerConfig.dumpIntervalMsec);
+
+	const heapdumpGenerator = new GenerateOncePerNodeHeadumpGenerator({
+		logger,
+		lowHeapAvailPct: workerConfig.lowHeapAvailPct
+	});
+
+	const heapdumpInterval = setInterval(() => {
+		if (dumpsFlagValue) {
+			heapdumpGenerator.maybeGenerateDump();
+		}
+	}, workerConfig.dumpIntervalMsec);
 
 	process.on("message", (msg: string) => {
 		logger.info(`worker received a message: ${msg}`);
@@ -50,7 +70,7 @@ export const startMonitorOnWorker = (parentLogger: Logger, workerConfig: {
 		}
 	}, workerConfig.iAmAliveInervalMsec);
 
-	return [workerPingingServerInterval, coredumpInterval];
+	return [workerPingingServerInterval, coredumpInterval, heapdumpInterval, flagInterval];
 };
 
 const logRunningProcesses = (logger: Logger) => {
@@ -168,15 +188,15 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 		}
 	};
 
-	const maybeUploadCoredumps = () => {
+	const maybeUploadeDumpFiles = () => {
 		const now = new Date(); // fix time early for testing, while timers are still frozen
 
-		glob("/tmp/core*.ready", (err: Error, coreFiles: Array<string>) => {
+		glob("/tmp/dump*.ready", (err: Error, dumpFiles: Array<string>) => {
 			if (err) {
-				logger.error("Cannot get core coreFiles using glob");
+				logger.error("Cannot get dump files using glob");
 				return;
 			}
-			coreFiles.forEach((file) => {
+			dumpFiles.forEach((file) => {
 				const fileSplit = file.split("/");
 				const uploadId = UUID();
 				const uploadLogger = logger.child({ uploadId });
@@ -188,13 +208,13 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 				const s3 = new AWS.S3();
 
 				const uploadParams = {
-					Bucket: envVars.S3_COREDUMPS_BUCKET_NAME,
-					Key: `${envVars.S3_COREDUMPS_BUCKET_PATH}/${key}`,
+					Bucket: envVars.S3_DUMPS_BUCKET_NAME,
+					Key: `${envVars.S3_DUMPS_BUCKET_PATH}/${key}`,
 					Body: fs.createReadStream(uploadInProgressFile),
-					Region: envVars.S3_COREDUMPS_BUCKET_REGION
+					Region: envVars.S3_DUMPS_BUCKET_REGION
 				};
 
-				uploadLogger.info({ uploadParams }, "about to upload coredump");
+				uploadLogger.info({ uploadParams }, "about to upload dump");
 
 				s3.upload(uploadParams, (err, data) => {
 					if (err) {
@@ -213,6 +233,6 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 		maybeSetupWorkersReadyAt();
 		maybeRemoveDeadWorkers();
 		maybeSendShutdownToAllWorkers();
-		maybeUploadCoredumps();
+		maybeUploadeDumpFiles();
 	}, config.pollIntervalMsecs);
 };

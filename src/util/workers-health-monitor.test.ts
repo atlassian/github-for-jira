@@ -2,9 +2,12 @@ import { startMonitorOnMaster, startMonitorOnWorker } from "utils/workers-health
 import { stopHealthcheck } from "utils/healthcheck-stopper";
 import cluster from "cluster";
 import { GenerateOnceCoredumpGenerator } from "services/generate-once-coredump-generator";
+import { GenerateOncePerNodeHeadumpGenerator } from "services/generate-once-per-node-headump-generator";
 import fs from "fs";
 import AWS from "aws-sdk";
 import { waitUntil } from "test/utils/wait-until";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { when } from "jest-when";
 jest.mock("cluster", () => {
 	const workers = {
 		1: { send: jest.fn(), on: jest.fn(), process: { pid: 1 } },
@@ -17,12 +20,15 @@ jest.mock("cluster", () => {
 
 jest.mock("utils/healthcheck-stopper");
 jest.mock("services/generate-once-coredump-generator");
+jest.mock("services/generate-once-per-node-headump-generator");
 jest.mock("aws-sdk");
+jest.mock("config/feature-flags");
 
 describe("workers-health-monitor", () => {
 	let originalProcessSend;
 	let originalProcessOn;
 	let maybeGenerateCoredump: jest.Mock;
+	let maybeGenerateHeapdump: jest.Mock;
 	const intervals: NodeJS.Timeout[] = [];
 	beforeEach(() => {
 		jest.useFakeTimers("modern").setSystemTime(new Date("2020-01-01"));
@@ -32,10 +38,16 @@ describe("workers-health-monitor", () => {
 		process.send = jest.fn();
 		process.on = jest.fn();
 		maybeGenerateCoredump = jest.fn();
+		maybeGenerateHeapdump = jest.fn();
 		(GenerateOnceCoredumpGenerator as jest.Mock).mockReturnValue({
-			maybeGenerateCoredump: maybeGenerateCoredump
+			maybeGenerateDump: maybeGenerateCoredump
+		});
+		(GenerateOncePerNodeHeadumpGenerator as jest.Mock).mockReturnValue({
+			maybeGenerateDump: maybeGenerateHeapdump
 		});
 		logger.child = jest.fn(() => logger);
+
+		when(booleanFlag).calledWith(BooleanFlags.GENERATE_CORE_HEAP_DUMPS_ON_LOW_MEM).mockResolvedValue(true);
 	});
 
 	afterEach(() => {
@@ -57,7 +69,7 @@ describe("workers-health-monitor", () => {
 		it("should start the worker monitoring", async () => {
 			intervals.push(...startMonitorOnWorker(logger, {
 				iAmAliveInervalMsec: 10,
-				coredumpIntervalMsec: 1000,
+				dumpIntervalMsec: 1000,
 				lowHeapAvailPct: 10
 			}));
 
@@ -68,7 +80,7 @@ describe("workers-health-monitor", () => {
 		it("should stop healthchecks when shutdown is received", async () => {
 			intervals.push(...startMonitorOnWorker(logger, {
 				iAmAliveInervalMsec: 10,
-				coredumpIntervalMsec: 1000,
+				dumpIntervalMsec: 1000,
 				lowHeapAvailPct: 10
 			}));
 			(process.on as jest.Mock).mock.calls[0][1]("shutdown");
@@ -76,10 +88,10 @@ describe("workers-health-monitor", () => {
 			expect(stopHealthcheck).toBeCalled();
 		});
 
-		it("should generate heapdump only once", async () => {
+		it("should generate core and heap dumps", async () => {
 			intervals.push(...startMonitorOnWorker(logger, {
 				iAmAliveInervalMsec: 1000,
-				coredumpIntervalMsec: 10,
+				dumpIntervalMsec: 10,
 				lowHeapAvailPct: 10
 			}));
 
@@ -90,6 +102,12 @@ describe("workers-health-monitor", () => {
 				lowHeapAvailPct: 10
 			});
 			expect(maybeGenerateCoredump).toBeCalledTimes(2);
+			expect(GenerateOncePerNodeHeadumpGenerator).toBeCalledTimes(1);
+			expect(GenerateOncePerNodeHeadumpGenerator).toBeCalledWith({
+				logger: expect.anything(),
+				lowHeapAvailPct: 10
+			});
+			expect(maybeGenerateHeapdump).toBeCalledTimes(2);
 		});
 	});
 
@@ -148,8 +166,8 @@ describe("workers-health-monitor", () => {
 			expect(cluster.workers[2]!.send).toBeCalled();
 		});
 
-		const CORE_READY_FILEPATH = "/tmp/core.123.ready";
-		const CORE_UPLOAD_INPGORESS_FILEPATH = "/tmp/core.123.ready.uploadinprogress";
+		const DUMP_READY_FILEPATH = "/tmp/dump_core.123.ready";
+		const DUMP_UPLOAD_FILEPATH = "/tmp/dump_core.123.ready.uploadinprogress";
 
 		const deleteFileSafe = (path: string) => {
 			try {
@@ -161,17 +179,17 @@ describe("workers-health-monitor", () => {
 		};
 
 		beforeEach(() => {
-			deleteFileSafe(CORE_READY_FILEPATH);
-			deleteFileSafe(CORE_UPLOAD_INPGORESS_FILEPATH);
+			deleteFileSafe(DUMP_READY_FILEPATH);
+			deleteFileSafe(DUMP_UPLOAD_FILEPATH);
 		});
 
 		afterEach(() => {
-			deleteFileSafe(CORE_READY_FILEPATH);
-			deleteFileSafe(CORE_UPLOAD_INPGORESS_FILEPATH);
+			deleteFileSafe(DUMP_READY_FILEPATH);
+			deleteFileSafe(DUMP_UPLOAD_FILEPATH);
 		});
 
-		it("should upload coredumps to S3", async () => {
-			fs.writeFileSync("/tmp/core.123.ready", "test-string");
+		it("should upload dumps to S3", async () => {
+			fs.writeFileSync(DUMP_READY_FILEPATH, "test-string");
 
 			intervals.push(startMonitorOnMaster(logger, {
 				pollIntervalMsecs: 10,
@@ -191,7 +209,7 @@ describe("workers-health-monitor", () => {
 			jest.useRealTimers();
 
 			await waitUntil(async () => {
-				const exists = fs.existsSync(CORE_UPLOAD_INPGORESS_FILEPATH);
+				const exists = fs.existsSync(DUMP_UPLOAD_FILEPATH);
 				expect(exists).toBeTruthy();
 				expect(uploadFn).toBeCalled();
 			});
@@ -199,12 +217,12 @@ describe("workers-health-monitor", () => {
 			expect(uploadFn).toBeCalledWith({
 				Body: expect.anything(),
 				Bucket: "my-bucket",
-				Key: "my/path/core.123.ready_2020-01-01T00_00_00_010Z",
+				Key: "my/path/dump_core.123.ready_2020-01-01T00_00_00_010Z",
 				Region: "my-region"
 			}, expect.anything());
 
 			uploadFn.mock.calls[0][1]();
-			expect(fs.existsSync(CORE_UPLOAD_INPGORESS_FILEPATH)).toBeFalsy();
+			expect(fs.existsSync(DUMP_UPLOAD_FILEPATH)).toBeFalsy();
 		});
 	});
 });
