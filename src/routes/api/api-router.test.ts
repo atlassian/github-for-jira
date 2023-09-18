@@ -362,15 +362,15 @@ describe("API Router", () => {
 
 		});
 
-		describe("kill-worker-with-oom", () => {
+		describe("fill-mem-and-generate-coredump", () => {
 			it("should return 200", () => {
 				return supertest(app)
-					.post("/api/kill-worker-with-oom?arraySize=2&nIter=7")
+					.post("/api/fill-mem-and-generate-coredump?arraySize=2&nIter=7")
 					.set("host", "127.0.0.1")
 					.set("X-Slauth-Mechanism", "slauthtoken")
 					.expect(200)
 					.then((response) => {
-						expect(response.body).toEqual({ data: 14 });
+						expect(response.body).toEqual({ allocated: 14, dumpGenerated: false });
 					});
 			});
 		});

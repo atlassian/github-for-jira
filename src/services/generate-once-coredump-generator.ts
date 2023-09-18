@@ -39,7 +39,7 @@ export class GenerateOnceCoredumpGenerator {
 
 			this.config.logger.info(`Core dump was created, took ${tsAfterDump - tsBeforeDump}`);
 
-			fs.renameSync(`/tmp/dump_core.${process.pid.toString()}`, `/tmp/core.${process.pid.toString()}.ready`);
+			fs.renameSync(`/tmp/dump_core.${process.pid.toString()}`, `/tmp/dump_core.${process.pid.toString()}.ready`);
 			this.coreDumpGenerated = true;
 			return true;
 

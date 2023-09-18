@@ -29,7 +29,7 @@ describe("coredump-generator", () => {
 		(hasEnoughFreeHeap as jest.Mock).mockReturnValue(false);
 		expect(generator.maybeGenerateDump()).toBeTruthy();
 		expect(dumpme).toBeCalled();
-		expect(fs.renameSync).toBeCalledWith(`/tmp/core.${process.pid.toString()}`, `/tmp/core.${process.pid.toString()}.ready`);
+		expect(fs.renameSync).toBeCalledWith(`/tmp/dump_core.${process.pid.toString()}`, `/tmp/dump_core.${process.pid.toString()}.ready`);
 	});
 
 	it("should create only a single coredump file", () => {
