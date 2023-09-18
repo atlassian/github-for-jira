@@ -3,7 +3,7 @@ import "config/env"; // Important to be before other dependencies
 import { getLogger } from "config/logger";
 import throng from "throng";
 import { initializeSentry } from "config/sentry";
-// import { isNodeProd } from "utils/is-node-env";
+import { isNodeProd } from "utils/is-node-env";
 import { getFrontendApp } from "./app";
 import createLag from "event-loop-lag";
 import { statsd } from "config/statsd";
@@ -86,19 +86,19 @@ const start = async () => {
 	}, 1000);
 };
 
-// if (isNodeProd()) {
-// Production clustering (one process per core)
-throng({
-	master: troubleshootUnresponsiveWorkers_master,
-	worker: async () => {
-		await start();
-		troubleshootUnresponsiveWorkers_worker();
-	},
-	lifetime: Infinity
-});
-// } else {
-// 	// Dev/test single process, don't need clustering
-// 	// eslint-disable-next-line @typescript-eslint/no-floating-promises
-// 	start();
-// }
+if (isNodeProd()) {
+	// Production clustering (one process per core)
+	throng({
+		master: troubleshootUnresponsiveWorkers_master,
+		worker: async () => {
+			await start();
+			troubleshootUnresponsiveWorkers_worker();
+		},
+		lifetime: Infinity
+	});
+} else {
+	// Dev/test single process, don't need clustering
+	// eslint-disable-next-line @typescript-eslint/no-floating-promises
+	start();
+}
 

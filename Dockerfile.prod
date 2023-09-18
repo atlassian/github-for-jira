@@ -40,10 +40,10 @@ RUN apk add gdb
 RUN apk add bash
 
 USER node
+COPY --chown=node:node --from=build /app /app
 # Add this the service Dockerfile, at the final stage if multi-stage
 COPY --from=docker.atl-paas.net/sox/brahmos-deps/stress-ng:latest /usr/bin/stress-ng /usr/bin/stress-ng
 WORKDIR /app
-COPY --from=build /app .
 ENV NODE_ENV production
 
 #
