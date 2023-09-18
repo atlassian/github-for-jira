@@ -35,7 +35,7 @@ const buttonContainerStyle = css`
 	text-align: center;
 	margin: ${token("space.300")} 0 0;
 `;
-const InlineDialogLink = styled.a`
+const inlineDialogLinkStyle = css`
 	cursor: pointer;
 `;
 const inlineDialogDivStyle = css`
@@ -110,7 +110,7 @@ const StartConnection = () => {
 							position="right-end"
 							content={InlineDialogContent}
 						>
-							{(props) => <InlineDialogLink {...props}>Learn how to check Github permissions</InlineDialogLink>}
+							{(props) => <a css={inlineDialogLinkStyle} {...props}>Learn how to check Github permissions</a>}
 						</Tooltip>
 					</div>
 				</div>

@@ -26,7 +26,7 @@ const OrgDiv = styled.div<OrgDivType>`
 	padding: ${token("space.150")} 0;
 	margin-bottom: ${token("space.100")};
 `;
-const OrgName = styled.span`
+const orgNameStyle = css`
 	color: ${token("color.text")};
 	font-weight: 590;
 `;
@@ -88,7 +88,7 @@ const OrganizationsList = ({
 					<OrgDiv key={org.id} hasError={!canConnect(org)}>
 						{
 							canConnect(org) ? <>
-								<OrgName>{org.account.login}</OrgName>
+								<span css={orgNameStyle}>{org.account.login}</span>
 								{
 									loaderForOrgClicked && clickedOrg?.id === org.id ?
 										<LoadingButton style={{width: 80}} isLoading>Loading button</LoadingButton> :
@@ -110,7 +110,7 @@ const OrganizationsList = ({
 								}
 							</> : <>
 								<div>
-									<OrgName>{org.account.login}</OrgName>
+									<span css={orgNameStyle}>{org.account.login}</span>
 									<div>{errorMessage(org)}</div>
 								</div>
 								<div css={iconWrapperStyle}>

@@ -1,4 +1,3 @@
-import styled from "@emotion/styled";
 import { css } from "@emotion/react";
 import { token } from "@atlaskit/tokens";
 import Button from "@atlaskit/button";
@@ -8,10 +7,10 @@ import { popup } from "../../../utils";
 const paragraphStyle = css`
 	color: ${token("color.text.subtle")};
 `;
-const BulletSeparator = styled.span`
+const bulletSeparatorStyle = css`
 	padding: 0 ${token("space.100")};
 `;
-const StyledLink = styled.a`
+const linkStyle = css`
 	cursor: pointer;
 `;
 
@@ -23,20 +22,20 @@ export const ErrorForSSO = ({ orgName, accessUrl, resetCallback }: { orgName?: s
 		Can't connect, single sign-on(SSO) required{orgName && <span> for <b>{orgName}</b></span>}.
 	</div>
 	<div css={paragraphStyle}>
-		1. <StyledLink onClick={() => popup(accessUrl)}>Log into GitHub with SSO</StyledLink>.
+		1. <a css={linkStyle} onClick={() => popup(accessUrl)}>Log into GitHub with SSO</a>.
 	</div>
 	<div css={paragraphStyle}>
-		2. <StyledLink onClick={resetCallback}>Retry connection in Jira</StyledLink> (once logged in).
+		2. <a css={linkStyle} onClick={resetCallback}>Retry connection in Jira</a> (once logged in).
 	</div>
 </>;
 
 export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl }: { orgName?: string; adminOrgsUrl: string; }) => <div css={paragraphStyle}>
 	Can't connect, you're not the organization owner{orgName && <span> of <b>{orgName}</b></span>}.<br />
-	Ask an <StyledLink onClick={() => {
+	Ask an <a css={linkStyle} onClick={() => {
 	// TODO: Need to get this URL for Enterprise users too, this is only for Cloud users
 		popup(adminOrgsUrl);
 		analyticsClient.sendUIEvent({ actionSubject: "checkOrgAdmin", action: "clicked"}, { type: "cloud" });
-	}}>organization owner</StyledLink> to complete this step.
+	}}>organization owner</a> to complete this step.
 </div>;
 
 export const ErrorForIPBlocked = ({ orgName, resetCallback }: { orgName?: string; resetCallback: () => void }) => <>
@@ -50,6 +49,6 @@ export const ErrorForIPBlocked = ({ orgName, resetCallback }: { orgName?: string
 	>
 		How to update allowlist
 	</Button>
-	<BulletSeparator>&#8226;</BulletSeparator>
-	<StyledLink onClick={resetCallback}>Retry</StyledLink>
+	<span css={bulletSeparatorStyle}>&#8226;</span>
+	<a css={linkStyle} onClick={resetCallback}>Retry</a>
 </>;
