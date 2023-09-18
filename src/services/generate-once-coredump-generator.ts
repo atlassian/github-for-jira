@@ -23,7 +23,7 @@ export class GenerateOnceCoredumpGenerator {
 	}
 
 	/**
-	 * In case of success, a file will be generated with the path /tmp/core.PID
+	 * In case of success, a file will be generated with the path /tmp/dump_core.PID
 	 */
 	public maybeGenerateDump(): boolean {
 		if (this.coreDumpGenerated) {
