@@ -171,13 +171,17 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 
 	// Given that heapdump eats a lot of mem and CPU, let's listen to only one worker. Otherwise, if 2 or more workers
 	// crash, that would put the whole node under risk,
-	let workerToReportOnCrashPid: string | undefined;
+	let workerToReportOnCrashPid: number | undefined;
 	const maybeChargeWorkerToGenerateHeapdumpOnCrash = () => {
 		if (areWorkersReady() && !workerToReportOnCrashPid && Object.keys(registeredWorkers).length > 0) {
 			const pids = Object.keys(registeredWorkers);
-			workerToReportOnCrashPid = pids[Math.floor(Math.random() * pids.length)];
-			const worker = cluster.workers[workerToReportOnCrashPid];
+			workerToReportOnCrashPid = parseInt(pids[Math.floor(Math.random() * pids.length)]);
+			logger.info({
+				workerToReportOnCrashPid
+			}, "worker was picked");
+			const worker = Object.values(cluster.workers).find(worker => worker?.process.pid === workerToReportOnCrashPid);
 			if (!worker) {
+				logger.info("couldn't find the worker not found");
 				workerToReportOnCrashPid = undefined;
 				return;
 			}
