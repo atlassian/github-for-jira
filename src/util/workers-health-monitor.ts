@@ -7,35 +7,30 @@ import glob from "glob";
 import fs from "fs";
 import AWS from "aws-sdk";
 import { v4 as UUID } from "uuid";
-// import nodeOomHeapdump from "node-oom-heapdump";
-// import * as fs from "fs";
-// import * as path from "path";
-// import { envVars } from "config/env";
-
-// const heapdumpsDir = path.join("/tmp", "heapdumps");
-//
-// if (!fs.existsSync(heapdumpsDir)){
-// 	fs.mkdirSync(heapdumpsDir, { recursive: true });
-// }
-
-// const generateHeapDumpFilePath = (pid: number) => {
-// 	return path.resolve(heapdumpsDir, `heapdump_${envVars.MICROS_INSTANCE_ID}_${pid}`);
-// };
-
-// nodeOomHeapdump({
-// 	heapdumpOnOOM: true,
-//
-// 	path: generateHeapDumpFilePath(process.pid)
-// });
+import { envVars } from "config/env";
+import { GenerateOnceCoredumpGenerator } from "services/generate-once-coredump-generator";
 
 const CONF_SHUTDOWN_MSG = "shutdown";
 
-export const startMonitorOnWorker = (parentLogger: Logger, iAmAliveInervalMsec: number) => {
+export const startMonitorOnWorker = (parentLogger: Logger, workerConfig: {
+	iAmAliveInervalMsec: number,
+	coredumpIntervalMsec: number,
+	lowHeapAvailPct: number,
+}) => {
 	const logger = parentLogger.child({ isWorker: true });
-	logger.info({ iAmAliveInervalMsec }, "worker config");
+	logger.info({ workerConfig }, "worker config");
 
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	logger.info({ memStats: require("v8").getHeapStatistics() });
+
+	const coreDumpGenerator = new GenerateOnceCoredumpGenerator({
+		logger,
+		lowHeapAvailPct: workerConfig.lowHeapAvailPct
+	});
+
+	const coredumpInterval = setInterval(() => {
+		coreDumpGenerator.maybeGenerateCoredump();
+	}, workerConfig.coredumpIntervalMsec);
 
 	process.on("message", (msg: string) => {
 		logger.info(`worker received a message: ${msg}`);
@@ -53,8 +48,9 @@ export const startMonitorOnWorker = (parentLogger: Logger, iAmAliveInervalMsec: 
 			logger.error("process.send is undefined in worker, shouldn't happen");
 			clearInterval(workerPingingServerInterval);
 		}
-	}, iAmAliveInervalMsec);
-	return workerPingingServerInterval;
+	}, workerConfig.iAmAliveInervalMsec);
+
+	return [workerPingingServerInterval, coredumpInterval];
 };
 
 const logRunningProcesses = (logger: Logger) => {
@@ -173,37 +169,40 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 	};
 
 	const maybeUploadCoredumps = () => {
-		glob("/tmp/core*.ready", (err: Error, files: Array<string>) => {
+		const now = new Date(); // fix time early for testing, while timers are still frozen
+
+		glob("/tmp/core*.ready", (err: Error, coreFiles: Array<string>) => {
 			if (err) {
-				logger.error("Cannot get files using glob");
+				logger.error("Cannot get core coreFiles using glob");
 				return;
 			}
-			files.forEach((file) => {
+			coreFiles.forEach((file) => {
+				const fileSplit = file.split("/");
 				const uploadId = UUID();
 				const uploadLogger = logger.child({ uploadId });
-				const inProgressFile =  file + ".inprogress";
-				const key = `${file}_${new Date().toISOString().split(":").join("_").split(".").join("_")}`;
-				fs.renameSync(file, inProgressFile);
-				uploadLogger.info(`start uploading ${inProgressFile} with key ${key}`);
+				const uploadInProgressFile =  file + ".uploadinprogress";
+				const key = `${fileSplit[fileSplit.length - 1]}_${now.toISOString().split(":").join("_").split(".").join("_")}`;
+				fs.renameSync(file, uploadInProgressFile);
+				uploadLogger.info(`start uploading ${uploadInProgressFile} with key ${key}`);
 
 				const s3 = new AWS.S3();
 
 				const uploadParams = {
-					Bucket: process.env.S3_COREDUMPS_BUCKET_NAME!,
-					Key: `${process.env.S3_COREDUMPS_BUCKET_PATH}/${key}`,
-					Body: fs.createReadStream(inProgressFile),
-					Region: process.env.S3_COREDUMPS_BUCKET_REGION!
+					Bucket: envVars.S3_COREDUMPS_BUCKET_NAME,
+					Key: `${envVars.S3_COREDUMPS_BUCKET_PATH}/${key}`,
+					Body: fs.createReadStream(uploadInProgressFile),
+					Region: envVars.S3_COREDUMPS_BUCKET_REGION
 				};
 
 				uploadLogger.info({ uploadParams }, "about to upload coredump");
 
 				s3.upload(uploadParams, (err, data) => {
 					if (err) {
-						uploadLogger.error({ err }, `cannot upload ${inProgressFile}`);
+						uploadLogger.error({ err }, `cannot upload ${uploadInProgressFile}`);
 					} else {
 						uploadLogger.info({ data }, `file was successfully uploaded`);
 					}
-					fs.unlinkSync(inProgressFile);
+					fs.unlinkSync(uploadInProgressFile);
 				});
 			});
 		});

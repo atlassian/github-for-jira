@@ -24,7 +24,7 @@ import { ApiResetSubscriptionFailedTasks } from "./api-reset-subscription-failed
 import { RecoverCommitsFromDatePost } from "./commits-from-date/recover-commits-from-dates";
 import { ResetFailedAndPendingDeploymentCursorPost } from "./commits-from-date/reset-failed-and-pending-deployment-cursors";
 import { ApiRecryptPost } from "./api-recrypt-post";
-import { CoredumpGenerator } from "services/coredump-generator";
+import { GenerateOnceCoredumpGenerator } from "services/generate-once-coredump-generator";
 
 export const ApiRouter = Router();
 
@@ -102,20 +102,24 @@ ApiRouter.post("/ping", ApiPingPost);
 
 /**
  * Workable parameters for ddev (250Mb heap):
- * 	?arraySize=20000&nIter=400&pctThreshold=75
+ *
+ * to occupy 25% of mem and generate coredump:
+ * 	- ?arraySize=20000&nIter=400&pctThreshold=75
+ *
+ * to generate coredump straight away, without occupying any extra mem:
+ * 	- ?arraySize=1 &nIter=1&pcThreshold=100
  */
 const FillMemAndGenerateCoreDump = (req: Request, res: Response) => {
 	const nIter = parseInt(req.query?.nIter?.toString() || "0");
 	const arraySize = parseInt(req.query?.arraySize?.toString() || "10");
 	const pctThreshold = parseInt(req.query?.pctThreshold?.toString() || "50");
-	const generator = new CoredumpGenerator({
+	const generator = new GenerateOnceCoredumpGenerator({
 		logger: req.log,
-		memLeftPctThesholdBeforeGc: pctThreshold,
-		memLeftPctThesholdAfterGc: pctThreshold
+		lowHeapAvailPct: pctThreshold
 	});
 	let coreDumpGenerated = false;
 	const allocate = (iter: number) => {
-		if (generator.maybeGenerateCoreDump()) {
+		if (generator.maybeGenerateCoredump()) {
 			coreDumpGenerated = true;
 			return [];
 		}

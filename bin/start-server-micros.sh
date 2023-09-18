@@ -17,7 +17,7 @@ esac
 
 case "$MICROS_ENVTYPE" in
   "dev")
-    export NODE_OPTIONS="--max-old-space-size=250" # since ddev nodes have smaller memory size
+    export NODE_OPTIONS="--max-old-space-size=250" # since ddev nodes have smaller memory available in general
   ;;
 esac
 
