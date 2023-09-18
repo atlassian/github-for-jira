@@ -26,7 +26,7 @@ RUN yarn list
 RUN yarn run build:release
 
 # https://stackoverflow.com/questions/57108751/docker-build-failed-when-copying-in-multi-step-build
-RUN chown node:node -R /app
+RUN chown root:root -R /app
 
 FROM node:14.21-alpine3.16
 
