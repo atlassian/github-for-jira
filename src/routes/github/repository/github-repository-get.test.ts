@@ -152,7 +152,7 @@ describe("GitHub Repository Search", () => {
 				items: [{ owner, full_name: "first", id: 1 }, { owner, full_name: "second", id: 22 }, { owner, full_name: "third", id: 333 }]
 			});
 
-			nockSearchRepos422(`${randomString} org:anotherOrgName in:full_name`);
+			nockSearchRepos422(`${randomString} org:anotherOrgName in:full_name fork:true`);
 
 			await supertest(app)
 				.get("/github/repository").set(
