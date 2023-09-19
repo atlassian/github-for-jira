@@ -158,7 +158,7 @@ describe("subscription-installation-service", () => {
 			});
 
 			it("on success with ENABLE_GITHUB_SECURITY_IN_JIRA FF is on: creates a Db record, kicks off sync and updates isConfigured state", async () => {
-				when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+				when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, installation.jiraHost).mockResolvedValue(true);
 				mockGitHub({
 					isGhe: false,
 					is500Error: false,
@@ -279,7 +279,7 @@ describe("subscription-installation-service", () => {
 				});
 			});
 			it("on success with ENABLE_GITHUB_SECURITY_IN_JIRA FF is on: creates a Db record, kicks off sync and updates isConfigured state", async () => {
-				when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+				when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, installation.jiraHost).mockResolvedValue(true);
 				mockGitHub({
 					isGhe: true,
 					is500Error: false,

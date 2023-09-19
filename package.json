@@ -65,6 +65,7 @@
 		"@sentry/node": "^6.8.0",
 		"@types/event-loop-lag": "^1.0.30",
 		"@types/safe-json-stringify": "^1.1.2",
+		"@types/yaml": "^1.9.7",
 		"atlassian-jwt": "^2.0.0",
 		"aws-sdk": "^2.1015.0",
 		"axios": "^0.26.0",
