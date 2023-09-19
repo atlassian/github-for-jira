@@ -178,7 +178,7 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 			workerToReportOnCrashPid = parseInt(pids[Math.floor(Math.random() * pids.length)]);
 			logger.info({
 				workerToReportOnCrashPid
-			}, "worker was picked");
+			}, "worker to generate heapdump on oom was picked");
 			const worker = Object.values(cluster.workers).find(worker => worker?.process.pid === workerToReportOnCrashPid);
 			if (!worker) {
 				logger.info("couldn't find the worker not found");
@@ -191,7 +191,7 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 
 	const maybeRemoveDeadWorkers = () => {
 		if (areWorkersReady()) {
-			logger.info(`removing dead workers`);
+			logInfoSampled(logger, `removing dead workers`, `removing dead workers`, 100);
 			const keysToKill: Array<string> = [];
 			const now = Date.now();
 			Object.keys(liveWorkers).forEach((key) => {

@@ -11,7 +11,7 @@ import {
 	transformGitHubSeverityToJiraSeverity,
 	transformGitHubStateToJiraStatus
 } from "~/src/transforms/util/github-security-alerts";
-import { capitalize } from "lodash";
+import { capitalize, truncate } from "lodash";
 import Logger from "bunyan";
 import { DependabotAlertResponseItem } from "../github/client/github-client.types";
 
@@ -48,7 +48,7 @@ export const transformDependabotAlert = async (context: WebhookContext<Dependabo
 			updateSequenceNumber: Date.now(),
 			containerId: transformRepositoryId(repository.id, githubClientConfig.baseUrl),
 			displayName: alert.security_advisory.summary,
-			description: getDependabotScanningVulnDescription(alert, identifiers, context.log), // alert.security_advisory.description,
+			description: getDependabotScanningVulnDescription(alert, identifiers, context.log),
 			url: alert.html_url,
 			type: "sca",
 			introducedDate: alert.created_at,
@@ -71,7 +71,10 @@ export const getDependabotScanningVulnDescription = (
 	logger: Logger) => {
 	try {
 		const identifiersText = getIdentifiersText(identifiers);
-		return `**Vulnerability:** ${alert.security_advisory.summary}\n\n**Impact:** ${alert.security_advisory.description}\n\n**Severity:** ${capitalize(alert.security_advisory?.severity)} - ${alert.security_advisory?.cvss?.score}\n\nGitHub uses  [Common Vulnerability Scoring System (CVSS)](https://www.atlassian.com/trust/security/security-severity-levels) data to calculate security severity.\n\n**State:** ${capitalize(alert.state)}\n\n**Patched version:** ${alert.security_vulnerability?.first_patched_version?.identifier}\n\n**Identifiers:**\n\n${identifiersText}\n\nVisit the vulnerability’s [dependabot alert page](${alert.html_url}) in GitHub to learn more about and see remediation options.`;
+		// description cannot exceed 5000 characters
+		const description = `**Vulnerability:** ${alert.security_advisory.summary}\n\n**Impact:** ${alert.security_advisory.description}\n\n**Severity:** ${capitalize(alert.security_advisory?.severity)} - ${alert.security_advisory?.cvss?.score}\n\nGitHub uses  [Common Vulnerability Scoring System (CVSS)](https://www.atlassian.com/trust/security/security-severity-levels) data to calculate security severity.\n\n**State:** ${capitalize(alert.state)}\n\n**Patched version:** ${alert.security_vulnerability?.first_patched_version?.identifier}\n\n**Identifiers:**\n\n${identifiersText}\n\nVisit the vulnerability’s [dependabot alert page](${alert.html_url}) in GitHub to learn more about and see remediation options.`;
+		return truncate(description, { length: 4999 });
+
 	} catch (err) {
 		logger.warn({ err }, "Failed to construct vulnerability description");
 		return alert.security_advisory?.summary;
