@@ -47,7 +47,8 @@ export const transformDependabotAlert = async (context: WebhookContext<Dependabo
 			id: `d-${transformRepositoryId(repository.id, githubClientConfig.baseUrl)}-${alert.number}`,
 			updateSequenceNumber: Date.now(),
 			containerId: transformRepositoryId(repository.id, githubClientConfig.baseUrl),
-			displayName: alert.security_advisory.summary,
+			// display name cannot exceed 255 characters
+			displayName: truncate(alert.security_advisory.summary, { length: 254 }),
 			description: getDependabotScanningVulnDescription(alert, identifiers, context.log),
 			url: alert.html_url,
 			type: "sca",
