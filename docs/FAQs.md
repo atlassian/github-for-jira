@@ -57,8 +57,6 @@ When an organization contains a small amount of data, the backfilling process is
 
 - **Atlassian IP address ranges need whitelisting** - [Please see our IP allowlist documentation](https://github.com/atlassian/github-for-jira/blob/main/docs/ip-allowlist.md)
 
-- **Reverse proxy support** - GitHub for Jira does not support reverse proxies.
-
 - **Self-signed certificate** - There is a problem with your SSL certificate.
 
 <h3>Q: Can I connect multiple GitHub Enterprise Servers or GitHub Apps to Jira?</h3>

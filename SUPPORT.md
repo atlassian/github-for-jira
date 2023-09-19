@@ -58,8 +58,6 @@ If you're still having troubles after reading through this file, look up your pr
 
 - **GitHub Enterprise Server Edition does not currently support application access via SAML SSO** - Only Github Enterprise Cloud offers this ability. [Learn more about authentication with SAML single sign-on](https://docs.github.com/en/enterprise-cloud@latest/authentication/authenticating-with-saml-single-sign-on/about-authentication-with-saml-single-sign-on#about-oauth-apps-github-apps-and-saml-sso).
 
-- **Reverse proxy support** - GitHub for Jira does not support reverse proxies.
-
 - **Self-signed certificate** - There is a problem with your SSL certificate.
 
 <h3>Q: Can I connect multiple GitHub Enterprise Servers or GitHub Apps to Jira?</h3>
