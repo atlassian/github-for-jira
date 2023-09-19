@@ -42,7 +42,6 @@ if (isNodeProd()) {
 } else {
 	initialize();
 	// Dev/test single process, no need for clustering or lifecycle events
-	// eslint-disable-next-line @typescript-eslint/no-floating-promises
 	start();
 }
 
