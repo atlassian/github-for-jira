@@ -1,5 +1,4 @@
-/** @jsxImportSource @emotion/react */
-
+import React from "react";
 import LoggedinInfo from "../../common/LoggedinInfo";
 import { Wrapper } from "../../common/Wrapper";
 import Step from "../../components/Step";
@@ -25,7 +24,7 @@ const InstallationRequested = () => {
 		<Wrapper>
 			<SyncHeader />
 			<Step title="Request sent">
-				<>
+				<React.Fragment>
 					<div css={paragraphStyle}>
 						Once the owner of this organization has installed Jira, you (or <br />
 						another Jira admin) can come back here and finish the set up.
@@ -37,7 +36,7 @@ const InstallationRequested = () => {
 					>
 						Add another organization
 					</Button>
-				</>
+				</React.Fragment>
 			</Step>
 			<LoggedinInfo
 				username={username}

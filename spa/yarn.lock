@@ -504,6 +504,13 @@
   dependencies:
     "@babel/types" "^7.22.5"
 
+"@babel/helper-module-imports@^7.22.15":
+  version "7.22.15"
+  resolved "https://registry.yarnpkg.com/@babel/helper-module-imports/-/helper-module-imports-7.22.15.tgz#16146307acdc40cc00c3b2c647713076464bdbf0"
+  integrity sha512-0pYVBnDKZO2fnSPCrgM/6WMc7eS20Fbok+0r88fp+YtWVLZrp4CkafFGIp+W0VKw4a22sgebPT99y+FDNMdP4w==
+  dependencies:
+    "@babel/types" "^7.22.15"
+
 "@babel/helper-module-transforms@^7.22.5":
   version "7.22.5"
   resolved "https://packages.atlassian.com/api/npm/npm-remote/@babel/helper-module-transforms/-/helper-module-transforms-7.22.5.tgz#0f65daa0716961b6e96b164034e737f60a80d2ef"
@@ -591,6 +598,11 @@
   version "7.22.5"
   resolved "https://packages.atlassian.com/api/npm/npm-remote/@babel/helper-string-parser/-/helper-string-parser-7.22.5.tgz#533f36457a25814cf1df6488523ad547d784a99f"
   integrity sha512-mM4COjgZox8U+JcXQwPijIZLElkgEpO5rsERVDJTc2qfCDfERyob6k5WegS14SX18IIjv+XD+GrqNumY5JRCDw==
+
+"@babel/helper-validator-identifier@^7.22.19":
+  version "7.22.20"
+  resolved "https://registry.yarnpkg.com/@babel/helper-validator-identifier/-/helper-validator-identifier-7.22.20.tgz#c4ae002c61d2879e724581d96665583dbc1dc0e0"
+  integrity sha512-Y4OZ+ytlatR8AI+8KZfKuL5urKp7qey08ha31L8b3BwewJAoJamTzyvxPR/5D+KkdJCGPq/+8TukHBlY10FX9A==
 
 "@babel/helper-validator-identifier@^7.22.5":
   version "7.22.5"
@@ -813,7 +825,7 @@
   dependencies:
     "@babel/helper-plugin-utils" "^7.8.0"
 
-"@babel/plugin-syntax-jsx@^7.22.5", "@babel/plugin-syntax-jsx@^7.7.2":
+"@babel/plugin-syntax-jsx@^7.17.12", "@babel/plugin-syntax-jsx@^7.22.5", "@babel/plugin-syntax-jsx@^7.7.2":
   version "7.22.5"
   resolved "https://packages.atlassian.com/api/npm/npm-remote/@babel/plugin-syntax-jsx/-/plugin-syntax-jsx-7.22.5.tgz#a6b68e84fb76e759fc3b93e901876ffabbe1d918"
   integrity sha512-gvyP4hZrgrs/wWMaocvxZ44Hw0b3W8Pe+cMxc8V1ULQ07oh8VNbIRaoD1LRZVTvD+0nieDKjfgKg89sD7rrKrg==
@@ -1226,6 +1238,17 @@
   dependencies:
     "@babel/plugin-transform-react-jsx" "^7.22.5"
 
+"@babel/plugin-transform-react-jsx@^7.17.12":
+  version "7.22.15"
+  resolved "https://registry.yarnpkg.com/@babel/plugin-transform-react-jsx/-/plugin-transform-react-jsx-7.22.15.tgz#7e6266d88705d7c49f11c98db8b9464531289cd6"
+  integrity sha512-oKckg2eZFa8771O/5vi7XeTvmM6+O9cxZu+kanTU7tD4sin5nO/G8jGJhq8Hvt2Z0kUoEDRayuZLaUlYl8QuGA==
+  dependencies:
+    "@babel/helper-annotate-as-pure" "^7.22.5"
+    "@babel/helper-module-imports" "^7.22.15"
+    "@babel/helper-plugin-utils" "^7.22.5"
+    "@babel/plugin-syntax-jsx" "^7.22.5"
+    "@babel/types" "^7.22.15"
+
 "@babel/plugin-transform-react-jsx@^7.22.5":
   version "7.22.5"
   resolved "https://packages.atlassian.com/api/npm/npm-remote/@babel/plugin-transform-react-jsx/-/plugin-transform-react-jsx-7.22.5.tgz#932c291eb6dd1153359e2a90cb5e557dcf068416"
@@ -1538,6 +1561,15 @@
     "@babel/helper-validator-identifier" "^7.22.5"
     to-fast-properties "^2.0.0"
 
+"@babel/types@^7.22.15":
+  version "7.22.19"
+  resolved "https://registry.yarnpkg.com/@babel/types/-/types-7.22.19.tgz#7425343253556916e440e662bb221a93ddb75684"
+  integrity sha512-P7LAw/LbojPzkgp5oznjE6tQEIWbp4PkkfrZDINTro9zgBRtI324/EYsiSI7lhPbpIQ+DCeR2NNmMWANGGfZsg==
+  dependencies:
+    "@babel/helper-string-parser" "^7.22.5"
+    "@babel/helper-validator-identifier" "^7.22.19"
+    to-fast-properties "^2.0.0"
+
 "@bcoe/v8-coverage@^0.2.3":
   version "0.2.3"
   resolved "https://packages.atlassian.com/api/npm/npm-remote/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
@@ -1654,6 +1686,13 @@
   resolved "https://packages.atlassian.com/api/npm/npm-remote/@csstools/selector-specificity/-/selector-specificity-2.2.0.tgz#2cbcf822bf3764c9658c4d2e568bd0c0cb748016"
   integrity sha512-+OJ9konv95ClSTOJCmMZqpd5+YGsB2S+x6w3E1oaM8UuR5j8nTNHYSz8c9BEPGDOCMQYIEEGlVPj/VY64iTbGw==
 
+"@emotion/babel-plugin-jsx-pragmatic@^0.2.1":
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/@emotion/babel-plugin-jsx-pragmatic/-/babel-plugin-jsx-pragmatic-0.2.1.tgz#01d3306fde73b60d683f78f3bd9f6b2c919b63b6"
+  integrity sha512-xy1SlgEJygAAIvIuC2idkGKJYa6v5iwoyILkvNKgk347bV+IImXrUat5Z86EmLGyWhEoTplVT9EHqTnHZG4HFw==
+  dependencies:
+    "@babel/plugin-syntax-jsx" "^7.17.12"
+
 "@emotion/babel-plugin@^11.11.0":
   version "11.11.0"
   resolved "https://packages.atlassian.com/api/npm/npm-remote/@emotion/babel-plugin/-/babel-plugin-11.11.0.tgz#c2d872b6a7767a9d176d007f5b31f7d504bb5d6c"
@@ -1670,6 +1709,16 @@
     find-root "^1.1.0"
     source-map "^0.5.7"
     stylis "4.2.0"
+
+"@emotion/babel-preset-css-prop@^11.11.0":
+  version "11.11.0"
+  resolved "https://registry.yarnpkg.com/@emotion/babel-preset-css-prop/-/babel-preset-css-prop-11.11.0.tgz#6a86d3df74f7804af1ae0b37cd8893a9863ddbb7"
+  integrity sha512-+1Cba68IyBeltWzvbBSXcBWqP2eKQuQcSUpIu3ma4pOUeRol4EvwWrYS2Rv51aIVqg066fLB+Z9O/8NKR7uUlQ==
+  dependencies:
+    "@babel/plugin-transform-react-jsx" "^7.17.12"
+    "@babel/runtime" "^7.18.3"
+    "@emotion/babel-plugin" "^11.11.0"
+    "@emotion/babel-plugin-jsx-pragmatic" "^0.2.1"
 
 "@emotion/cache@^11.11.0", "@emotion/cache@^11.4.0":
   version "11.11.0"
@@ -4593,6 +4642,13 @@ csstype@^3.0.2:
   version "3.1.2"
   resolved "https://packages.atlassian.com/api/npm/npm-remote/csstype/-/csstype-3.1.2.tgz#1d4bf9d572f11c14031f0436e1c10bc1f571f50b"
   integrity sha512-I7K1Uu0MBPzaFKg4nI5Q7Vs2t+3gWWW648spaF+Rg7pI9ds18Ugn+lvg4SHczUdKlHI5LWBXyqfS8+DufyBsgQ==
+
+customize-cra@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/customize-cra/-/customize-cra-1.0.0.tgz#73286563631aa08127ad4d30a2e3c89cf4e93c8d"
+  integrity sha512-DbtaLuy59224U+xCiukkxSq8clq++MOtJ1Et7LED1fLszWe88EoblEYFBJ895sB1mC6B4uu3xPT/IjClELhMbA==
+  dependencies:
+    lodash.flow "^3.5.0"
 
 damerau-levenshtein@^1.0.8:
   version "1.0.8"
@@ -7752,6 +7808,11 @@ lodash.debounce@^4.0.8:
   version "4.0.8"
   resolved "https://packages.atlassian.com/api/npm/npm-remote/lodash.debounce/-/lodash.debounce-4.0.8.tgz#82d79bff30a67c4005ffd5e2515300ad9ca4d7af"
   integrity sha512-FT1yDzDYEoYWhnSGnpE/4Kj1fLZkDFyqRb7fNt6FdYOSxlUWAtp42Eh6Wb0rGIv/m9Bgo7x4GhQbm5Ys4SG5ow==
+
+lodash.flow@^3.5.0:
+  version "3.5.0"
+  resolved "https://registry.yarnpkg.com/lodash.flow/-/lodash.flow-3.5.0.tgz#87bf40292b8cf83e4e8ce1a3ae4209e20071675a"
+  integrity sha512-ff3BX/tSioo+XojX4MOsOMhJw0nZoUEF011LX8g8d3gvjVbxd89cCio4BCXronjxcTUIJUoqKEUA+n4CqvvRPw==
 
 lodash.memoize@4.x, lodash.memoize@^4.1.2:
   version "4.1.2"

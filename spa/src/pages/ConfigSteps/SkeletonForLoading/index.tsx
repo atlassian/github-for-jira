@@ -1,4 +1,4 @@
-/** @jsxImportSource @emotion/react */
+import React from "react";
 import Step from "../../../components/Step";
 import Skeleton from "@atlaskit/skeleton";
 import { css } from "@emotion/react";
@@ -10,7 +10,7 @@ const contentStyle = css`
 	margin: 0 auto;
 `;
 
-const SkeletonForLoading = () => <>
+const SkeletonForLoading = () => <React.Fragment>
 	<Step
 		title={<Skeleton
 			width="60%"
@@ -34,6 +34,6 @@ const SkeletonForLoading = () => <>
 			isShimmering
 		/>
 	</div>
-</>;
+</React.Fragment>;
 
 export default SkeletonForLoading;

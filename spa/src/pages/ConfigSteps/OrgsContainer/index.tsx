@@ -1,4 +1,4 @@
-/** @jsxImportSource @emotion/react */
+import React from "react";
 import Button, { LoadingButton } from "@atlaskit/button";
 import { GitHubInstallationType } from "../../../../../src/rest-interfaces";
 import { css } from "@emotion/react";
@@ -90,7 +90,7 @@ const OrganizationsList = ({
 				return (
 					<div key={org.id} css={orgDivStyles}>
 						{canConnect(org) ? (
-							<>
+							<React.Fragment>
 								<span css={orgNameStyle}>{org.account.login}</span>
 								{loaderForOrgClicked && clickedOrg?.id === org.id ? (
 									<LoadingButton style={{ width: 80 }} isLoading>
@@ -115,9 +115,9 @@ const OrganizationsList = ({
 										Connect
 									</Button>
 								)}
-							</>
+							</React.Fragment>
 						) : (
-							<>
+							<React.Fragment>
 								<div>
 									<span css={orgNameStyle}>{org.account.login}</span>
 									<div>{errorMessage(org)}</div>
@@ -129,7 +129,7 @@ const OrganizationsList = ({
 										size="medium"
 									/>
 								</div>
-							</>
+							</React.Fragment>
 						)}
 					</div>
 				);

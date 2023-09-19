@@ -1,4 +1,4 @@
-/** @jsxImportSource @emotion/react */
+import React from "react";
 import { css } from "@emotion/react";
 import { token } from "@atlaskit/tokens";
 import Button from "@atlaskit/button";
@@ -18,7 +18,7 @@ const linkStyle = css`
 /************************************************************************
  * UI view for the 3 known errors
  ************************************************************************/
-export const ErrorForSSO = ({ orgName, accessUrl, resetCallback }: { orgName?: string; accessUrl: string; resetCallback: () => void;}) => <>
+export const ErrorForSSO = ({ orgName, accessUrl, resetCallback }: { orgName?: string; accessUrl: string; resetCallback: () => void;}) => <React.Fragment>
 	<div css={paragraphStyle}>
 		Can't connect, single sign-on(SSO) required{orgName && <span> for <b>{orgName}</b></span>}.
 	</div>
@@ -28,7 +28,7 @@ export const ErrorForSSO = ({ orgName, accessUrl, resetCallback }: { orgName?: s
 	<div css={paragraphStyle}>
 		2. <a css={linkStyle} onClick={resetCallback}>Retry connection in Jira</a> (once logged in).
 	</div>
-</>;
+</React.Fragment>;
 
 export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl }: { orgName?: string; adminOrgsUrl: string; }) => <div css={paragraphStyle}>
 	Can't connect, you're not the organization owner{orgName && <span> of <b>{orgName}</b></span>}.<br />
@@ -39,7 +39,7 @@ export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl }: { orgName?: string;
 	}}>organization owner</a> to complete this step.
 </div>;
 
-export const ErrorForIPBlocked = ({ orgName, resetCallback }: { orgName?: string; resetCallback: () => void }) => <>
+export const ErrorForIPBlocked = ({ orgName, resetCallback }: { orgName?: string; resetCallback: () => void }) => <React.Fragment>
 	<div css={paragraphStyle}>
 		Can't connect{orgName && <span> to <b>{orgName}</b></span>}, blocked by your IP allow list.
 	</div>
@@ -52,4 +52,4 @@ export const ErrorForIPBlocked = ({ orgName, resetCallback }: { orgName?: string
 	</Button>
 	<span css={bulletSeparatorStyle}>&#8226;</span>
 	<a css={linkStyle} onClick={resetCallback}>Retry</a>
-</>;
+</React.Fragment>;

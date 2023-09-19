@@ -1,4 +1,4 @@
-/** @jsxImportSource @emotion/react */
+ 
 import { ReactNode } from "react";
 import { css } from "@emotion/react";
 import Button from "@atlaskit/button";

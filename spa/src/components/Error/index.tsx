@@ -1,4 +1,4 @@
-/** @jsxImportSource @emotion/react */
+import React from "react";
 import { css } from "@emotion/react";
 import { token } from "@atlaskit/tokens";
 import WarningIcon from "@atlaskit/icon/glyph/warning";

@@ -1,5 +1,4 @@
-/** @jsxImportSource @emotion/react */
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Button, { LoadingButton } from "@atlaskit/button";
 import AddIcon from "@atlaskit/icon/glyph/editor/add";
 import styled from "@emotion/styled";
@@ -338,11 +337,11 @@ const ConfigSteps = () => {
 			}
 			<div css={configContainerStyle}>
 				{
-					isLoggedIn ? <>
+					isLoggedIn ? <React.Fragment>
 						{
-							loaderForOrgFetching ? <SkeletonForLoading /> : <>
+							loaderForOrgFetching ? <SkeletonForLoading /> : <React.Fragment>
 									<Step title="Select a GitHub organization">
-												<>
+												<React.Fragment>
 													<div css={paragraphStyle}>
 														This organization's repositories will be available to all projects<br />
 														in <b>{hostUrl?.jiraHost}</b>.
@@ -364,17 +363,17 @@ const ConfigSteps = () => {
 															{ organizations.length === 0 ? "Select an organization in GitHub" : "Select another organization" }
 														</div>
 													</div>
-												</>
+												</React.Fragment>
 											</Step>
 									<LoggedinInfo
 										username={loggedInUser || ""}
 										logout={clearLogin}
 									/>
-								</>
+								</React.Fragment>
 						}
-					</>
+					</React.Fragment>
 					: <Step title="Select your GitHub product">
-						<>
+						<React.Fragment>
 							<div css={gitHubOptionContainerStyle}>
 									<div
 										css={selectedOption === 1 ? [gitHubOptionStyle, gitHubSelectedOptionStyle]: [gitHubOptionStyle]}
@@ -416,7 +415,7 @@ const ConfigSteps = () => {
 											Next
 										</Button>
 								}
-							</>
+							</React.Fragment>
 					</Step>
 				}
 			</div>

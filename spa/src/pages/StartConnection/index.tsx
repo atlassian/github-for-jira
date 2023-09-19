@@ -1,4 +1,4 @@
-/** @jsxImportSource @emotion/react */
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "@atlaskit/button";
 import ArrowRightIcon from "@atlaskit/icon/glyph/arrow-right";
@@ -59,7 +59,7 @@ const InlineDialog = styled(TooltipPrimitive)`
 const GITHUB_CLOUD_ORG_SETTINGS_URL = "https://github.com/settings/organizations";
 
 const InlineDialogContent = () => (
-	<>
+	<React.Fragment>
 		<div css={inlineDialogDivStyle}>To check your GitHub permissions:</div>
 		<ol>
 			<li>Go to <a href={GITHUB_CLOUD_ORG_SETTINGS_URL} target="_blank">manage organizations</a></li>
@@ -68,7 +68,7 @@ const InlineDialogContent = () => (
 		<div css={inlineDialogImgContainerStyle}>
 			<img src="/public/assets/github-skeleton.svg" alt=""/>
 		</div>
-	</>
+	</React.Fragment>
 );
 
 const getAnalyticsSourceFrom = (): string => {
