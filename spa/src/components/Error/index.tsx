@@ -35,7 +35,7 @@ const Error = ({
 	type: ErrorType,
 	message: React.JSX.Element | string
 }) => {
-	const errorWrapperStyles =  [errorWrapperStyle, type === "warning" && errorWrapperWithWarningStyle];
+	const errorWrapperStyles = type === "warning" ? [errorWrapperStyle, errorWrapperWithWarningStyle] : [errorWrapperStyle];
 	return (
 		<div css={errorWrapperStyles}>
 			{
