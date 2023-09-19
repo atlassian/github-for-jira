@@ -78,6 +78,7 @@ export type pullRequestNode = {
 	title: string;
 	body: string;
 	url: string;
+	draft: boolean;
 	headRefName: string; // is defined even if the ref was deleted
 	baseRefName: string; // is defined even if the ref was deleted
 	headRef?: {
