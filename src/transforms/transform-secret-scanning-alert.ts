@@ -22,7 +22,8 @@ export const transformSecretScanningAlert = async (
 			id: `s-${transformRepositoryId(repository.id, githubClientConfig.baseUrl)}-${alert.number}`,
 			updateSequenceNumber: Date.now(),
 			containerId: transformRepositoryId(repository.id, githubClientConfig.baseUrl),
-			displayName: alert.secret_type_display_name || `${alert.secret_type} secret exposed`,
+			// display name cannot exceed 255 characters
+			displayName: truncate(alert.secret_type_display_name || `${alert.secret_type} secret exposed`, { length: 254 }),
 			description: getSecretScanningVulnDescription(alert, logger),
 			url: alert.html_url,
 			type: "sast",

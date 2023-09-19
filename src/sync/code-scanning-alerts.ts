@@ -13,6 +13,7 @@ import {
 	transformGitHubStateToJiraStatus
 } from "~/src/transforms/util/github-security-alerts";
 import { getCodeScanningVulnDescription } from "../transforms/transform-code-scanning-alert";
+import { truncate } from "lodash";
 
 export const getCodeScanningAlertTask = async (
 	parentLogger: Logger,
@@ -99,7 +100,8 @@ const transformCodeScanningAlert = async (
 			id: `c-${transformRepositoryId(repository.id, gitHubClientConfig.baseUrl)}-${alert.number}`,
 			updateSequenceNumber: Date.now(),
 			containerId: transformRepositoryId(repository.id, gitHubClientConfig.baseUrl),
-			displayName: alert.rule.description || alert.rule.name,
+			// display name cannot exceed 255 characters
+			displayName: truncate(alert.rule.description || alert.rule.name, { length: 254 }),
 			description: getCodeScanningVulnDescription(alert, identifiers, alertInstances, logger),
 			url: alert.html_url,
 			type: "sast",

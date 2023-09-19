@@ -12,6 +12,7 @@ import {
 	transformGitHubSeverityToJiraSeverity,
 	transformGitHubStateToJiraStatus
 } from "~/src/transforms/util/github-security-alerts";
+import { truncate } from "lodash";
 
 export const getDependabotAlertTask = async (
 	parentLogger: Logger,
@@ -96,7 +97,8 @@ const transformDependabotAlerts = async (
 			id: `d-${transformRepositoryId(repository.id, gitHubClientConfig.baseUrl)}-${alert.number}`,
 			updateSequenceNumber: Date.now(),
 			containerId: transformRepositoryId(repository.id, gitHubClientConfig.baseUrl),
-			displayName: alert.security_advisory.summary,
+			// display name cannot exceed 255 characters
+			displayName: truncate(alert.security_advisory.summary, { length: 254 }),
 			description: getDependabotScanningVulnDescription(alert, identifiers,logger),
 			url: alert.html_url,
 			type: "sca",

@@ -8,6 +8,7 @@ import { JiraVulnerabilityBulkSubmitData, JiraVulnerabilitySeverityEnum } from "
 import { PageSizeAwareCounterCursor } from "./page-counter-cursor";
 import { SecretScanningAlertResponseItem, SortDirection } from "../github/client/github-client.types";
 import { getSecretScanningVulnDescription, transformGitHubStateToJiraStatus } from "../transforms/transform-secret-scanning-alert";
+import { truncate } from "lodash";
 
 export const getSecretScanningAlertTask = async (
 	parentLogger: Logger,
@@ -88,7 +89,8 @@ const transformSecretScanningAlert = async (
 			id: `s-${transformRepositoryId(repository.id, gitHubClientConfig.baseUrl)}-${alert.number}`,
 			updateSequenceNumber: Date.now(),
 			containerId: transformRepositoryId(repository.id, gitHubClientConfig.baseUrl),
-			displayName: alert.secret_type_display_name || `${alert.secret_type} secret exposed`,
+			// display name cannot exceed 255 characters
+			displayName: truncate(alert.secret_type_display_name || `${alert.secret_type} secret exposed`,{ length: 254 }),
 			description: getSecretScanningVulnDescription(alert, logger),
 			url: alert.html_url,
 			type: "sast",
