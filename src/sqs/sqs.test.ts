@@ -1,4 +1,3 @@
-/* eslint-disable jest/no-done-callback,@typescript-eslint/no-explicit-any */
 import { SqsQueue } from "./sqs";
 import { v4 as uuidv4 } from "uuid";
 import { waitUntil } from "test/utils/wait-until";
@@ -18,7 +17,6 @@ const delay = (time: number) => new Promise(resolve => setTimeout(resolve, time)
 
 const mockSendMessagePromise = () => (Promise.resolve({
 	MessageId: "123",
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	$response: undefined as unknown as Response<SendMessageResult, AWSError>
 }));
 

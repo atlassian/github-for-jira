@@ -101,9 +101,7 @@ describe("backfillErrorHandler", () => {
 		({
 			receiveCount, lastAttempt, log: getLogger("test"), message: {}, payload: {
 				jiraHost,
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-ignore
-				installationId: subscription?.gitHubInstallationId
+				installationId: subscription?.gitHubInstallationId || 0
 			}
 		});
 
@@ -192,12 +190,11 @@ describe("backfillErrorHandler", () => {
 		expect(result).toEqual({
 			isFailure: false
 		});
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		expect(sendMessageMock.mock.calls[0][0]).toEqual(
+		const mockMessage = sendMessageMock.mock.calls[0] as any[];
+		expect(mockMessage[0]).toEqual(
 			{ installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost }
 		);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		expect(sendMessageMock.mock.calls[0][1]).toEqual(0);
+		expect(mockMessage[1]).toEqual(0);
 		expect((await RepoSyncState.findByPk(repoSyncState!.id))?.commitStatus).toEqual("failed");
 	});
 
@@ -210,12 +207,11 @@ describe("backfillErrorHandler", () => {
 		expect(result).toEqual({
 			isFailure: false
 		});
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		expect(sendMessageMock.mock.calls[0][0]).toEqual(
+		const mockMessage = sendMessageMock.mock.calls[0] as any[];
+		expect(mockMessage[0]).toEqual(
 			{ installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost }
 		);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		expect(sendMessageMock.mock.calls[0][1]).toEqual(0);
+		expect(mockMessage[1]).toEqual(0);
 		expect((await RepoSyncState.findByPk(repoSyncState!.id))?.commitStatus).toEqual("failed");
 		expect((await Subscription.findByPk(repoSyncState!.subscriptionId))?.syncWarning).toEqual("Invalid permissions for commit task");
 	});
@@ -261,12 +257,11 @@ describe("backfillErrorHandler", () => {
 		expect(result).toEqual({
 			isFailure: false
 		});
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		expect(sendMessageMock.mock.calls[0][0]).toEqual(
+		const mockMessage = sendMessageMock.mock.calls[0] as any[];
+		expect(mockMessage[0]).toEqual(
 			{ installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost }
 		);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		expect(sendMessageMock.mock.calls[0][1]).toEqual(0);
+		expect(mockMessage[1]).toEqual(0);
 		expect((await RepoSyncState.findByPk(repoSyncState!.id))?.commitStatus).toEqual("complete");
 	});
 });

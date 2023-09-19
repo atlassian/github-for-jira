@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { waitUntil } from "test/utils/wait-until";
@@ -111,10 +110,10 @@ describe("Branch Webhook", () => {
 
 			await expect(app.receive(branchBasic)).toResolve();
 
-			// eslint-disable-next-line @typescript-eslint/require-await
-			await waitUntil(async () => {
+			await waitUntil(() => {
 				expect(githubNock).toBeDone();
 				expect(jiraNock).toBeDone();
+				return Promise.resolve();
 			});
 		});
 
@@ -124,10 +123,10 @@ describe("Branch Webhook", () => {
 			await expect(app.receive(branchNoIssues)).toResolve();
 			expect(getLastCommit).not.toBeCalled();
 
-			// eslint-disable-next-line @typescript-eslint/require-await
-			await waitUntil(async () => {
+			await waitUntil(() => {
 				expect(githubNock).toBeDone();
 				expect(jiraNock).toBeDone();
+				return Promise.resolve();
 			});
 		});
 
@@ -137,10 +136,10 @@ describe("Branch Webhook", () => {
 			await expect(app.receive(branchInvalidRef)).toResolve();
 			expect(parseSmartCommit).not.toBeCalled();
 
-			// eslint-disable-next-line @typescript-eslint/require-await
-			await waitUntil(async () => {
+			await waitUntil(() => {
 				expect(githubNock).toBeDone();
 				expect(jiraNock).toBeDone();
+				return Promise.resolve();
 			});
 		});
 	});
@@ -158,10 +157,10 @@ describe("Branch Webhook", () => {
 
 			await expect(app.receive(branchDelete)).toResolve();
 
-			// eslint-disable-next-line @typescript-eslint/require-await
-			await waitUntil(async () => {
+			await waitUntil(() => {
 				expect(githubNock).toBeDone();
 				expect(jiraNock).toBeDone();
+				return Promise.resolve();
 			});
 		});
 	});

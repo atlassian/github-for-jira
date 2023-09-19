@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { waitUntil } from "test/utils/wait-until";
@@ -204,10 +203,10 @@ describe("Deployment Webhook", () => {
 
 			await expect(app.receive(deploymentStatusBasic)).toResolve();
 
-			// eslint-disable-next-line @typescript-eslint/require-await
-			await waitUntil(async () => {
+			await waitUntil(() => {
 				expect(githubNock).toBeDone();
 				expect(jiraNock).toBeDone();
+				return Promise.resolve();
 			});
 		});
 	});
