@@ -36,6 +36,10 @@ export const listenToMicrosLifecycle = (active: Callback, inactive: Callback): v
 				}
 				try {
 					const lifecycleData: LifecycleData = JSON.parse(data.Body) as LifecycleData;
+					if (lifecycleData.Type === undefined || lifecycleData.Subject === undefined || lifecycleData.Message === undefined) {
+						logger.error({ data }, "Lifecycle event missing required data, skipping.");
+						return;
+					}
 
 					// Only continue if it's a micros lifecycle events as there are
 					// other internal events on this queue
@@ -67,9 +71,9 @@ type Callback = (data: LifecycleMessageData) => void;
 // We're interested in type "Notification" and Subject "Micros Lifecycle Notification"
 // There are also messages on this queue used internally
 interface LifecycleData {
-	Type?: string;
-	Subject?: string;
-	Message?: string;
+	Type: string;
+	Subject: string;
+	Message: string;
 }
 
 interface LifecycleMessageData {
