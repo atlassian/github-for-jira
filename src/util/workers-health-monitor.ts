@@ -173,6 +173,12 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 	// crash, that would put the whole node under risk,
 	let workerToReportOnCrashPid: number | undefined;
 	const maybeChargeWorkerToGenerateHeapdumpOnCrash = () => {
+		logger.info({
+			areWorkersReady: areWorkersReady(),
+			workerToReportOnCrashPid,
+			registeredWorkers,
+			registeredWorkersLength: Object.keys(registeredWorkers).length
+		}, "wtf");
 		if (areWorkersReady() && !workerToReportOnCrashPid && Object.keys(registeredWorkers).length > 0) {
 			const pids = Object.keys(registeredWorkers);
 			workerToReportOnCrashPid = parseInt(pids[Math.floor(Math.random() * pids.length)]);
