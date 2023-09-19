@@ -84,9 +84,7 @@ const OrganizationsList = ({
 		<div css={orgsWrapperStyle}>
 			{organizations.map((org) => {
 				const hasError = !canConnect(org);
-				const orgDivStyles = hasError
-					? [orgDivStyle, orgDivWithErrorStyle]
-					: [orgDivStyle];
+				const orgDivStyles = [orgDivStyle, hasError && orgDivWithErrorStyle];
 				return (
 					<div key={org.id} css={orgDivStyles}>
 						{canConnect(org) ? (
