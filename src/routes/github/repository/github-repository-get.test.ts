@@ -76,7 +76,7 @@ describe("GitHub Repository Search", () => {
 
 			const owner = { login: "myOrgName" };
 
-			nockSearchRepos200(`${randomString} org:myOrgName in:full_name`, {
+			nockSearchRepos200(`${randomString} org:myOrgName in:full_name fork:true`, {
 				items: [{ owner, full_name: "first", id: 1 }, { owner, full_name: "second", id: 22 }, { owner, full_name: "second", id: 333 }]
 			});
 
@@ -105,7 +105,7 @@ describe("GitHub Repository Search", () => {
 				.post(`/app/installations/${subscription.gitHubInstallationId}/access_tokens`)
 				.reply(200);
 
-			nockSearchRepos200(`${randomString} org:myOrgName in:full_name`, {
+			nockSearchRepos200(`${randomString} org:myOrgName in:full_name fork:true`, {
 				items: [{ full_name: "forth", id: 4444 }]
 			});
 
@@ -148,7 +148,7 @@ describe("GitHub Repository Search", () => {
 
 			const owner = { login: "myOrgName" };
 
-			nockSearchRepos200(`${randomString} org:myOrgName in:full_name`, {
+			nockSearchRepos200(`${randomString} org:myOrgName in:full_name fork:true`, {
 				items: [{ owner, full_name: "first", id: 1 }, { owner, full_name: "second", id: 22 }, { owner, full_name: "third", id: 333 }]
 			});
 
