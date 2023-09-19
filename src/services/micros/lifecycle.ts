@@ -27,7 +27,8 @@ export const listenToMicrosLifecycle = (active: Callback, inactive: Callback): v
 		client = Consumer.create({
 			queueUrl: envVars.SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL,
 			region: envVars.SNS_NOTIFICATION_LIFECYCLE_QUEUE_REGION,
-			handleMessage: (data: SQSMessage) => {
+			// eslint-disable-next-line @typescript-eslint/require-await
+			handleMessage: async (data: SQSMessage) => {
 				logger.debug(data, "Received Micros event");
 				if (!data.Body) { // Just making sure SQS message has data
 					logger.debug("Lifecycle event missing body, skipping.");
