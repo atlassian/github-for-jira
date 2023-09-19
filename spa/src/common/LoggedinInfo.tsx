@@ -11,6 +11,9 @@ const loggedInContentStyle = css`
 	justify-content: center;
 	margin: 0 auto;
 `;
+const buttonStyle = css`
+	padding-left: 0;
+`;
 
 const LoggedinInfo = ({ username, logout }: { username: string; logout: () => void;}) => {
 	const clicked = () => {
@@ -28,7 +31,7 @@ const LoggedinInfo = ({ username, logout }: { username: string; logout: () => vo
 			<div data-testid="logged-in-as">
 				Logged in as <b>{username}</b>.&nbsp;
 			</div>
-			<Button style={{ paddingLeft: 0 }} appearance="link" onClick={clicked}>
+			<Button css={buttonStyle} appearance="link" onClick={clicked}>
 				Change GitHub login
 			</Button>
 		</div>

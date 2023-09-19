@@ -47,6 +47,13 @@ const sectionImgStyle = css`
 	height: 100px;
 `;
 
+const buttonStyle = css`
+	padding-left: 0;
+	height: 14px;
+	line-height: 14px;
+	display: inline-flex;
+`;
+
 const Connected = () => {
 	useEffectScreenEvent("SuccessfulConnectedScreen");
 
@@ -142,12 +149,7 @@ const Connected = () => {
 					<br />
 					have).
 					<Button
-						style={{
-							paddingLeft: 0,
-							height: 14,
-							lineHeight: "14px",
-							display: "inline-flex",
-						}}
+						css={buttonStyle}
 						appearance="link"
 						onClick={navigateToBackfillPage}
 					>

@@ -6,7 +6,7 @@ import CrossIcon from "@atlaskit/icon/glyph/cross";
 import analyticsClient from "../analytics";
 
 const navHeight = 56;
-const wrapperOutterStyle = css`
+const outerWrapperStyle = css`
 	padding: 20px 40px 0px 40px;
 `;
 const wrapperCenterStyle = css`
@@ -28,13 +28,13 @@ const navigateToHomePage = () => {
 
 export const Wrapper = (attr: { children?: ReactNode | undefined }) => {
 	return (
-		<div css={wrapperOutterStyle}>
+		<div css={outerWrapperStyle}>
 			<Button
 				style={{ float: "right" }}
 				iconBefore={<CrossIcon label="Close" size="medium" />}
 				appearance="subtle"
 				onClick={navigateToHomePage}
-			></Button>
+			/>
 			<div css={wrapperCenterStyle}>{attr.children}</div>
 		</div>
 	);
