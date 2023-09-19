@@ -145,7 +145,7 @@ export const transformPullRequestRest = async (
 	// Need to get full name from a REST call as `pullRequest.user.login` doesn't have it
 	const author = getJiraAuthor(user, await getGithubUser(gitHubInstallationClient, user?.login));
 	const reviewers = await mapReviewsRest(reviews, gitHubInstallationClient);
-	const status = await mapStatus(state, draft, isDraftPrFfOn, merged_at);
+	const status = mapStatus(state, draft, isDraftPrFfOn, merged_at);
 
 	return {
 		...transformRepositoryDevInfoBulk(base.repo, gitHubInstallationClient.baseUrl),
@@ -179,7 +179,7 @@ export const transformPullRequestRest = async (
 const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, issueKeys: string[]) => {
 	const isDraftPrFfOn = await booleanFlag(BooleanFlags.INNO_DRAFT_PR);
 
-	if (await mapStatus(pullRequest.state, pullRequest.draft, isDraftPrFfOn, pullRequest.merged_at) === "MERGED") {
+	if (mapStatus(pullRequest.state, pullRequest.draft, isDraftPrFfOn, pullRequest.merged_at) === "MERGED") {
 		return [];
 	}
 
