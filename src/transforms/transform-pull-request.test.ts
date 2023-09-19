@@ -8,11 +8,10 @@ import multipleReviewersWithMultipleReviews
 import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 import { getInstallationId } from "~/src/github/client/installation-id";
 import { getLogger } from "config/logger";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, shouldSendAll } from "config/feature-flags";
 import _, { cloneDeep } from "lodash";
 import { createLogger } from "bunyan";
 import { when } from "jest-when";
-import { shouldSendAll } from "config/feature-flags";
 
 jest.mock("config/feature-flags");
 describe("pull_request transform REST", () => {
@@ -747,7 +746,9 @@ describe("pull_request transform GraphQL", () => {
 
 		const { updatedAt } = payload;
 
-		const data = transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger);
+		const isDraftPrFFOn = true;
+
+		const data = transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger, isDraftPrFFOn);
 
 		expect(data).toMatchObject({
 			author: {
@@ -787,7 +788,9 @@ describe("pull_request transform GraphQL", () => {
 
 		const { updatedAt } = payload;
 
-		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger);
+		const isDraftPrFFOn = true;
+
+		const data = transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger, isDraftPrFFOn);
 
 		expect(data).toStrictEqual({
 			author: {
@@ -829,7 +832,9 @@ describe("pull_request transform GraphQL", () => {
 
 		const { updatedAt } = payload;
 
-		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger);
+		const isDraftPrFFOn = true;
+
+		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger, isDraftPrFFOn);
 
 		expect(data).toStrictEqual({
 			author: {
@@ -869,7 +874,9 @@ describe("pull_request transform GraphQL", () => {
 		const payload = { ...createPullPayload(title), author: {} };
 		payload.reviews = createReview("APPROVED", "cool-email@emails.com");
 
-		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger);
+		const isDraftPrFFOn = true;
+
+		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger, isDraftPrFFOn);
 		const { updatedAt } = payload;
 
 		expect(data).toMatchObject({
@@ -908,7 +915,9 @@ describe("pull_request transform GraphQL", () => {
 		const payload = { ...createPullPayload(title), author: {} };
 		payload.reviews = createMultipleReviews();
 
-		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger);
+		const isDraftPrFFOn = true;
+
+		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger, isDraftPrFFOn);
 
 		expect({ firstReviewStatus: data?.reviewers[0] }).toEqual(expect.objectContaining({
 			firstReviewStatus: expect.objectContaining({
