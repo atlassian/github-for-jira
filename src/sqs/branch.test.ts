@@ -31,7 +31,7 @@ describe("Branch Webhook", () => {
 			jiraHost,
 			jiraClientKey: clientKey
 		});
-		await sqsQueues.branch.start();
+		sqsQueues.branch.start();
 	});
 
 	afterEach(async () => {
@@ -109,8 +109,9 @@ describe("Branch Webhook", () => {
 
 			mockSystemTime(12345678);
 
-			await expect(app.receive(branchBasic as any)).toResolve();
+			await expect(app.receive(branchBasic)).toResolve();
 
+			// eslint-disable-next-line @typescript-eslint/require-await
 			await waitUntil(async () => {
 				expect(githubNock).toBeDone();
 				expect(jiraNock).toBeDone();
@@ -120,9 +121,10 @@ describe("Branch Webhook", () => {
 		it("should not update Jira issue if there are no issue Keys in the branch name", async () => {
 			const getLastCommit = jest.fn();
 
-			await expect(app.receive(branchNoIssues as any)).toResolve();
+			await expect(app.receive(branchNoIssues)).toResolve();
 			expect(getLastCommit).not.toBeCalled();
 
+			// eslint-disable-next-line @typescript-eslint/require-await
 			await waitUntil(async () => {
 				expect(githubNock).toBeDone();
 				expect(jiraNock).toBeDone();
@@ -132,9 +134,10 @@ describe("Branch Webhook", () => {
 		it("should exit early if ref_type is not a branch", async () => {
 			const parseSmartCommit = jest.fn();
 
-			await expect(app.receive(branchInvalidRef as any)).toResolve();
+			await expect(app.receive(branchInvalidRef)).toResolve();
 			expect(parseSmartCommit).not.toBeCalled();
 
+			// eslint-disable-next-line @typescript-eslint/require-await
 			await waitUntil(async () => {
 				expect(githubNock).toBeDone();
 				expect(jiraNock).toBeDone();
@@ -153,8 +156,9 @@ describe("Branch Webhook", () => {
 
 			mockSystemTime(12345678);
 
-			await expect(app.receive(branchDelete as any)).toResolve();
+			await expect(app.receive(branchDelete)).toResolve();
 
+			// eslint-disable-next-line @typescript-eslint/require-await
 			await waitUntil(async () => {
 				expect(githubNock).toBeDone();
 				expect(jiraNock).toBeDone();

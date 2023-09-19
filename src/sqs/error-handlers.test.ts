@@ -20,6 +20,7 @@ describe("error-handlers", () => {
 
 	afterEach(() => {
 		// Unlock Time
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 		statsdIncrementSpy.mockRestore();
 		jest.useRealTimers();
 	});
@@ -142,7 +143,7 @@ describe("error-handlers", () => {
 		it("Doesn't sent metric for a non-error case when not retryable", async () => {
 
 			const mockedResponse: ErrorHandlingResult = { retryable: false, isFailure: false };
-			const handlerUnderTest = webhookMetricWrapper(async () => mockedResponse, "test");
+			const handlerUnderTest = webhookMetricWrapper(() => Promise.resolve(mockedResponse), "test");
 
 			const result = await handlerUnderTest(new Error(), createContext(1, false));
 			expect(result).toBe(mockedResponse);
@@ -152,7 +153,7 @@ describe("error-handlers", () => {
 		it("Doesn't sent metric for a non-error case when lastAttempt", async () => {
 
 			const mockedResponse: ErrorHandlingResult = { retryable: true, isFailure: false };
-			const handlerUnderTest = webhookMetricWrapper(async () => mockedResponse, "test");
+			const handlerUnderTest = webhookMetricWrapper(() => Promise.resolve(mockedResponse), "test");
 
 			const result = await handlerUnderTest(new Error(), createContext(3, true));
 			expect(result).toBe(mockedResponse);
@@ -162,7 +163,7 @@ describe("error-handlers", () => {
 		it("Doesn't sent metric for an error when retryable but not last attempt", async () => {
 
 			const mockedResponse: ErrorHandlingResult = { retryable: true, isFailure: true };
-			const handlerUnderTest = webhookMetricWrapper(async () => mockedResponse, "test");
+			const handlerUnderTest = webhookMetricWrapper(() => Promise.resolve(mockedResponse), "test");
 
 			const result = await handlerUnderTest(new Error(), createContext(2, false));
 			expect(result).toBe(mockedResponse);
@@ -172,7 +173,7 @@ describe("error-handlers", () => {
 		it("Sends metric for an error case when not retryable", async () => {
 
 			const mockedResponse: ErrorHandlingResult = { retryable: false, isFailure: true };
-			const handlerUnderTest = webhookMetricWrapper(async () => mockedResponse, "test");
+			const handlerUnderTest = webhookMetricWrapper(() => Promise.resolve(mockedResponse), "test");
 
 			const result = await handlerUnderTest(new Error(), createContext(1, false));
 			expect(result).toBe(mockedResponse);
@@ -182,7 +183,7 @@ describe("error-handlers", () => {
 		it("Sends metric for a non-error case when lastAttempt", async () => {
 
 			const mockedResponse: ErrorHandlingResult = { retryable: true, isFailure: true };
-			const handlerUnderTest = webhookMetricWrapper(async () => mockedResponse, "test");
+			const handlerUnderTest = webhookMetricWrapper(() => Promise.resolve(mockedResponse), "test");
 
 			const result = await handlerUnderTest(new Error(), createContext(3, true));
 			expect(result).toBe(mockedResponse);

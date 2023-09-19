@@ -32,8 +32,8 @@ const mockGitHubRateLimit = (limit: number, remaining: number, resetTime: number
 const mockRatelimitThreshold = (threshold: number) => {
 	when(numberFlag).calledWith(
 		NumberFlags.PREEMPTIVE_RATE_LIMIT_THRESHOLD,
-		expect.anything(),
-		expect.anything()
+		100,
+		jiraHost
 	).mockResolvedValue(threshold);
 };
 
@@ -202,8 +202,9 @@ describe("Deployment Webhook", () => {
 				operationType: "NORMAL"
 			}).reply(200);
 
-			await expect(app.receive(deploymentStatusBasic as any)).toResolve();
+			await expect(app.receive(deploymentStatusBasic)).toResolve();
 
+			// eslint-disable-next-line @typescript-eslint/require-await
 			await waitUntil(async () => {
 				expect(githubNock).toBeDone();
 				expect(jiraNock).toBeDone();

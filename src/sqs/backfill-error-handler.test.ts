@@ -65,8 +65,8 @@ describe("backfillErrorHandler", () => {
 		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
 		try {
 			await client.getPage(1000);
-		} catch (err) {
-			return err;
+		} catch (err: unknown) {
+			return err as GithubClientRateLimitingError;
 		}
 		return undefined;
 	};
@@ -78,8 +78,8 @@ describe("backfillErrorHandler", () => {
 		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
 		try {
 			await client.getPage(1000);
-		} catch (err) {
-			return err;
+		} catch (err: unknown) {
+			return err as GithubClientError;
 		}
 		return undefined;
 	};
@@ -91,8 +91,8 @@ describe("backfillErrorHandler", () => {
 
 		try {
 			await client?.appPropertiesGet();
-		} catch (ex) {
-			return ex;
+		} catch (ex: unknown) {
+			return ex as JiraClientError;
 		}
 		return undefined;
 	};
@@ -147,8 +147,8 @@ describe("backfillErrorHandler", () => {
 				database: "your_database"
 			});
 			await sequelize.authenticate();
-		} catch (err) {
-			sequelizeConnectionError = err;
+		} catch (err: unknown) {
+			sequelizeConnectionError = err as Error;
 		}
 
 		const result = await backfillErrorHandler(jest.fn())(new TaskError(task, sequelizeConnectionError), createContext(2, false));
@@ -192,9 +192,11 @@ describe("backfillErrorHandler", () => {
 		expect(result).toEqual({
 			isFailure: false
 		});
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		expect(sendMessageMock.mock.calls[0][0]).toEqual(
 			{ installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost }
 		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		expect(sendMessageMock.mock.calls[0][1]).toEqual(0);
 		expect((await RepoSyncState.findByPk(repoSyncState!.id))?.commitStatus).toEqual("failed");
 	});
@@ -208,9 +210,11 @@ describe("backfillErrorHandler", () => {
 		expect(result).toEqual({
 			isFailure: false
 		});
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		expect(sendMessageMock.mock.calls[0][0]).toEqual(
 			{ installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost }
 		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		expect(sendMessageMock.mock.calls[0][1]).toEqual(0);
 		expect((await RepoSyncState.findByPk(repoSyncState!.id))?.commitStatus).toEqual("failed");
 		expect((await Subscription.findByPk(repoSyncState!.subscriptionId))?.syncWarning).toEqual("Invalid permissions for commit task");
@@ -257,9 +261,11 @@ describe("backfillErrorHandler", () => {
 		expect(result).toEqual({
 			isFailure: false
 		});
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		expect(sendMessageMock.mock.calls[0][0]).toEqual(
 			{ installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost }
 		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		expect(sendMessageMock.mock.calls[0][1]).toEqual(0);
 		expect((await RepoSyncState.findByPk(repoSyncState!.id))?.commitStatus).toEqual("complete");
 	});
