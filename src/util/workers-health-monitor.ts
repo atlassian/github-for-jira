@@ -127,17 +127,27 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 						liveWorkers[workerPid] = Date.now();
 					});
 					worker.on("exit", (code, signal) => {
+						glob("/tmp/*", (err: Error, tmpFiles: Array<string>) => {
+							if (err) {
+								logger.error("Cannot get /tmp files using glob");
+								return;
+							}
+							logger.info({
+								tmpFiles: JSON.stringify(tmpFiles),
+								workerPid
+							}, "Listing TMP files");
+						});
 						const maybeOomHeapdumpPath = generateHeapdumpPathOnOom(workerPid.toString()) + ".heapsnapshot";
 						if (fs.existsSync(maybeOomHeapdumpPath)) {
-							logger.info(`found ${maybeOomHeapdumpPath}, prepare for uploading`);
+							logger.info({ workerPid },`found ${maybeOomHeapdumpPath}, prepare for uploading`);
 							fs.renameSync(maybeOomHeapdumpPath, maybeOomHeapdumpPath + ".ready");
 						}
 						if (signal) {
-							logger.warn(`worker was killed by signal: ${signal}, code=${code}`);
+							logger.warn({ workerPid },`worker was killed by signal: ${signal}, code=${code}`);
 						} else if (code !== 0) {
-							logger.warn(`worker exited with error code: ${code}`);
+							logger.warn({ workerPid },`worker exited with error code: ${code}`);
 						} else {
-							logger.warn("worker exited with success code");
+							logger.warn({ workerPid }, "worker exited with success code");
 						}
 					});
 				}
