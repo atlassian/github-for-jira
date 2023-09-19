@@ -99,16 +99,7 @@ if (isNodeProd()) {
 } else {
 	// Dev/test single process, don't need clustering
 	// eslint-disable-next-line @typescript-eslint/no-floating-promises
-	// start();
-
-	throng({
-		master: troubleshootUnresponsiveWorkers_master,
-		worker: async () => {
-			await start();
-			troubleshootUnresponsiveWorkers_worker();
-		},
-		lifetime: Infinity
-	});
+	start();
 }
 
 
