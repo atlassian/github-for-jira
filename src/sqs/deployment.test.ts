@@ -63,7 +63,7 @@ describe("Deployment Webhook", () => {
 			encryptedSharedSecret: "shared-secret"
 		});
 
-		await sqsQueues.deployment.start();
+		sqsQueues.deployment.start();
 	});
 
 	afterEach(async () => {

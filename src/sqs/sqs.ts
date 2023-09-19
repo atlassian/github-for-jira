@@ -91,7 +91,6 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 	 * Starts listening to the queue, times out in 1 minute
 	 */
 	public start() {
-
 		//This checks if the previous listener was stopped or never created. However it could be that the
 		//previous listener is stopped, but still processing its last message
 		if (this.listenerContext && !this.listenerContext.stopped) {
@@ -107,8 +106,11 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 			queueRegion: this.queueRegion,
 			longPollingInterval: this.longPollingIntervalSec
 		}, "Starting the queue");
-		// eslint-disable-next-line @typescript-eslint/no-floating-promises
-		this.listen(this.listenerContext);
+
+		// Don't await the listen function, because it's an infinite loop
+		this.listen(this.listenerContext).catch(err => {
+			this.log.error({ err }, "Error while listening to the queue");
+		});
 	}
 
 
