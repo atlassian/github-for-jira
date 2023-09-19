@@ -6,7 +6,7 @@ import { transformRepositoryId } from "~/src/transforms/transform-repository-id"
 import Logger from "bunyan";
 import { Repository } from "@octokit/webhooks-types";
 import { SecretScanningAlertResponseItem } from "../github/client/github-client.types";
-import { capitalize } from "lodash";
+import { capitalize, truncate } from "lodash";
 
 export const transformSecretScanningAlert = async (
 	alert: SecretScanningAlertResponseItem,
@@ -61,7 +61,9 @@ export const transformGitHubStateToJiraStatus = (state: string | undefined, logg
 
 export const getSecretScanningVulnDescription = (alert: SecretScanningAlertResponseItem, logger: Logger) => {
 	try {
-		return `**Vulnerability:** Fix ${alert.secret_type_display_name}\n\n**State:** ${capitalize(alert.state)}\n\n**Secret type:** ${alert.secret_type}\n\nVisit the vulnerability’s [secret scanning alert page](${alert.html_url}) in GitHub to learn more about the potential active secret and remediation steps.`;
+		const description = `**Vulnerability:** Fix ${alert.secret_type_display_name}\n\n**State:** ${capitalize(alert.state)}\n\n**Secret type:** ${alert.secret_type}\n\nVisit the vulnerability’s [secret scanning alert page](${alert.html_url}) in GitHub to learn more about the potential active secret and remediation steps.`;
+		// description cannot exceed 5000 characters
+		return truncate(description, { length: 4999 });
 	} catch (err) {
 		logger.warn({ err }, "Failed to construct vulnerability description");
 		return alert.secret_type_display_name;

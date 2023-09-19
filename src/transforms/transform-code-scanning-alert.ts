@@ -6,7 +6,7 @@ import {
 } from "interfaces/jira";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import Logger from "bunyan";
-import { capitalize } from "lodash";
+import { capitalize, truncate } from "lodash";
 import { createInstallationClient } from "../util/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
@@ -166,7 +166,9 @@ export const getCodeScanningVulnDescription = (
 		const branches = getBranches(alertInstances);
 		const identifiersText = getIdentifiersText(identifiers);
 		// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-		return `**Vulnerability:** ${alert.rule.description}\n\n**Impact:** The vulnerability in ${alert.tool.name} impacts ${toSentence(branches)}.\n\n**Severity:** ${capitalize(alert.rule?.security_severity_level)}\n\nGitHub uses  [Common Vulnerability Scoring System (CVSS)](https://www.atlassian.com/trust/security/security-severity-levels) data to calculate security severity.\n\n**Status:** ${capitalize(alert.state)}\n\n**Weaknesses:** ${identifiersText}\n\nVisit the vulnerability’s [code scanning alert page](${alert.html_url}) in GitHub for a recommendation and relevant example.`;
+		const description = `**Vulnerability:** ${alert.rule.description}\n\n**Impact:** The vulnerability in ${alert.tool.name} impacts ${toSentence(branches)}.\n\n**Severity:** ${capitalize(alert.rule?.security_severity_level)}\n\nGitHub uses  [Common Vulnerability Scoring System (CVSS)](https://www.atlassian.com/trust/security/security-severity-levels) data to calculate security severity.\n\n**Status:** ${capitalize(alert.state)}\n\n**Weaknesses:** ${identifiersText}\n\nVisit the vulnerability’s [code scanning alert page](${alert.html_url}) in GitHub for a recommendation and relevant example.`;
+		// description cannot exceed 5000 characters
+		return truncate(description, { length: 4999 });
 	} catch (err) {
 		logger.warn({ err }, "Failed to construct vulnerability description");
 		return alert.rule?.description;
