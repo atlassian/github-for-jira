@@ -46,7 +46,7 @@ export const listenToMicrosLifecycle = (active: Callback, inactive: Callback): v
 					if (lifecycleData.Subject === "Micros Lifecycle Notification") {
 						logger.info(data, "Received Micros lifecycle event");
 						// Need to parse THIS message as well because reasons instead of having it all as flat data
-						const notification: LifecycleMessageData = JSON.parse(lifecycleData?.Message || "") as LifecycleMessageData;
+						const notification: LifecycleMessageData = JSON.parse(lifecycleData.Message) as LifecycleMessageData;
 						// Get the event name (`active` or `inactive`) from the events, removing the prefix
 						const event = notification.LifecycleTransition?.toLowerCase().replace("micros:", "");
 						// Check to make sure `LifecycleTransition` was actually set
