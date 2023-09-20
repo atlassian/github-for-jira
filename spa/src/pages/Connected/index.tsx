@@ -166,7 +166,7 @@ const Connected = () => {
 					</div>
 				</div>
 				<div css={paragraphStyle}>
-					We're backfilling your organization's repositories into Jira (this{" "}
+					We're backfilling your organization's repositories into Jira (this
 					<br />
 					can take a while, depending on how many repositories you
 					<br />
