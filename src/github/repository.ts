@@ -15,7 +15,7 @@ export const repositoryWebhookHandler = async (context: WebhookContext, jiraClie
 
 const updateRepoCount = async (subscription: Subscription) => {
 	// Update the repos by taking the new post-delete count of repos for the given subscription
-	const totalNumberOfRepos = await RepoSyncState.countSubscriptio	nRepos(subscription);
+	const totalNumberOfRepos = await RepoSyncState.countSubscriptionRepos(subscription);
 	await subscription.update({ totalNumberOfRepos });
 };
 
