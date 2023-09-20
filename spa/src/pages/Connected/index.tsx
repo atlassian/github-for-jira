@@ -118,11 +118,10 @@ const Connected = () => {
 						<Button
 							css={buttonStyle}
 							appearance="link"
-							onClick={navigateToBackfillPage}
+							onClick={() => navigate("/spa/steps")}
 						>
-							Check your backfill status
+							Add another organization
 						</Button>
-						.
 					</div>
 				</div>
 				<div>
@@ -173,12 +172,7 @@ const Connected = () => {
 					<br />
 					have).
 					<Button
-						style={{
-							paddingLeft: 0,
-							height: 14,
-							lineHeight: "14px",
-							display: "inline-flex",
-						}}
+						css={buttonStyle}
 						appearance="link"
 						onClick={navigateToBackfillPage}
 					>
