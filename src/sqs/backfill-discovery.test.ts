@@ -71,10 +71,9 @@ describe("Discovery Queue Test - GitHub Client", () => {
 
 		when(numberFlag).calledWith(
 			NumberFlags.PREEMPTIVE_RATE_LIMIT_THRESHOLD,
-			expect.anything(),
-			expect.anything()
+			100,
+			jiraHost
 		).mockResolvedValue(100);
-
 	});
 
 	afterEach(async () => {

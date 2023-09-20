@@ -108,7 +108,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 		}, "Starting the queue");
 
 		// Don't await the listen function, because it's an infinite loop
-		this.listen(this.listenerContext).catch(err => {
+		this.listen(this.listenerContext).catch((err: unknown) => {
 			this.log.error({ err }, "Error while listening to the queue");
 		});
 	}
@@ -210,7 +210,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 				.promise();
 
 			await this.handleSqsResponse(result, listenerContext);
-		} catch (err) {
+		} catch (err: unknown) {
 			listenerContext.log.error({ err }, `Error receiving message from SQS queue`);
 			//In case of aws client error we wait for the long polling interval to prevent bombarding the queue with failing requests
 			await new Promise(resolve => setTimeout(resolve, this.longPollingIntervalSec * 1000));
@@ -239,7 +239,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 				.promise();
 			statsd.increment(sqsQueueMetrics.deleted, this.metricsTags, { jiraHost: context.payload?.jiraHost });
 			context.log.debug("Successfully deleted message from queue");
-		} catch (err) {
+		} catch (err: unknown) {
 			context.log.warn({ err }, "Error deleting message from the queue");
 		}
 	}
@@ -253,8 +253,15 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 			return false;
 		}
 
-		const messageBody = JSON.parse(message.Body);
-		const { webhookReceived } = messageBody;
+		const messageBody = JSON.parse(message.Body) as { webhookReceived?: number };
+		const webhookReceived = messageBody?.webhookReceived;
+		if (!webhookReceived) {
+			context.log.warn(
+				{ deletedMessageId: message.MessageId },
+				`No webhookReceived timestamp found in message from ${this.queueName} queue`
+			);
+			return false;
+		}
 
 		if (Date.now() - webhookReceived > ONE_DAY_MILLI) {
 			try {
@@ -264,7 +271,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 					`Deleted stale message from ${this.queueName} queue`
 				);
 				return true;
-			} catch (error) {
+			} catch (error: unknown) {
 				context.log.error(
 					{ error, deletedMessageId: message.MessageId },
 					`Failed to delete stale message from ${this.queueName} queue`
@@ -277,7 +284,17 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 	}
 
 	private async executeMessage(message: Message, listenerContext: SQSContext): Promise<void> {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const payload: MessagePayload = message.Body ? JSON.parse(message.Body) : {};
+		if (!payload.jiraHost) {
+			listenerContext.log.error({ payload }, "Message doesn't have jiraHost");
+			return;
+		}
+
+		if (!payload.installationId) {
+			listenerContext.log.error({ payload }, "Message doesn't have installationId");
+			return;
+		}
 
 		// Sets the log level depending on FF for the specific jira host
 		listenerContext.log.level(await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, payload?.jiraHost));
@@ -335,16 +352,18 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 			const messageProcessingDuration = Date.now() - messageProcessingStartTime;
 			this.sendProcessedMetrics(messageProcessingDuration, payload?.jiraHost);
 			await this.deleteMessage(context);
-		} catch (err) {
+		} catch (err: unknown) {
 			await this.handleSqsMessageExecutionError(err, context);
 		}
 	}
 
-	private async handleSqsMessageExecutionError(err, context: SQSMessageContext<MessagePayload>) {
+	private async handleSqsMessageExecutionError(err: unknown, context: SQSMessageContext<MessagePayload>) {
 		try {
 			context.log.warn({ err }, "Failed message");
-			const errorHandlingResult = await this.errorHandler(err, context);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+			const errorHandlingResult = await this.errorHandler(err as any, context);
 
+			this.log.info({ errorHandlingResult }, "Error handling result");
 			if (errorHandlingResult.isFailure) {
 				context.log.error({ err }, "Error while executing SQS message");
 				statsd.increment(sqsQueueMetrics.failed, this.metricsTags, { jiraHost: context.payload?.jiraHost });
@@ -365,7 +384,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 				context.log.warn({ err }, "SQS message visibility timeout changed");
 				await this.changeVisibilityTimeoutIfNeeded(errorHandlingResult, context.message, context.log);
 			}
-		} catch (errorHandlingException) {
+		} catch (errorHandlingException: unknown) {
 			context.log.error({ err: errorHandlingException, originalError: err }, "Error while performing error handling on SQS message");
 		}
 	}
@@ -379,6 +398,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 	}
 
 	private isMessageReachedRetryLimit(context: SQSMessageContext<MessagePayload>) {
+		this.log.info(`Message receive count: ${context.receiveCount} and max attempts: ${this.maxAttempts}`);
 		return context.receiveCount >= this.maxAttempts;
 	}
 
