@@ -35,9 +35,9 @@ export const backfillQueueMessageHandler =
 			}
 
 			try {
-				const processor = await processInstallation(sendSQSBackfillMessage);
+				const processor = processInstallation(sendSQSBackfillMessage);
 				await processor(backfillData, sentry, context.log);
-			} catch (err) {
+			} catch (err: unknown) {
 				logAdditionalData ? context.log.warn({ err, installationId }, "processInstallation threw a error")
 					: context.log.warn({ err }, "processInstallation threw a error");
 

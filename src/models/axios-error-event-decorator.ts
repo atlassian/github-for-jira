@@ -27,7 +27,7 @@ export class AxiosErrorEventDecorator {
 		return this.response?.request;
 	}
 
-	static decorate(event: any, hint: any): any {
+	static decorate(this: void, event: any, hint: any): any {
 		return new AxiosErrorEventDecorator(event, hint).decorate();
 	}
 
