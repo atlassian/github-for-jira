@@ -70,7 +70,7 @@ describe("ApiInstallationDeleteForPollinator", ()=>{
 
 			const sub = await createSubscription(jiraSiteUrl);
 			await createRepoSyncState(sub.id, 1);
-			expect((await RepoSyncState.findAllFromSubscription(sub)).length).toBe(1);
+			expect((await RepoSyncState.findAllFromSubscription(sub, 100, 0, [["id", "DESC"]])).length).toBe(1);
 
 			const res = getRes();
 			await ApiInstallationDeleteForPollinator(getReq({
@@ -85,7 +85,7 @@ describe("ApiInstallationDeleteForPollinator", ()=>{
 			}), res);
 			expect(res.status).toBeCalledWith(200);
 			expect(mockJiraClient.devinfo.installation.delete).toBeCalledWith(GHES_GITHUB_INSTALLATION_ID.toString());
-			expect((await RepoSyncState.findAllFromSubscription(sub)).length).toBe(0);
+			expect((await RepoSyncState.findAllFromSubscription(sub, 100, 0, [["id", "DESC"]])).length).toBe(0);
 
 			await sub.reload();
 
