@@ -12,6 +12,7 @@ import { matchRouteWithPattern } from "~/src/util/match-route-with-pattern";
 import { fetchAndSaveUserJiraAdminStatus } from "middleware/jira-admin-permission-middleware";
 import { envVars } from "~/src/config/env";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { errorStringFromUnknown } from "../util/error-string-from-unknown";
 
 export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	const authHeader = req.headers["authorization"] as string;
@@ -79,9 +80,9 @@ const getIssuer = (token: string, logger: Logger): string | undefined => {
 	let unverifiedClaims;
 	try {
 		unverifiedClaims = decodeSymmetric(token, "", getAlgorithm(token), true); // decode without verification;
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.warn({ err }, "Invalid JWT");
-		throw new Error(`Invalid JWT: ${err.message}`);
+		throw new Error(`Invalid JWT: ${errorStringFromUnknown(err)}`);
 	}
 
 	if (!unverifiedClaims.iss) {
@@ -113,9 +114,9 @@ const verifySymmetricJwt = async (req: Request, token: string, installation: Ins
 
 		verifyJwtClaims(claims, tokenType, req);
 		return claims;
-	} catch (err) {
+	} catch (err: unknown) {
 		req.log.warn({ err }, "Invalid JWT");
-		throw new Error(`Unable to decode JWT token: ${err.message}`);
+		throw new Error(`Unable to decode JWT token: ${errorStringFromUnknown(err)}`);
 	}
 };
 

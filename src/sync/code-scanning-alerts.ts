@@ -12,6 +12,8 @@ import {
 	transformRuleTagsToIdentifiers,
 	transformGitHubStateToJiraStatus
 } from "~/src/transforms/util/github-security-alerts";
+import { getCodeScanningVulnDescription } from "../transforms/transform-code-scanning-alert";
+import { truncate } from "lodash";
 
 export const getCodeScanningAlertTask = async (
 	parentLogger: Logger,
@@ -55,7 +57,7 @@ export const getCodeScanningAlertTask = async (
 	const nextPageCursorStr = smartCursor.copyWithPageNo(smartCursor.pageNo + 1).serialise();
 	const edgesWithCursor = [{ codeScanningAlerts: codeScanningAlerts, cursor: nextPageCursorStr }];
 
-	const jiraPayload = await transformCodeScanningAlert(codeScanningAlerts, repository, jiraHost, logger,  messagePayload.gitHubAppConfig?.gitHubAppId);
+	const jiraPayload = await transformCodeScanningAlert(codeScanningAlerts, repository, jiraHost, logger,  messagePayload.gitHubAppConfig?.gitHubAppId, gitHubClient);
 	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload?.vulnerabilities?.length }, "Backfill task complete");
 	return {
 		edges: edgesWithCursor,
@@ -80,15 +82,17 @@ const transformCodeScanningAlert = async (
 	repository: Repository,
 	jiraHost: string,
 	logger: Logger,
-	gitHubAppId: number | undefined
+	gitHubAppId: number | undefined,
+	gitHubClient: GitHubInstallationClient
 ): Promise<JiraVulnerabilityBulkSubmitData> => {
 
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
 
-	const handleUnmappedState = (state) => logger.info(`Received unmapped state from code_scanning_alert sync: ${state}`);
-	const handleUnmappedSeverity = (severity) => logger.info(`Received unmapped severity from code_scanning_alert sync: ${severity}`);
+	const handleUnmappedState = (state: string) => logger.info(`Received unmapped state from code_scanning_alert sync: ${state}`);
+	const handleUnmappedSeverity = (severity: string | null) => logger.info(`Received unmapped severity from code_scanning_alert sync: ${severity ?? "Missing Severity"}`);
 
-	const vulnerabilities = alerts.map((alert) => {
+	const vulnerabilities = await Promise.all(alerts.map(async (alert) => {
+		const { data: alertInstances } = await gitHubClient.getCodeScanningAlertInstances(repository.owner.login, repository.name, alert.number);
 		const identifiers = transformRuleTagsToIdentifiers(alert.rule.tags);
 
 		return {
@@ -96,8 +100,9 @@ const transformCodeScanningAlert = async (
 			id: `c-${transformRepositoryId(repository.id, gitHubClientConfig.baseUrl)}-${alert.number}`,
 			updateSequenceNumber: Date.now(),
 			containerId: transformRepositoryId(repository.id, gitHubClientConfig.baseUrl),
-			displayName: alert.rule.name,
-			description: alert.rule.full_description || alert.rule.description,
+			// display name cannot exceed 255 characters
+			displayName: truncate(alert.rule.description || alert.rule.name, { length: 254 }),
+			description: getCodeScanningVulnDescription(alert, identifiers, alertInstances, logger),
 			url: alert.html_url,
 			type: "sast",
 			introducedDate: alert.created_at,
@@ -111,7 +116,7 @@ const transformCodeScanningAlert = async (
 				content: alert.tool.name
 			}
 		};
-	});
+	}));
 	return { vulnerabilities };
 
 };

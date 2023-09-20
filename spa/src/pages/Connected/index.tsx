@@ -26,7 +26,8 @@ const paragraphStyle = css`
 	margin: ${token("space.300")} ${token("space.0")};
 `;
 const buttonContainerStyle = css`
-	margin: ${token("space.0")} ${token("space.0")} ${token("space.300")} ${token("space.0")};
+	margin: ${token("space.0")} ${token("space.0")} ${token("space.300")}
+		${token("space.0")};
 `;
 const flexWrapperStyle = css`
 	padding: ${token("space.300")} ${token("space.0")} ${token("space.0")};
@@ -46,6 +47,9 @@ const sectionStyle = css`
 const sectionImgStyle = css`
 	height: 100px;
 `;
+const linkStyle = css`
+	cursor: pointer;
+`;
 
 const buttonStyle = css`
 	padding-left: 0;
@@ -61,8 +65,33 @@ const Connected = () => {
 	const { colorMode } = useThemeObserver();
 
 	const navigateToBackfillPage = () => {
-		analyticsClient.sendUIEvent({ actionSubject: "checkBackfillStatus", action: "clicked" });
-		AP.navigator.go( "addonmodule", { moduleKey: "gh-addon-admin" });
+		analyticsClient.sendUIEvent({
+			actionSubject: "checkBackfillStatus",
+			action: "clicked",
+		});
+		AP.navigator.go("addonmodule", { moduleKey: "gh-addon-admin" });
+	};
+
+	const learnAboutIssueLinking = () => {
+		analyticsClient.sendUIEvent({
+			actionSubject: "learnAboutIssueLinking",
+			action: "clicked",
+		});
+		window.open(
+			"https://support.atlassian.com/jira-software-cloud/docs/reference-issues-in-your-development-work/",
+			"_blank"
+		);
+	};
+
+	const learnAboutDevelopmentWork = () => {
+		analyticsClient.sendUIEvent({
+			actionSubject: "learnAboutDevelopmentWork",
+			action: "clicked",
+		});
+		window.open(
+			"https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-development-tools/",
+			"_blank"
+		);
 	};
 
 	return (
@@ -87,12 +116,13 @@ const Connected = () => {
 					</div>
 					<div css={buttonContainerStyle}>
 						<Button
-							style={{ paddingLeft: 0 }}
+							css={buttonStyle}
 							appearance="link"
-							onClick={() => navigate("/spa/steps")}
+							onClick={navigateToBackfillPage}
 						>
-							Add another organization
+							Check your backfill status
 						</Button>
+						.
 					</div>
 				</div>
 				<div>
@@ -112,10 +142,7 @@ const Connected = () => {
 								<br />
 								more to bring them into Jira.
 							</div>
-							<a
-								href="https://support.atlassian.com/jira-software-cloud/docs/reference-issues-in-your-development-work/"
-								target="_blank"
-							>
+							<a css={linkStyle} onClick={learnAboutIssueLinking}>
 								Learn about issue linking
 							</a>
 						</div>
@@ -133,10 +160,7 @@ const Connected = () => {
 								<br />
 								code feature.
 							</div>
-							<a
-								href="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-development-tools/"
-								target="_blank"
-							>
+							<a css={linkStyle} onClick={learnAboutDevelopmentWork}>
 								Learn about development work in Jira
 							</a>
 						</div>
@@ -149,7 +173,12 @@ const Connected = () => {
 					<br />
 					have).
 					<Button
-						css={buttonStyle}
+						style={{
+							paddingLeft: 0,
+							height: 14,
+							lineHeight: "14px",
+							display: "inline-flex",
+						}}
 						appearance="link"
 						onClick={navigateToBackfillPage}
 					>

@@ -8,7 +8,7 @@ const logger = getLogger("worker");
 
 let running = false;
 
-export const start = async () => {
+export const start = () => {
 	if (running) {
 		logger.debug("Worker instance already running, skipping.");
 		return;

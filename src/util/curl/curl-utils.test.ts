@@ -35,7 +35,7 @@ describe("curl-utils", () => {
 
 	describe("logCurlOutput", () => {
 		it("should not explode with empty output", () => {
-			logCurlOutputInChunks({ body: "", meta: "" }, getLogger("test"));
+			expect(() => logCurlOutputInChunks({ body: "", meta: "" }, getLogger("test"))).not.toThrowError();
 		});
 
 		it("should not explode with non-empty output", async () => {
@@ -44,7 +44,7 @@ describe("curl-utils", () => {
 				method: "GET",
 				authorization: "secrets"
 			});
-			logCurlOutputInChunks(result, getLogger("test"));
+			expect(() => logCurlOutputInChunks(result, getLogger("test"))).not.toThrowError();
 		});
 	});
 });
