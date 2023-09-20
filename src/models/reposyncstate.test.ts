@@ -172,22 +172,6 @@ describe("RepoSyncState", () => {
 		});
 	});
 
-	describe("countAllFromSubscription", () => {
-		it("should return 0 when no repos", async () => {
-			expect(await RepoSyncState.countAllFromSubscription(sub)).toStrictEqual(0);
-		});
-
-		it("should count repos of the subscription", async () => {
-			await RepoSyncState.create(repo);
-			await RepoSyncState.create({
-				...repo,
-				subscriptionId: otherSub.id
-			});
-
-			expect(await RepoSyncState.countAllFromSubscription(sub)).toStrictEqual(1);
-		});
-	});
-
 	describe("findOneFromSubscription", () => {
 		it("Should return no repos", async () => {
 			let result = await RepoSyncState.findOneFromSubscription(sub);

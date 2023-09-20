@@ -227,14 +227,6 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 		return result || [];
 	}
 
-	static async countAllFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<number> {
-		return await RepoSyncState.count(merge(options, {
-			where: {
-				subscriptionId: subscription.id
-			}
-		}));
-	}
-
 	// TODO: move repoOwner to Subscription table and get rid of this.
 	// The current schema implies a subscription might have multiple
 	// "repoOwner"s associated with it, while that's impossible

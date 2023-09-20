@@ -24,8 +24,10 @@ export const ApiInstallationSyncstateGet = async (req: Request, res: Response): 
 	const limit = Number(req.query.limit);
 	const offset = Number(req.query.offset);
 
-	if (limit > 10000) {
-		const msg = "Max limit value is 10000";
+	const MAX_PAGE_SIZE = 10000;
+
+	if (limit > MAX_PAGE_SIZE) {
+		const msg = `Max limit value is ${MAX_PAGE_SIZE}`;
 		req.log.warn({ req, res }, msg);
 		res.status(400).send(msg);
 		return;
