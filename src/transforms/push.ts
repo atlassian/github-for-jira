@@ -82,7 +82,7 @@ export const createJobData = async (payload: GitHubPushData, jiraHost: string, l
 };
 
 export const enqueuePush = async (payload: GitHubPushData, jiraHost: string, logger: Logger, gitHubAppConfig?: GitHubAppConfig) =>
-	await sqsQueues.push.sendMessage(await createJobData(payload, jiraHost, logger, gitHubAppConfig));
+	await sqsQueues.push.sendMessage(await createJobData(payload, jiraHost, logger, gitHubAppConfig), 0, logger);
 
 export const processPush = async (github: GitHubInstallationClient, payload: PushQueueMessagePayload, rootLogger: Logger) => {
 	const {

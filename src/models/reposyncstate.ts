@@ -12,7 +12,7 @@ import {
 	STRING,
 	UpdateOptions,
 	JSON,
-	QueryTypes
+	QueryTypes, Order
 } from "sequelize";
 import { Subscription, TaskStatus } from "./subscription";
 import { merge } from "lodash";
@@ -215,11 +215,14 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 		return results[0] as RepoSyncState & Subscription;
 	}
 
-	static async findAllFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState[]> {
+	static async findAllFromSubscription(subscription: Subscription, limit: number, offset: number, order: Order, options: FindOptions = {}): Promise<RepoSyncState[]> {
 		const result = await RepoSyncState.findAll(merge(options, {
 			where: {
 				subscriptionId: subscription.id
-			}
+			},
+			limit,
+			offset,
+			order
 		}));
 		return result || [];
 	}
