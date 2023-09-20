@@ -26,20 +26,27 @@ export const ApiResetSubscriptionFailedTasks = async (req: Request, res: Respons
 
 	const logs: OutputLogRecord[] = [];
 
-	const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription);
-	await Promise.all(repoSyncStates.map(async (repoSyncState) => {
-		let updated = false;
-		targetTasks.forEach(targetTask => {
-			if (repoSyncState[`${targetTask}Status`] === "failed") {
-				repoSyncState[`${targetTask}Status`] = null;
-				logs.push({ repoSyncStateId: repoSyncState.id, targetTask });
-				updated = true;
+	let offset = 0;
+	let hasNextPage = true;
+	do {
+		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, 100, offset, [["repoFullName", "ASC"]]);
+		offset += 100;
+		hasNextPage = repoSyncStates.length === 100;
+
+		await Promise.all(repoSyncStates.map(async (repoSyncState) => {
+			let updated = false;
+			targetTasks.forEach(targetTask => {
+				if (repoSyncState[`${targetTask}Status`] === "failed") {
+					repoSyncState[`${targetTask}Status`] = null;
+					logs.push({ repoSyncStateId: repoSyncState.id, targetTask });
+					updated = true;
+				}
+			});
+			if (updated) {
+				await repoSyncState.save();
 			}
-		});
-		if (updated) {
-			await repoSyncState.save();
-		}
-	}));
+		}));
+	} while (hasNextPage);
 
 	res.json(logs);
 };

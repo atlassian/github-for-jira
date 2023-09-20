@@ -1,10 +1,9 @@
 import { Octokit } from "@octokit/rest";
-import { getLogger } from "config/logger";
 import { GitHubInstallationClient } from "../../github/client/github-installation-client";
+import Logger from "bunyan";
 
-const logger = getLogger("services.github.user");
 // TODO: Remove this method on featureFlag cleanup
-export const getGithubUser = async (gitHubInstallationClient: GitHubInstallationClient, username: string): Promise<Octokit.UsersGetByUsernameResponse | undefined> => {
+export const getGithubUser = async (gitHubInstallationClient: GitHubInstallationClient, username: string, logger: Logger): Promise<Octokit.UsersGetByUsernameResponse | undefined> => {
 	if (!username) {
 		return undefined;
 	}
