@@ -91,7 +91,7 @@ const transformDependabotAlerts = async (
 	const handleUnmappedSeverity = (severity: string | null) => logger.info(`Received unmapped severity from dependabot_alerts sync: ${severity ?? "Missing Severity"}`);
 
 	const vulnerabilities = alerts.map((alert) => {
-		const identifiers = mapVulnIdentifiers(alert.security_advisory.identifiers, alert.security_advisory.references);
+		const identifiers = mapVulnIdentifiers(alert.security_advisory.identifiers, alert.security_advisory.references, alert.html_url);
 		return {
 			schemaVersion: "1.0",
 			id: `d-${transformRepositoryId(repository.id, gitHubClientConfig.baseUrl)}-${alert.number}`,
