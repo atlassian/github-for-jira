@@ -142,7 +142,7 @@ const StartConnection = () => {
 							Go to backfill page
 						</Button>
 				}
-			</ButtonContainer>
+			</div>
 		</Wrapper>
 	);
 };
