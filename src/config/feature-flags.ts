@@ -13,6 +13,7 @@ const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {
 
 export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
+	INNO_DRAFT_PR = "inno-draft-pr",
 	VERBOSE_LOGGING = "verbose-logging",
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
 	JIRA_ADMIN_CHECK = "jira-admin-check",
@@ -32,7 +33,8 @@ export enum BooleanFlags {
 	USE_NEW_5KU_SPA_EXPERIENCE = "enable-5ku-experience--cloud-connect",
 	ENABLE_5KU_BACKFILL_PAGE = "enable-5ku-experience-backfill-page",
 	USE_INSTALLATION_CLIENT_CHECK_PERMISSION = "use-installation-client-to-check-permission",
-	USE_CUSTOM_ROOT_CA_BUNDLE = "use-custom-root-ca-bundle"
+	USE_CUSTOM_ROOT_CA_BUNDLE = "use-custom-root-ca-bundle",
+	GENERATE_CORE_HEAP_DUMPS_ON_LOW_MEM = "generate-core-heap-dumps-on-low-mem"
 }
 
 export enum StringFlags {
@@ -100,9 +102,9 @@ export const shouldSendAll = async (type: ShouldSendAllStringTypes, jiraHost: st
 	try {
 		// Full set:
 		// ["branches-backfill", "builds-backfill", "commits-backfill", "deployments-backfill", "prs-backfill", "branches", "builds", "commits", "deployments", "prs"]
-		const sendAllString: string = await stringFlag(StringFlags.SEND_ALL, "[]", jiraHost);
+		const sendAllString = await stringFlag(StringFlags.SEND_ALL, "[]", jiraHost);
 		const sendAllArray: string[] = JSON.parse(sendAllString);
-		return sendAllArray.includes(type);
+		return Array.isArray(sendAllArray) && sendAllArray.includes(type);
 	} catch (e) {
 		logger.error({ err: e, type }, "Cannot define if should send all");
 		return false;
@@ -113,7 +115,7 @@ export const isBlocked = async (jiraHost: string, installationId: number, logger
 	try {
 		const blockedInstallationsString = await stringFlag(StringFlags.BLOCKED_INSTALLATIONS, "[]", jiraHost);
 		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString);
-		return blockedInstallations.includes(installationId);
+		return Array.isArray(blockedInstallations) && blockedInstallations.includes(installationId);
 	} catch (e) {
 		logger.error({ err: e, installationId }, "Cannot define if isBlocked");
 		return false;

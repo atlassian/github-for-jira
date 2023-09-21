@@ -1,10 +1,11 @@
+/** @jsxImportSource @emotion/react */
 import Avatar from "@atlaskit/avatar";
-import styled from "@emotion/styled";
 import Badge from "@atlaskit/badge";
 import { token } from "@atlaskit/tokens";
 import Lozenge from "@atlaskit/lozenge";
 import { SuccessfulConnection } from "../rest-interfaces";
 import { ThemeAppearance } from "@atlaskit/lozenge/dist/types/Lozenge";
+import { css } from "@emotion/react";
 
 type Row = {
 	key: string;
@@ -12,22 +13,25 @@ type Row = {
 	cells: { key: string | number; content: React.JSX.Element | string | number }[];
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
-const RowWrapper = styled.div`
+const rowWrapperStyle = css`
 	display: flex;
 	align-items: center;
 `;
-// eslint-disable-next-line react-refresh/only-export-components
-const AvatarWrapper = styled.span`
+const avatarWrapperStyle = css`
 	margin-right: ${token("space.200")};
 `;
 
 const ifAllReposSynced = (
 	numberOfSyncedRepos: number,
 	totalNumberOfRepos: number
-): number | string =>
-	numberOfSyncedRepos === totalNumberOfRepos ? totalNumberOfRepos :
-		(totalNumberOfRepos ? `${numberOfSyncedRepos} / ${totalNumberOfRepos}` : "");
+): number | string => {
+	if (!totalNumberOfRepos) return "";// If the total number of repos is 0, then show nothing
+	if (numberOfSyncedRepos === totalNumberOfRepos) {
+		return totalNumberOfRepos;
+	} else {
+		return `${numberOfSyncedRepos} / ${totalNumberOfRepos}`;
+	}
+};
 
 const mapSyncStatus = (status: string): ThemeAppearance => {
 	switch (status) {
@@ -82,25 +86,25 @@ export const getGHSubscriptionsRows = (
 				{
 					key: cloudConnection.account.login,
 					content: (
-						<RowWrapper>
+						<div css={rowWrapperStyle}>
 							{cloudConnection.account.avatar_url && (
-								<AvatarWrapper>
+								<span css={avatarWrapperStyle}>
 									<Avatar
 										name={cloudConnection.account.login}
 										src={cloudConnection.account.avatar_url}
 										size="medium"
 									/>
-								</AvatarWrapper>
+								</span>
 							)}
 
 							<span>{cloudConnection.account.login}</span>
-						</RowWrapper>
+						</div>
 					),
 				},
 				{
 					key: cloudConnection.account.login,
 					content: (
-						<RowWrapper>
+						<div css={rowWrapperStyle}>
 							<span>
 								{cloudConnection.isGlobalInstall
 									? `All repos`
@@ -112,13 +116,13 @@ export const getGHSubscriptionsRows = (
 									cloudConnection.totalNumberOfRepos
 								)}
 							</Badge>
-						</RowWrapper>
+						</div>
 					),
 				},
 				{
 					key: cloudConnection.id,
 					content: (
-						<RowWrapper>
+						<div css={rowWrapperStyle}>
 							<div>
 								<Lozenge appearance={mapSyncStatus(cloudConnection.syncStatus)} maxWidth="500">
 									{cloudConnection.syncStatus}
@@ -141,7 +145,7 @@ export const getGHSubscriptionsRows = (
 									</>
 								)}
 							</div>
-						</RowWrapper>
+						</div>
 					),
 				}
 			],

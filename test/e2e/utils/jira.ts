@@ -105,7 +105,7 @@ export const jiraCreateIssue = async (page: Page, projectId: string = testData.p
 	// V3 implementation
 	// await page.click("[data-testid='navigation-apps-sidebar-next-gen.ui.menu.software-backlog-link']");
 	// const taskInput = page.locator("[data-test-id='platform-inline-card-create.ui.form.summary.styled-text-area']");
-	await taskInput.fill("Task " + Date.now());
+	await taskInput.fill("Task " + Date.now().toString());
 	await taskInput.press("Enter");
 	const url = await page.locator("[data-test-id='platform-board-kit.ui.column.draggable-column.styled-wrapper']:first-child [data-test-id='platform-board-kit.ui.card.card'][draggable]").last().getAttribute("id");
 	return url?.replace("card-", "") || "";

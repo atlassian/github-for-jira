@@ -1,3 +1,4 @@
+/** @jsxImportSource @emotion/react */
 import { DynamicTableStateless } from "@atlaskit/dynamic-table";
 import {
 	head,

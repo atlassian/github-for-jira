@@ -43,7 +43,7 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 				}
 				: undefined
 		);
-		const gitHubAppConfig = await gitHubClient.createGitHubApp("" + req.query.code);
+		const gitHubAppConfig = await gitHubClient.createGitHubApp(req.query.code.toString());
 		await GitHubServerApp.install({
 			uuid,
 			appId: gitHubAppConfig.id,

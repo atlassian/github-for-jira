@@ -1,7 +1,8 @@
+/** @jsxImportSource @emotion/react */
 import { token } from "@atlaskit/tokens";
-import styled from "@emotion/styled";
+import { css } from "@emotion/react";
 
-const Container = styled.div`
+const containerStyle = css`
 	width: 100%;
 	border: ${token("space.025")} solid ${token("color.border")};
 	border-radius: ${token("space.050")};
@@ -10,11 +11,11 @@ const Container = styled.div`
 	background: transparent;
 	margin: 0 0 ${token("space.100")};
 `;
-const Header = styled.div`
+const headerStyle = css`
 	line-height: ${token("space.400")};
 	align-items: center;
 `;
-const StepTitle = styled.div`
+const stepTitleStyle = css`
 	cursor: pointer;
 	font-weight: 600;
 	font-size: ${token("space.200")};
@@ -30,14 +31,14 @@ const Step = ({
 	children: JSX.Element,
 }) => {
 	return (
-		<Container>
-			<Header>
-				<StepTitle>{title}</StepTitle>
-			</Header>
+		<div css={containerStyle}>
+			<div css={headerStyle}>
+				<div css={stepTitleStyle}>{title}</div>
+			</div>
 				<div data-testid="content">
 					{children}
 				</div>
-		</Container>
+		</div>
 	);
 };
 

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { waitUntil } from "test/utils/wait-until";
@@ -32,8 +31,8 @@ const mockGitHubRateLimit = (limit: number, remaining: number, resetTime: number
 const mockRatelimitThreshold = (threshold: number) => {
 	when(numberFlag).calledWith(
 		NumberFlags.PREEMPTIVE_RATE_LIMIT_THRESHOLD,
-		expect.anything(),
-		expect.anything()
+		100,
+		jiraHost
 	).mockResolvedValue(threshold);
 };
 
@@ -63,7 +62,7 @@ describe("Deployment Webhook", () => {
 			encryptedSharedSecret: "shared-secret"
 		});
 
-		await sqsQueues.deployment.start();
+		sqsQueues.deployment.start();
 	});
 
 	afterEach(async () => {
@@ -202,11 +201,12 @@ describe("Deployment Webhook", () => {
 				operationType: "NORMAL"
 			}).reply(200);
 
-			await expect(app.receive(deploymentStatusBasic as any)).toResolve();
+			await expect(app.receive(deploymentStatusBasic)).toResolve();
 
-			await waitUntil(async () => {
+			await waitUntil(() => {
 				expect(githubNock).toBeDone();
 				expect(jiraNock).toBeDone();
+				return Promise.resolve();
 			});
 		});
 	});

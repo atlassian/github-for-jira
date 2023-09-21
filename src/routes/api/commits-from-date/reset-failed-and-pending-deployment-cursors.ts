@@ -55,7 +55,7 @@ export const ResetFailedAndPendingDeploymentCursorPost = async (req: Request, re
 			count++;
 			lastId = repo.id;
 		}
-		info(`${count} repo sync states updated, last RepoSyncState id is ${lastId})`);
+		info(`${count} repo sync states updated, last RepoSyncState id is ${lastId ? lastId.toString() : "undefined"})`);
 
 		res.end();
 

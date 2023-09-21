@@ -1,11 +1,12 @@
+/** @jsxImportSource @emotion/react */
 import { token } from "@atlaskit/tokens";
 import { Box, xcss } from "@atlaskit/primitives";
-import styled from "@emotion/styled";
 import Heading from "@atlaskit/heading";
 import { GhEnterpriseServer } from "../../../rest-interfaces";
 import GitHubEnterpriseApplication from "./GHEnterpriseApplication";
+import { css } from "@emotion/react";
 
-const EnterpriserServerHeader = styled.div`
+const enterpriserServerHeaderStyle = css`
 	display: flex;
 	align-items: center;
 	flex-direction: row;
@@ -48,9 +49,9 @@ const GitHubEnterpriseConnections = ({
 			ghEnterpriseServers.map((connection) => {
 				return (
 					<Box xcss={containerStyles}>
-						<EnterpriserServerHeader>
+						<div css={enterpriserServerHeaderStyle}>
 							<Heading level="h400">{connection.gitHubBaseUrl}</Heading>
-						</EnterpriserServerHeader>
+						</div>
 						<Box xcss={whiteBoxStyle}>
 							{connection.applications.map((application) => (<GitHubEnterpriseApplication application={application}/>))}
 						</Box>

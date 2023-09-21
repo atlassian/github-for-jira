@@ -43,7 +43,7 @@ describe("Enqueue push", () => {
 				gitHubApiUrl: "https://api.whatever.url",
 				uuid: "xxx-xxx-xxx"
 			}
-		}));
+		}), 0, expect.anything());
 	});
 
 	it("should push shas with no issue keys", async () => {
@@ -72,7 +72,7 @@ describe("Enqueue push", () => {
 			shas: [
 				{ id: "c123", issueKeys: [] }
 			]
-		}));
+		}), 0, expect.anything());
 	});
 
 	it("should not push shas with no issue keys", async () => {
@@ -99,6 +99,6 @@ describe("Enqueue push", () => {
 		});
 		expect(sqsQueues.push.sendMessage).toBeCalledWith(expect.objectContaining({
 			shas: []
-		}));
+		}), 0, expect.anything());
 	});
 });

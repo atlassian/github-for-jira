@@ -32,7 +32,7 @@ const mapFile = (
 		unchanged: JiraCommitFileChangeTypeEnum.UNKNOWN
 	};
 
-	const fallbackUrl = `https://github.com/${repoOwner}/${repoName}/blob/${commitHash}/${githubFile.filename}`;
+	const fallbackUrl = `https://github.com/${repoOwner ?? "undefined"}/${repoName}/blob/${commitHash}/${githubFile.filename}`;
 
 	if (isEmpty(githubFile.filename)) {
 		return undefined;
@@ -82,7 +82,7 @@ export const createJobData = async (payload: GitHubPushData, jiraHost: string, l
 };
 
 export const enqueuePush = async (payload: GitHubPushData, jiraHost: string, logger: Logger, gitHubAppConfig?: GitHubAppConfig) =>
-	await sqsQueues.push.sendMessage(await createJobData(payload, jiraHost, logger, gitHubAppConfig));
+	await sqsQueues.push.sendMessage(await createJobData(payload, jiraHost, logger, gitHubAppConfig), 0, logger);
 
 export const processPush = async (github: GitHubInstallationClient, payload: PushQueueMessagePayload, rootLogger: Logger) => {
 	const {
@@ -217,5 +217,6 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		log.info("Push has succeeded");
 	} catch (err) {
 		log.warn({ err }, "Push has failed");
+		throw err;
 	}
 };

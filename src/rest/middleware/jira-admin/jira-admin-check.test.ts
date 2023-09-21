@@ -47,7 +47,7 @@ describe("Jira Admin Check", () => {
 						})
 					} as any;
 				} else {
-					throw new Error("Wrong installation " + reqInst);
+					throw new Error(`Wrong installation ${reqInst.toString()}`);
 				}
 			});
 
