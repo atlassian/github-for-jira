@@ -3,6 +3,7 @@ import { Subscription } from "models/subscription";
 import { createAppClient } from "~/src/util/get-github-client-config";
 import { AxiosResponse } from "axios";
 import { Octokit } from "@octokit/rest";
+import { errorStringFromUnknown } from "~/src/util/error-string-from-unknown";
 
 export const ApiInstallationGet = async (req: Request, res: Response): Promise<void> => {
 	const { installationId, gitHubAppId: gitHubAppIdStr } = req.params;
@@ -46,7 +47,7 @@ export const ApiInstallationGet = async (req: Request, res: Response): Promise<v
 				req.log.error({ ...response }, "Failed installation");
 				return {
 					id: response.id,
-					error: response.err.message + ". More details in logs",
+					error: `${errorStringFromUnknown(response.err)}. More details in logs`,
 					deleted: response.deleted
 				};
 			});
@@ -56,7 +57,7 @@ export const ApiInstallationGet = async (req: Request, res: Response): Promise<v
 			connections,
 			failedConnections,
 			hasConnections: connections.length > 0 || failedConnections.length > 0,
-			syncStateUrl: `${req.protocol}://${req.get("host")}/api/${installationId}/${encodeURIComponent(jiraHost)}/syncstate`
+			syncStateUrl: `${req.protocol}://${req.get("host") ?? ""}/api/${installationId}/${encodeURIComponent(jiraHost)}/syncstate`
 		});
 	} catch (err) {
 		req.log.error({ installationId, err }, "Error getting installation");

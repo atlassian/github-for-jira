@@ -3,6 +3,7 @@ import { Op } from "sequelize";
 import { RepoSyncState } from "~/src/models/reposyncstate";
 import { Subscription, TaskStatus } from "~/src/models/subscription";
 import { sequelize } from "models/sequelize";
+import { errorStringFromUnknown } from "~/src/util/error-string-from-unknown";
 
 interface Page {
 	pageNum: number;
@@ -102,11 +103,8 @@ export const JiraConnectedReposGet = async (
 
 		const offset = pageNumber == 1 ? 0 : (pageNumber - 1) * pageSize;
 
-		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, {
-			where: filterCondition,
-			limit: pageSize,
-			order: [["repoFullName", "ASC"]],
-			offset
+		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, pageSize, offset, [["repoFullName", "ASC"]], {
+			where: filterCondition
 		});
 		const repos = repoSyncStates.map((repoSyncState) => {
 			return {
@@ -130,9 +128,9 @@ export const JiraConnectedReposGet = async (
 			...getPaginationState(pageNumber, pageSize, reposCount)
 		});
 
-	} catch (err) {
+	} catch (err: unknown) {
 		req.log.warn({ err }, "Failed to render connected repos");
-		return next(new Error(`Failed to render connected repos: ${err}`));
+		return next(new Error(`Failed to render connected repos: ${errorStringFromUnknown(err)}`));
 	}
 };
 

@@ -89,7 +89,7 @@ describe("Installation", () => {
 					insert into "Installations"
 					("secrets", "encryptedSharedSecret", "clientKey", "createdAt", "updatedAt")
 					values
-					('xxxxx', 'encrypted:some-plain-text', '${clientKey}', now(), now())
+					('xxxxx', 'encrypted:some-plain-text', '${clientKey as string}', now(), now())
 				`, {
 			type: QueryTypes.INSERT
 		});
@@ -100,7 +100,7 @@ describe("Installation", () => {
 		const found = await Installation.sequelize?.query(`
 			select "encryptedSharedSecret" from "Installations" where "clientKey" = '${hashedClientKey}'
 		`, { plain: true });
-		if (!found) throw new Error("Cannot find installation by clientKey " + clientKey);
+		if (!found) throw new Error(`Cannot find installation by clientKey ${clientKey as string}`);
 		return found.encryptedSharedSecret;
 	};
 });

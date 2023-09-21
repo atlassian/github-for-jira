@@ -59,7 +59,7 @@ describe("API Router", () => {
 	it("should GET syncstate", async () => {
 
 		await supertest(app)
-			.get(`/api/${subscription.gitHubInstallationId}/${encodeURIComponent(subscription.jiraHost)}/syncstate`)
+			.get(`/api/${subscription.gitHubInstallationId}/${encodeURIComponent(subscription.jiraHost)}/syncstate?limit=100&offset=0`)
 			.set("X-Slauth-Mechanism", "asap")
 			.then((response) => {
 				expect(response.body).toMatchObject({
@@ -199,7 +199,7 @@ describe("API Router", () => {
 
 			it("should return 404 if no installation is found", async () => {
 				return supertest(app)
-					.get(`/api/${invalidId}/${encodeURIComponent(jiraHost)}/syncstate`)
+					.get(`/api/${invalidId}/${encodeURIComponent(jiraHost)}/syncstate?limit=100&offset=0`)
 					.set("host", "127.0.0.1")
 					.set("X-Slauth-Mechanism", "slauthtoken")
 					.send({ jiraHost })
@@ -211,7 +211,7 @@ describe("API Router", () => {
 
 			it("should return the sync state for an existing installation", async () => {
 				return supertest(app)
-					.get(`/api/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}/syncstate`)
+					.get(`/api/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}/syncstate?limit=100&offset=0`)
 					.set("host", "127.0.0.1")
 					.set("X-Slauth-Mechanism", "slauthtoken")
 					.expect(200)
@@ -360,6 +360,19 @@ describe("API Router", () => {
 					});
 			});
 
+		});
+
+		describe("fill-mem-and-generate-coredump", () => {
+			it("should return 200", () => {
+				return supertest(app)
+					.post("/api/fill-mem-and-generate-coredump?arraySize=2&nIter=7")
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.expect(200)
+					.then((response) => {
+						expect(response.body).toEqual({ allocated: 14, dumpGenerated: false });
+					});
+			});
 		});
 
 		describe("Ping", () => {

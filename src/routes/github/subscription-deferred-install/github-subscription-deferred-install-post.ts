@@ -22,7 +22,7 @@ export const GithubSubscriptionDeferredInstallPost = async (req: Request, res: R
 	res.render("subscription-deferred-install-approval-form.hbs", {
 		success: true,
 		orgName: payload.orgName,
-		orgUrl: `${res.locals.gitHubAppConfig.hostname}/${payload.orgName}`,
+		orgUrl: `${res.locals.gitHubAppConfig.hostname as string}/${payload.orgName}`,
 		jiraHost: res.locals.jiraHost
 	});
 };

@@ -354,7 +354,7 @@ describe("sync/installation", () => {
 			const sendMessageMock = jest.fn();
 			await markCurrentTaskAsFailedAndContinue({
 				...MESSAGE_PAYLOAD,
-				installationId: MESSAGE_PAYLOAD.installationId + 1
+				installationId: (MESSAGE_PAYLOAD.installationId as number) + 1
 			}, TASK, false, sendMessageMock, getLogger("test"), mockError);
 
 			const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
