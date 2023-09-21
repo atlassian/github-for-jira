@@ -60,7 +60,7 @@ export const transformDependabotAlert = async (context: WebhookContext<Dependabo
 			identifiers,
 			status: transformGitHubStateToJiraStatus(alert.state, handleUnmappedState),
 			additionalInfo: {
-				content: alert.dependency.manifest_path
+				content: truncate(alert.dependency.manifest_path, { length: 254 })
 			}
 		}]
 	};
