@@ -49,6 +49,13 @@ export const getCodeScanningAlertTask = async (
 				jiraPayload: undefined
 			};
 		}
+		if (err.cause?.response?.status == 403 && err.cause?.response?.data?.message?.includes("Code scanning is not enabled for this repository")) {
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Code scanning is not configured, so marking backfill task complete");
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
+		}
 		if (err.cause?.response?.status == 404 && err.cause?.response?.data?.message?.includes("no analysis found")) {
 			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Code scanning is not configured, so marking backfill task complete");
 			return {
