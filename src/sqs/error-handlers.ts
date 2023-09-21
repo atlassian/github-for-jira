@@ -17,13 +17,13 @@ const RATE_LIMITING_DELAY_BUFFER_SEC = 10;
 const EXPONENTIAL_BACKOFF_BASE_SEC = 60;
 const EXPONENTIAL_BACKOFF_MULTIPLIER = 3;
 
-export const handleUnknownError: ErrorHandler<BaseMessagePayload> = async <MessagePayload extends BaseMessagePayload>(
+export const handleUnknownError: ErrorHandler<BaseMessagePayload> = <MessagePayload extends BaseMessagePayload>(
 	err: Error,
 	context: SQSMessageContext<MessagePayload>
 ): Promise<ErrorHandlingResult> => {
 	const delaySec = EXPONENTIAL_BACKOFF_BASE_SEC * Math.pow(EXPONENTIAL_BACKOFF_MULTIPLIER, context.receiveCount);
 	context.log.warn({ err, delaySec }, "Unknown error: retrying with exponential backoff");
-	return { retryable: true, retryDelaySec: delaySec, isFailure: true };
+	return Promise.resolve({ retryable: true, retryDelaySec: delaySec, isFailure: true });
 };
 
 export const jiraAndGitHubErrorsHandler: ErrorHandler<BaseMessagePayload> = async <MessagePayload extends BaseMessagePayload> (error: Error,
@@ -75,7 +75,7 @@ const maybeHandleNonRetryableResponseCode = <MessagePayload extends BaseMessageP
 	//Unfortunately we can't check if error is instance of Octokit.HookError because it is not a class, so we'll just rely on status
 	//New GitHub Client error (GithubClientError) also has status parameter, so it will be covered by the following check too
 	//TODO When we get rid of Octokit completely add check if (error instanceof GithubClientError) before the following code
-	const status: number | undefined = error["status"];
+	const status: number | undefined = error["status"] as number | undefined;
 	if (status && UNRETRYABLE_STATUS_CODES.includes(status)) {
 		context.log.warn({ err: error }, `Received error with ${status} status. Unretryable. Discarding the message`);
 		return { retryable: false, isFailure: false };

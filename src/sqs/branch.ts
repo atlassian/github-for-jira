@@ -5,6 +5,11 @@ import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 export const branchQueueMessageHandler: MessageHandler<BranchMessagePayload> = async (context: SQSMessageContext<BranchMessagePayload>) => {
 	const messagePayload: BranchMessagePayload = context.payload;
+	if (messagePayload.webhookReceived === undefined || messagePayload.webhookPayload === undefined || messagePayload.webhookId === undefined) {
+		context.log.error({ messagePayload }, "Missing required fields");
+		return;
+	}
+
 	const { webhookId, installationId, jiraHost } = context.payload;
 	context.log = context.log.child({
 		webhookId,

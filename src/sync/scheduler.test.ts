@@ -106,7 +106,7 @@ describe("scheduler", () => {
 
 		configureRateLimit(100000, 100000);
 
-		const repoSyncStats = await RepoSyncState.findAllFromSubscription(subscription);
+		const repoSyncStats = await RepoSyncState.findAllFromSubscription(subscription, 1000, 0, [["id", "ASC"]]);
 		await Promise.all(repoSyncStats.map((record, index) => {
 			return index > 10 ? record.destroy() : Promise.resolve();
 		}));
@@ -184,7 +184,7 @@ describe("scheduler", () => {
 	});
 
 	it("returns empty when all tasks are finished", async () => {
-		const repoSyncStats = await RepoSyncState.findAllFromSubscription(subscription);
+		const repoSyncStats = await RepoSyncState.findAllFromSubscription(subscription, 1000, 0, [["id", "DESC"]]);
 		await Promise.all(repoSyncStats.map((record) => {
 			record.branchStatus = "complete";
 			record.commitStatus = "complete";
@@ -199,7 +199,7 @@ describe("scheduler", () => {
 	});
 
 	it("returns empty when all tasks are finished with FF ON", async () => {
-		const repoSyncStats = await RepoSyncState.findAllFromSubscription(subscription);
+		const repoSyncStats = await RepoSyncState.findAllFromSubscription(subscription, 1000, 0, [["id", "DESC"]]);
 		await Promise.all(repoSyncStats.map((record) => {
 			record.branchStatus = "complete";
 			record.commitStatus = "complete";
@@ -217,7 +217,7 @@ describe("scheduler", () => {
 		configureRateLimit(10000, 10000);
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
-		const repoSyncStats = await RepoSyncState.findAllFromSubscription(subscription);
+		const repoSyncStats = await RepoSyncState.findAllFromSubscription(subscription, 1000, 0, [["id", "DESC"]]);
 		await Promise.all(repoSyncStats.map((record) => {
 			record.branchStatus = "complete";
 			record.commitStatus = "complete";
@@ -244,7 +244,7 @@ describe("scheduler", () => {
 	it("should filter dependabot alerts task if ENABLE_GITHUB_SECURITY_IN_JIRA FF is off", async () => {
 		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(false);
 		configureRateLimit(10000, 10000);
-		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription);
+		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, 1000, 0, [["id", "DESC"]]);
 		await Promise.all(repoSyncStates.map((record) => {
 			record.dependabotAlertStatus = "pending";
 			return record.save();
@@ -258,7 +258,7 @@ describe("scheduler", () => {
 	it("should not filter dependabot alerts task if ENABLE_GITHUB_SECURITY_IN_JIRA FF is on and security permissions accepted", async () => {
 		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
 		configureRateLimit(10000, 10000);
-		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription);
+		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, 1000, 0, [["id", "DESC"]]);
 		await Promise.all(repoSyncStates.map((record) => {
 			record.dependabotAlertStatus = "pending";
 			return record.save();
@@ -276,7 +276,7 @@ describe("scheduler", () => {
 	it("should filter dependabot alerts task if only ENABLE_GITHUB_SECURITY_IN_JIRA FF is on and security permissions are not accepted", async () => {
 		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
 		configureRateLimit(10000, 10000);
-		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription);
+		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, 1000, 0, [["id", "DESC"]]);
 		await Promise.all(repoSyncStates.map((record) => {
 			record.dependabotAlertStatus = "pending";
 			return record.save();
@@ -292,7 +292,7 @@ describe("scheduler", () => {
 	it("should filter secret scanning alerts task if ENABLE_GITHUB_SECURITY_IN_JIRA FF is off", async () => {
 		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(false);
 		configureRateLimit(10000, 10000);
-		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription);
+		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, 1000, 0, [["id", "DESC"]]);
 		await Promise.all(repoSyncStates.map((record) => {
 			record.secretScanningAlertStatus = "pending";
 			return record.save();
@@ -305,7 +305,7 @@ describe("scheduler", () => {
 	it("should not filter secret scanning alerts task if ENABLE_GITHUB_SECURITY_IN_JIRA FF is on", async () => {
 		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
 		configureRateLimit(10000, 10000);
-		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription);
+		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, 1000, 0, [["id", "DESC"]]);
 		await Promise.all(repoSyncStates.map((record) => {
 			record.secretScanningAlertStatus = "pending";
 			return record.save();

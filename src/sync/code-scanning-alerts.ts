@@ -31,12 +31,33 @@ export const getCodeScanningAlertTask = async (
 	const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 	const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
 
-	const { data: codeScanningAlerts  } = await gitHubClient.getCodeScanningAlerts(repository.owner.login, repository.name, {
-		per_page: smartCursor.perPage,
-		page: smartCursor.pageNo,
-		sort: "created",
-		direction: SortDirection.DES
-	});
+	let codeScanningAlerts:  CodeScanningAlertResponseItem[];
+	try {
+
+		const response = await gitHubClient.getCodeScanningAlerts(repository.owner.login, repository.name, {
+			per_page: smartCursor.perPage,
+			page: smartCursor.pageNo,
+			sort: "created",
+			direction: SortDirection.DES
+		});
+		codeScanningAlerts = response.data;
+	} catch (err) {
+		if (err.cause?.response?.status == 403 && err.cause?.response?.data?.message?.includes("Advanced Security must be enabled for this repository to use code scanning")) {
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Advanced Security disabled, so marking code scanning backfill task complete");
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
+		}
+		if (err.cause?.response?.status == 404 && err.cause?.response?.data?.message?.includes("no analysis found")) {
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Code scanning is not configured, so marking backfill task complete");
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
+		}
+		throw err;
+	}
 
 	if (!codeScanningAlerts?.length) {
 		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");

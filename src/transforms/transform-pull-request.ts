@@ -46,7 +46,7 @@ const mapReviewState = (state: string | undefined) => {
 	}
 };
 
-const mapReviewsRest = async (reviews: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }> = [], gitHubInstallationClient: GitHubInstallationClient): Promise<JiraReview[]> => {
+const mapReviewsRest = async (reviews: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }> = [], gitHubInstallationClient: GitHubInstallationClient, logger: Logger): Promise<JiraReview[]> => {
 
 	const usernames: Record<string, JiraReviewer> = {};
 
@@ -83,7 +83,7 @@ const mapReviewsRest = async (reviews: Array<{ state?: string, user: Octokit.Pul
 		};
 		const isDeletedUser = !reviewer.login;
 		if (!isDeletedUser) {
-			const gitHubUser = await getGithubUser(gitHubInstallationClient, reviewer.login);
+			const gitHubUser = await getGithubUser(gitHubInstallationClient, reviewer.login, logger);
 			mappedReviewer.email = gitHubUser?.email || `${reviewer.login}@noreply.user.github.com`;
 		}
 		return mappedReviewer;
@@ -141,10 +141,10 @@ export const transformPullRequestRest = async (
 
 	const isDraftPrFfOn = await booleanFlag(BooleanFlags.INNO_DRAFT_PR);
 
-	const branches = await getBranches(gitHubInstallationClient, pullRequest, issueKeys);
+	const branches = await getBranches(gitHubInstallationClient, pullRequest, issueKeys, log);
 	// Need to get full name from a REST call as `pullRequest.user.login` doesn't have it
-	const author = getJiraAuthor(user, await getGithubUser(gitHubInstallationClient, user?.login));
-	const reviewers = await mapReviewsRest(reviews, gitHubInstallationClient);
+	const author = getJiraAuthor(user, await getGithubUser(gitHubInstallationClient, user?.login, log));
+	const reviewers = await mapReviewsRest(reviews, gitHubInstallationClient, log);
 	const status = mapStatus(state, draft, isDraftPrFfOn, merged_at);
 
 	return {
@@ -176,7 +176,7 @@ export const transformPullRequestRest = async (
 // Do not send the branch on the payload when the Pull Request Merged event is called.
 // Reason: If "Automatically delete head branches" is enabled, the branch deleted and PR merged events might be sent out
 // “at the same time” and received out of order, which causes the branch being created again.
-const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, issueKeys: string[]) => {
+const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, issueKeys: string[], logger: Logger) => {
 	const isDraftPrFfOn = await booleanFlag(BooleanFlags.INNO_DRAFT_PR);
 
 	if (mapStatus(pullRequest.state, pullRequest.draft, isDraftPrFfOn, pullRequest.merged_at) === "MERGED") {
@@ -188,7 +188,7 @@ const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, p
 			createPullRequestUrl: generateCreatePullRequestUrl(pullRequest?.head?.repo?.html_url, pullRequest?.head?.ref, issueKeys),
 			lastCommit: {
 				// Need to get full name from a REST call as `pullRequest.head.user` doesn't have it
-				author: getJiraAuthor(pullRequest.head?.user, await getGithubUser(gitHubInstallationClient, pullRequest.head?.user?.login)),
+				author: getJiraAuthor(pullRequest.head?.user, await getGithubUser(gitHubInstallationClient, pullRequest.head?.user?.login, logger)),
 				authorTimestamp: pullRequest.updated_at,
 				displayId: pullRequest?.head?.sha?.substring(0, 6),
 				fileCount: 0,
