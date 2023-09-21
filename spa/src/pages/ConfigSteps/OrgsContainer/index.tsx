@@ -1,9 +1,9 @@
 /** @jsxImportSource @emotion/react */
+import { useRef, useState, useEffect } from "react";
 import Button, { LoadingButton } from "@atlaskit/button";
 import { GitHubInstallationType } from "../../../../../src/rest-interfaces";
 import { css } from "@emotion/react";
 import { token } from "@atlaskit/tokens";
-import { useState } from "react";
 import WarningIcon from "@atlaskit/icon/glyph/warning";
 import OauthManager from "../../../services/oauth-manager";
 import { ErrorForIPBlocked, ErrorForNonAdmins, ErrorForSSO } from "../../../components/Error/KnownErrors";
@@ -11,8 +11,7 @@ import { ErrorForIPBlocked, ErrorForNonAdmins, ErrorForSSO } from "../../../comp
 const orgsWrapperStyle = css`
 	max-height: 250px;
 	overflow-y: auto;
-	padding-right: 80px;
-	margin-right: -80px;
+	width: 100%;
 `;
 const orgDivStyle = css`
 	display: flex;
@@ -34,6 +33,14 @@ const iconWrapperStyle = css`
 	padding-top: ${token("space.150")};
 `;
 
+const gradientStyle = css`
+	background: linear-gradient(rgba(255, 255, 255, 0), rgb(255, 255, 255));
+	height: 100px;
+	margin-top: -100px;
+	position: relative;
+	width: 100%;
+	display: block;
+`;
 
 const OrganizationsList = ({
 	organizations,
@@ -49,8 +56,56 @@ const OrganizationsList = ({
 	resetCallback: (args: boolean) => void;
 	connectingOrg: (org: GitHubInstallationType) => void;
 }) => {
-	const [clickedOrg, setClickedOrg] = useState<GitHubInstallationType | undefined>(undefined);
-	const canConnect = (org: GitHubInstallationType) => !org.requiresSsoLogin && !org.isIPBlocked && org.isAdmin;
+	const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
+	const [isListScrollable, setIsListScrollable] = useState(false);
+	const contentRef = useRef<HTMLDivElement | null>(null);
+	const hasScrolledYetRef = useRef(false);
+	const [clickedOrg, setClickedOrg] = useState<
+		GitHubInstallationType | undefined
+	>(undefined);
+
+	const canConnect = (org: GitHubInstallationType) =>
+		!org.requiresSsoLogin && !org.isIPBlocked && org.isAdmin;
+
+	const checkIsListScrollable = () => {
+		let isListScrollable = false;
+		const content = contentRef.current;
+		console.log("i am in ",content);
+		if (content) {
+			const max = parseInt(window.getComputedStyle(content).maxHeight);
+			const size = content.scrollHeight;
+			console.log("i am in ", max, size);
+			isListScrollable =  (size - 15) > max;
+
+		}
+		setIsListScrollable(isListScrollable);
+	};
+
+	const handleScroll = ()=> {
+		const content = contentRef.current;
+		hasScrolledYetRef.current = true;
+		if (content) {
+			const scrollTop = content.scrollTop;
+			const scrollHeight = content.scrollHeight;
+			const clientHeight = content.clientHeight;
+			const scrolledToBottom = scrollTop + clientHeight === scrollHeight;
+			setIsScrolledToBottom(scrolledToBottom);
+		}
+	};
+
+	useEffect(() => {
+		const content = contentRef.current;
+		hasScrolledYetRef.current = false;
+		if (content) {
+			checkIsListScrollable();
+			content.addEventListener("scroll", handleScroll);
+		}
+		return () => {
+			if (content) {
+				content.removeEventListener("scroll", handleScroll);
+			}
+		};
+	}, []);
 
 	// This method clears the tokens and then re-authenticates
 	const resetToken = async () => {
@@ -81,60 +136,63 @@ const OrganizationsList = ({
 		}
 	};
 	return (
-		<div css={orgsWrapperStyle}>
-			{organizations.map((org) => {
-				const hasError = !canConnect(org);
-				const orgDivStyles = hasError
-					? [orgDivStyle, orgDivWithErrorStyle]
-					: [orgDivStyle];
-				return (
-					<div key={org.id} css={orgDivStyles}>
-						{canConnect(org) ? (
-							<>
-								<span css={orgNameStyle}>{org.account.login}</span>
-								{loaderForOrgClicked && clickedOrg?.id === org.id ? (
-									<LoadingButton style={{ width: 80 }} isLoading>
-										Loading button
-									</LoadingButton>
-								) : (
-									<Button
-										isDisabled={
-											loaderForOrgClicked && clickedOrg?.id !== org.id
-										}
-										onClick={async () => {
-											setLoaderForOrgClicked(true);
-											setClickedOrg(org);
-											try {
-												// Calling the create connection function that is passed from the parent
-												await connectingOrg(org);
-											} finally {
-												setLoaderForOrgClicked(false);
-											}
-										}}
-									>
-										Connect
-									</Button>
-								)}
-							</>
-						) : (
-							<>
-								<div>
+		<>
+			<div css={orgsWrapperStyle} ref={contentRef}>
+				{organizations.map((org) => {
+					const hasError = !canConnect(org);
+					const orgDivStyles = hasError
+						? [orgDivStyle, orgDivWithErrorStyle]
+						: [orgDivStyle];
+					return (
+						<div key={org.id} css={orgDivStyles}>
+							{canConnect(org) ? (
+								<>
 									<span css={orgNameStyle}>{org.account.login}</span>
-									<div>{errorMessage(org)}</div>
-								</div>
-								<div css={iconWrapperStyle}>
-									<WarningIcon
-										label="warning"
-										primaryColor={token("color.background.warning.bold")}
-										size="medium"
-									/>
-								</div>
-							</>
-						)}
-					</div>
-				);
-			})}
-		</div>
+									{loaderForOrgClicked && clickedOrg?.id === org.id ? (
+										<LoadingButton style={{ width: 80 }} isLoading>
+											Loading button
+										</LoadingButton>
+									) : (
+										<Button
+											isDisabled={
+												loaderForOrgClicked && clickedOrg?.id !== org.id
+											}
+											onClick={async () => {
+												setLoaderForOrgClicked(true);
+												setClickedOrg(org);
+												try {
+													// Calling the create connection function that is passed from the parent
+													await connectingOrg(org);
+												} finally {
+													setLoaderForOrgClicked(false);
+												}
+											}}
+										>
+											Connect
+										</Button>
+									)}
+								</>
+							) : (
+								<>
+									<div>
+										<span css={orgNameStyle}>{org.account.login}</span>
+										<div>{errorMessage(org)}</div>
+									</div>
+									<div css={iconWrapperStyle}>
+										<WarningIcon
+											label="warning"
+											primaryColor={token("color.background.warning.bold")}
+											size="medium"
+										/>
+									</div>
+								</>
+							)}
+						</div>
+					);
+				})}
+			</div>
+			{isListScrollable && (hasScrolledYetRef.current ? !isScrolledToBottom : true)  && <div css={gradientStyle} />}
+		</>
 	);
 };
 
