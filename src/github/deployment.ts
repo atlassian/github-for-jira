@@ -33,7 +33,7 @@ export const deploymentWebhookHandler = async (context: WebhookContext, jiraClie
 		webhookReceived: Date.now(),
 		webhookId: context.id,
 		gitHubAppConfig: context.gitHubAppConfig
-	});
+	}, 0, context.log);
 };
 
 export const processDeployment = async (

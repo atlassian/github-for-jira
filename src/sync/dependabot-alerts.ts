@@ -12,6 +12,7 @@ import {
 	transformGitHubSeverityToJiraSeverity,
 	transformGitHubStateToJiraStatus
 } from "~/src/transforms/util/github-security-alerts";
+import { truncate } from "lodash";
 
 export const getDependabotAlertTask = async (
 	parentLogger: Logger,
@@ -90,13 +91,14 @@ const transformDependabotAlerts = async (
 	const handleUnmappedSeverity = (severity: string | null) => logger.info(`Received unmapped severity from dependabot_alerts sync: ${severity ?? "Missing Severity"}`);
 
 	const vulnerabilities = alerts.map((alert) => {
-		const identifiers = mapVulnIdentifiers(alert.security_advisory.identifiers, alert.security_advisory.references);
+		const identifiers = mapVulnIdentifiers(alert.security_advisory.identifiers, alert.security_advisory.references, alert.html_url);
 		return {
 			schemaVersion: "1.0",
 			id: `d-${transformRepositoryId(repository.id, gitHubClientConfig.baseUrl)}-${alert.number}`,
 			updateSequenceNumber: Date.now(),
 			containerId: transformRepositoryId(repository.id, gitHubClientConfig.baseUrl),
-			displayName: alert.security_advisory.summary,
+			// display name cannot exceed 255 characters
+			displayName: truncate(alert.security_advisory.summary || `Dependabot alert #${alert.number}`, { length: 254 }),
 			description: getDependabotScanningVulnDescription(alert, identifiers,logger),
 			url: alert.html_url,
 			type: "sca",

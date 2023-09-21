@@ -14,7 +14,7 @@ export const saveConfiguredAppProperties = async (jiraHost: string, logger: Logg
 		await jiraClient.appPropertiesCreate(isConfiguredState);
 	} catch (err) {
 		// Doing best effort but don't blow things up if it fails
-		logger.error({ err }, "Set app properties failed");
+		logger.error({ err, jiraHost: installation.jiraHost, installationId: installation.id }, "Set app properties failed");
 	}
 };
 
@@ -29,7 +29,7 @@ export const getConfiguredAppProperties = async (jiraHost: string, logger: Logge
 	try {
 		return await jiraClient.appPropertiesGet();
 	} catch (err) {
-		logger.error({ err }, "Get app properties failed");
+		logger.error({ err, jiraHost: installation.jiraHost, installationId: installation.id }, "Get app properties failed");
 		return undefined;
 	}
 };

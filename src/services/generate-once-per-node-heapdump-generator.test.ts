@@ -48,16 +48,16 @@ describe("heapdump-generator", () => {
 		(hasEnoughFreeHeap as jest.Mock).mockReturnValue(false);
 		expect(generator.maybeGenerateDump()).toBeTruthy();
 		expect(v8.getHeapSnapshot).toBeCalled();
-		await waitUntil(async () => {
-			expect(fs.readFileSync("/tmp/dump_heap.ready").toLocaleString()).toStrictEqual("the heapdump");
+		await waitUntil(() => {
+			return Promise.resolve(expect(fs.readFileSync("/tmp/dump_heap.ready").toLocaleString()).toStrictEqual("the heapdump"));
 		});
 	});
 
 	it("should create only a single dump file", async () => {
 		(hasEnoughFreeHeap as jest.Mock).mockReturnValue(false);
 		expect(generator.maybeGenerateDump()).toBeTruthy();
-		await waitUntil(async () => {
-			expect(fs.readFileSync("/tmp/dump_heap.ready")).toBeTruthy();
+		await waitUntil(() => {
+			return Promise.resolve(expect(fs.readFileSync("/tmp/dump_heap.ready")).toBeTruthy());
 		});
 		expect(generator.maybeGenerateDump()).toBeFalsy();
 		expect(v8.getHeapSnapshot).toBeCalledTimes(1);

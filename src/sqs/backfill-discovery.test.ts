@@ -67,14 +67,13 @@ describe("Discovery Queue Test - GitHub Client", () => {
 			gitHubAppId: gitHubServerApp.id
 		});
 
-		await sqsQueues.backfill.start();
+		sqsQueues.backfill.start();
 
 		when(numberFlag).calledWith(
 			NumberFlags.PREEMPTIVE_RATE_LIMIT_THRESHOLD,
-			expect.anything(),
-			expect.anything()
+			100,
+			jiraHost
 		).mockResolvedValue(100);
-
 	});
 
 	afterEach(async () => {
@@ -130,7 +129,7 @@ describe("Discovery Queue Test - GitHub Client", () => {
 		await waitUntil(async () => {
 			const subscription = await Subscription.getSingleInstallation(jiraHost, TEST_INSTALLATION_ID, undefined);
 			expect(subscription).toBeTruthy();
-			const states = await RepoSyncState.findAllFromSubscription(subscription!);
+			const states = await RepoSyncState.findAllFromSubscription(subscription!, 100, 0, [["id", "ASC"]]);
 			expect(states?.length).toBe(2);
 		});
 	});
@@ -153,7 +152,7 @@ describe("Discovery Queue Test - GitHub Client", () => {
 		await waitUntil(async () => {
 			const subscription = await Subscription.getSingleInstallation(jiraHost, TEST_INSTALLATION_ID, gitHubServerApp.id);
 			expect(subscription).toBeTruthy();
-			const states = await RepoSyncState.findAllFromSubscription(subscription!);
+			const states = await RepoSyncState.findAllFromSubscription(subscription!, 100, 0, [["id", "ASC"]]);
 			expect(states?.length).toBe(2);
 		});
 	});

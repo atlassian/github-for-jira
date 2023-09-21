@@ -11,8 +11,14 @@ import { envVars } from "config/env";
 import { GenerateOnceCoredumpGenerator } from "services/generate-once-coredump-generator";
 import { GenerateOncePerNodeHeadumpGenerator } from "services/generate-once-per-node-headump-generator";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import oom from "node-oom-heapdump";
 
-const CONF_SHUTDOWN_MSG = "shutdown";
+const SHUTDOWN_MSG = "shutdown";
+const HEAPDUMP_ON_CRASH_MSG = "heapdump_on_crash";
+
+const generateHeapdumpPathOnOom = (pid: string) => {
+	return `/tmp/dump_heap_oom_${pid}`;
+};
 
 export const startMonitorOnWorker = (parentLogger: Logger, workerConfig: {
 	iAmAliveInervalMsec: number,
@@ -54,9 +60,17 @@ export const startMonitorOnWorker = (parentLogger: Logger, workerConfig: {
 
 	process.on("message", (msg: string) => {
 		logger.info(`worker received a message: ${msg}`);
-		if (msg === CONF_SHUTDOWN_MSG) {
+		if (msg === SHUTDOWN_MSG) {
 			logger.warn("shutdown received, stop healthcheck");
 			stopHealthcheck();
+		}
+		if (msg === HEAPDUMP_ON_CRASH_MSG) {
+			if (dumpsFlagValue) {
+				logger.warn("charging heapdump on crash");
+				oom({
+					path: generateHeapdumpPathOnOom(process.pid.toString())
+				});
+			}
 		}
 	});
 
@@ -113,12 +127,27 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 						liveWorkers[workerPid] = Date.now();
 					});
 					worker.on("exit", (code, signal) => {
+						glob("/tmp/*", (err: Error, tmpFiles: Array<string>) => {
+							if (err) {
+								logger.error("Cannot get /tmp files using glob");
+								return;
+							}
+							logger.info({
+								tmpFiles: JSON.stringify(tmpFiles),
+								workerPid
+							}, "Listing TMP files");
+						});
+						const maybeOomHeapdumpPath = generateHeapdumpPathOnOom(workerPid.toString()) + ".heapsnapshot";
+						if (fs.existsSync(maybeOomHeapdumpPath)) {
+							logger.info({ workerPid },`found ${maybeOomHeapdumpPath}, prepare for uploading`);
+							fs.renameSync(maybeOomHeapdumpPath, maybeOomHeapdumpPath + ".ready");
+						}
 						if (signal) {
-							logger.warn(`worker was killed by signal: ${signal}, code=${code}`);
+							logger.warn({ workerPid },`worker was killed by signal: ${signal}, code=${code}`);
 						} else if (code !== 0) {
-							logger.warn(`worker exited with error code: ${code}`);
+							logger.warn({ workerPid },`worker exited with error code: ${code}`);
 						} else {
-							logger.warn("worker exited with success code");
+							logger.warn({ workerPid }, "worker exited with success code");
 						}
 					});
 				}
@@ -150,9 +179,29 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 		}
 	};
 
+	// Given that heapdump eats a lot of mem and CPU, let's listen to only one worker. Otherwise, if 2 or more workers
+	// crash, that would put the whole node under risk,
+	let workerToReportOnCrashPid: number | undefined;
+	const maybeChargeWorkerToGenerateHeapdumpOnCrash = () => {
+		if (areWorkersReady() && !workerToReportOnCrashPid && Object.keys(registeredWorkers).length > 0) {
+			const pids = Object.keys(registeredWorkers);
+			workerToReportOnCrashPid = parseInt(pids[Math.floor(Math.random() * pids.length)]);
+			logger.info({
+				workerToReportOnCrashPid
+			}, "worker to generate heapdump on oom was picked");
+			const worker = Object.values(cluster.workers).find(worker => worker?.process.pid === workerToReportOnCrashPid);
+			if (!worker) {
+				logger.info("couldn't find the worker not found");
+				workerToReportOnCrashPid = undefined;
+				return;
+			}
+			worker.send(HEAPDUMP_ON_CRASH_MSG);
+		}
+	};
+
 	const maybeRemoveDeadWorkers = () => {
 		if (areWorkersReady()) {
-			logger.info(`removing dead workers`);
+			logInfoSampled(logger, `removing dead workers`, `removing dead workers`, 100);
 			const keysToKill: Array<string> = [];
 			const now = Date.now();
 			Object.keys(liveWorkers).forEach((key) => {
@@ -177,7 +226,7 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 				nLiveWorkers
 			}, `send shutdown signal to all workers`);
 			for (const worker of Object.values(cluster.workers)) {
-				worker?.send(CONF_SHUTDOWN_MSG);
+				worker?.send(SHUTDOWN_MSG);
 			}
 			logRunningProcesses(logger);
 		} else {
@@ -231,6 +280,7 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 	return setInterval(() => {
 		registerNewWorkers(); // must be called periodically to make sure we pick up new/respawned workers
 		maybeSetupWorkersReadyAt();
+		maybeChargeWorkerToGenerateHeapdumpOnCrash();
 		maybeRemoveDeadWorkers();
 		maybeSendShutdownToAllWorkers();
 		maybeUploadeDumpFiles();
