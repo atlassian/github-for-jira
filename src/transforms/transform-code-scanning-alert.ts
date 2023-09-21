@@ -139,7 +139,8 @@ export const transformCodeScanningAlertToJiraSecurity = async (context: WebhookC
 			updateSequenceNumber: Date.now(),
 			containerId: transformRepositoryId(repository.id, gitHubInstallationClient.baseUrl),
 			// display name cannot exceed 255 characters
-			displayName: truncate(alert.rule.description || alert.rule.name, { length: 254 }),
+			// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+			displayName: truncate(alert.rule.description || alert.rule.name || `Code scanning alert #${alert.number}`, { length: 254 }),
 			description: getCodeScanningVulnDescription(alert, identifiers, alertInstances, context.log),
 			url: alert.html_url,
 			type: "sast",

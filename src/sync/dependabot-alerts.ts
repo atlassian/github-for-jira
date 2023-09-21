@@ -98,7 +98,7 @@ const transformDependabotAlerts = async (
 			updateSequenceNumber: Date.now(),
 			containerId: transformRepositoryId(repository.id, gitHubClientConfig.baseUrl),
 			// display name cannot exceed 255 characters
-			displayName: truncate(alert.security_advisory.summary, { length: 254 }),
+			displayName: truncate(alert.security_advisory.summary || `Dependabot alert #${alert.number}`, { length: 254 }),
 			description: getDependabotScanningVulnDescription(alert, identifiers,logger),
 			url: alert.html_url,
 			type: "sca",
