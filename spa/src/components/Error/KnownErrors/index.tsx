@@ -1,7 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
 import { token } from "@atlaskit/tokens";
-import Button from "@atlaskit/button";
 import analyticsClient from "../../../analytics";
 import { popup } from "../../../utils";
 
@@ -13,6 +12,11 @@ const bulletSeparatorStyle = css`
 `;
 const linkStyle = css`
 	cursor: pointer;
+`;
+
+const updateLinkStyle = css`
+	padding-left: 0;
+	padding-right: 0;
 `;
 
 /************************************************************************
@@ -43,13 +47,16 @@ export const ErrorForIPBlocked = ({ orgName, resetCallback }: { orgName?: string
 	<div css={paragraphStyle}>
 		Can't connect{orgName && <span> to <b>{orgName}</b></span>}, blocked by your IP allow list.
 	</div>
-	<Button
-		style={{ paddingLeft: 0, paddingRight: 0 }}
-		appearance="link"
-		onClick={() => popup("https://github.com/atlassian/github-for-jira/blob/main/docs/ip-allowlist.md")}
+	<a
+		css={updateLinkStyle}
+		onClick={() =>
+			popup(
+				"https://github.com/atlassian/github-for-jira/blob/main/docs/ip-allowlist.md"
+			)
+		}
 	>
-		How to update allowlist
-	</Button>
+				How to update allowlist
+	</a>
 	<span css={bulletSeparatorStyle}>&#8226;</span>
 	<a css={linkStyle} onClick={resetCallback}>Retry</a>
 </>;
