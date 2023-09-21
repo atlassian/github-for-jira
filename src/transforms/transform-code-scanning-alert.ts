@@ -152,7 +152,7 @@ export const transformCodeScanningAlertToJiraSecurity = async (context: WebhookC
 			...(identifiers ? { identifiers } : null),
 			status: transformGitHubStateToJiraStatus(alert.state, handleUnmappedState),
 			additionalInfo: {
-				content: alert.tool.name
+				content: truncate(alert.tool.name, { length: 254 })
 			}
 		}]
 	};

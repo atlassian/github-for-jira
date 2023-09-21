@@ -99,7 +99,7 @@ const transformDependabotAlerts = async (
 			containerId: transformRepositoryId(repository.id, gitHubClientConfig.baseUrl),
 			// display name cannot exceed 255 characters
 			displayName: truncate(alert.security_advisory.summary || `Dependabot alert #${alert.number}`, { length: 254 }),
-			description: getDependabotScanningVulnDescription(alert, identifiers,logger),
+			description: getDependabotScanningVulnDescription(alert, identifiers, logger),
 			url: alert.html_url,
 			type: "sca",
 			introducedDate: alert.created_at,
@@ -110,7 +110,7 @@ const transformDependabotAlerts = async (
 			identifiers,
 			status: transformGitHubStateToJiraStatus(alert.state?.toLowerCase(), handleUnmappedState),
 			additionalInfo: {
-				content: alert.dependency.manifest_path
+				content: truncate(alert.dependency.manifest_path, { length: 254 })
 			}
 		};
 	});
