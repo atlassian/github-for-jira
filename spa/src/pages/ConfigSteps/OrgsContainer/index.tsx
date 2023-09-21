@@ -35,8 +35,8 @@ const iconWrapperStyle = css`
 
 const gradientStyle = css`
 	background: linear-gradient(rgba(255, 255, 255, 0), rgb(255, 255, 255));
-	height: 100px;
-	margin-top: -100px;
+	height: 70px;
+	margin-top: -70px;
 	position: relative;
 	width: 100%;
 	display: block;
@@ -59,6 +59,7 @@ const OrganizationsList = ({
 	const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
 	const [isListScrollable, setIsListScrollable] = useState(false);
 	const contentRef = useRef<HTMLDivElement | null>(null);
+	const gradientRef = useRef<HTMLDivElement | null>(null);
 	const hasScrolledYetRef = useRef(false);
 	const [clickedOrg, setClickedOrg] = useState<
 		GitHubInstallationType | undefined
@@ -93,9 +94,17 @@ const OrganizationsList = ({
 		}
 	};
 
+	const handleGradientScroll = () =>{
+		console.log("okokokok ");
+	};
+
 	useEffect(() => {
 		const content = contentRef.current;
+		const gradient = gradientRef.current;
 		hasScrolledYetRef.current = false;
+		if(gradient){
+			gradient.addEventListener("scroll", handleGradientScroll);
+		}
 		if (content) {
 			checkIsListScrollable();
 			content.addEventListener("scroll", handleScroll);
@@ -103,6 +112,9 @@ const OrganizationsList = ({
 		return () => {
 			if (content) {
 				content.removeEventListener("scroll", handleScroll);
+			}
+			if(gradient){
+				gradient.removeEventListener("scroll", handleGradientScroll);
 			}
 		};
 	}, []);
@@ -191,7 +203,7 @@ const OrganizationsList = ({
 					);
 				})}
 			</div>
-			{isListScrollable && (hasScrolledYetRef.current ? !isScrolledToBottom : true)  && <div css={gradientStyle} />}
+			{isListScrollable && (hasScrolledYetRef.current ? !isScrolledToBottom : true)  && <div ref={gradientRef} css={gradientStyle} />}
 		</>
 	);
 };
