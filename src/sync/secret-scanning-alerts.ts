@@ -26,12 +26,26 @@ export const getSecretScanningAlertTask = async (
 	const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 	const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
 
-	const { data: secretScanningAlerts  } = await gitHubClient.getSecretScanningAlerts(repository.owner.login, repository.name, {
-		per_page: smartCursor.perPage,
-		page: smartCursor.pageNo,
-		sort: "created",
-		direction: SortDirection.DES
-	});
+	let secretScanningAlerts: SecretScanningAlertResponseItem[];
+	try {
+		const response = await gitHubClient.getSecretScanningAlerts(repository.owner.login, repository.name, {
+			per_page: smartCursor.perPage,
+			page: smartCursor.pageNo,
+			sort: "created",
+			direction: SortDirection.DES
+		});
+		secretScanningAlerts = response.data;
+	} catch (err) {
+		if (err.cause?.response?.status == 404 && err.cause?.response?.data?.message?.includes("Secret scanning is disabled on this repository")) {
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Secret scanning disabled, so marking backfill task complete");
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
+		}
+		throw err;
+	}
+
 
 	if (!secretScanningAlerts?.length) {
 		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
