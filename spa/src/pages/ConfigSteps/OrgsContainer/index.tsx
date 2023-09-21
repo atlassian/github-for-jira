@@ -70,11 +70,9 @@ const OrganizationsList = ({
 	const checkIsListScrollable = () => {
 		let isListScrollable = false;
 		const content = contentRef.current;
-		console.log("i am in ",content);
 		if (content) {
 			const max = parseInt(window.getComputedStyle(content).maxHeight);
 			const size = content.scrollHeight;
-			console.log("i am in ", max, size);
 			isListScrollable =  (size - 15) > max;
 
 		}
