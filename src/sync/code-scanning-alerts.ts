@@ -31,7 +31,7 @@ export const getCodeScanningAlertTask = async (
 	const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 	const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
 
-	let codeScanningAlerts:  CodeScanningAlertResponseItem[];
+	let codeScanningAlerts: CodeScanningAlertResponseItem[];
 	try {
 
 		const response = await gitHubClient.getCodeScanningAlerts(repository.owner.login, repository.name, {
@@ -78,7 +78,7 @@ export const getCodeScanningAlertTask = async (
 	const nextPageCursorStr = smartCursor.copyWithPageNo(smartCursor.pageNo + 1).serialise();
 	const edgesWithCursor = [{ codeScanningAlerts: codeScanningAlerts, cursor: nextPageCursorStr }];
 
-	const jiraPayload = await transformCodeScanningAlert(codeScanningAlerts, repository, jiraHost, logger,  messagePayload.gitHubAppConfig?.gitHubAppId, gitHubClient);
+	const jiraPayload = await transformCodeScanningAlert(codeScanningAlerts, repository, jiraHost, logger, messagePayload.gitHubAppConfig?.gitHubAppId, gitHubClient);
 	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload?.vulnerabilities?.length }, "Backfill task complete");
 	return {
 		edges: edgesWithCursor,
@@ -134,7 +134,7 @@ const transformCodeScanningAlert = async (
 			...(identifiers ? { identifiers } : null),
 			status: transformGitHubStateToJiraStatus(alert.state, handleUnmappedState),
 			additionalInfo: {
-				content: alert.tool.name
+				content: truncate(alert.tool.name, { length: 254 })
 			}
 		};
 	}));
