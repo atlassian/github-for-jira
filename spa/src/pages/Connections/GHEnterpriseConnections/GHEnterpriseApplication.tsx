@@ -1,19 +1,20 @@
+/** @jsxImportSource @emotion/react */
 import { DynamicTableStateless } from "@atlaskit/dynamic-table";
 import { useState } from "react";
-import styled from "@emotion/styled";
 import Heading from "@atlaskit/heading";
 import ChevronRightIcon from "@atlaskit/icon/glyph/chevron-right";
 import ChevronDownIcon from "@atlaskit/icon/glyph/chevron-down";
 import { head, getGHSubscriptionsRows } from "../../../utils/dynamicTableHelper";
 import { GitHubEnterpriseApplication } from "../../../rest-interfaces";
+import { css } from "@emotion/react";
 
-const Wrapper = styled.div`
+const wrapperStyle = css`
 	display: flex;
 	align-items: center;
 	flex-direction: column;
 `;
 
-const ApplicationHeader = styled.div`
+const applicationHeaderStyle = css`
 	cursor: pointer;
 	display: flex;
 	align-items: center;
@@ -22,7 +23,7 @@ const ApplicationHeader = styled.div`
 	margin-bottom: 20px;
 `;
 
-const ApplicationContent = styled.div`
+const applicationContentStyle = css`
 	width: 100%;
 `;
 
@@ -35,8 +36,9 @@ const GitHubEnterpriseApp = ({
 }: GitHubEnterpriseApplicationProps) => {
 	const [showAppContent, setShowAppContent] = useState<boolean>(true);
 	return (
-		<Wrapper>
-			<ApplicationHeader
+		<div css={wrapperStyle}>
+			<div
+				css={applicationHeaderStyle}
 				onClick={() => {
 					setShowAppContent((prevState) => !prevState);
 				}}
@@ -47,18 +49,18 @@ const GitHubEnterpriseApp = ({
 					<ChevronRightIcon label="" />
 				)}
 				<Heading level="h400">{application.gitHubAppName}</Heading>
-			</ApplicationHeader>
+			</div>
 			{showAppContent && (
-				<ApplicationContent>
+				<div css={applicationContentStyle}>
 					<DynamicTableStateless
 						head={head}
 						rows={getGHSubscriptionsRows(application.successfulConnections)}
 						rowsPerPage={5}
 						page={1}
 					/>
-				</ApplicationContent>
+				</div>
 			)}
-		</Wrapper>
+		</div>
 	);
 };
 
