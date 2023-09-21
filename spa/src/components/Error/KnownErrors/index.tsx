@@ -12,9 +12,6 @@ const bulletSeparatorStyle = css`
 `;
 const linkStyle = css`
 	cursor: pointer;
-`;
-
-const updateLinkStyle = css`
 	padding-left: 0;
 	padding-right: 0;
 `;
@@ -48,7 +45,7 @@ export const ErrorForIPBlocked = ({ orgName, resetCallback }: { orgName?: string
 		Can't connect{orgName && <span> to <b>{orgName}</b></span>}, blocked by your IP allow list.
 	</div>
 	<a
-		css={updateLinkStyle}
+		css={linkStyle}
 		onClick={() =>
 			popup(
 				"https://github.com/atlassian/github-for-jira/blob/main/docs/ip-allowlist.md"
