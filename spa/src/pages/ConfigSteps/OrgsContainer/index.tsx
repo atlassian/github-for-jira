@@ -1,12 +1,17 @@
 /** @jsxImportSource @emotion/react */
-import { useRef, useState, useEffect } from "react";
+import { useState } from "react";
 import Button, { LoadingButton } from "@atlaskit/button";
 import { GitHubInstallationType } from "../../../../../src/rest-interfaces";
 import { css } from "@emotion/react";
 import { token } from "@atlaskit/tokens";
 import WarningIcon from "@atlaskit/icon/glyph/warning";
 import OauthManager from "../../../services/oauth-manager";
-import { ErrorForIPBlocked, ErrorForNonAdmins, ErrorForSSO } from "../../../components/Error/KnownErrors";
+import {
+	ErrorForIPBlocked,
+	ErrorForNonAdmins,
+	ErrorForSSO,
+} from "../../../components/Error/KnownErrors";
+import useOrgListScroll from "../../../helper/useOrgListScroll";
 
 const orgsWrapperStyle = css`
 	max-height: 250px;
@@ -56,54 +61,18 @@ const OrganizationsList = ({
 	resetCallback: (args: boolean) => void;
 	connectingOrg: (org: GitHubInstallationType) => void;
 }) => {
-	const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
-	const [isListScrollable, setIsListScrollable] = useState(false);
-	const contentRef = useRef<HTMLDivElement | null>(null);
-	const hasScrolledYetRef = useRef(false);
+	const {
+		isScrolledToBottom,
+		isListScrollable,
+		contentRef,
+		hasScrolledYetRef,
+	} = useOrgListScroll();
 	const [clickedOrg, setClickedOrg] = useState<
 		GitHubInstallationType | undefined
 	>(undefined);
 
 	const canConnect = (org: GitHubInstallationType) =>
 		!org.requiresSsoLogin && !org.isIPBlocked && org.isAdmin;
-
-	const checkIsListScrollable = () => {
-		let isListScrollable = false;
-		const content = contentRef.current;
-		if (content) {
-			const max = parseInt(window.getComputedStyle(content).maxHeight);
-			const size = content.scrollHeight;
-			isListScrollable =  (size - 15) > max;
-
-		}
-		setIsListScrollable(isListScrollable);
-	};
-
-	const handleScroll = ()=> {
-		const content = contentRef.current;
-		hasScrolledYetRef.current = true;
-		if (content) {
-			const scrollTop = content.scrollTop;
-			const scrollHeight = content.scrollHeight;
-			const clientHeight = content.clientHeight;
-			const scrolledToBottom = scrollTop + clientHeight === scrollHeight;
-			setIsScrolledToBottom(scrolledToBottom);
-		}
-	};
-
-	useEffect(() => {
-		const content = contentRef.current;
-		hasScrolledYetRef.current = false;
-		if (content) {
-			checkIsListScrollable();
-			content.addEventListener("scroll", handleScroll);
-		}
-		return () => {
-			if (content) {
-				content.removeEventListener("scroll", handleScroll);
-			}
-		};
-	}, []);
 
 	// This method clears the tokens and then re-authenticates
 	const resetToken = async () => {
@@ -189,7 +158,10 @@ const OrganizationsList = ({
 					);
 				})}
 			</div>
-			{isListScrollable && (hasScrolledYetRef.current ? !isScrolledToBottom : true)  && <div css={gradientStyle} />}
+			{isListScrollable &&
+				(hasScrolledYetRef.current ? !isScrolledToBottom : true) && (
+					<div css={gradientStyle} />
+				)}
 		</>
 	);
 };
