@@ -47,6 +47,7 @@ export const getDependabotAlertTask = async (
 				jiraPayload: undefined
 			};
 		}
+		logger.error({ err, reason: err.cause?.response?.data }, "Dependabot alert backfill failed");
 		throw err;
 	}
 
