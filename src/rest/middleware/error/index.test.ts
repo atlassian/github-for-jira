@@ -33,26 +33,29 @@ describe("Testing RestErrorHandler", () => {
 	};
 	const sendRequest = (url: string) => supertest(app).get(url).send();
 
-	beforeEach(async () => {
+	beforeEach(() => {
 		app = createApp();
 	});
 
 	it("Testing Rest Api Error", async () => {
 		const res = await sendRequest("/testRestApiError");
-		expect(res.body.errorCode).toEqual("UNKNOWN");
-		expect(res.body.message).toEqual("Throwing Rest API error");
+		const body = res.body as { errorCode: string, message: string };
+		expect(body.errorCode).toEqual("UNKNOWN");
+		expect(body.message).toEqual("Throwing Rest API error");
 	});
 
 	it("Testing Github Client Error", async () => {
 		const res = await sendRequest("/testGithubClientError");
-		expect(res.body.errorCode).toEqual("UNKNOWN");
-		expect(res.body.message).toEqual("Throwing GitHub client error");
+		const body = res.body as { errorCode: string, message: string };
+		expect(body.errorCode).toEqual("UNKNOWN");
+		expect(body.message).toEqual("Throwing GitHub client error");
 	});
 
 	it("Testing Other Errors", async () => {
 		const res = await sendRequest("/testOtherErrors");
-		expect(res.body.errorCode).toEqual("UNKNOWN");
-		expect(res.body.message).toEqual("Unknown Error");
+		const body = res.body as { errorCode: string, message: string };
+		expect(body.errorCode).toEqual("UNKNOWN");
+		expect(body.message).toEqual("Unknown Error");
 	});
 
 

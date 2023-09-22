@@ -6,7 +6,7 @@ export type GetRedirectUrlResponse = {
 
 export type ExchangeTokenResponse = {
 	accessToken: string;
-	refreshToken: string;
+	refreshToken?: string;
 };
 
 export type UsersGetAuthenticatedResponse = {
