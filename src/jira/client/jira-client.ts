@@ -24,6 +24,8 @@ import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { getDeploymentDebugInfo } from "./jira-client-deployment-helper";
 import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
+import { sendAnalytics } from "~/src/util/analytics-client";
+import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "~/src/interfaces/common";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 500;
@@ -80,7 +82,7 @@ export interface JiraClient {
 		) => Promise<DeploymentsResult>;
 	},
 	remoteLink: {
-		submit: (data: any, options?: JiraSubmitOptions) => Promise<void>;
+		submit: (data: any, options?: JiraSubmitOptions) => Promise<AxiosResponse>;
 	},
 	security: {
 		submitVulnerabilities: (data: JiraVulnerabilityBulkSubmitData, options?: JiraSubmitOptions) => Promise<AxiosResponse>;
@@ -459,7 +461,7 @@ export const getJiraClient = async (
 					operationType: options?.operationType || "NORMAL"
 				};
 				logger.info("Sending remoteLinks payload to jira.");
-				await instance.post("/rest/remotelinks/1.0/bulk", payload);
+				return await instance.post("/rest/remotelinks/1.0/bulk", payload);
 			}
 		},
 		security: {
@@ -475,6 +477,16 @@ export const getJiraClient = async (
 				logger.info("Sending vulnerabilities payload to jira.");
 				const response = await instance.post("/rest/security/1.0/bulk", payload);
 				handleSubmitVulnerabilitiesResponse(response, logger);
+				await sendAnalytics(installation.jiraHost, AnalyticsEventTypes.TrackEvent, {
+					action: AnalyticsTrackEventsEnum.GitHubSecurityVulnerabilitiesSubmittedEventName,
+					actionSubject: AnalyticsTrackEventsEnum.GitHubSecurityVulnerabilitiesSubmittedEventName,
+					source: !subscription.gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise
+				}, {
+					jiraHost: installation.jiraHost,
+					operationType: options?.operationType || "NORMAL",
+					workspaceId: subscription?.id,
+					count: data.vulnerabilities?.length
+				});
 				return response;
 			}
 		}
@@ -486,9 +498,8 @@ export const getJiraClient = async (
 const handleSubmitVulnerabilitiesResponse = (response: AxiosResponse, logger: Logger) => {
 	const rejectedEntities = response.data?.rejectedEntities;
 	if (rejectedEntities?.length > 0) {
-		logger.warn({ rejectedEntities }, `Data depot rejected ${rejectedEntities.length} vulnerabilities`);
+		logger.warn({ rejectedEntities }, `Data depot rejected ${rejectedEntities.length as number} vulnerabilities`);
 	}
-
 };
 
 const extractDeploymentDataForLoggingPurpose = (data: JiraDeploymentBulkSubmitData, logger: Logger): Record<string, any> => {

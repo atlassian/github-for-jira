@@ -89,3 +89,4 @@ services:
       dockerfile: etc/app-install/Dockerfile
     env_file:
       - .env
+

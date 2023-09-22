@@ -35,7 +35,8 @@ const getErrorMessages = (statusCode: number): string => {
 
 export const GithubCreateBranchPost = async (req: Request, res: Response): Promise<void> => {
 	const { gitHubAppConfig, jiraHost } = res.locals;
-	const { owner, repo, sourceBranchName, newBranchName } = req.body;
+	const { owner, repo, sourceBranchName } = req.body;
+	const newBranchName: string = req.body.newBranchName;
 	const logger = getLogger("github-create-branch-options-get", {
 		fields: req.log?.fields
 	});

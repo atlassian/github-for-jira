@@ -69,9 +69,9 @@ export const JiraConnectEnterprisePost = async (
 	// inside the handler
 	const TIMEOUT_PERIOD_MS = parseInt(process.env.JIRA_CONNECT_ENTERPRISE_POST_TIMEOUT_MSEC || "30000");
 
-	const gheServerURL = req.body.gheServerURL?.trim();
-	const apiKeyHeaderName = req.body.apiKeyHeaderName?.trim();
-	const apiKeyValue = req.body.apiKeyValue?.trim();
+	const gheServerURL: string = req.body.gheServerURL?.trim() ?? "undefined";
+	const apiKeyHeaderName: string | undefined = req.body.apiKeyHeaderName?.trim();
+	const apiKeyValue: string | undefined = req.body.apiKeyValue?.trim();
 
 	const { id: installationId } = res.locals.installation;
 
@@ -124,7 +124,7 @@ export const JiraConnectEnterprisePost = async (
 
 	try {
 		const client = await createAnonymousClient(gheServerURL, jiraHost, { trigger: "jira-connect-enterprise-post" }, req.log,
-			apiKeyHeaderName
+			apiKeyHeaderName && apiKeyValue !== undefined
 				? {
 					headerName: apiKeyHeaderName,
 					apiKeyGenerator: () => Promise.resolve(apiKeyValue)
@@ -146,7 +146,7 @@ export const JiraConnectEnterprisePost = async (
 					reason: "Received OK, but the host is not GitHub Enterprise server"
 				}]
 			});
-			sendErrorMetricAndAnalytics(jiraHost, ErrorResponseCode.CANNOT_CONNECT, "" + response.status);
+			sendErrorMetricAndAnalytics(jiraHost, ErrorResponseCode.CANNOT_CONNECT, response?.status?.toString() ?? "undefined");
 			return;
 		}
 
@@ -176,7 +176,7 @@ export const JiraConnectEnterprisePost = async (
 			return;
 		}
 
-		const codeOrStatus = "" + (axiosError.code || axiosError.response?.status);
+		const codeOrStatus = (axiosError.code || axiosError.response?.status?.toString() || "undefined");
 		req.log.warn({ err, gheServerURL }, `Couldn't access GHE host`);
 
 		const reasons = [err.message];

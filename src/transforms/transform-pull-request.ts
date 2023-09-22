@@ -9,13 +9,18 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { JiraReview } from "interfaces/jira";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 import { pullRequestNode } from "~/src/github/client/github-queries";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, shouldSendAll } from "config/feature-flags";
 import { getLogger } from "config/logger";
 import { Repository } from "models/subscription";
 
-const mapStatus = (status: string, merged_at?: string) => {
+export const mapStatus = (status: string, draft: boolean, isDraftPrFfOn: boolean, merged_at?: string) => {
 	if (status.toLowerCase() === "merged") return "MERGED";
-	if (status.toLowerCase() === "open") return "OPEN";
+	if (isDraftPrFfOn) {
+		if (status.toLowerCase() === "open" && !draft) return "OPEN";
+		if (status.toLowerCase() === "open" && draft) return "DRAFT";
+	} else {
+		if (status.toLowerCase() === "open") return "OPEN";
+	}
 	if (status.toLowerCase() === "closed" && merged_at) return "MERGED";
 	if (status.toLowerCase() === "closed" && !merged_at) return "DECLINED";
 	if (status.toLowerCase() === "declined") return "DECLINED";
@@ -41,7 +46,7 @@ const mapReviewState = (state: string | undefined) => {
 	}
 };
 
-const mapReviewsRest = async (reviews: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }> = [], gitHubInstallationClient: GitHubInstallationClient): Promise<JiraReview[]> => {
+const mapReviewsRest = async (reviews: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }> = [], gitHubInstallationClient: GitHubInstallationClient, logger: Logger): Promise<JiraReview[]> => {
 
 	const usernames: Record<string, JiraReviewer> = {};
 
@@ -78,7 +83,7 @@ const mapReviewsRest = async (reviews: Array<{ state?: string, user: Octokit.Pul
 		};
 		const isDeletedUser = !reviewer.login;
 		if (!isDeletedUser) {
-			const gitHubUser = await getGithubUser(gitHubInstallationClient, reviewer.login);
+			const gitHubUser = await getGithubUser(gitHubInstallationClient, reviewer.login, logger);
 			mappedReviewer.email = gitHubUser?.email || `${reviewer.login}@noreply.user.github.com`;
 		}
 		return mappedReviewer;
@@ -96,7 +101,7 @@ export const extractIssueKeysFromPrRest = async (pullRequest: Octokit.PullsListR
 
 export const extractIssueKeysFromPr = (pullRequest: pullRequestNode) => {
 	const { title, headRef, body } = pullRequest;
-	return jiraIssueKeyParser(`${title}\n${headRef?.name}\n${body}`);
+	return jiraIssueKeyParser(`${title}\n${headRef?.name ?? ""}\n${body}`);
 };
 
 export const transformPullRequestRest = async (
@@ -109,6 +114,7 @@ export const transformPullRequestRest = async (
 {
 	const {
 		id,
+		draft,
 		user,
 		comments,
 		base,
@@ -124,7 +130,8 @@ export const transformPullRequestRest = async (
 	const issueKeys = await extractIssueKeysFromPrRest(pullRequest, jiraHost);
 
 	// This is the same thing we do in sync, concatenating these values
-	if (isEmpty(issueKeys) || !head?.repo) {
+	const alwaysSend = await shouldSendAll("prs", jiraHost, log);
+	if ((isEmpty(issueKeys) && !alwaysSend) || !head?.repo) {
 		log?.info({
 			pullRequestNumber: pullRequestNumber,
 			pullRequestId: id
@@ -132,11 +139,13 @@ export const transformPullRequestRest = async (
 		return undefined;
 	}
 
-	const branches = await getBranches(gitHubInstallationClient, pullRequest, issueKeys);
+	const isDraftPrFfOn = await booleanFlag(BooleanFlags.INNO_DRAFT_PR);
+
+	const branches = await getBranches(gitHubInstallationClient, pullRequest, issueKeys, log);
 	// Need to get full name from a REST call as `pullRequest.user.login` doesn't have it
-	const author = getJiraAuthor(user, await getGithubUser(gitHubInstallationClient, user?.login));
-	const reviewers = await mapReviewsRest(reviews, gitHubInstallationClient);
-	const status = mapStatus(state, merged_at);
+	const author = getJiraAuthor(user, await getGithubUser(gitHubInstallationClient, user?.login, log));
+	const reviewers = await mapReviewsRest(reviews, gitHubInstallationClient, log);
+	const status = mapStatus(state, draft, isDraftPrFfOn, merged_at);
 
 	return {
 		...transformRepositoryDevInfoBulk(base.repo, gitHubInstallationClient.baseUrl),
@@ -151,9 +160,9 @@ export const transformPullRequestRest = async (
 				id: pullRequestNumber,
 				issueKeys,
 				lastUpdate: updated_at,
-				reviewers: reviewers,
-				sourceBranch: head.ref || "",
-				sourceBranchUrl: `${head.repo.html_url}/tree/${head.ref}`,
+				reviewers,
+				sourceBranch: pullRequest.head.ref || "",
+				sourceBranchUrl: `${pullRequest.head.repo.html_url}/tree/${pullRequest.head.ref}`,
 				status,
 				timestamp: updated_at,
 				title: title,
@@ -167,8 +176,10 @@ export const transformPullRequestRest = async (
 // Do not send the branch on the payload when the Pull Request Merged event is called.
 // Reason: If "Automatically delete head branches" is enabled, the branch deleted and PR merged events might be sent out
 // “at the same time” and received out of order, which causes the branch being created again.
-const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, issueKeys: string[]) => {
-	if (mapStatus(pullRequest.state, pullRequest.merged_at) === "MERGED") {
+const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, issueKeys: string[], logger: Logger) => {
+	const isDraftPrFfOn = await booleanFlag(BooleanFlags.INNO_DRAFT_PR);
+
+	if (mapStatus(pullRequest.state, pullRequest.draft, isDraftPrFfOn, pullRequest.merged_at) === "MERGED") {
 		return [];
 	}
 
@@ -177,7 +188,7 @@ const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, p
 			createPullRequestUrl: generateCreatePullRequestUrl(pullRequest?.head?.repo?.html_url, pullRequest?.head?.ref, issueKeys),
 			lastCommit: {
 				// Need to get full name from a REST call as `pullRequest.head.user` doesn't have it
-				author: getJiraAuthor(pullRequest.head?.user, await getGithubUser(gitHubInstallationClient, pullRequest.head?.user?.login)),
+				author: getJiraAuthor(pullRequest.head?.user, await getGithubUser(gitHubInstallationClient, pullRequest.head?.user?.login, logger)),
 				authorTimestamp: pullRequest.updated_at,
 				displayId: pullRequest?.head?.sha?.substring(0, 6),
 				fileCount: 0,
@@ -197,10 +208,10 @@ const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, p
 	];
 };
 
-export const transformPullRequest = (repository: Repository, _jiraHost: string, pullRequest: pullRequestNode, log: Logger) => {
+export const transformPullRequest = (repository: Repository, _jiraHost: string, pullRequest: pullRequestNode, alwaysSend: boolean, log: Logger, isDraftPrFfOn: boolean) => {
 	const issueKeys = extractIssueKeysFromPr(pullRequest);
 
-	if (isEmpty(issueKeys)) {
+	if (isEmpty(issueKeys) && !alwaysSend) {
 		log.info({
 			pullRequestNumber: pullRequest.number,
 			pullRequestId: pullRequest.id
@@ -208,7 +219,7 @@ export const transformPullRequest = (repository: Repository, _jiraHost: string, 
 		return undefined;
 	}
 
-	const status = mapStatus(pullRequest.state, pullRequest.mergedAt);
+	const status = mapStatus(pullRequest.state, pullRequest.draft, isDraftPrFfOn, pullRequest.mergedAt);
 
 	return {
 		author: getJiraAuthor(pullRequest.author),
@@ -228,7 +239,7 @@ export const transformPullRequest = (repository: Repository, _jiraHost: string, 
 				}
 				: {}
 		),
-		status: status,
+		status,
 		timestamp: pullRequest.updatedAt,
 		title: pullRequest.title,
 		url: pullRequest.url,

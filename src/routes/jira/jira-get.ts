@@ -13,6 +13,7 @@ import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/commo
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Errors } from "config/errors";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { errorStringFromUnknown } from "~/src/util/error-string-from-unknown";
 
 interface FailedConnection {
 	id: number;
@@ -183,7 +184,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 	}
 
 	const successfulServerConnections = gheServersWithConnections
-		.reduce((acc, obj) => acc + obj.successfulConnections?.length, 0);
+		.reduce((acc: number, obj: any) => acc + (obj.successfulConnections?.length as number), 0);
 	const allSuccessfulConnections = [...successfulCloudConnections, ...gheServersWithConnections];
 	const completeConnections = allSuccessfulConnections.filter(connection => connection.syncStatus === "FINISHED");
 
@@ -233,7 +234,7 @@ export const JiraGet = async (
 
 		await renderJiraCloudAndEnterpriseServer(res, req);
 		req.log.debug("Jira configuration rendered successfully.");
-	} catch (error) {
-		return next(new Error(`Failed to render Jira configuration: ${error}`));
+	} catch (error: unknown) {
+		return next(new Error(`Failed to render Jira configuration: ${errorStringFromUnknown(error)}`));
 	}
 };

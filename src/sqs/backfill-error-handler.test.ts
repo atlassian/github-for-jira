@@ -57,7 +57,7 @@ describe("backfillErrorHandler", () => {
 				"date": "Fri, 04 Mar 2022 21:09:27 GMT",
 				"x-ratelimit-limit": "8900",
 				"x-ratelimit-remaining": "0",
-				"x-ratelimit-reset": "" + resetTime,
+				"x-ratelimit-reset": "" + resetTime.toString(),
 				"x-ratelimit-resource": "core",
 				"x-ratelimit-used": "2421"
 			});
@@ -65,8 +65,8 @@ describe("backfillErrorHandler", () => {
 		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
 		try {
 			await client.getPage(1000);
-		} catch (err) {
-			return err;
+		} catch (err: unknown) {
+			return err as GithubClientRateLimitingError;
 		}
 		return undefined;
 	};
@@ -78,8 +78,8 @@ describe("backfillErrorHandler", () => {
 		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
 		try {
 			await client.getPage(1000);
-		} catch (err) {
-			return err;
+		} catch (err: unknown) {
+			return err as GithubClientError;
 		}
 		return undefined;
 	};
@@ -91,8 +91,8 @@ describe("backfillErrorHandler", () => {
 
 		try {
 			await client?.appPropertiesGet();
-		} catch (ex) {
-			return ex;
+		} catch (ex: unknown) {
+			return ex as JiraClientError;
 		}
 		return undefined;
 	};
@@ -101,9 +101,7 @@ describe("backfillErrorHandler", () => {
 		({
 			receiveCount, lastAttempt, log: getLogger("test"), message: {}, payload: {
 				jiraHost,
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-ignore
-				installationId: subscription?.gitHubInstallationId
+				installationId: subscription?.gitHubInstallationId || 0
 			}
 		});
 
@@ -147,8 +145,8 @@ describe("backfillErrorHandler", () => {
 				database: "your_database"
 			});
 			await sequelize.authenticate();
-		} catch (err) {
-			sequelizeConnectionError = err;
+		} catch (err: unknown) {
+			sequelizeConnectionError = err as Error;
 		}
 
 		const result = await backfillErrorHandler(jest.fn())(new TaskError(task, sequelizeConnectionError), createContext(2, false));
@@ -192,10 +190,11 @@ describe("backfillErrorHandler", () => {
 		expect(result).toEqual({
 			isFailure: false
 		});
-		expect(sendMessageMock.mock.calls[0][0]).toEqual(
+		const mockMessage = sendMessageMock.mock.calls[0] as any[];
+		expect(mockMessage[0]).toEqual(
 			{ installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost }
 		);
-		expect(sendMessageMock.mock.calls[0][1]).toEqual(0);
+		expect(mockMessage[1]).toEqual(0);
 		expect((await RepoSyncState.findByPk(repoSyncState!.id))?.commitStatus).toEqual("failed");
 	});
 
@@ -208,10 +207,11 @@ describe("backfillErrorHandler", () => {
 		expect(result).toEqual({
 			isFailure: false
 		});
-		expect(sendMessageMock.mock.calls[0][0]).toEqual(
+		const mockMessage = sendMessageMock.mock.calls[0] as any[];
+		expect(mockMessage[0]).toEqual(
 			{ installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost }
 		);
-		expect(sendMessageMock.mock.calls[0][1]).toEqual(0);
+		expect(mockMessage[1]).toEqual(0);
 		expect((await RepoSyncState.findByPk(repoSyncState!.id))?.commitStatus).toEqual("failed");
 		expect((await Subscription.findByPk(repoSyncState!.subscriptionId))?.syncWarning).toEqual("Invalid permissions for commit task");
 	});
@@ -257,10 +257,11 @@ describe("backfillErrorHandler", () => {
 		expect(result).toEqual({
 			isFailure: false
 		});
-		expect(sendMessageMock.mock.calls[0][0]).toEqual(
+		const mockMessage = sendMessageMock.mock.calls[0] as any[];
+		expect(mockMessage[0]).toEqual(
 			{ installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost }
 		);
-		expect(sendMessageMock.mock.calls[0][1]).toEqual(0);
+		expect(mockMessage[1]).toEqual(0);
 		expect((await RepoSyncState.findByPk(repoSyncState!.id))?.commitStatus).toEqual("complete");
 	});
 });
