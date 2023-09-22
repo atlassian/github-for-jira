@@ -3,12 +3,12 @@ import { useState, useEffect, useRef } from "react";
 const useOrgListScroll = () => {
 	const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
 	const [isListScrollable, setIsListScrollable] = useState(false);
-	const contentRef = useRef<HTMLDivElement | null>(null);
-	const hasScrolledYetRef = useRef(false);
+	const containerRef = useRef<HTMLDivElement | null>(null);
+	const hasUserScrolledRef = useRef(false);
 
 	const checkIsListScrollable = (): boolean => {
 		let isListScrollable = false;
-		const content = contentRef.current;
+		const content = containerRef.current;
 		if (content) {
 			const max = parseInt(window.getComputedStyle(content).maxHeight);
 			const size = content.scrollHeight;
@@ -18,8 +18,8 @@ const useOrgListScroll = () => {
 	};
 
 	const handleScroll = ()=> {
-		const content = contentRef.current;
-		hasScrolledYetRef.current = true;
+		const content = containerRef.current;
+		hasUserScrolledRef.current = true;
 		if (content) {
 			const scrollTop = content.scrollTop;
 			const scrollHeight = content.scrollHeight;
@@ -30,8 +30,8 @@ const useOrgListScroll = () => {
 	};
 
 	useEffect(() => {
-		const content = contentRef.current;
-		hasScrolledYetRef.current = false;
+		const content = containerRef.current;
+		hasUserScrolledRef.current = false;
 		if (content) {
 			setIsListScrollable(checkIsListScrollable());
 			content.addEventListener("scroll", handleScroll);
@@ -42,7 +42,7 @@ const useOrgListScroll = () => {
 			}
 		};
 	}, []);
-    return { isScrolledToBottom, isListScrollable, contentRef, hasScrolledYetRef };
+    return { isScrolledToBottom, isListScrollable, containerRef, hasUserScrolledRef };
 };
 
 export default useOrgListScroll;

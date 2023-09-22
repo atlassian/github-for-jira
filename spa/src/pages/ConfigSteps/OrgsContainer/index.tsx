@@ -64,8 +64,8 @@ const OrganizationsList = ({
 	const {
 		isScrolledToBottom,
 		isListScrollable,
-		contentRef,
-		hasScrolledYetRef,
+		containerRef,
+		hasUserScrolledRef,
 	} = useOrgListScroll();
 	const [clickedOrg, setClickedOrg] = useState<
 		GitHubInstallationType | undefined
@@ -104,7 +104,7 @@ const OrganizationsList = ({
 	};
 	return (
 		<>
-			<div css={orgsWrapperStyle} ref={contentRef}>
+			<div css={orgsWrapperStyle} ref={containerRef}>
 				{organizations.map((org) => {
 					const hasError = !canConnect(org);
 					const orgDivStyles = hasError
@@ -159,7 +159,7 @@ const OrganizationsList = ({
 				})}
 			</div>
 			{isListScrollable &&
-				(hasScrolledYetRef.current ? !isScrolledToBottom : true) && (
+				(hasUserScrolledRef.current ? !isScrolledToBottom : true) && (
 					<div css={gradientStyle} />
 				)}
 		</>
