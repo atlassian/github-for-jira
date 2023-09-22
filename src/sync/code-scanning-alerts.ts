@@ -63,6 +63,7 @@ export const getCodeScanningAlertTask = async (
 				jiraPayload: undefined
 			};
 		}
+		logger.error({ err, reason: err.cause?.response?.data }, "Code Scanning backfill failed");
 		throw err;
 	}
 
