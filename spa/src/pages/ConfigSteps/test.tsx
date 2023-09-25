@@ -15,6 +15,11 @@ jest.mock("react-router-dom", () => ({
 
 // Mock the import of the css
 jest.mock("simplebar-react/dist/simplebar.min.css", () => "");
+// Mock the simplebar-react component
+jest.mock("simplebar-react", () => ({
+	__esModule: true,
+	default: ({children}: {children: React.JSX.Element}) => <div>{children}</div>,
+}));
 
 /* eslint-disable react-refresh/only-export-components */
 const Authenticated = {
@@ -221,4 +226,5 @@ test("Connect GitHub Screen - Changing GitHub login when authenticated", async (
 	expect(screen.queryByText(GITHUB_ENTERPRISE)).toBeInTheDocument();
 	expect(screen.queryByText(SELECT_GH_PRODUCT_CTA)).toBeInTheDocument();
 });
+
 
