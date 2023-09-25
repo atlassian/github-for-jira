@@ -43,6 +43,7 @@ export const getSecretScanningAlertTask = async (
 				jiraPayload: undefined
 			};
 		}
+		logger.error({ err, reason: err.cause?.response?.data }, "Secret scanning backfill failed");
 		throw err;
 	}
 

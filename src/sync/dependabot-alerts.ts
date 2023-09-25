@@ -46,7 +46,14 @@ export const getDependabotAlertTask = async (
 				edges: [],
 				jiraPayload: undefined
 			};
+		} else if (err.cause?.response?.status == 403 && err.cause?.response?.data?.message?.includes("Dependabot alerts are not available for archived repositories")) {
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Archived repository, backfill task complete");
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
 		}
+		logger.error({ err, reason: err.cause?.response?.data }, "Dependabot alert backfill failed");
 		throw err;
 	}
 
