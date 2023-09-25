@@ -27,6 +27,8 @@ export const registerHandlebarsHelpers = () => {
 				: `${numberOfSyncedRepos} / ${totalNumberOfRepos}`
 	);
 
+	hbs.registerHelper("hasTotalNumberOfRepos", (totalNumberOfRepos: number) => (totalNumberOfRepos || totalNumberOfRepos === 0));
+
 	hbs.registerHelper("repoAccessType", (repository_selection: string) =>
 		repository_selection === "all" ? "All repos" : "Only select repos"
 	);
