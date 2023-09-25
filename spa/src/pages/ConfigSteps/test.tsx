@@ -32,6 +32,16 @@ const Authenticated = {
 	getUserDetails: jest.fn().mockReturnValue({ username: "kay", email: "kay"}),
 	clear: jest.fn(),
 };
+const AuthenticatedWithOrgsWithErrors = {
+	checkValidity: jest.fn().mockReturnValue(Promise.resolve(true)),
+	authenticateInGitHub: jest.fn().mockReturnValue(Promise),
+	fetchOrgs: jest.fn().mockReturnValue({ orgs: [ { account: { login: "org-1" }, id: 1, isAdmin: false }, { account: { login: "org-2" }, id: 2, requiresSsoLogin: true }, { account: { login: "org-3" }, id: 3, isIPBlocked: true  }, { account: { login: "org-4" }, id: 4, isAdmin: true  } ]}),
+	installNewApp: jest.fn(),
+	connectOrg: jest.fn(),
+	setTokens: jest.fn(),
+	getUserDetails: jest.fn().mockReturnValue({ username: "kay", email: "kay"}),
+	clear: jest.fn(),
+};
 const AuthenticatedWithNoOrgs = {
 	checkValidity: jest.fn().mockReturnValue(Promise.resolve(true)),
 	authenticateInGitHub: jest.fn().mockReturnValue(Promise),
@@ -171,6 +181,52 @@ test("Connect GitHub Screen - Checking the GitHub Cloud flow when authenticated 
 	expect(screen.getAllByRole("button", { name: "Connect" })[1]).toBeDisabled();
 	expect(screen.getByLabelText("Install organization")).toBeDisabled();
 	expect(AppManager.connectOrg).toBeCalled();
+});
+
+test("Connect GitHub Screen - Checking the GitHub Cloud flow when authenticated with orgs with errors", async () => {
+	jest.mocked(OAuthManager).getUserDetails = AuthenticatedWithOrgsWithErrors.getUserDetails;
+	jest.mocked(OAuthManager).checkValidity = AuthenticatedWithOrgsWithErrors.checkValidity;
+	jest.mocked(AppManager).fetchOrgs = AuthenticatedWithOrgsWithErrors.fetchOrgs;
+	jest.mocked(AppManager).installNewApp = AuthenticatedWithOrgsWithErrors.installNewApp;
+	jest.mocked(AppManager).connectOrg = jest.fn().mockImplementation(async () => {
+		//do not return, so that to assert on the loading icon
+		return new Promise(_ => {});
+	});
+
+	const { container }  = render(
+		<BrowserRouter>
+			<ConfigSteps />
+		</BrowserRouter>
+	);
+	await act(async () => container);
+
+	expect(screen.queryByText(GITHUB_CLOUD)).not.toBeInTheDocument();
+	expect(screen.queryByText(GITHUB_ENTERPRISE)).not.toBeInTheDocument();
+	expect(screen.queryByText("Next ")).not.toBeInTheDocument();
+	expect(screen.queryByText(SELECT_GH_PRODUCT)).not.toBeInTheDocument();
+
+	// Checking if all the orgs are being displayed
+	expect(screen.queryByText(SELECT_GH_TEXT)).toBeInTheDocument();
+	expect(screen.queryByText("org-1")).toBeInTheDocument();
+	expect(screen.queryByText("org-2")).toBeInTheDocument();
+	expect(screen.queryByText("org-3")).toBeInTheDocument();
+	expect(screen.queryByText("org-4")).toBeInTheDocument();
+
+	// 3 orgs have errors, only 1 can be connected
+	expect(await screen.findAllByRole("button", { name: "Connect" })).toHaveLength(1);
+
+	const errorForNonAdmins = container.querySelectorAll("[class$='-ErrorForNonAdmins']");
+	expect(errorForNonAdmins[0].textContent).toBe("Can't connect, you're not the organization owner.Ask an organization owner to complete this step.");
+
+	const errorForSSO = container.querySelectorAll("[class$='-ErrorForSSO']");
+	expect(errorForSSO[0].textContent).toBe("Can't connect, single sign-on(SSO) required.");
+	expect(errorForSSO[1].textContent).toBe("1. Log into GitHub with SSO.");
+	expect(errorForSSO[3].textContent).toBe("2. Retry connection in Jira (once logged in).");
+
+	const errorForIPBlocked = container.querySelectorAll("[class$='-ErrorForIPBlocked']");
+	expect(errorForIPBlocked[0].textContent).toBe("Can't connect, blocked by your IP allow list.");
+	expect(errorForIPBlocked[1].textContent).toBe("How to update allowlist");
+	expect(errorForIPBlocked[3].textContent).toBe("Retry");
 });
 
 test("Connect GitHub Screen - Checking the GitHub Cloud flow when authenticated with no orgs", async () => {

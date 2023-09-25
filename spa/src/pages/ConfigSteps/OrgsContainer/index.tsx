@@ -13,6 +13,10 @@ import {
 } from "../../../components/Error/KnownErrors";
 import Scrollbars from "../../../common/Scrollbars";
 
+const MAX_HEIGHT_FOR_ORGS_CONTAINER = 250;
+const PADDING_RIGHT_FOR_ORGS_CONTAINER = 80;
+const MARGIN_RIGHT_FOR_ORGS_CONTAINER = -80;
+
 const orgDivStyle = css`
 	display: flex;
 	justify-content: space-between;
@@ -83,9 +87,9 @@ const OrganizationsList = ({
 	return (
 		<Scrollbars
 			style={{
-			maxHeight: 250,
-			paddingRight: 80,
-			marginRight: -80
+			maxHeight: MAX_HEIGHT_FOR_ORGS_CONTAINER,
+			paddingRight: PADDING_RIGHT_FOR_ORGS_CONTAINER,
+			marginRight: MARGIN_RIGHT_FOR_ORGS_CONTAINER
 			}}
 		>
 			<>
