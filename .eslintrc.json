@@ -102,7 +102,6 @@
 			"src/jira/**",
 			"src/middleware/**",
 			"src/models/**",
-			"src/rest/**",
 			"src/routes/**",
 			"src/sync/**",
 			"src/transforms/**",

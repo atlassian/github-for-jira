@@ -41,8 +41,8 @@ export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response)
 
 	const { jiraHost } = res.locals;
 	const repoName = sanitizeHtml(req.query?.searchQuery as string);
-	const page = Number(sanitizeHtml(req.query?.page)) || DEFAULT_PAGE_NUMBER;
-	const limit = Number(sanitizeHtml(req.query?.limit)) || DEFAULT_LIMIT;
+	const page = Number(sanitizeHtml(req.query?.page as string ?? "undefined")) || DEFAULT_PAGE_NUMBER;
+	const limit = Number(sanitizeHtml(req.query?.limit as string ?? "undefined")) || DEFAULT_LIMIT;
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 
 	if (!subscriptions.length) {
