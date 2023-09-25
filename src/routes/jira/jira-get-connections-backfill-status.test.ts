@@ -131,7 +131,7 @@ describe("jira-get-connections-backfillStatus.test", () => {
 					delete newRepoSyncState["branchStatus"];
 					newRepoSyncState["repoId"] = repoSyncState.repoId + newRepoStateNo;
 					newRepoSyncState["repoName"] =
-						repoSyncState.repoName + newRepoStateNo;
+						repoSyncState.repoName + newRepoStateNo.toString();
 					newRepoSyncState["repoFullName"] =
 						repoSyncState.repoFullName +
 						String(newRepoStateNo).padStart(3, "0");

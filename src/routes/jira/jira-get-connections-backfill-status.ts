@@ -36,11 +36,13 @@ export const JiraGetConnectionsBackfillStatus = async (
 			res.status(400).send("Missing Subscription IDs");
 			return;
 		}
-		const subscriptions: Subscription[] = await Subscription.findAll({
+		let subscriptions: Subscription[] = await Subscription.findAll({
 			where: {
 				id: subscriptionIds
 			}
 		});
+		subscriptions = subscriptions.filter((subscription: Subscription) => subscription.totalNumberOfRepos && subscription.totalNumberOfRepos > 0);
+		const resultSubscriptionIds = subscriptions.map(subscription => subscription.id);
 
 		if (subscriptions?.length <= 0) {
 			req.log.error("Missing Subscription");
@@ -64,10 +66,9 @@ export const JiraGetConnectionsBackfillStatus = async (
 
 		const repoSyncStates = await RepoSyncState.findAll({
 			where: {
-				subscriptionId: subscriptionIds
+				subscriptionId: resultSubscriptionIds
 			}
 		});
-
 		const repos = groupBy(repoSyncStates, "subscriptionId");
 		const subscriptionsById = groupBy(subscriptions, "id");
 		const backfillStatus = getBackfillStatus(repos, subscriptionsById);
@@ -77,11 +78,11 @@ export const JiraGetConnectionsBackfillStatus = async (
 			data: {
 				subscriptions: backfillStatus,
 				isBackfillComplete,
-				subscriptionIds
+				subscriptionIds: resultSubscriptionIds
 			}
 		});
 	} catch (error) {
-		return next(new Error(`Failed to render connected repos: ${error}`));
+		return next(new Error(`Failed to render connected repos`));
 	}
 };
 
