@@ -13,6 +13,9 @@ jest.mock("react-router-dom", () => ({
 	useNavigate: () => jest.fn(),
 }));
 
+// Mock the import of the css
+jest.mock("simplebar-react/dist/simplebar.min.css", () => "");
+
 /* eslint-disable react-refresh/only-export-components */
 const Authenticated = {
 	checkValidity: jest.fn().mockReturnValue(Promise.resolve(true)),
@@ -33,7 +36,6 @@ const AuthenticatedWithNoOrgs = {
 	getUserDetails: jest.fn().mockReturnValue({ username: "kay", email: "kay"}),
 	clear: jest.fn(),
 };
-
 /* eslint-disable react-refresh/only-export-components */
 const UnAuthenticated = {
 	checkValidity: jest.fn().mockReturnValue(Promise.resolve(false)),
