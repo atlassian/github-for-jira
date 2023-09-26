@@ -103,11 +103,8 @@ export const JiraConnectedReposGet = async (
 
 		const offset = pageNumber == 1 ? 0 : (pageNumber - 1) * pageSize;
 
-		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, {
-			where: filterCondition,
-			limit: pageSize,
-			order: [["repoFullName", "ASC"]],
-			offset
+		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, pageSize, offset, [["repoFullName", "ASC"]], {
+			where: filterCondition
 		});
 		const repos = repoSyncStates.map((repoSyncState) => {
 			return {

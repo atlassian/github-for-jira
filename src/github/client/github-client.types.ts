@@ -101,10 +101,17 @@ export type DependabotAlertResponseItem = {
 		summary: string,
 		description: string,
 		identifiers: { type: string, value: string }[],
-		references: { url: string }[]
+		references: { url: string }[],
+		severity: string,
+		cvss: {
+			score?: number
+		}
 	},
 	security_vulnerability: {
-		severity: string
+		severity: string,
+		first_patched_version: {
+			identifier: number
+		}
 	},
 	dependency: {
 		scope: string,
@@ -191,4 +198,12 @@ type CodeScanningAlertResponseItemMostRecentInstance = {
 	state: string;
 	commit_sha: string;
 	html_url: string;
+}
+
+export type CodeScanningAlertInstanceResponseItem = {
+	ref: string;
+	environment: string;
+	category: string;
+	state: string;
+	commit_sha: string;
 }

@@ -12,6 +12,7 @@ import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
 import { JiraClient } from "~/src/models/jira-client";
 import { SECURITY_EVENTS, SECURITY_PERMISSIONS } from "../github/installation";
+import { Metrics } from "../github/client/github-client";
 
 export const hasAdminAccess = async (githubToken: string, jiraHost: string, gitHubInstallationId: number, logger: Logger, gitHubServerAppIdPk?: number): Promise<boolean> => {
 	const metrics = {
@@ -31,7 +32,7 @@ export const hasAdminAccess = async (githubToken: string, jiraHost: string, gitH
 
 		logger.info("Checking if the user is an admin");
 		return await isUserAdminOfOrganization(gitHubUserClient, jiraHost, gitHubInstallationClient, installation.account.login, login, installation.target_type, logger);
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.warn({ err }, "Error checking user access");
 		return false;
 	}
@@ -89,7 +90,7 @@ export const verifyAdminPermsAndFinishInstallation =
 			const metrics = {
 				trigger: "github-configuration-post"
 			};
-			let avatarUrl;
+			let avatarUrl: string | undefined;
 			if (await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, installation.jiraHost)) {
 				avatarUrl = await getAvatarUrl(
 					log,
@@ -120,7 +121,7 @@ export const verifyAdminPermsAndFinishInstallation =
 							await submitSecurityWorkspaceToLink(installation, subscription, log)
 						]);
 					}
-				} catch (err) {
+				} catch (err: unknown) {
 					log.warn({ err }, "Failed to submit security workspace to Jira");
 				}
 			}
@@ -147,7 +148,7 @@ export const verifyAdminPermsAndFinishInstallation =
 			});
 
 			return {};
-		} catch (err) {
+		} catch (err: unknown) {
 
 			await sendAnalytics(installation.jiraHost, AnalyticsEventTypes.TrackEvent, {
 				action: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
@@ -185,13 +186,13 @@ export const submitSecurityWorkspaceToLink = async (
 	});
 };
 
-const hasSecurityPermissionsAndEvents = async (subscription: Subscription, gitHubServerAppId: number | undefined, logger: Logger, metrics: any) => {
+const hasSecurityPermissionsAndEvents = async (subscription: Subscription, gitHubServerAppId: number | undefined, logger: Logger, metrics: Metrics) => {
 	try {
 		const gitHubAppClient = await createAppClient(logger, subscription.jiraHost, gitHubServerAppId, metrics);
 		const { data: ghApp } = await gitHubAppClient.getInstallation(subscription.gitHubInstallationId);
 		return SECURITY_PERMISSIONS.every(securityPermission => securityPermission in ghApp.permissions) &&
 			SECURITY_EVENTS.every((securityEvent) => ghApp.events.includes(securityEvent));
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.warn({ err }, "Failed to fetch GitHub app details for evaluating security permissions and events");
 		throw err;
 	}
@@ -200,7 +201,7 @@ const hasSecurityPermissionsAndEvents = async (subscription: Subscription, gitHu
 const setSecurityPermissionAccepted = async (subscription: Subscription, logger: Logger) => {
 	try {
 		await subscription.update({ isSecurityPermissionsAccepted: true });
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.warn({ err }, "Failed to set security permissions accepted field in Subscriptions");
 		throw err;
 	}

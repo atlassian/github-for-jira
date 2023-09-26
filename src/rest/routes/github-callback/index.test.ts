@@ -3,7 +3,7 @@ import { getFrontendApp } from "~/src/app";
 
 describe("rest oauth router", () => {
 	let app;
-	beforeEach(async () => {
+	beforeEach(() => {
 		app = getFrontendApp();
 	});
 	describe("rest oauth callback", () => {
