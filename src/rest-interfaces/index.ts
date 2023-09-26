@@ -60,6 +60,7 @@ export type ErrorCode =
 	| "RATELIMIT"
 	| "TIMEOUT"
 	| "IP_BLOCKED"
+	| "POPUP_BLOCKED"
 	| "SSO_LOGIN"
 	| "RESOURCE_NOT_FOUND"
 	| "UNKNOWN";

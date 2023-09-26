@@ -10,7 +10,6 @@ export function popup (url: string) {
 	const openedPopup = window.open(url, "_blank");
 	if (!openedPopup || openedPopup.closed || typeof openedPopup.closed === "undefined") {
 		// TODO: Meaningful UI when browser pop-up is blocked
-		console.log("Popup is blocked");
 		return null;
 	}
 	return openedPopup;

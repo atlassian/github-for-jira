@@ -1,6 +1,8 @@
 import Api from "../../api";
 import { AxiosError } from "axios";
-import { popup, reportError } from "../../utils";
+import { popup, reportError, } from "../../utils";
+import { ErrorWithErrorCode, CustomError } from "../../utils/modifyError";
+import { ErrorCode } from "../../rest-interfaces";
 
 let username: string | undefined;
 let email: string | undefined;
@@ -33,12 +35,12 @@ async function checkValidity(): Promise<boolean | AxiosError> {
 	}
 }
 
-async function authenticateInGitHub(onWinClosed: () => void): Promise<void> {
+async function authenticateInGitHub(onWinClosed: () => void): Promise<void | Error>  {
 	const res = await Api.auth.generateOAuthUrl();
 	if (res.data.redirectUrl && res.data.state) {
 		oauthState = res.data.state;
 		const win = popup(res.data.redirectUrl);
-		if (win) {
+		if(win) {
 			const winCloseCheckHandler = setInterval(() => {
 				if (win.closed) {
 					clearInterval(winCloseCheckHandler);
@@ -52,6 +54,13 @@ async function authenticateInGitHub(onWinClosed: () => void): Promise<void> {
 					}
 				}
 			}, 1000);
+		}
+		else{
+			const popup_blocked_errorcode: ErrorCode = "POPUP_BLOCKED";
+			const popup_blocked: ErrorWithErrorCode = {
+				errorCode: popup_blocked_errorcode
+			};
+			throw new CustomError(popup_blocked);
 		}
 	} else {
 		reportError({
