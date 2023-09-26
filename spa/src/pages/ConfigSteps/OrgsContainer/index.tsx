@@ -81,7 +81,7 @@ const OrganizationsList = ({
 			// TODO: Update this to support GHE
 			const adminOrgsUrl = `https://github.com/orgs/${org.account.login}/people?query=role%3Aowner`;
 
-			return <ErrorForNonAdmins adminOrgsUrl={adminOrgsUrl} />;
+			return <ErrorForNonAdmins deferredInstallUrl={org?.deferredInstallUrl} adminOrgsUrl={adminOrgsUrl} />;
 		}
 	};
 	return (

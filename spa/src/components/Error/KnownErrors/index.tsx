@@ -31,13 +31,27 @@ export const ErrorForSSO = ({ orgName, accessUrl, resetCallback }: { orgName?: s
 	</div>
 </>;
 
-export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl }: { orgName?: string; adminOrgsUrl: string; }) => <div css={paragraphStyle}>
+export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl, deferredInstallUrl }: {
+	orgName?: string;
+	adminOrgsUrl: string;
+	deferredInstallUrl?: string;
+}) => <div css={paragraphStyle}>
 	Can't connect, you're not the organization owner{orgName && <span> of <b>{orgName}</b></span>}.<br />
 	Ask an <a css={linkStyle} onClick={() => {
-	// TODO: Need to get this URL for Enterprise users too, this is only for Cloud users
+		// TODO: Need to get this URL for Enterprise users too, this is only for Cloud users
 		popup(adminOrgsUrl);
 		analyticsClient.sendUIEvent({ actionSubject: "checkOrgAdmin", action: "clicked"}, { type: "cloud" });
 	}}>organization owner</a> to complete this step.
+	{
+		// TODO: This will change later once the new designs are finalized
+		deferredInstallUrl && <>
+			Or send <a css={linkStyle} onClick={() => {
+				popup(deferredInstallUrl);
+				// TODO: Create events in amplitude
+				analyticsClient.sendUIEvent({ actionSubject: "deferredInstallUrl", action: "clicked"});
+			}}>this link</a>.
+		</>
+	}
 </div>;
 
 export const ErrorForIPBlocked = ({ orgName, resetCallback }: { orgName?: string; resetCallback: () => void }) => <>

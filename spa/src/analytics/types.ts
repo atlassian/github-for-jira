@@ -6,7 +6,8 @@ type UIEventActionSubject =
 	| "checkBackfillStatus"
 	| "dropExperienceViaBackButton"
 	| "checkOrgAdmin"
-	| "learnAboutIssueLinking" | "learnAboutDevelopmentWork";
+	| "learnAboutIssueLinking" | "learnAboutDevelopmentWork"
+	| "deferredInstallUrl";
 
 export type UIEventProps = {
 	actionSubject: UIEventActionSubject,

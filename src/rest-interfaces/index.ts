@@ -25,6 +25,7 @@ export type OrganizationsResponse = {
 export type GitHubInstallationType = {
 	account: GitHubInstallationAccountType;
 	app_id: number;
+	deferredInstallUrl?: string;
 	requiresSsoLogin: boolean;
 	isIPBlocked: boolean;
 	isAdmin: boolean;
