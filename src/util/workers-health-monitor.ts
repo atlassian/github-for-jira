@@ -37,8 +37,12 @@ export const startMonitorOnWorker = (parentLogger: Logger, workerConfig: {
 
 	// Not invoking inline because "maybeGenerateDump()" are synchronous calls, don't want to make it asynchronous just
 	// because of the flag: much more difficult to test.
-	const flagInterval = setInterval(async () => {
-		dumpsFlagValue = await booleanFlag(BooleanFlags.GENERATE_CORE_HEAP_DUMPS_ON_LOW_MEM);
+	const flagInterval = setInterval(() => {
+		booleanFlag(BooleanFlags.GENERATE_CORE_HEAP_DUMPS_ON_LOW_MEM).then((value) => {
+			dumpsFlagValue = value;
+		}).catch((err) => {
+			logger.error({ err }, "cannot get flag value");
+		});
 	}, 1000);
 
 	const coredumpInterval = setInterval(() => {
