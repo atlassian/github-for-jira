@@ -9,6 +9,7 @@ import { JiraCloudIDRouter } from "./routes/jira";
 import { RestErrorHandler } from "./middleware/error";
 import { JiraAdminEnforceMiddleware } from "./middleware/jira-admin/jira-admin-check";
 import { AnalyticsProxyHandler } from "./routes/analytics-proxy";
+import { DeferredInstallationUrlRoute } from "~/src/rest/routes/deferred-installation-url";
 
 export const RestRouter = Router({ mergeParams: true });
 
@@ -36,6 +37,8 @@ subRouter.use("/oauth", OAuthRouter);
 subRouter.use("/installation", GitHubAppsRoute);
 
 subRouter.use("/jira/cloudid", JiraCloudIDRouter);
+
+subRouter.use("/deferredInstallationUrl", DeferredInstallationUrlRoute);
 
 subRouter.use(GitHubTokenHandler);
 

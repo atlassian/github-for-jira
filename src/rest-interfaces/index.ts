@@ -18,6 +18,10 @@ export type GetGitHubAppsUrlResponse = {
 	appInstallationUrl: string;
 }
 
+export type GetDeferredInstallationUrl = {
+	deferredInstallUrl: string;
+}
+
 export type OrganizationsResponse = {
 	orgs: Array<GitHubInstallationType>;
 }
