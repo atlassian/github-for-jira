@@ -14,7 +14,7 @@ type SimpleError = {
 }
 
 type ErrorWithErrorCode = {
-	errorCode: ErrorCode;
+	errorCode: ErrorCode
 };
 
 const GENERIC_MESSAGE = "Something went wrong and we couldn’t connect to GitHub, try again.";
@@ -25,12 +25,9 @@ export const GENERIC_MESSAGE_WITH_LINK = <>
 </>;
 
 export const modifyError = (
-	error: AxiosError<ApiError> | SimpleError | ErrorWithErrorCode,
-	context: { orgLogin?: string },
-	callbacks: {
-		onClearGitHubToken: (e: MouseEvent<HTMLAnchorElement>) => void;
-		onRelogin: () => void;
-	}
+  error: AxiosError<ApiError> | SimpleError | ErrorWithErrorCode,
+  context: { orgLogin?: string; },
+  callbacks: { onClearGitHubToken: (e: MouseEvent<HTMLAnchorElement>) => void; onRelogin: () => void }
 ): ErrorObjType => {
 	const errorObj = { type: "error" as ErrorType };
 	const warningObj = { type: "warning" as ErrorType };
@@ -42,88 +39,47 @@ export const modifyError = (
 	} else {
 		errorCode = "UNKNOWN";
 	}
-	const accessUrl = `https://github.com/organizations/${context.orgLogin}/settings/profile`;
-	const adminOrgsUrl = `https://github.com/orgs/${context.orgLogin}/people?query=role%3Aowner`;
-	let result;
+
 	// TODO: map all of the remaining backend errors in frontend
-	switch (errorCode) {
-		case "IP_BLOCKED":
-			result = {
-				...warningObj,
-				errorCode,
-				message: (
-					<ErrorForIPBlocked
-						resetCallback={callbacks.onRelogin}
-						orgName={context.orgLogin}
-					/>
-				),
-			};
-			break;
-		case "SSO_LOGIN":
-			// TODO: Update this to support GHE
-			result = {
-				...warningObj,
-				errorCode,
-				message: (
-					<>
-						<ErrorForSSO
-							accessUrl={accessUrl}
-							resetCallback={callbacks.onRelogin}
-							orgName={context.orgLogin}
-						/>
-					</>
-				),
-			};
-			break;
-		case "INSUFFICIENT_PERMISSION":
-			// TODO: Update this to support GHE
-			result = {
-				...warningObj,
-				errorCode,
-				message: (
-					<ErrorForNonAdmins
-						orgName={context.orgLogin}
-						adminOrgsUrl={adminOrgsUrl}
-					/>
-				),
-			};
-			break;
-		case "TIMEOUT":
-			result = {
-				...errorObj,
-				errorCode,
-				message: "Request timeout. Please try again later.",
-			};
-			break;
-		case "RATELIMIT":
-			result = {
-				...errorObj,
-				errorCode,
-				message: "GitHub rate limit exceeded. Please try again later.",
-			};
-			break;
+	if (errorCode === "IP_BLOCKED") {
+		return {
+			...warningObj,
+			errorCode,
+			message: <ErrorForIPBlocked resetCallback={callbacks.onRelogin} orgName={context.orgLogin} />
+		};
+	}  else if (errorCode === "SSO_LOGIN") {
+		// TODO: Update this to support GHE
+		const accessUrl = `https://github.com/organizations/${context.orgLogin}/settings/profile`;
 
-		case "INVALID_TOKEN":
-			result = {
-				...errorObj,
-				errorCode,
-				message: (
-					<>
-						<span>
-							GitHub token seems invalid, please{" "}
-							<a href="" onClick={callbacks.onClearGitHubToken}>
-								login again
-							</a>
-							.
-						</span>
-					</>
-				),
-			};
-			break;
+		return {
+			...warningObj,
+			errorCode,
+			message: <>
+				<ErrorForSSO accessUrl={accessUrl} resetCallback={callbacks.onRelogin} orgName={context.orgLogin} />
+			</>
+		};
+	} else if (errorCode === "INSUFFICIENT_PERMISSION") {
+		// TODO: Update this to support GHE
+		const adminOrgsUrl = `https://github.com/orgs/${context.orgLogin}/people?query=role%3Aowner`;
 
-		default:
-			result = { ...errorObj, errorCode, message: GENERIC_MESSAGE };
-			break;
+		return {
+			...warningObj,
+			errorCode,
+			message: <ErrorForNonAdmins orgName={context.orgLogin} adminOrgsUrl={adminOrgsUrl} />
+		};
+	} else if (errorCode === "TIMEOUT") {
+		return { ...errorObj, errorCode, message: "Request timeout. Please try again later." };
+	} else if (errorCode === "RATELIMIT") {
+		return { ...errorObj, errorCode,  message: "GitHub rate limit exceeded. Please try again later." };
+	} else if (errorCode === "INVALID_TOKEN") {
+		return {
+			...errorObj,
+			errorCode,
+			message: <>
+				<span>GitHub token seems invalid, please <a href="" onClick={callbacks.onClearGitHubToken}>login again</a>.</span>
+			</>
+		};
+	} else {
+		return { ...errorObj, errorCode, message: GENERIC_MESSAGE };
 	}
-	return result;
 };
