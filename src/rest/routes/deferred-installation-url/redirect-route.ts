@@ -2,9 +2,7 @@ import { Router, Request, Response } from "express";
 import { errorWrapper } from "../../helper";
 import { GetDeferredInstallationUrl } from "rest-interfaces";
 import { BaseLocals } from "..";
-import {
-	extractSubscriptionDeferredInstallPayload
-} from "services/subscription-deferred-install-service";
+import { extractSubscriptionDeferredInstallPayload } from "services/subscription-deferred-install-service";
 import { InvalidArgumentError } from "config/errors";
 import { envVars } from "config/env";
 
