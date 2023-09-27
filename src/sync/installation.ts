@@ -191,7 +191,7 @@ const sendJiraFailureToSentry = (err, sentry: Hub) => {
 const markSyncAsCompleteAndStop = async (data: BackfillMessagePayload, subscription: Subscription, logger: Logger) => {
 	await subscription.update({
 		syncStatus: SyncStatus.COMPLETE,
-		backfillSince: await getBackfillSince(data, logger)
+		backfillSince: getBackfillSince(data, logger)
 	});
 	const endTime = Date.now();
 	const startTime = data?.startTime || 0;
@@ -541,7 +541,7 @@ const updateRepo = async (subscription: Subscription, repoId: number, values: Re
 	]);
 };
 
-const getBackfillSince = async (data: BackfillMessagePayload, log: Logger): Promise<Date | null | undefined> => {
+const getBackfillSince = (data: BackfillMessagePayload, log: Logger): Date | null | undefined => {
 	try {
 		const commitSince = data.commitsFromDate ? new Date(data.commitsFromDate) : undefined;
 		//set it to null on falsy value so that we can override db with sequlize

@@ -77,7 +77,7 @@ export const finishOAuthFlow = async (
 
 	try {
 		await redis.unlink(state);
-	} catch (e) {
+	} catch (e: unknown) {
 		log.warn({ err: e }, "Failed to unlink redis state on oauth callback");
 		//continue the flow as unlink is optional from user's point of view
 	}
@@ -87,7 +87,7 @@ export const finishOAuthFlow = async (
 		throw new InvalidArgumentError("No redis state found for exchange github token");
 	}
 
-	const parsedState = JSON.parse(redisState);
+	const parsedState = JSON.parse(redisState) as { jiraHost?: string };
 
 	if (jiraHost !== parsedState.jiraHost) {
 		log.warn("Parsed redis state jiraHost doesn't match the jiraHost provided in jwt token");
@@ -101,12 +101,17 @@ export const finishOAuthFlow = async (
 		log
 	);
 
-	const { accessToken, refreshToken } = await githubClient.exchangeGitHubToken({
+	const gitHubTokens = await githubClient.exchangeGitHubToken({
 		clientId: envVars.GITHUB_CLIENT_ID,
 		clientSecret: envVars.GITHUB_CLIENT_SECRET,
 		code,
 		state
 	});
+	if (gitHubTokens === undefined) {
+		log.warn("Failed to exchange token");
+		throw new InvalidArgumentError("Failed to exchange token");
+	}
+	const { accessToken, refreshToken } = gitHubTokens;
 
 	return {
 		accessToken,

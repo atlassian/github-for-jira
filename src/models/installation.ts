@@ -18,8 +18,8 @@ export class Installation extends EncryptedModel {
 		return EncryptionSecretKeyEnum.JIRA_INSTANCE_SECRETS;
 	}
 
-	async getEncryptContext() {
-		return { };
+	getEncryptContext() {
+		return Promise.resolve({ });
 	}
 
 	getSecretFields() {
