@@ -10,7 +10,7 @@ import { RestErrorHandler } from "./middleware/error";
 import { JiraAdminEnforceMiddleware } from "./middleware/jira-admin/jira-admin-check";
 import { AnalyticsProxyHandler } from "./routes/analytics-proxy";
 import { DeferredInstallationUrlRoute } from "./routes/deferred-installation-url";
-import { DeferredInstallRequestRoute } from "./routes/deferred-installation-url/redirected";
+import { DeferredInstallRequestRoute } from "./routes/deferred-installation-url/redirect-route";
 
 export const RestRouter = Router({ mergeParams: true });
 

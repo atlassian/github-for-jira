@@ -61,7 +61,7 @@ describe("rest deferred installation url router", () => {
 
 				expect(resp.status).toEqual(200);
 				expect(resp.body).toHaveProperty("deferredInstallUrl");
-				expect((resp.body as GetDeferredInstallationUrl).deferredInstallUrl).toBe(`${envVars.APP_URL}/github/subscription-deferred-install/request/${CUSTOMIZED_UUID}`);
+				expect((resp.body as GetDeferredInstallationUrl).deferredInstallUrl).toBe(`${envVars.APP_URL}/rest/deferred-installation/request/${CUSTOMIZED_UUID}`);
 			});
 		});
 	});

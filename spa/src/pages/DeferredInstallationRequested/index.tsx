@@ -46,12 +46,10 @@ const DeferredInstallationRequested = () => {
 							</Button>
 						</>
 					</Step>
-					{
-						Boolean(username) && <LoggedinInfo
-							username={username}
-							logout={navigateBackToSteps}
-						/>
-					}
+					<LoggedinInfo
+						username={username}
+						logout={navigateBackToSteps}
+					/>
 				</>
 			}
 		</Wrapper>
