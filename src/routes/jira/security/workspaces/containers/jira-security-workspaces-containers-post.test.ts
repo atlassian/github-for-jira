@@ -8,6 +8,10 @@ import { Errors } from "config/errors";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import { DEFAULT_AVATAR } from "routes/jira/security/workspaces/containers/jira-security-workspaces-containers-post";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+
+jest.mock("config/feature-flags");
 
 const createMultipleSubscriptionsAndRepos = async () => {
 	const sub1 = await Subscription.create({
@@ -65,6 +69,10 @@ describe("Repositories Post", () => {
 	let installation: Installation;
 
 	beforeEach(async () => {
+		when(booleanFlag).calledWith(
+			BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost
+		).mockResolvedValue(true);
+
 		installation = await Installation.install({
 			host: jiraHost,
 			sharedSecret: "shared-secret",
@@ -82,6 +90,32 @@ describe("Repositories Post", () => {
 			iss: installation.plainClientKey
 		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
 	};
+
+	it("Should return a 403 when the ENABLE_GITHUB_SECURITY_IN_JIRA FF is off", async () => {
+		when(booleanFlag).calledWith(
+			BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost
+		).mockResolvedValue(false);
+
+		app = express();
+		app.use((req, _, next) => {
+			req.log = getLogger("test");
+			next();
+		});
+		app.use(getFrontendApp());
+
+		await supertest(app)
+			.post("/jira/security/workspaces/containers")
+			.set({
+				authorization: `JWT ${await generateJwt()}`
+			})
+			.send({
+				ids: ["1234", "2345"]
+			})
+			.expect(res => {
+				expect(res.status).toBe(403);
+				expect(res.text).toContain(Errors.FORBIDDEN_PATH);
+			});
+	});
 
 	it("Should return a 400 status if no IDs are passed in the body", async () => {
 		app = express();

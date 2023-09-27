@@ -27,7 +27,7 @@ export const ApiJiraUninstallPost = async (request: Request, response: Response)
 		return;
 	}
 	request.log.info(
-		`Forcing uninstall for ${response.locals.installation.clientKey}`
+		`Forcing uninstall for ${response.locals.installation.clientKey as string}`
 	);
 	await JiraEventsUninstallPost(request, response);
 };

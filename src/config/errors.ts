@@ -14,6 +14,7 @@ export enum Errors {
 	MISSING_WORKSPACE_ID = "Missing workspace ID",
 	MISSING_WORKSPACE_IDS = "Missing workspace IDs",
 	UNEXPECTED_REPOSITORY_URL_STRUCTURE = "Repository url structure is unexpected and cannot be opperated on",
+	FORBIDDEN_PATH = "Forbidden path"
 }
 
 export class UIDisplayableError extends Error {

@@ -1,37 +1,61 @@
-import { token } from "@atlaskit/tokens";
-import styled from "@emotion/styled";
+/** @jsxImportSource @emotion/react */
+import { token, useThemeObserver } from "@atlaskit/tokens";
+import { css } from "@emotion/react";
 
-const HeaderWrapper = styled.div`
+const headerWrapperStyle = css`
 	text-align: center;
 `;
 
-const LogoContainer = styled.div`
+const logoContainerStyle = css`
 	display: inline-flex;
 	align-items: center;
 `;
 
-const Logo = styled.img`
+const logoImgStyle = css`
 	height: ${token("space.800")};
 	padding: ${token("space.100")};
 `;
 
-const SyncLogo = styled.img`
+const syncLogoImg = css`
 	height: ${token("space.500")};
 	padding: ${token("space.100")};
 `;
-const Title = styled.h2`
+const titleStyle = css`
 	margin: ${token("space.400")} ${token("space.0")} ${token("space.300")};
 `;
 
-const SyncHeader = () => (
-	<HeaderWrapper>
-		<LogoContainer>
-			<Logo className="logo" src="/public/assets/jira-logo.svg" alt=""/>
-			<SyncLogo className="sync-logo" src="/public/assets/sync.svg" alt=""/>
-			<Logo className="logo" src="/public/assets/github-logo.svg" alt=""/>
-		</LogoContainer>
-		<Title>Connect Github to Jira</Title>
-	</HeaderWrapper>
-);
+const SyncHeader = () => {
+	const { colorMode } = useThemeObserver();
+
+	return (
+		<div css={headerWrapperStyle}>
+			<div css={logoContainerStyle}>
+				<img
+					css={logoImgStyle}
+					className="logo"
+					src="/public/assets/jira-logo.svg"
+					alt=""
+				/>
+				<img
+					css={syncLogoImg}
+					className="sync-logo"
+					src="/public/assets/sync.svg"
+					alt=""
+				/>
+				<img
+					css={logoImgStyle}
+					className="logo"
+					src={
+						colorMode === "dark"
+							? "/public/assets/github-logo-dark-theme.svg"
+							: "/public/assets/github-logo.svg"
+					}
+					alt=""
+				/>
+			</div>
+			<h2 css={titleStyle}>Connect Github to Jira</h2>
+		</div>
+	);
+};
 
 export default SyncHeader;

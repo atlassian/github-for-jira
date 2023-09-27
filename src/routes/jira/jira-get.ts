@@ -13,6 +13,7 @@ import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/commo
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Errors } from "config/errors";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { errorStringFromUnknown } from "~/src/util/error-string-from-unknown";
 
 interface FailedConnection {
 	id: number;
@@ -73,6 +74,7 @@ const getInstallation = async (subscription: Subscription, gitHubAppId: number |
 		const response = await gitHubAppClient.getInstallation(gitHubInstallationId);
 		return {
 			...response.data,
+			subscriptionId: subscription.id,
 			syncStatus: mapSyncStatus(subscription.syncStatus),
 			syncWarning: subscription.syncWarning,
 			totalNumberOfRepos: subscription.totalNumberOfRepos,
@@ -164,24 +166,24 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 	const useNewSPAExperience = await booleanFlag(BooleanFlags.USE_NEW_5KU_SPA_EXPERIENCE, jiraHost);
 	if (useNewSPAExperience && !hasConnections) {
 		res.redirect("/spa?from=homepage");
-		return;
+	} else {
+		res.render("jira-configuration.hbs", {
+			host: jiraHost,
+			gheServers: groupedGheServers,
+			ghCloud: { successfulCloudConnections, failedCloudConnections },
+			hasCloudAndEnterpriseServers: !!((successfulCloudConnections.length || failedCloudConnections.length) && gheServers.length),
+			hasCloudServers: !!(successfulCloudConnections.length || failedCloudConnections.length),
+			hasConnections,
+			useNewSPAExperience,
+			APP_URL: process.env.APP_URL,
+			enableRepoConnectedPage: await booleanFlag(BooleanFlags.ENABLE_CONNECTED_REPOS_VIEW, jiraHost),
+			csrfToken: req.csrfToken(),
+			nonce
+		});
 	}
 
-	res.render("jira-configuration.hbs", {
-		host: jiraHost,
-		gheServers: groupedGheServers,
-		ghCloud: { successfulCloudConnections, failedCloudConnections },
-		hasCloudAndEnterpriseServers: !!((successfulCloudConnections.length || failedCloudConnections.length) && gheServers.length),
-		hasCloudServers: !!(successfulCloudConnections.length || failedCloudConnections.length),
-		hasConnections,
-		useNewSPAExperience,
-		APP_URL: process.env.APP_URL,
-		csrfToken: req.csrfToken(),
-		nonce
-	});
-
 	const successfulServerConnections = gheServersWithConnections
-		.reduce((acc, obj) => acc + obj.successfulConnections?.length, 0);
+		.reduce((acc: number, obj: any) => acc + (obj.successfulConnections?.length as number), 0);
 	const allSuccessfulConnections = [...successfulCloudConnections, ...gheServersWithConnections];
 	const completeConnections = allSuccessfulConnections.filter(connection => connection.syncStatus === "FINISHED");
 
@@ -231,7 +233,7 @@ export const JiraGet = async (
 
 		await renderJiraCloudAndEnterpriseServer(res, req);
 		req.log.debug("Jira configuration rendered successfully.");
-	} catch (error) {
-		return next(new Error(`Failed to render Jira configuration: ${error}`));
+	} catch (error: unknown) {
+		return next(new Error(`Failed to render Jira configuration: ${errorStringFromUnknown(error)}`));
 	}
 };

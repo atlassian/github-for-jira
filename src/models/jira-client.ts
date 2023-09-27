@@ -9,7 +9,7 @@ import { envVars } from "config/env";
 export class JiraClient {
 	axios: AxiosInstance;
 
-	static async getNewClient(installation: Installation, log: Logger) {
+	static async getNewClient(this: void, installation: Installation, log: Logger) {
 		const jiraClient = new JiraClient();
 		jiraClient.axios = getAxiosInstance(
 			installation.jiraHost,
@@ -66,6 +66,10 @@ export class JiraClient {
 
 	async deleteWorkspace(subscriptionId: number) {
 		return await this.axios.delete(`/rest/security/1.0/linkedWorkspaces/bulk?workspaceIds=${subscriptionId}`);
+	}
+
+	async deleteVulnerabilities(subscriptionId: number) {
+		return await this.axios.delete(`/rest/security/1.0/bulkByProperties?workspaceId=${subscriptionId}`);
 	}
 
 	async checkAdminPermissions(accountId: string) {

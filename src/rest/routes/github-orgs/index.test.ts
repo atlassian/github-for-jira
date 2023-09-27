@@ -43,7 +43,7 @@ describe("Test cases for GitHub Org Route", () => {
 		secret = testSharedSecret,
 		iss = "jira-client-key",
 		exp = Date.now() / 1000 + 10000,
-		qsh = "context-qsh" } = {}): any => {
+		qsh = "context-qsh" } = {}): string => {
 		return encodeSymmetric({
 			qsh,
 			iss,
@@ -77,8 +77,9 @@ describe("Test cases for GitHub Org Route", () => {
 				.set("github-auth", "github-token");
 
 			expect(resp.status).toBe(200);
-			expect(resp.body).toHaveProperty("orgs");
-			expect(resp.body.orgs).toHaveLength(3);
+			const body = resp.body as { orgs: { id: number, name: string }[] };
+			expect(body).toHaveProperty("orgs");
+			expect(body.orgs).toHaveLength(3);
 		});
 	});
 
@@ -142,8 +143,9 @@ describe("Test cases for GitHub Org Route", () => {
 				.send({ installationId: 4 });
 
 			expect(resp.status).toBe(401);
-			expect(resp.body).toHaveProperty("errorCode");
-			expect(resp.body.errorCode).toBe("INSUFFICIENT_PERMISSION");
+			const body = resp.body as { errorCode: string };
+			expect(body).toHaveProperty("errorCode");
+			expect(body.errorCode).toBe("INSUFFICIENT_PERMISSION");
 		});
 		it("Should throw error for no github installation id", async () => {
 			const resp = await supertest(app)
@@ -152,8 +154,9 @@ describe("Test cases for GitHub Org Route", () => {
 				.set("github-auth", "github-token");
 
 			expect(resp.status).toBe(400);
-			expect(resp.body).toHaveProperty("errorCode");
-			expect(resp.body.errorCode).toBe("INVALID_OR_MISSING_ARG");
+			const body = resp.body as { errorCode: string };
+			expect(body).toHaveProperty("errorCode");
+			expect(body.errorCode).toBe("INVALID_OR_MISSING_ARG");
 		});
 	});
 });

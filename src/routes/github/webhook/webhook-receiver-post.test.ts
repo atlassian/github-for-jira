@@ -336,7 +336,7 @@ describe("webhook-receiver-post", () => {
 		}));
 	});
 	describe.each(
-		["created", "new_permissions_accepted"]
+		["new_permissions_accepted"]
 	)("should call installation handler", (action) => {
 		it(`${action} action`, async() => {
 			req = createGHESReqForEvent("installation", action, EXIST_GHES_UUID, { installation: { id: 123 } } as unknown as InstallationEvent);
@@ -354,7 +354,7 @@ describe("webhook-receiver-post", () => {
 
 	});
 
-	it("should not call installation handler for other than created/new_permissions_accepted action", async () => {
+	it("should not call installation handler for other than new_permissions_accepted action", async () => {
 		req = createGHESReqForEvent("installation", "suspend", EXIST_GHES_UUID, { installation: { id: 123 } } as unknown as InstallationEvent);
 		const spy = jest.fn();
 		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
@@ -400,7 +400,7 @@ const createGHESReqForEvent = (event: string, action?: string, uuid?: string, pa
 
 const createReqForEvent = (
 	{ event, action, uuid, webhookSecret, signature, payload }:
-		{ event: string, action?: string, uuid?: string, webhookSecret?: string, signature?: string, payload?: Schema }
+	{ event: string, action?: string, uuid?: string, webhookSecret?: string, signature?: string, payload?: Schema }
 ) => {
 	const body = action ? { action, ...payload } : { ...payload };
 

@@ -33,7 +33,8 @@ const getRedirectUrl = async (res: Response, state: string) => {
 	}
 	const scopes = ["user", "repo"];
 
-	const { hostname, clientId } = res.locals.gitHubAppConfig;
+	const hostname: string = res.locals.gitHubAppConfig.hostname;
+	const clientId: string = res.locals.gitHubAppConfig.clientId;
 	const callbackURI = `${appUrl}${callbackPath}`;
 	return `${hostname}/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
 };
@@ -80,7 +81,7 @@ const finishOAuthFlow = async (
 	code: string,
 	log: Logger,
 	respondWithError: (status: number, msg: string) => void,
-	populateSession: (gitHubToken: string, gitHubRefreshToke: string, gitHubServerUuid?: string) => void
+	populateSession: (gitHubToken: string, gitHubRefreshToke: string | undefined, gitHubServerUuid?: string) => void
 ) => {
 	const jiraHost = (await Installation.findByPk(secureState.installationIdPk))?.jiraHost;
 	if (!jiraHost) {
@@ -107,13 +108,15 @@ const finishOAuthFlow = async (
 			jiraHost, metrics, log
 		);
 
-		const { accessToken, refreshToken } = await gitHubAnonymousClient.exchangeGitHubToken({
+		const exchangeGitHubToken = await gitHubAnonymousClient.exchangeGitHubToken({
 			clientId: secureState.gitHubClientId, clientSecret: gitHubClientSecret, code, state: stateKey
 		});
 
-		if (!accessToken) {
+		if (!exchangeGitHubToken) {
 			return respondWithError(400, `didn't get access token from GitHub`);
 		}
+
+		const { accessToken, refreshToken } = exchangeGitHubToken;
 		populateSession(accessToken, refreshToken, secureState.gitHubServerUuid);
 
 		log.debug(`got access token from GitHub, redirecting to ${secureState.postLoginRedirectUrl}`);
@@ -175,7 +178,7 @@ export const GithubOAuthCallbackGet = async (req: Request, res: Response, next: 
 			res.status(status).send(message);
 		},
 
-		(gitHubToken: string, gitHubRefreshToken: string, gitHubServerUuid?: string) => {
+		(gitHubToken: string, gitHubRefreshToken: string | undefined, gitHubServerUuid?: string) => {
 			req.session.githubToken = gitHubToken;
 			req.session.githubRefreshToken = gitHubRefreshToken;
 			req.session.gitHubUuid = gitHubServerUuid;

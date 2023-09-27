@@ -45,7 +45,9 @@ export class InstallationTokenCache {
 
 	private setupCacheSizeListener() {
 		this.logger.info("Setting up cache max size listener");
-		onFlagChange(NumberFlags.INSTALLATION_TOKEN_CACHE_MAX_SIZE, async () => { await this.updateCacheMaxSizeFromFlags(); });
+		onFlagChange(NumberFlags.INSTALLATION_TOKEN_CACHE_MAX_SIZE, () => { this.updateCacheMaxSizeFromFlags().catch(
+			e => this.logger.error({ err: e }, "Error setting max cache size on flag change")
+		); });
 		this.updateCacheMaxSizeFromFlags().catch(e => this.logger.error({ err: e }, "Error setting max cache size on first setup"));
 		this.logger.info("Set up cache max size listener done");
 	}

@@ -96,10 +96,8 @@ const fetchPendingRepoSyncStates = (subscription: Subscription, tasks: TaskType[
 	// that might be changed may result in a erroneous flicking between being the main task and a subtask, thus
 	// slowing down the sync (when it is main, exponential retry is used; when it becomes subtask, other main task resets
 	// retry counter)
-	RepoSyncState.findAllFromSubscription(subscription, {
-		order: [["id", "DESC"]],
-		where: getLookupPendingConditionForTasks(tasks),
-		limit
+	RepoSyncState.findAllFromSubscription(subscription, limit, 0, [["id", "DESC"]], {
+		where: getLookupPendingConditionForTasks(tasks)
 	});
 
 /**
@@ -171,8 +169,8 @@ export const getNextTasks = async (subscription: Subscription, targetTasks: Task
 	}
 
 	let tasks = getTargetTasks(targetTasks);
-	if (!await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, subscription.jiraHost)) {
-		tasks =  without(tasks, "dependabotAlert", "secretScanningAlert");
+	if (!await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, subscription.jiraHost) || !subscription.isSecurityPermissionsAccepted) {
+		tasks =  without(tasks, "dependabotAlert", "secretScanningAlert", "codeScanningAlert");
 	}
 
 	const nSubTasks = await estimateNumberOfSubtasks(subscription, logger);

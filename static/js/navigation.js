@@ -8,3 +8,16 @@ $(".go-back").click(function (event) {
     history.back();
   }
 });
+
+$(".go-main-admin").click(function (event) {
+	event.preventDefault();
+
+	AP.navigator.go(
+		'addonmodule',
+		{
+			moduleKey: "gh-addon-admin",
+		}
+	);
+});
+
+

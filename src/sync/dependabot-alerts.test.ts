@@ -8,6 +8,7 @@ import { waitUntil } from "~/test/utils/wait-until";
 import { BooleanFlags, booleanFlag } from "../config/feature-flags";
 import { when } from "jest-when";
 import { GitHubServerApp } from "../models/github-server-app";
+import { Subscription } from "../models/subscription";
 
 
 jest.mock("config/feature-flags");
@@ -15,6 +16,7 @@ describe("sync/dependabot-alerts", () => {
 
 	const sentry: Hub = { setUser: jest.fn() } as any;
 	const MOCK_SYSTEM_TIMESTAMP_SEC = 12345678;
+	let subscription;
 
 
 	describe("cloud", () => {
@@ -37,11 +39,12 @@ describe("sync/dependabot-alerts", () => {
 		};
 		beforeEach(async () => {
 
-			await new DatabaseStateCreator()
+			const builderResult = await new DatabaseStateCreator()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForDependabotAlerts()
+				.withSecurityPermissionsAccepted()
 				.create();
-
+			subscription = builderResult.subscription;
 			mockSystemTime(MOCK_SYSTEM_TIMESTAMP_SEC);
 
 		});
@@ -53,7 +56,7 @@ describe("sync/dependabot-alerts", () => {
 			jiraNock
 				.post(
 					"/rest/security/1.0/bulk",
-					expectedResponseCloudServer()
+					expectedResponseCloudServer(subscription)
 				)
 				.reply(200);
 
@@ -109,8 +112,10 @@ describe("sync/dependabot-alerts", () => {
 				.forServer()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForDependabotAlerts()
+				.withSecurityPermissionsAccepted()
 				.create();
 
+			subscription = builderResult.subscription;
 			mockSystemTime(MOCK_SYSTEM_TIMESTAMP_SEC);
 
 			gitHubServerApp = builderResult.gitHubServerApp!;
@@ -135,7 +140,7 @@ describe("sync/dependabot-alerts", () => {
 			jiraNock
 				.post(
 					"/rest/security/1.0/bulk",
-					expectedResponseGHEServer()
+					expectedResponseGHEServer(subscription)
 				)
 				.reply(200);
 
@@ -170,7 +175,7 @@ describe("sync/dependabot-alerts", () => {
 });
 
 
-const expectedResponseCloudServer = () => ({
+const expectedResponseCloudServer = (subscription: Subscription) => ({
 	"vulnerabilities": [
 		{
 			"schemaVersion": "1.0",
@@ -178,7 +183,7 @@ const expectedResponseCloudServer = () => ({
 			"updateSequenceNumber": 12345678,
 			"containerId": "1",
 			"displayName": "semver vulnerable to Regular Expression Denial of Service",
-			"description": "Versions of the package semver before 7.5.2 on the 7.x branch, before 6.3.1 on the 6.x branch, and all other versions before 5.7.2 are vulnerable to Regular Expression Denial of Service (ReDoS) via the function new Range, when untrusted user data is provided as a range.",
+			"description": "**Vulnerability:** semver vulnerable to Regular Expression Denial of Service\n\n**Impact:** Versions of the package semver before 7.5.2 on the 7.x branch, before 6.3.1 on the 6.x branch, and all other versions before 5.7.2 are vulnerable to Regular Expression Denial of Service (ReDoS) via the function new Range, when untrusted user data is provided as a range.\n\n**Severity:**  - undefined\n\nGitHub uses  [Common Vulnerability Scoring System (CVSS)](https://www.atlassian.com/trust/security/security-severity-levels) data to calculate security severity.\n\n**State:** Open\n\n**Patched version:** undefined\n\n**Identifiers:**\n\n- [GHSA-c2qf-rxjj-qqgw](https://github.com/advisories/GHSA-c2qf-rxjj-qqgw)\n- [CVE-2022-25883](https://nvd.nist.gov/vuln/detail/CVE-2022-25883)\n\nVisit the vulnerability’s [dependabot alert page](undefined) in GitHub to learn more about and see remediation options.",
 			"type": "sca",
 			"introducedDate": "2023-07-13T06:24:50Z",
 			"lastUpdated": "2023-07-13T06:24:50Z",
@@ -206,7 +211,7 @@ const expectedResponseCloudServer = () => ({
 			"updateSequenceNumber": 12345678,
 			"containerId": "1",
 			"displayName": "semver vulnerable to Regular Expression Denial of Service",
-			"description": "Versions of the package semver before 7.5.2 on the 7.x branch, before 6.3.1 on the 6.x branch, and all other versions before 5.7.2 are vulnerable to Regular Expression Denial of Service (ReDoS) via the function new Range, when untrusted user data is provided as a range.",
+			"description": "**Vulnerability:** semver vulnerable to Regular Expression Denial of Service\n\n**Impact:** Versions of the package semver before 7.5.2 on the 7.x branch, before 6.3.1 on the 6.x branch, and all other versions before 5.7.2 are vulnerable to Regular Expression Denial of Service (ReDoS) via the function new Range, when untrusted user data is provided as a range.\n\n**Severity:**  - undefined\n\nGitHub uses  [Common Vulnerability Scoring System (CVSS)](https://www.atlassian.com/trust/security/security-severity-levels) data to calculate security severity.\n\n**State:** Open\n\n**Patched version:** undefined\n\n**Identifiers:**\n\n- [GHSA-c2qf-rxjj-qqgw](https://github.com/advisories/GHSA-c2qf-rxjj-qqgw)\n- [CVE-2022-25883](https://nvd.nist.gov/vuln/detail/CVE-2022-25883)\n\nVisit the vulnerability’s [dependabot alert page](undefined) in GitHub to learn more about and see remediation options.",
 			"type": "sca",
 			"introducedDate": "2023-07-13T06:24:50Z",
 			"lastUpdated": "2023-07-13T06:24:50Z",
@@ -230,12 +235,13 @@ const expectedResponseCloudServer = () => ({
 		}
 	],
 	"properties": {
-		"gitHubInstallationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID
+		"gitHubInstallationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+		"workspaceId": subscription.id
 	},
 	"operationType": "BACKFILL"
 });
 
-const expectedResponseGHEServer = () => ({
+const expectedResponseGHEServer = (subscription: Subscription) => ({
 	"vulnerabilities": [
 		{
 			"schemaVersion": "1.0",
@@ -243,7 +249,7 @@ const expectedResponseGHEServer = () => ({
 			"updateSequenceNumber": 12345678,
 			"containerId": "6769746875626d79646f6d61696e636f6d-1",
 			"displayName": "semver vulnerable to Regular Expression Denial of Service",
-			"description": "Versions of the package semver before 7.5.2 on the 7.x branch, before 6.3.1 on the 6.x branch, and all other versions before 5.7.2 are vulnerable to Regular Expression Denial of Service (ReDoS) via the function new Range, when untrusted user data is provided as a range.",
+			"description": "**Vulnerability:** semver vulnerable to Regular Expression Denial of Service\n\n**Impact:** Versions of the package semver before 7.5.2 on the 7.x branch, before 6.3.1 on the 6.x branch, and all other versions before 5.7.2 are vulnerable to Regular Expression Denial of Service (ReDoS) via the function new Range, when untrusted user data is provided as a range.\n\n**Severity:**  - undefined\n\nGitHub uses  [Common Vulnerability Scoring System (CVSS)](https://www.atlassian.com/trust/security/security-severity-levels) data to calculate security severity.\n\n**State:** Open\n\n**Patched version:** undefined\n\n**Identifiers:**\n\n- [GHSA-c2qf-rxjj-qqgw](https://github.com/advisories/GHSA-c2qf-rxjj-qqgw)\n- [CVE-2022-25883](https://nvd.nist.gov/vuln/detail/CVE-2022-25883)\n\nVisit the vulnerability’s [dependabot alert page](undefined) in GitHub to learn more about and see remediation options.",
 			"type": "sca",
 			"introducedDate": "2023-07-13T06:24:50Z",
 			"lastUpdated": "2023-07-13T06:24:50Z",
@@ -271,7 +277,7 @@ const expectedResponseGHEServer = () => ({
 			"updateSequenceNumber": 12345678,
 			"containerId": "6769746875626d79646f6d61696e636f6d-1",
 			"displayName": "semver vulnerable to Regular Expression Denial of Service",
-			"description": "Versions of the package semver before 7.5.2 on the 7.x branch, before 6.3.1 on the 6.x branch, and all other versions before 5.7.2 are vulnerable to Regular Expression Denial of Service (ReDoS) via the function new Range, when untrusted user data is provided as a range.",
+			"description": "**Vulnerability:** semver vulnerable to Regular Expression Denial of Service\n\n**Impact:** Versions of the package semver before 7.5.2 on the 7.x branch, before 6.3.1 on the 6.x branch, and all other versions before 5.7.2 are vulnerable to Regular Expression Denial of Service (ReDoS) via the function new Range, when untrusted user data is provided as a range.\n\n**Severity:**  - undefined\n\nGitHub uses  [Common Vulnerability Scoring System (CVSS)](https://www.atlassian.com/trust/security/security-severity-levels) data to calculate security severity.\n\n**State:** Open\n\n**Patched version:** undefined\n\n**Identifiers:**\n\n- [GHSA-c2qf-rxjj-qqgw](https://github.com/advisories/GHSA-c2qf-rxjj-qqgw)\n- [CVE-2022-25883](https://nvd.nist.gov/vuln/detail/CVE-2022-25883)\n\nVisit the vulnerability’s [dependabot alert page](undefined) in GitHub to learn more about and see remediation options.",
 			"type": "sca",
 			"introducedDate": "2023-07-13T06:24:50Z",
 			"lastUpdated": "2023-07-13T06:24:50Z",
@@ -295,7 +301,8 @@ const expectedResponseGHEServer = () => ({
 		}
 	],
 	"properties": {
-		"gitHubInstallationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID
+		"gitHubInstallationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+		"workspaceId": subscription.id
 	},
 	"operationType": "BACKFILL"
 });

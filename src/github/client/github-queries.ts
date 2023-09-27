@@ -78,6 +78,7 @@ export type pullRequestNode = {
 	title: string;
 	body: string;
 	url: string;
+	draft: boolean;
 	headRefName: string; // is defined even if the ref was deleted
 	baseRefName: string; // is defined even if the ref was deleted
 	headRef?: {
@@ -157,8 +158,8 @@ export type pullRequestQueryResponse = {
 		pullRequests: {
 			edges: {
 				createdAt: string;
-			cursor: string,
-			node: pullRequestNode;
+				cursor: string,
+				node: pullRequestNode;
 			}[]
 		};
 	};
@@ -534,6 +535,7 @@ export type DeploymentQueryNode = {
 	cursor: string,
 	node: {
 		createdAt: string,
+		updatedAt?: string,
 		repository: Repository,
 		databaseId: string,
 		commitOid: string,

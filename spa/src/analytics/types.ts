@@ -4,7 +4,9 @@ type UIEventActionSubject =
   | "startOAuthAuthorisation" | "switchGitHubAccount"
 	| "connectOrganisation" | "installToNewOrganisation"
 	| "checkBackfillStatus"
-	| "dropExperienceViaBackButton";
+	| "dropExperienceViaBackButton"
+	| "checkOrgAdmin"
+	| "learnAboutIssueLinking" | "learnAboutDevelopmentWork";
 
 export type UIEventProps = {
 	actionSubject: UIEventActionSubject,
@@ -19,12 +21,13 @@ export type ScreenNames =
 
 type TrackEventActionSubject =
 	"finishOAuthFlow"
+  | "organizations"
   | "organisationConnectResponse"
 	| "installNewOrgInGithubResponse";
 
 export type TrackEventProps = {
 	actionSubject: TrackEventActionSubject,
-	action: "success" | "fail"
+	action: "success" | "fail" | "fetched" | "requested";
 };
 
 export type ScreenEventProps = {

@@ -17,7 +17,7 @@ export class GithubClientError extends Error {
 		this.uiErrorCode = "UNKNOWN";
 
 		this.cause = { ...cause };
-		this.stack = this.stack?.split("\n").slice(0, 2).join("\n") + "\n" + cause.stack;
+		this.stack = (this.stack?.split("\n").slice(0, 2).join("\n") ?? "Missing Stack") + "\n" + (cause.stack ?? "Missing Stack");
 	}
 }
 
@@ -87,10 +87,10 @@ export type GraphQLError = {
 		[key: string]: any;
 	};
 	locations?:
-		{
-			line: number;
-			column: number;
-		}[];
+	{
+		line: number;
+		column: number;
+	}[];
 };
 
 export const buildAxiosStubErrorForGraphQlErrors = (response: AxiosResponse) => {

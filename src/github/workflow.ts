@@ -2,12 +2,13 @@ import { transformWorkflow } from "../transforms/transform-workflow";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { createInstallationClient } from "utils/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
+import { shouldSendAll } from "config/feature-flags";
 
 export const workflowWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 	const { payload, log: logger } = context;
-
+	const jiraHost = jiraClient.baseURL;
 	context.log = context.log.child({
-		jiraHost: jiraClient.baseURL,
+		jiraHost,
 		gitHubInstallationId
 	});
 
@@ -17,7 +18,8 @@ export const workflowWebhookHandler = async (context: WebhookContext, jiraClient
 		subTrigger: "workflow"
 	};
 	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, metrics, context.log, gitHubAppId);
-	const jiraPayload = await transformWorkflow(gitHubInstallationClient, payload, logger);
+	const alwaysSend = await shouldSendAll("builds", jiraHost, logger);
+	const jiraPayload = await transformWorkflow(gitHubInstallationClient, payload, alwaysSend, logger);
 
 	if (!jiraPayload) {
 		logger.info(

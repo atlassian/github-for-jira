@@ -3,13 +3,17 @@ import { transformPullRequest, transformPullRequestRest } from "./transform-pull
 import transformPullRequestList from "fixtures/api/transform-pull-request-list.json";
 import reviewersListNoUser from "fixtures/api/pull-request-reviewers-no-user.json";
 import reviewersListHasUser from "fixtures/api/pull-request-reviewers-has-user.json";
-import multipleReviewersWithMultipleReviews from "fixtures/api/pull-request-has-multiple-reviewers-with-multiple-reviews.json";
+import multipleReviewersWithMultipleReviews
+	from "fixtures/api/pull-request-has-multiple-reviewers-with-multiple-reviews.json";
 import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 import { getInstallationId } from "~/src/github/client/installation-id";
 import { getLogger } from "config/logger";
-import _ from "lodash";
+import { booleanFlag, BooleanFlags, shouldSendAll } from "config/feature-flags";
+import _, { cloneDeep } from "lodash";
 import { createLogger } from "bunyan";
+import { when } from "jest-when";
 
+jest.mock("config/feature-flags");
 describe("pull_request transform REST", () => {
 	const gitHubInstallationId = 100403908;
 	let client: GitHubInstallationClient;
@@ -17,6 +21,10 @@ describe("pull_request transform REST", () => {
 	beforeEach(() => {
 		mockSystemTime(12345678);
 		client = new GitHubInstallationClient(getInstallationId(gitHubInstallationId), gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
+
+		when(booleanFlag).calledWith(
+			BooleanFlags.INNO_DRAFT_PR
+		).mockResolvedValue(true);
 	});
 
 	it("should not contain branches on the payload if pull request status is closed.", async () => {
@@ -30,7 +38,7 @@ describe("pull_request transform REST", () => {
 				name: "Some User Name"
 			});
 
-		const data = await transformPullRequestRest(client, fixture as any);
+		const data = await transformPullRequestRest(client, fixture as any, [], getLogger("test"), jiraHost);
 
 		const { updated_at, title } = fixture;
 
@@ -87,7 +95,7 @@ describe("pull_request transform REST", () => {
 				name: "Last Commit User Name"
 			});
 
-		const data = await transformPullRequestRest(client, fixture as any);
+		const data = await transformPullRequestRest(client, fixture as any, [], getLogger("test"), jiraHost);
 
 		const { updated_at, title } = fixture;
 
@@ -171,7 +179,7 @@ describe("pull_request transform REST", () => {
 				name: "Last Commit User Name"
 			});
 
-		const data = await transformPullRequestRest(client, fixture as any);
+		const data = await transformPullRequestRest(client, fixture as any, [], getLogger("test"), jiraHost);
 
 		const { updated_at, title } = fixture;
 
@@ -244,7 +252,7 @@ describe("pull_request transform REST", () => {
 		// @ts-ignore
 		fixture.user = null;
 
-		const data = await transformPullRequestRest(client, fixture as any, reviewersListNoUser as any);
+		const data = await transformPullRequestRest(client, fixture as any, reviewersListNoUser as any, getLogger("test"), jiraHost);
 
 		const { updated_at, title } = fixture;
 
@@ -302,7 +310,7 @@ describe("pull_request transform REST", () => {
 		// @ts-ignore
 		delete reviewrsListNoState[0].state;
 
-		const data = await transformPullRequestRest(client, pulLRequestFixture as any, reviewrsListNoState as any);
+		const data = await transformPullRequestRest(client, pulLRequestFixture as any, reviewrsListNoState as any, getLogger("test"), jiraHost);
 
 		const { updated_at, title } = pulLRequestFixture;
 
@@ -349,6 +357,64 @@ describe("pull_request transform REST", () => {
 		});
 	});
 
+	it("maps CHANGES_REQUESTED state to NEEDSWORK", async () => {
+		const pullRequestList = Object.assign({},
+			transformPullRequestList
+		);
+
+		const pulLRequestFixture = pullRequestList[0];
+		pulLRequestFixture.title = "[TEST-1] Branch payload with loads of issue keys Test";
+
+		const reviewersListChangesRequestedState = _.cloneDeep(reviewersListHasUser);
+		reviewersListChangesRequestedState[0].state = "CHANGES_REQUESTED";
+
+		const data = await transformPullRequestRest(client, pulLRequestFixture as any, reviewersListChangesRequestedState as any, getLogger("test"), jiraHost);
+
+		const { updated_at, title } = pulLRequestFixture;
+
+		expect(data).toStrictEqual({
+			id: "100403908",
+			name: "integrations/test",
+			pullRequests: [
+				{
+					author: {
+						avatar: "https://github.com/ghost.png",
+						email: "deleted@noreply.user.github.com",
+						name: "Deleted User",
+						url: "https://github.com/ghost"
+					},
+					commentCount: 0,
+					destinationBranch: "devel",
+					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
+					displayId: "#51",
+					id: 51,
+					issueKeys: ["TEST-1"],
+					lastUpdate: updated_at,
+					reviewers: [
+						{
+							avatar: "https://github.com/images/error/octocat_happy.gif",
+							name: "octocat",
+							email: "octocat@noreply.user.github.com",
+							url: "https://github.com/octocat",
+							approvalStatus: "NEEDSWORK"
+						}
+					],
+					sourceBranch: "use-the-force",
+					sourceBranchUrl:
+						"https://github.com/integrations/test/tree/use-the-force",
+					status: "MERGED",
+					timestamp: updated_at,
+					title: title,
+					url: "https://github.com/integrations/test/pull/51",
+					updateSequenceId: 12345678
+				}
+			],
+			branches: [],
+			url: "https://github.com/integrations/test",
+			updateSequenceId: 12345678
+		});
+	});
+
 	it("should resolve reviewer's email", async () => {
 		const pullRequestList = Object.assign({},
 			transformPullRequestList
@@ -367,7 +433,7 @@ describe("pull_request transform REST", () => {
 				email: "octocat-mapped@github.com"
 			});
 
-		const data = await transformPullRequestRest(client, fixture as any, reviewersListHasUser as any);
+		const data = await transformPullRequestRest(client, fixture as any, reviewersListHasUser as any, getLogger("test"), jiraHost);
 
 		const { updated_at, title } = fixture;
 
@@ -412,6 +478,67 @@ describe("pull_request transform REST", () => {
 		});
 	});
 
+	it("should map pullrequest without associations", async () => {
+		when(shouldSendAll).calledWith("prs", expect.anything(), expect.anything()).mockResolvedValue(true);
+
+		const fixture = cloneDeep(transformPullRequestList[0]);
+		fixture.title = "PR without an issue key";
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		fixture.user = null;
+
+		githubUserTokenNock(gitHubInstallationId);
+		githubNock.get(`/users/${reviewersListHasUser[0].user.login}`)
+			.reply(200, {
+				...reviewersListHasUser[0].user,
+				email: "octocat-mapped@github.com"
+			});
+
+		const data = await transformPullRequestRest(client, fixture as any, reviewersListHasUser as any, getLogger("test"), jiraHost);
+
+		const { updated_at, title } = fixture;
+
+		expect(data).toMatchObject({
+			id: "100403908",
+			name: "integrations/test",
+			pullRequests: [
+				{
+					author: {
+						avatar: "https://github.com/ghost.png",
+						name: "Deleted User",
+						url: "https://github.com/ghost"
+					},
+					destinationBranch: "devel",
+					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
+					displayId: "#51",
+					id: 51,
+					issueKeys: [],
+					lastUpdate: updated_at,
+					reviewers: [
+						{
+							avatar: "https://github.com/images/error/octocat_happy.gif",
+							email: "octocat-mapped@github.com",
+							name: "octocat",
+							url: "https://github.com/octocat",
+							approvalStatus: "APPROVED"
+						}
+					],
+					sourceBranch: "use-the-force",
+					sourceBranchUrl:
+						"https://github.com/integrations/test/tree/use-the-force",
+					status: "MERGED",
+					timestamp: updated_at,
+					title: title,
+					url: "https://github.com/integrations/test/pull/51",
+					updateSequenceId: 12345678
+				}
+			],
+			branches: [],
+			url: "https://github.com/integrations/test",
+			updateSequenceId: 12345678
+		});
+	});
+
 	it("should send the correct review state for multiple reviewers", async () => {
 		const pullRequestList = Object.assign({},
 			transformPullRequestList
@@ -425,11 +552,11 @@ describe("pull_request transform REST", () => {
 
 		githubUserTokenNock(gitHubInstallationId);
 
-		const data = await transformPullRequestRest(client, fixture as any, multipleReviewersWithMultipleReviews as any);
+		const data = await transformPullRequestRest(client, fixture as any, multipleReviewersWithMultipleReviews as any, getLogger("test"), jiraHost);
 
 		expect({ firstReviewStatus: data?.pullRequests[0].reviewers[0] }).toEqual(expect.objectContaining({
 			firstReviewStatus: expect.objectContaining({
-				approvalStatus: "UNAPPROVED"
+				approvalStatus: "NEEDSWORK"
 			})
 		}));
 
@@ -440,8 +567,73 @@ describe("pull_request transform REST", () => {
 		}));
 	});
 
-});
+	it("should map to draft status when PR is 'open' is draft property is true", async () => {
+		const pullRequestList = Object.assign({},
+			transformPullRequestList
+		);
 
+		const fixture = pullRequestList[3];
+		fixture.title = "[TESt-1] Draft PR Test";
+
+		const data = await transformPullRequestRest(client, fixture as any, [], getLogger("test"), jiraHost);
+		const { updated_at, title } = fixture;
+
+		expect(data).toMatchObject({
+			id: "100403908",
+			name: "someusername/test",
+			pullRequests: [
+				{
+					author: {
+						avatar: "https://avatars0.githubusercontent.com/u/173?v=4",
+						name: "Some User Name",
+						url: "https://api.github.com/users/someusername"
+					},
+					destinationBranch: "devel",
+					destinationBranchUrl: "https://github.com/someusername/test/tree/devel",
+					displayId: "#51",
+					id: 51,
+					issueKeys: ["TEST-1"],
+					lastUpdate: updated_at,
+					sourceBranch: "use-the-force",
+					sourceBranchUrl:
+						"https://github.com/someusername/test/tree/use-the-force",
+					status: "DRAFT",
+					timestamp: updated_at,
+					title: title,
+					url: "https://github.com/someusername/test/pull/51",
+					updateSequenceId: 12345678
+				}
+			],
+			branches: [
+				{
+					id: "use-the-force",
+					issueKeys: ["TEST-1"],
+					lastCommit: {
+						author: {
+							avatar: "https://avatars3.githubusercontent.com/u/31044959?v=4",
+							name: "Some User Name",
+							url: "https://github.com/someusername"
+						},
+						authorTimestamp: "2018-05-04T14:06:56Z",
+						displayId: "09ca66",
+						fileCount: 0,
+						hash: "09ca669e4b5ff78bfa6a9fee74c384812e1f96dd",
+						id: "09ca669e4b5ff78bfa6a9fee74c384812e1f96dd",
+						issueKeys: ["TEST-1"],
+						message: "n/a",
+						updateSequenceId: 12345678,
+						url: "https://github.com/someusername/test/commit/09ca669e4b5ff78bfa6a9fee74c384812e1f96dd"
+					},
+					name: "use-the-force",
+					updateSequenceId: 12345678,
+					url: "https://github.com/someusername/test/tree/use-the-force"
+				}
+			],
+			url: "https://github.com/someusername/test",
+			updateSequenceId: 12345678
+		});
+	});
+});
 
 describe("pull_request transform GraphQL", () => {
 	const logger = createLogger({ name: "test", foo: 123 });
@@ -554,7 +746,9 @@ describe("pull_request transform GraphQL", () => {
 
 		const { updatedAt } = payload;
 
-		const data = transformPullRequest(REPO_OBJ, jiraHost, payload as any, logger);
+		const isDraftPrFFOn = true;
+
+		const data = transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger, isDraftPrFFOn);
 
 		expect(data).toMatchObject({
 			author: {
@@ -594,7 +788,9 @@ describe("pull_request transform GraphQL", () => {
 
 		const { updatedAt } = payload;
 
-		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, logger);
+		const isDraftPrFFOn = true;
+
+		const data = transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger, isDraftPrFFOn);
 
 		expect(data).toStrictEqual({
 			author: {
@@ -629,12 +825,58 @@ describe("pull_request transform GraphQL", () => {
 		});
 	});
 
+	it("maps CHANGES_REQUESTED state to NEEDSWORK", async () => {
+		const title = "[TES-123] Branch payload Test";
+		const payload = { ...createPullPayload(title) };
+		payload.reviews = createReview("CHANGES_REQUESTED");
+
+		const { updatedAt } = payload;
+
+		const isDraftPrFFOn = true;
+
+		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger, isDraftPrFFOn);
+
+		expect(data).toStrictEqual({
+			author: {
+				avatar: "test-pull-request-author-avatar",
+				email: "test-pull-request-author-login@noreply.user.github.com",
+				name: "test-pull-request-author-login",
+				url: "test-pull-request-author-url"
+			},
+			commentCount: 10,
+			destinationBranch: "devel",
+			destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
+			displayId: "#51",
+			id: 51,
+			issueKeys: ["TES-123"],
+			lastUpdate: updatedAt,
+			reviewers: [
+				{
+					avatar: "test-pull-request-reviewer-avatar",
+					email: "test-pull-request-reviewer-login@email.test",
+					name: "test-pull-request-reviewer-login",
+					url: "https://github.com/reviewer",
+					approvalStatus: "NEEDSWORK"
+				}
+			],
+			sourceBranch: "evernote-test",
+			sourceBranchUrl: "https://github.com/integrations/test/tree/evernote-test",
+			status: "MERGED",
+			timestamp: updatedAt,
+			title,
+			url: "https://github.com/integrations/test/pull/51",
+			updateSequenceId: 12345678
+		});
+	});
+
 	it("should resolve reviewer's email", async () => {
 		const title = "[TES-123] Branch payload Test";
 		const payload = { ...createPullPayload(title), author: {} };
 		payload.reviews = createReview("APPROVED", "cool-email@emails.com");
 
-		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, logger);
+		const isDraftPrFFOn = true;
+
+		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger, isDraftPrFFOn);
 		const { updatedAt } = payload;
 
 		expect(data).toMatchObject({
@@ -673,7 +915,9 @@ describe("pull_request transform GraphQL", () => {
 		const payload = { ...createPullPayload(title), author: {} };
 		payload.reviews = createMultipleReviews();
 
-		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, logger);
+		const isDraftPrFFOn = true;
+
+		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger, isDraftPrFFOn);
 
 		expect({ firstReviewStatus: data?.reviewers[0] }).toEqual(expect.objectContaining({
 			firstReviewStatus: expect.objectContaining({
@@ -687,5 +931,4 @@ describe("pull_request transform GraphQL", () => {
 			})
 		}));
 	});
-
 });

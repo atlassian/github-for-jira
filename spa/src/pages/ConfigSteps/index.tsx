@@ -1,7 +1,9 @@
+/** @jsxImportSource @emotion/react */
 import { useEffect, useState } from "react";
 import Button, { LoadingButton } from "@atlaskit/button";
 import AddIcon from "@atlaskit/icon/glyph/editor/add";
 import styled from "@emotion/styled";
+import { css } from "@emotion/react";
 import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
 import Step from "../../components/Step";
@@ -9,7 +11,7 @@ import LoggedinInfo from "../../common/LoggedinInfo";
 import Tooltip, { TooltipPrimitive } from "@atlaskit/tooltip";
 import { token } from "@atlaskit/tokens";
 import { useNavigate } from "react-router-dom";
-import Error from "../../components/Error";
+import ErrorUI from "../../components/Error";
 import AppManager from "../../services/app-manager";
 import OAuthManager from "../../services/oauth-manager";
 import analyticsClient from "../../analytics";
@@ -19,11 +21,8 @@ import { reportError } from "../../utils";
 import { GitHubInstallationType } from "../../../../src/rest-interfaces";
 import OrganizationsList from "../ConfigSteps/OrgsContainer";
 import SkeletonForLoading from "../ConfigSteps/SkeletonForLoading";
+import OauthManager from "../../services/oauth-manager";
 
-type GitHubOptionType = {
-	selectedOption: number;
-	optionKey: number;
-};
 type HostUrlType = {
 	jiraHost: string;
 };
@@ -32,25 +31,25 @@ type ErrorMessageCounterType = {
 	count: number;
 }
 
-const ConfigContainer = styled.div`
+const configContainerStyle = css`
   margin: 0 auto;
   width: 100%;
   min-height: 364px;
 `;
-const GitHubOptionContainer = styled.div`
+const gitHubOptionContainerStyle = css`
 	display: flex;
 	margin-bottom: ${token("space.200")};
 `;
-const TooltipContainer = styled.div`
+const tooltipContainerStyle = css`
 	margin-bottom: ${token("space.400")};
 	a {
 		cursor: pointer;
 	}
 `;
-const GitHubOption = styled.div<GitHubOptionType>`
-	background: ${props => props.optionKey === props.selectedOption ? "#DEEBFF" : "rgba(9, 30, 66, 0.04)"};
-	font-weight: ${props => props.optionKey === props.selectedOption ? 600 : 400};
-	color: ${props => props.optionKey === props.selectedOption ? token("color.text.accent.blue") : "inherit"};
+const gitHubOptionStyle = css`
+	background: ${token("color.background.accent.gray.subtlest")};
+	font-weight: 400;
+	color: ${token("color.text")};
 	padding: ${token("space.100")} ${token("space.200")};
 	margin-right: ${token("space.100")};
 	border-radius: 100px;
@@ -66,6 +65,13 @@ const GitHubOption = styled.div<GitHubOptionType>`
 		margin-right: ${token("space.100")};
 	}
 `;
+
+const gitHubSelectedOptionStyle = css`
+	background: ${token("color.background.selected")};
+	font-weight: 600;
+	color: ${token("color.text.selected")};
+`;
+
 const InlineDialog = styled(TooltipPrimitive)`
 	background: white;
 	border-radius: ${token("space.050")};
@@ -76,7 +82,7 @@ const InlineDialog = styled(TooltipPrimitive)`
 	position: absolute;
 	top: -22px;
 `;
-const AddOrganizationContainer = styled.div`
+const addOrganizationContainerStyle = css`
 	display: flex;
 	align-items: center;
 	justify-content: start;
@@ -95,7 +101,7 @@ const AddOrganizationContainer = styled.div`
 		}
 	}
 `;
-const Paragraph = styled.div`
+const paragraphStyle = css`
 	color: ${token("color.text.subtle")};
 	margin-bottom: ${token("space.100")};
 `;
@@ -161,7 +167,7 @@ const ConfigSteps = () => {
 		const response = await AppManager.fetchOrgs();
 		setLoaderForOrgFetching(false);
 		if (response instanceof AxiosError) {
-			showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken }));
+			showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
 			return { success: false, orgs: [] };
 		} else {
 			setOrganizations(response.orgs);
@@ -179,9 +185,15 @@ const ConfigSteps = () => {
 						setLoaderForLogin(false);
 					});
 				} catch (e) {
+					const errorObj = modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
+					showError(errorObj);
+					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail"}, { errorCode: errorObj.errorCode, step: "initiate-oauth"});
+					reportError(new Error("Fail initiate authorize", { cause: e }), {
+						path: "authorize",
+						selectedOption
+					});
+				} finally {
 					setLoaderForLogin(false);
-					showError(modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken }));
-					reportError(e);
 				}
 				break;
 			}
@@ -199,6 +211,21 @@ const ConfigSteps = () => {
 		clearLogin();
 	};
 
+	const reLogin = async () => {
+		// Clearing the errors
+		showError(undefined);
+		OauthManager.clear();
+		// This resets the token validity check in the parent component and resets the UI
+		setIsLoggedIn(false);
+		// Restart the whole auth flow
+		await OauthManager.authenticateInGitHub(() => {})
+			.catch(e => {
+				const errorObj = modifyError(e, { }, { onClearGitHubToken: () => {}, onRelogin: () => {} });
+				analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail"}, { errorCode: errorObj.errorCode, step: "initiate-oauth"});
+				reportError(new Error("Reset oauth flow on relogin", { cause: e }), { path: "reLogin" });
+			});
+	};
+
 	const clearLogin = () => {
 		setIsLoggedIn(false);
 		setLoaderForLogin(false);
@@ -209,16 +236,22 @@ const ConfigSteps = () => {
 	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual", orgLogin?: string) => {
 		try {
 			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" }, { mode });
-			const connected = await AppManager.connectOrg(gitHubInstallationId);
-			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: connected ? "success" : "fail"}, { mode });
+			const connected: boolean | AxiosError = await AppManager.connectOrg(gitHubInstallationId);
 			if (connected instanceof AxiosError) {
-				showError(modifyError(connected, { orgLogin }, { onClearGitHubToken: clearGitHubToken }));
+				const errorObj = modifyError(connected, { orgLogin }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
+				showError(errorObj);
+				analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail" }, { mode, errorCode: errorObj.errorCode });
 			} else {
+				analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: (connected === true ? "success" : "fail") }, { mode });
 				navigate("/spa/connected");
 			}
 		} catch (e) {
 			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail"}, { mode });
-			reportError(e);
+			reportError(new Error("Fail doCreateConnection", { cause: e }), {
+				path: "doCreateConnection",
+				isGitHubInstallationIdEmpty: !gitHubInstallationId,
+				mode
+			});
 		}
 	};
 
@@ -227,20 +260,25 @@ const ConfigSteps = () => {
 			analyticsClient.sendUIEvent({ actionSubject: "installToNewOrganisation", action: "clicked"}, { mode });
 			await AppManager.installNewApp({
 				onFinish: async (gitHubInstallationId: number | undefined) => {
-					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "success"}, { mode });
+					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: gitHubInstallationId ? "success" : "fail"}, { mode });
 					getOrganizations();
 					if(gitHubInstallationId) {
 						await doCreateConnection(gitHubInstallationId, "auto");
 					}
 				},
 				onRequested: async (_setupAction: string) => {
+					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "requested"}, { mode });
 					navigate("/spa/installationRequested");
 				}
 			});
 		} catch (e) {
-			showError(modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken }));
-			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail"}, { mode });
-			reportError(e);
+			const errorObj = modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
+			showError(errorObj);
+			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail"}, { mode, errorCode: errorObj.errorCode });
+			reportError(new Error("Fail installNewOrg", { cause: e }), {
+				path: "installNewOrg",
+				mode
+			});
 		}
 	};
 
@@ -249,14 +287,14 @@ const ConfigSteps = () => {
 		const handler = async (event: MessageEvent) => {
 			if (event.origin !== originalUrl) return;
 			if (event.data?.type === "oauth-callback" && event.data?.code) {
-				const response = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
+				const response: boolean | AxiosError = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
 				setLoaderForLogin(false);
 				if (response instanceof AxiosError) {
-					showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken }));
+					showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
 					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail" });
 					return;
 				} else {
-					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "success" });
+					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: response === true ?  "success" : "fail" });
 				}
 				setIsLoggedIn(true);
 			}
@@ -272,7 +310,7 @@ const ConfigSteps = () => {
 		const recheckValidity = async () => {
 			const status: boolean | AxiosError = await OAuthManager.checkValidity();
 			if (status instanceof AxiosError) {
-				showError(modifyError(status, {}, { onClearGitHubToken: clearGitHubToken }));
+				showError(modifyError(status, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
 				return;
 			}
 			setLoggedInUser(OAuthManager.getUserDetails().username);
@@ -282,6 +320,9 @@ const ConfigSteps = () => {
 				const result = await getOrganizations();
 				if (result.success && result.orgs.length === 0) {
 					await installNewOrg("auto");
+				}
+				if (result.success) {
+					setAnalyticsEventsForFetchedOrgs(result.orgs);
 				}
 			}
 		};
@@ -293,26 +334,26 @@ const ConfigSteps = () => {
 		<Wrapper>
 			<SyncHeader />
 			{
-				error && <Error type={error.type} message={error.message} />
+				error && <ErrorUI type={error.type} message={error.message} />
 			}
-			<ConfigContainer>
+			<div css={configContainerStyle}>
 				{
 					isLoggedIn ? <>
 						{
 							loaderForOrgFetching ? <SkeletonForLoading /> : <>
 									<Step title="Select a GitHub organization">
 												<>
-													<Paragraph>
+													<div css={paragraphStyle}>
 														This organization's repositories will be available to all projects<br />
 														in <b>{hostUrl?.jiraHost}</b>.
-													</Paragraph>
+													</div>
 													<OrganizationsList
 														organizations={organizations}
 														loaderForOrgClicked={loaderForOrgClicked}
 														setLoaderForOrgClicked={setLoaderForOrgClicked}
 														resetCallback={setIsLoggedIn}
 														connectingOrg={(org) => doCreateConnection(org.id, "manual", org.account?.login)} />
-													<AddOrganizationContainer>
+													<div css={addOrganizationContainerStyle}>
 														<Button
 															iconBefore={<AddIcon label="add new org" size="medium"/>}
 															isDisabled={loaderForOrgClicked}
@@ -322,7 +363,7 @@ const ConfigSteps = () => {
 														<div onClick={() => !loaderForOrgClicked && installNewOrg("manual")}>
 															{ organizations.length === 0 ? "Select an organization in GitHub" : "Select another organization" }
 														</div>
-													</AddOrganizationContainer>
+													</div>
 												</>
 											</Step>
 									<LoggedinInfo
@@ -334,10 +375,9 @@ const ConfigSteps = () => {
 					</>
 					: <Step title="Select your GitHub product">
 						<>
-							<GitHubOptionContainer>
-									<GitHubOption
-										optionKey={1}
-										selectedOption={selectedOption}
+							<div css={gitHubOptionContainerStyle}>
+									<div
+										css={selectedOption === 1 ? [gitHubOptionStyle, gitHubSelectedOptionStyle]: [gitHubOptionStyle]}
 										onClick={() => {
 											setSelectedOption(1);
 											analyticsClient.sendUIEvent({ actionSubject: "authorizeTypeGitHubCloud", action: "clicked" });
@@ -345,10 +385,9 @@ const ConfigSteps = () => {
 									>
 										<img src="/public/assets/cloud.svg" alt=""/>
 										<span>GitHub Cloud</span>
-									</GitHubOption>
-									<GitHubOption
-										optionKey={2}
-										selectedOption={selectedOption}
+									</div>
+									<div
+										css={selectedOption === 2 ? [gitHubOptionStyle, gitHubSelectedOptionStyle]: [gitHubOptionStyle]}
 										onClick={() => {
 											setSelectedOption(2);
 											analyticsClient.sendUIEvent({ actionSubject: "authorizeTypeGitHubEnt", action: "clicked" });
@@ -356,9 +395,9 @@ const ConfigSteps = () => {
 									>
 										<img src="/public/assets/server.svg" alt=""/>
 										<span>GitHub Enterprise Server</span>
-									</GitHubOption>
-								</GitHubOptionContainer>
-								<TooltipContainer>
+									</div>
+								</div>
+								<div css={tooltipContainerStyle}>
 									<Tooltip
 										component={InlineDialog}
 										position="right-end"
@@ -366,7 +405,7 @@ const ConfigSteps = () => {
 									>
 										{(props) => <a {...props}>How do I check my GitHub product?</a>}
 									</Tooltip>
-								</TooltipContainer>
+								</div>
 								{
 									loaderForLogin ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
 										<Button
@@ -380,9 +419,26 @@ const ConfigSteps = () => {
 							</>
 					</Step>
 				}
-			</ConfigContainer>
+			</div>
 		</Wrapper>
 	);
+};
+
+const setAnalyticsEventsForFetchedOrgs  = (orgs: Array<GitHubInstallationType>) => {
+	try {
+		const notAdminCount = (orgs || []).filter(o => !o.isAdmin).length;
+		const isIPBlockedCount = (orgs || []).filter(o => o.isIPBlocked).length;
+		const requiresSsoLoginCount = (orgs || []).filter(o => o.requiresSsoLogin).length;
+		analyticsClient.sendTrackEvent({ actionSubject: "organizations", action: "fetched" }, {
+			notAdminCount,
+			requiresSsoLoginCount,
+			isIPBlockedCount,
+		});
+	} catch (e) {
+		reportError(new Error("Fail setAnalyticsEventsForFetchedOrgs", { cause: e }), {
+			path: "setAnalyticsEventsForFetchedOrgs"
+		});
+	}
 };
 
 export default ConfigSteps;

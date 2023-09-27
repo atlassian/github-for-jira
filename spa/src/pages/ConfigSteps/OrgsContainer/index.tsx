@@ -1,45 +1,38 @@
+/** @jsxImportSource @emotion/react */
+import { useState } from "react";
 import Button, { LoadingButton } from "@atlaskit/button";
 import { GitHubInstallationType } from "../../../../../src/rest-interfaces";
-import styled from "@emotion/styled";
+import { css } from "@emotion/react";
 import { token } from "@atlaskit/tokens";
-import { useState } from "react";
 import WarningIcon from "@atlaskit/icon/glyph/warning";
-import { popup } from "../../../utils";
 import OauthManager from "../../../services/oauth-manager";
+import {
+	ErrorForIPBlocked,
+	ErrorForNonAdmins,
+	ErrorForSSO,
+} from "../../../components/Error/KnownErrors";
+import Scrollbars from "../../../common/Scrollbars";
 
-type OrgDivType = {
-	key: number;
-	hasError: boolean;
-};
+const MAX_HEIGHT_FOR_ORGS_CONTAINER = 250;
+const PADDING_RIGHT_FOR_ORGS_CONTAINER = 80;
+const MARGIN_RIGHT_FOR_ORGS_CONTAINER = -80;
 
-const OrgsWrapper = styled.div`
-	max-height: 250px;
-	overflow-y: auto;
-	padding-right: 80px;
-	margin-right: -80px;
-`;
-const OrgDiv = styled.div<OrgDivType>`
+const orgDivStyle = css`
 	display: flex;
 	justify-content: space-between;
-	align-items: ${props => props.hasError ? "start" : "center"};
+	align-items: center;
 	padding: ${token("space.150")} 0;
 	margin-bottom: ${token("space.100")};
 `;
-const OrgName = styled.span`
+const orgDivWithErrorStyle = css`
+	align-items: start;
+`;
+const orgNameStyle = css`
 	color: ${token("color.text")};
 	font-weight: 590;
 `;
-const Paragraph = styled.div`
-	color: ${token("color.text.subtle")};
-`;
-const IconWrapper = styled.div`
+const iconWrapperStyle = css`
 	padding-top: ${token("space.150")};
-`;
-const BulletSeparator = styled.span`
-	padding: 0 ${token("space.100")};
-`;
-const StyledLink = styled.a`
-	cursor: pointer;
 `;
 
 const OrganizationsList = ({
@@ -56,8 +49,12 @@ const OrganizationsList = ({
 	resetCallback: (args: boolean) => void;
 	connectingOrg: (org: GitHubInstallationType) => void;
 }) => {
-	const [clickedOrg, setClickedOrg] = useState<GitHubInstallationType | undefined>(undefined);
-	const canConnect = (org: GitHubInstallationType) => !org.requiresSsoLogin && !org.isIPBlocked && org.isAdmin;
+	const [clickedOrg, setClickedOrg] = useState<
+		GitHubInstallationType | undefined
+	>(undefined);
+
+	const canConnect = (org: GitHubInstallationType) =>
+		!org.requiresSsoLogin && !org.isIPBlocked && org.isAdmin;
 
 	// This method clears the tokens and then re-authenticates
 	const resetToken = async () => {
@@ -73,86 +70,83 @@ const OrganizationsList = ({
 			// TODO: Update this to support GHE
 			const accessUrl = `https://github.com/organizations/${org.account.login}/settings/profile`;
 
-			return <>
-				<Paragraph>
-					Can't connect, single sign-on(SSO) required.
-				</Paragraph>
-				<Paragraph>
-					1. <StyledLink onClick={() => popup(accessUrl)}>Log into GitHub with SSO</StyledLink>.
-				</Paragraph>
-				<Paragraph>
-					2. <StyledLink onClick={resetToken}>Retry connection in Jira</StyledLink> (once logged in).
-				</Paragraph>
-			</>;
+			return <ErrorForSSO resetCallback={resetToken} accessUrl={accessUrl} />;
 		}
 
 		if (org.isIPBlocked) {
-			return <>
-				<Paragraph>
-					Can't connect, blocked by your IP allow list.
-				</Paragraph>
-				<Button
-					style={{ paddingLeft: 0, paddingRight: 0 }}
-					appearance="link"
-					onClick={() => popup("https://github.com/atlassian/github-for-jira/blob/main/docs/ip-allowlist.md")}
-				>
-					How to update allowlist
-				</Button>
-				<BulletSeparator>&#8226;</BulletSeparator>
-				<StyledLink onClick={resetToken}>Retry</StyledLink>
-			</>;
+			return <ErrorForIPBlocked resetCallback={resetToken} />;
 		}
 
 		if (!org.isAdmin) {
-			return <>
-				<Paragraph>
-					Can't connect, you're not an organization owner.<br />Ask an owner to complete this step.
-				</Paragraph>
-			</>;
+			// TODO: Update this to support GHE
+			const adminOrgsUrl = `https://github.com/orgs/${org.account.login}/people?query=role%3Aowner`;
+
+			return <ErrorForNonAdmins adminOrgsUrl={adminOrgsUrl} />;
 		}
 	};
-
 	return (
-		<OrgsWrapper>
-			{
-				organizations.map(org =>
-					<OrgDiv key={org.id} hasError={!canConnect(org)}>
-						{
-							canConnect(org) ? <>
-								<OrgName>{org.account.login}</OrgName>
-								{
-									loaderForOrgClicked && clickedOrg?.id === org.id ?
-										<LoadingButton style={{width: 80}} isLoading>Loading button</LoadingButton> :
-										<Button
-											isDisabled={loaderForOrgClicked && clickedOrg?.id !== org.id}
-											onClick={async () => {
-												setLoaderForOrgClicked(true);
-												setClickedOrg(org);
-												try {
-													// Calling the create connection function that is passed from the parent
-													await connectingOrg(org);
-												} finally {
-													setLoaderForOrgClicked(false);
+		<Scrollbars
+			style={{
+			maxHeight: MAX_HEIGHT_FOR_ORGS_CONTAINER,
+			paddingRight: PADDING_RIGHT_FOR_ORGS_CONTAINER,
+			marginRight: MARGIN_RIGHT_FOR_ORGS_CONTAINER
+			}}
+		>
+			<>
+				{organizations.map((org) => {
+						const hasError = !canConnect(org);
+						const orgDivStyles = hasError
+							? [orgDivStyle, orgDivWithErrorStyle]
+							: [orgDivStyle];
+						return (
+							<div key={org.id} css={orgDivStyles}>
+								{canConnect(org) ? (
+									<>
+										<span css={orgNameStyle}>{org.account.login}</span>
+										{loaderForOrgClicked && clickedOrg?.id === org.id ? (
+											<LoadingButton style={{ width: 80 }} isLoading>
+												Loading button
+											</LoadingButton>
+										) : (
+											<Button
+												isDisabled={
+													loaderForOrgClicked && clickedOrg?.id !== org.id
 												}
-											}}
-										>
-											Connect
-										</Button>
-								}
-							</> : <>
-								<div>
-									<OrgName>{org.account.login}</OrgName>
-									<div>{errorMessage(org)}</div>
-								</div>
-								<IconWrapper>
-									<WarningIcon label="warning" primaryColor={token("color.background.warning.bold")} size="medium" />
-								</IconWrapper>
-							</>
-						}
-					</OrgDiv>
-				)
-			}
-		</OrgsWrapper>
+												onClick={async () => {
+													setLoaderForOrgClicked(true);
+													setClickedOrg(org);
+													try {
+														// Calling the create connection function that is passed from the parent
+														await connectingOrg(org);
+													} finally {
+														setLoaderForOrgClicked(false);
+													}
+												}}
+											>
+												Connect
+											</Button>
+										)}
+									</>
+								) : (
+									<>
+										<div>
+											<span css={orgNameStyle}>{org.account.login}</span>
+											<div>{errorMessage(org)}</div>
+										</div>
+										<div css={iconWrapperStyle}>
+											<WarningIcon
+												label="warning"
+												primaryColor={token("color.background.warning.bold")}
+												size="medium"
+											/>
+										</div>
+									</>
+								)}
+							</div>
+						);
+					})}
+			</>
+		</Scrollbars>
 	);
 };
 

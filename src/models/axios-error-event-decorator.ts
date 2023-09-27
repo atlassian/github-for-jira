@@ -27,7 +27,7 @@ export class AxiosErrorEventDecorator {
 		return this.response?.request;
 	}
 
-	static decorate(event: any, hint: any): any {
+	static decorate(this: void, event: any, hint: any): any {
 		return new AxiosErrorEventDecorator(event, hint).decorate();
 	}
 
@@ -71,7 +71,7 @@ export class AxiosErrorEventDecorator {
 		return [
 			"{{ default }}",
 			this.response?.status,
-			`${this.request?.method} ${pathname}`
+			`${this.request?.method as string} ${pathname ?? "undefined"}`
 		];
 	}
 

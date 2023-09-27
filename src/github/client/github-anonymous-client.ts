@@ -2,6 +2,7 @@ import Logger from "bunyan";
 import { AxiosResponse } from "axios";
 import { GitHubClient, GitHubConfig, Metrics } from "./github-client";
 import { getLogger } from "config/logger";
+import { ExchangeTokenResponse } from "~/src/rest-interfaces";
 
 export interface CreatedGitHubAppResponse {
 	id: number;
@@ -34,8 +35,8 @@ export class GitHubAnonymousClient extends GitHubClient {
 		clientSecret: string,
 		code: string,
 		state: string
-	}) {
-		const { data: { access_token: accessToken, refresh_token: refreshToken } } = await this.axios.get(`/login/oauth/access_token`,
+	}): Promise<ExchangeTokenResponse | undefined> {
+		const axiosResponse = await this.axios.get(`/login/oauth/access_token`,
 			{
 				baseURL: this.baseUrl,
 				params: {
@@ -51,6 +52,13 @@ export class GitHubAnonymousClient extends GitHubClient {
 				responseType: "json"
 			}
 		);
+
+		const accessToken = axiosResponse.data.access_token as string;
+		const refreshToken = axiosResponse.data.refresh_token as string | undefined;
+		if (accessToken === undefined) {
+			return undefined;
+		}
+
 		return {
 			accessToken,
 			refreshToken
@@ -86,7 +94,7 @@ export class GitHubAnonymousClient extends GitHubClient {
 		// In case of invalid or expired refresh token, GitHub API returns status code 200 with res.data object contains error fields,
 		// so adding check for presence of access token to make sure that new access token has been generated.
 		if (!res.data?.access_token) {
-			throw new Error(`Failed to renew access token ${res.data?.error}`);
+			throw new Error(`Failed to renew access token ${res.data?.error as string}`);
 		}
 		return {
 			accessToken: res.data.access_token,

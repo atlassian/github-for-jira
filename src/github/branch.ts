@@ -10,6 +10,7 @@ import { JiraBranchBulkSubmitData } from "interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
+import { shouldSendAll } from "config/feature-flags";
 
 export const createBranchWebhookHandler = async (context: WebhookContext<CreateEvent>, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 
@@ -42,8 +43,8 @@ export const processBranch = async (
 		webhookReceived: webhookReceivedDate
 	});
 
-	const jiraPayload: JiraBranchBulkSubmitData | undefined = await transformBranch(github, webhookPayload, logger);
-
+	const alwaysSend = await shouldSendAll("branches", jiraHost, logger);
+	const jiraPayload: JiraBranchBulkSubmitData | undefined = await transformBranch(github, webhookPayload, alwaysSend, logger);
 
 	if (!jiraPayload) {
 		logger.info("Halting further execution for createBranch since jiraPayload is empty");

@@ -4,6 +4,7 @@ import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import notEmpty from "~/src/util/not-empty";
 import Logger from "bunyan";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 interface Workspace {
 	id: string;
@@ -13,7 +14,7 @@ interface Workspace {
 }
 
 export const DEFAULT_AVATAR =
-	"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png;";
+	"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png";
 
 const omitRepoNameFromUrl = (repoUrl: string, repoName: string): string => {
 	if (repoUrl.endsWith(repoName)) {
@@ -83,6 +84,11 @@ export const JiraSecurityWorkspacesPost = async (
 	req: Request,
 	res: Response
 ): Promise<void> => {
+	if (!await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, res.locals.jiraHost)) {
+		res.status(403).send(Errors.FORBIDDEN_PATH);
+		return;
+	}
+
 	const logger = req.log;
 	req.log.info(
 		{ method: req.method, requestUrl: req.originalUrl },

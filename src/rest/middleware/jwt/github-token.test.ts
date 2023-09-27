@@ -27,6 +27,7 @@ describe("Github token handler", () => {
 			res.send(JSON.stringify(res.locals));
 		});
 		app.use((err, _req, res, _next) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 			res.status(err.httpStatus || err.status).send(err.message);
 		});
 		return app;
@@ -36,7 +37,7 @@ describe("Github token handler", () => {
 		secret = testSharedSecret,
 		iss = "jira-client-key",
 		exp = Date.now() / 1000 + 10000,
-		qsh = "context-qsh" } = {}): any => {
+		qsh = "context-qsh" } = {}) => {
 		return encodeSymmetric({
 			qsh,
 			iss,
@@ -84,7 +85,8 @@ describe("Github token handler", () => {
 		const res = await sendRequestWithToken(token, githubToken);
 
 		expect(res.status).toEqual(200);
-		expect(JSON.parse(res.text).jiraHost).toEqual(jiraHost);
-		expect(JSON.parse(res.text).githubToken).toEqual(githubToken);
+		const json = JSON.parse(res.text) as { jiraHost: string, githubToken: string };
+		expect(json.jiraHost).toEqual(jiraHost);
+		expect(json.githubToken).toEqual(githubToken);
 	});
 });

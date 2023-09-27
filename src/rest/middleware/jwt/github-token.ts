@@ -2,8 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { errorWrapper } from "../../helper";
 import { InvalidTokenError } from "config/errors";
 
-export const GitHubTokenHandler = errorWrapper("GitHubTokenHandler", async (req: Request, res: Response, next: NextFunction) => {
-
+export const GitHubTokenHandler = errorWrapper("GitHubTokenHandler", (req: Request, res: Response, next: NextFunction) => {
 	const token = req.headers["github-auth"];
 
 	if (!token) {
@@ -12,5 +11,5 @@ export const GitHubTokenHandler = errorWrapper("GitHubTokenHandler", async (req:
 
 	res.locals.githubToken = token;
 	next();
-
+	return Promise.resolve();
 });

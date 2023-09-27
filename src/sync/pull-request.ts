@@ -5,7 +5,7 @@ import {
 	transformPullRequest,
 	transformPullRequestRest
 } from "../transforms/transform-pull-request";
-import { statsd }  from "config/statsd";
+import { statsd } from "config/statsd";
 import { metricHttpRequest } from "config/metric-names";
 import { Repository } from "models/subscription";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
@@ -15,7 +15,7 @@ import { Octokit } from "@octokit/rest";
 import { getCloudOrServerFromHost } from "utils/get-cloud-or-server";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 import { getPullRequestReviews } from "~/src/transforms/util/github-get-pull-request-reviews";
-import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, numberFlag, NumberFlags, shouldSendAll } from "config/feature-flags";
 import { isEmpty } from "lodash";
 import { fetchNextPagesInParallel } from "~/src/sync/parallel-page-fetcher";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
@@ -118,11 +118,13 @@ const getPullRequestTaskGraphQL = async (
 
 	const response = await gitHubInstallationClient.getPullRequestPage(repository.owner.login, repository.name, perPage, cursor);
 
+	const isDraftPrFfOn = await booleanFlag(BooleanFlags.INNO_DRAFT_PR);
+
 	const filteredByCreatedSince = response.repository?.pullRequests?.edges
 		.filter(pull => !createdSince || pull.node.createdAt > createdSince.toISOString());
-
+	const alwaysSend = await shouldSendAll("prs-backfill", jiraHost, logger);
 	const pullRequests = filteredByCreatedSince
-		?.map((edge) => transformPullRequest(repository, jiraHost, edge.node, logger))
+		?.map((edge) => transformPullRequest(repository, jiraHost, edge.node, alwaysSend, logger, isDraftPrFfOn))
 		?.filter((pr) => pr !== undefined) || [];
 
 	(logger.fields || {}).prNumberArray = pullRequests.map(pull => createHashWithSharedSecret(String(pull?.id)));

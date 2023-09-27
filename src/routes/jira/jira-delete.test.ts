@@ -7,6 +7,7 @@ import { getLogger } from "config/logger";
 import { when } from "jest-when";
 import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
 import { Errors } from "~/src/config/errors";
+import { envVars } from "config/env";
 
 jest.mock("models/installation");
 jest.mock("models/subscription");
@@ -52,6 +53,12 @@ describe("DELETE /jira/configuration", () => {
 			.query({ gitHubInstallationId: subscription.githubInstallationId })
 			.reply(200, "OK");
 
+		jiraNock
+			.put(`/rest/atlassian-connect/latest/addons/${envVars.APP_KEY}/properties/is-configured`, {
+				isConfigured: false
+			})
+			.reply(200);
+
 		// TODO: use supertest for this
 		const req = {
 			log: getLogger("request"),
@@ -87,9 +94,18 @@ describe("DELETE /jira/configuration", () => {
 			.reply(200, "OK");
 
 		jiraNock
-			.delete("/rest/security/1.0/linkedWorkspaces/bulk?workspaceIds="+subscription.id)
+			.delete("/rest/security/1.0/linkedWorkspaces/bulk?workspaceIds="+(subscription.id ? (subscription.id as number)?.toString() : "undefined"))
 			.reply(202);
 
+		jiraNock
+			.delete("/rest/security/1.0/bulkByProperties?workspaceId="+(subscription.id ? (subscription.id as number)?.toString() : "undefined"))
+			.reply(202);
+
+		jiraNock
+			.put(`/rest/atlassian-connect/latest/addons/${envVars.APP_KEY}/properties/is-configured`, {
+				isConfigured: false
+			})
+			.reply(200);
 
 		// TODO: use supertest for this
 		const req = {
@@ -120,7 +136,7 @@ describe("DELETE /jira/configuration", () => {
 		};
 
 		const res = { status: jest.fn(() => res), send: jest.fn(), locals: { installation, jiraHost:"" } };
-		await JiraDelete(req as any, res as any);
+		await JiraDelete(req as any, res);
 		expect(subscription.destroy).not.toHaveBeenCalled();
 
 		expect(req.log.warn).toHaveBeenCalledWith(Errors.MISSING_JIRA_HOST);

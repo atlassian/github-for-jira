@@ -27,7 +27,7 @@ export const GithubConfigurationAppInstallsGet = async (req: Request, res: Respo
 	// We need to re-generate the URL for server because API gateway might override the hostname
 	if (data.html_url.indexOf("/github-apps/") > 0) {
 		// https://docs.github.com/en/enterprise-server@3.8/apps/maintaining-github-apps/installing-github-apps
-		newInstallationUrl = gitHubAppConfig.hostname + "/github-apps/" + data.html_url.split("/github-apps/")[1] + "/installations/new";
+		newInstallationUrl = `${gitHubAppConfig.hostname as string}/github-apps/${data.html_url.split("/github-apps/")[1]}/installations/new`;
 	} else {
 		newInstallationUrl = `${data.html_url}/installations/new`;
 	}

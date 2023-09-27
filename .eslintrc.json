@@ -19,7 +19,7 @@
 		"plugin:import/recommended",
 		"plugin:import/typescript",
 		"plugin:@typescript-eslint/eslint-recommended",
-		"plugin:@typescript-eslint/recommended"
+		"plugin:@typescript-eslint/recommended-requiring-type-checking"
 	],
 	"settings": {
 		"import/parsers": {
@@ -35,11 +35,12 @@
 		}
 	},
 	"rules": {
-		"@typescript-eslint/explicit-module-boundary-types": "off",
-		"@typescript-eslint/no-var-requires": "error",
-		"@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
-		"no-unused-vars": "off",
-		"no-console": "error",
+		"indent": ["error", "tab", {
+			"SwitchCase": 1
+		}],
+		"@typescript-eslint/indent": ["error", "tab", {
+			"SwitchCase": 1
+		}],
 		"quotes": [
 			"error",
 			"double",
@@ -48,10 +49,7 @@
 				"allowTemplateLiterals": true
 			}
 		],
-		"indent": ["error", "tab", {
-			"SwitchCase": 1
-		}],
-		"@import/no-unresolved": "off",
+		//extra rules
 		"object-curly-spacing": ["error", "always"],
 		"semi": ["error", "always"],
 		"no-trailing-spaces": "error",
@@ -59,28 +57,86 @@
 		"keyword-spacing": "error",
 		"space-in-parens": ["error", "never"],
 		"func-style" : ["error", "expression"],
-		"require-await": "off",
 		"@typescript-eslint/no-floating-promises": ["error"],
-		"jest/expect-expect": [
-			"error",
-			{
-				"assertFunctionNames": [
-					"expect",
-					"supertest.**.expect",
-					"*.expect"
-				]
-			}
-		]
-
+		"@typescript-eslint/explicit-module-boundary-types": "off",
+		"@typescript-eslint/no-var-requires": "error",
+		"@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+		"no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+		"no-console": "error",
+		"@typescript-eslint/restrict-template-expressions": ["error", {
+			"allowBoolean": true,
+			"allowNullish": true,
+			"allowNumber": true
+		}]
 	},
 	"overrides": [{
-		"files": [ "src/**/*.test.ts" ],
+		"files": [ "test/**/*.ts", "src/**/*.test.ts" ],
 		"extends": [
 			"plugin:jest/recommended"
 		],
 		"rules": {
 			"@typescript-eslint/no-explicit-any": "off",
-			"@typescript-eslint/no-non-null-assertion": "off"
+			"@typescript-eslint/no-non-null-assertion": "off",
+			"jest/no-alias-methods": "off",
+			"jest/no-done-callback": "off",
+			"@typescript-eslint/no-unsafe-assignment": "off",
+			"@typescript-eslint/no-unsafe-argument": "off",
+			"@typescript-eslint/no-unsafe-member-access": "off",
+			"@typescript-eslint/no-unsafe-return": "off",
+			"@typescript-eslint/no-unsafe-call": "off",
+			"@typescript-eslint/unbound-method": "off",
+			"@typescript-eslint/require-await": "off",
+			"@typescript-eslint/await-thenable": "off",
+			"@typescript-eslint/no-misused-promises": "off",
+			"jest/expect-expect": [
+				"error",
+				{
+					"assertFunctionNames": [
+						"expect",
+						"supertest.**.expect",
+						"*.expect",
+						"expectDisabledButton",
+						"expectEnabledButton"
+					]
+				}
+			]
 		}
-	}]
+	},
+		{
+			"files": [
+				"src/routes/**"
+			],
+			"rules": {
+				// To be removed later
+				"@typescript-eslint/no-unsafe-assignment": "off",
+				"@typescript-eslint/no-unsafe-argument": "off",
+				"@typescript-eslint/no-unsafe-member-access": "off",
+				"@typescript-eslint/no-unsafe-return": "off",
+				"@typescript-eslint/no-unsafe-call": "off",
+				"@typescript-eslint/require-await": "off",
+				"@typescript-eslint/await-thenable": "off",
+				"@typescript-eslint/no-misused-promises": "off"
+			}
+		},
+		{
+			"files": [
+				"src/*.ts",
+				"src/config/**",
+				"src/github/**",
+				"src/jira/**",
+				"src/middleware/**",
+				"src/models/**",
+				"src/sync/**",
+				"src/transforms/**",
+				"src/util/**"
+			],
+			"rules": {
+				// To be removed later
+				"@typescript-eslint/no-unsafe-assignment": "off",
+				"@typescript-eslint/no-unsafe-argument": "off",
+				"@typescript-eslint/no-unsafe-member-access": "off",
+				"@typescript-eslint/no-unsafe-return": "off",
+				"@typescript-eslint/no-unsafe-call": "off"
+			}
+		}]
 }
