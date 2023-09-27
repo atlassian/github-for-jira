@@ -102,41 +102,41 @@
 			]
 		}
 	},
-		{
-			"files": [
-				"src/routes/**"
-			],
-			"rules": {
-				// To be removed later
-				"@typescript-eslint/no-unsafe-assignment": "off",
-				"@typescript-eslint/no-unsafe-argument": "off",
-				"@typescript-eslint/no-unsafe-member-access": "off",
-				"@typescript-eslint/no-unsafe-return": "off",
-				"@typescript-eslint/no-unsafe-call": "off",
-				"@typescript-eslint/require-await": "off",
-				"@typescript-eslint/await-thenable": "off",
-				"@typescript-eslint/no-misused-promises": "off"
-			}
-		},
-		{
-			"files": [
-				"src/*.ts",
-				"src/config/**",
-				"src/github/**",
-				"src/jira/**",
-				"src/middleware/**",
-				"src/models/**",
-				"src/sync/**",
-				"src/transforms/**",
-				"src/util/**"
-			],
-			"rules": {
-				// To be removed later
-				"@typescript-eslint/no-unsafe-assignment": "off",
-				"@typescript-eslint/no-unsafe-argument": "off",
-				"@typescript-eslint/no-unsafe-member-access": "off",
-				"@typescript-eslint/no-unsafe-return": "off",
-				"@typescript-eslint/no-unsafe-call": "off"
-			}
-		}]
+	{
+		"files": [
+			"src/routes/**"
+		],
+		"rules": {
+			// To be removed later
+			"@typescript-eslint/no-unsafe-assignment": "off",
+			"@typescript-eslint/no-unsafe-argument": "off",
+			"@typescript-eslint/no-unsafe-member-access": "off",
+			"@typescript-eslint/no-unsafe-return": "off",
+			"@typescript-eslint/no-unsafe-call": "off",
+			"@typescript-eslint/require-await": "off",
+			"@typescript-eslint/await-thenable": "off",
+			"@typescript-eslint/no-misused-promises": "off"
+		}
+	},
+	{
+		"files": [
+			"src/*.ts",
+			"src/config/**",
+			"src/github/**",
+			"src/jira/**",
+			"src/middleware/**",
+			"src/models/**",
+			"src/sync/**",
+			"src/transforms/**",
+			"src/util/**"
+		],
+		"rules": {
+			// To be removed later
+			"@typescript-eslint/no-unsafe-assignment": "off",
+			"@typescript-eslint/no-unsafe-argument": "off",
+			"@typescript-eslint/no-unsafe-member-access": "off",
+			"@typescript-eslint/no-unsafe-return": "off",
+			"@typescript-eslint/no-unsafe-call": "off"
+		}
+	}]
 }

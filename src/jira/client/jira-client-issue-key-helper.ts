@@ -1,4 +1,3 @@
-
 import { uniq } from "lodash";
 import Logger from "bunyan";
 import { createHashWithSharedSecret } from "utils/encryption";
@@ -19,7 +18,9 @@ export const ISSUE_KEY_API_LIMIT = 500;
 /**
  * Truncates to ISSUE_KEY_API_LIMIT elements in an array
  */
-export const truncate = (array) => array.slice(0, ISSUE_KEY_API_LIMIT);
+export const truncate = (array: unknown[]) => {
+	return array.slice(0, ISSUE_KEY_API_LIMIT);
+};
 
 /**
  * Truncates branches, commits and PRs to their first ISSUE_KEY_API_LIMIT issue keys
@@ -67,7 +68,6 @@ export const withinIssueKeyLimit = (resources: IssueKeyObject[]): boolean => {
 export const dedupIssueKeys = (repositoryObj) => {
 	updateRepositoryIssueKeys(repositoryObj, uniq);
 };
-
 
 /**
  * Runs a mutating function on all branches, commits and PRs

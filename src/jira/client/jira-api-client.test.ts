@@ -3,6 +3,7 @@ import { getLogger } from "config/logger";
 import { JiraClient } from "./jira-api-client";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
+
 describe("JiraClient", () => {
 	let jiraClient: JiraClient | null;
 	beforeEach(async () => {
