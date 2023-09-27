@@ -1,5 +1,6 @@
 
 import { uniq } from "lodash";
+import Logger from "bunyan";
 import { createHashWithSharedSecret } from "utils/encryption";
 import {
 	JiraAssociation,
@@ -7,50 +8,52 @@ import {
 	JiraRemoteLink
 } from "interfaces/jira";
 
-interface IssueKeyObject {
+export interface IssueKeyObject {
 	issueKeys?: string[];
 	associations?: JiraAssociation[];
 }
-
-import Logger from "bunyan";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 500;
 
 /**
- * Truncates to 100 elements in an array
+ * Truncates to ISSUE_KEY_API_LIMIT elements in an array
  */
 export const truncate = (array) => array.slice(0, ISSUE_KEY_API_LIMIT);
 
 /**
- * Truncates branches, commits and PRs to their first 100 issue keys
+ * Truncates branches, commits and PRs to their first ISSUE_KEY_API_LIMIT issue keys
  */
 export const truncateIssueKeys = (repositoryObj) => {
 	updateRepositoryIssueKeys(repositoryObj, truncate);
 };
 
+/**
+ * Get truncated issue keys and associations based on the ISSUE_KEY_API_LIMIT.
+ */
+export const getTruncatedIssueKeys = (data: IssueKeyObject[] = []): IssueKeyObject[] =>
+	data.map((value: IssueKeyObject) => {
+		const truncatedValue: IssueKeyObject = {};
 
-// TODO: add unit tests
-export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObject[] =>
-	data.reduce((acc: IssueKeyObject[], value: IssueKeyObject) => {
-		if (value?.issueKeys && value.issueKeys.length > ISSUE_KEY_API_LIMIT) {
-			acc.push({
-				issueKeys: value.issueKeys.slice(ISSUE_KEY_API_LIMIT)
-			});
+		if (value?.issueKeys) {
+			truncatedValue.issueKeys = value.issueKeys.slice(0, ISSUE_KEY_API_LIMIT);
 		}
+
 		const association = findIssueKeyAssociation(value);
-		if (association?.values && association.values.length > ISSUE_KEY_API_LIMIT) {
-			acc.push({
-				// TODO: Shouldn't it be association.values.slice(ISSUE_KEY_API_LIMIT), just as for issue key?!
-				associations: [association]
-			});
+		if (association?.values) {
+			truncatedValue.associations = [
+				{
+					associationType: association.associationType,
+					values: association.values.slice(0, ISSUE_KEY_API_LIMIT)
+				}
+			];
 		}
-		return acc;
-	}, []);
+
+		return truncatedValue;
+	});
 
 /**
- * Returns if the max length of the issue
- * key field is within the limit
+ * Returns if the max length of the issue key field is within the limit
  */
 export const withinIssueKeyLimit = (resources: IssueKeyObject[]): boolean => {
 	if (!resources) return true;
@@ -58,7 +61,6 @@ export const withinIssueKeyLimit = (resources: IssueKeyObject[]): boolean => {
 	return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
 };
 
-//// TO BE BNROKEN INTO A UTILS FILE
 /**
  * Deduplicates issueKeys field for branches and commits
  */
@@ -67,14 +69,11 @@ export const dedupIssueKeys = (repositoryObj) => {
 };
 
 
-const findIssueKeyAssociation = (resource: IssueKeyObject): JiraAssociation | undefined =>
-	resource.associations?.find(a => a.associationType == "issueIdOrKeys");
-
 /**
  * Runs a mutating function on all branches, commits and PRs
  * with issue keys in a Jira Repository object
  */
-const updateRepositoryIssueKeys = (repositoryObj, mutatingFunc) => {
+export const updateRepositoryIssueKeys = (repositoryObj, mutatingFunc) => {
 	if (repositoryObj.commits) {
 		repositoryObj.commits = updateIssueKeysFor(repositoryObj.commits, mutatingFunc);
 	}
@@ -94,6 +93,13 @@ const updateRepositoryIssueKeys = (repositoryObj, mutatingFunc) => {
 };
 
 /**
+ * Finds the first association of type "issueIdOrKeys" in a given resource.
+ */
+export const findIssueKeyAssociation = (resource: IssueKeyObject): JiraAssociation | undefined => {
+	return resource.associations?.find(a => a.associationType == "issueIdOrKeys");
+};
+
+/**
  * Runs the mutatingFunc on the issue keys field for each branch, commit or PR
  */
 export const updateIssueKeysFor = (resources, func) => {
@@ -108,6 +114,7 @@ export const updateIssueKeysFor = (resources, func) => {
 	});
 	return resources;
 };
+
 /**
  * Runs the mutatingFunc on the association values field for each entity resource
  * Assumption is that the transformed resource only has one association which is for
@@ -137,6 +144,9 @@ export const withinIssueKeyAssociationsLimit = (resources: JiraRemoteLink[]): bo
 	return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
 };
 
+/**
+ * Extracts unique issue keys and hashes them
+ */
 export const extractAndHashIssueKeysForLoggingPurpose = (commitChunk: JiraCommit[], logger: Logger): string[] => {
 	try {
 		return commitChunk
@@ -149,6 +159,9 @@ export const extractAndHashIssueKeysForLoggingPurpose = (commitChunk: JiraCommit
 	}
 };
 
+/**
+ * hash unknown issue keys
+ */
 export const safeParseAndHashUnknownIssueKeysForLoggingPurpose = (responseData: any, logger: Logger): string[] => {
 	try {
 		return (responseData["unknownIssueKeys"] || []).map((key: string) => createHashWithSharedSecret(key));

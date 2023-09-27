@@ -71,6 +71,7 @@
 				]
 			}
 		]
+
 	},
 	"overrides": [{
 		"files": [ "src/**/*.test.ts" ],

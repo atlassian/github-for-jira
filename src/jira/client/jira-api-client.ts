@@ -12,7 +12,7 @@ import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { getDeploymentDebugInfo, extractDeploymentDataForLoggingPurpose } from "./jira-client-deployment-helper";
 import {
 	truncateIssueKeys,
-	getTruncatedIssuekeys,
+	getTruncatedIssueKeys,
 	withinIssueKeyLimit,
 	updateIssueKeyAssociationValuesFor,
 	extractAndHashIssueKeysForLoggingPurpose,
@@ -291,9 +291,9 @@ export class JiraClient {
 		dedupIssueKeys(data);
 		if (!withinIssueKeyLimit(data.commits) || !withinIssueKeyLimit(data.branches) || !withinIssueKeyLimit(data.pullRequests)) {
 			this.logger.warn({
-				truncatedCommitsCount: getTruncatedIssuekeys(data.commits).length,
-				truncatedBranchesCount: getTruncatedIssuekeys(data.branches).length,
-				truncatedPRsCount: getTruncatedIssuekeys(data.pullRequests).length
+				truncatedCommitsCount: getTruncatedIssueKeys(data.commits).length,
+				truncatedBranchesCount: getTruncatedIssueKeys(data.branches).length,
+				truncatedPRsCount: getTruncatedIssueKeys(data.pullRequests).length
 			}, issueKeyLimitWarning);
 			truncateIssueKeys(data);
 			const subscription = await Subscription.getSingleInstallation(
@@ -316,7 +316,7 @@ export class JiraClient {
 	async submitBuilds(data: JiraBuildBulkSubmitData, repositoryId: number, options?: JiraSubmitOptions) {
 		updateIssueKeysFor(data.builds, uniq);
 		if (!withinIssueKeyLimit(data.builds)) {
-			this.logger.warn({ truncatedBuilds: getTruncatedIssuekeys(data.builds) }, issueKeyLimitWarning);
+			this.logger.warn({ truncatedBuilds: getTruncatedIssueKeys(data.builds) }, issueKeyLimitWarning);
 			updateIssueKeysFor(data.builds, truncate);
 			const subscription = await Subscription.getSingleInstallation(this.jiraHost, this.gitHubInstallationId, this.gitHubAppId);
 			await subscription?.update({ syncWarning: issueKeyLimitWarning });
@@ -342,7 +342,7 @@ export class JiraClient {
 	async submitDeployments(data: JiraDeploymentBulkSubmitData, repositoryId: number, options?: JiraSubmitOptions): Promise<DeploymentsResult> {
 		updateIssueKeysFor(data.deployments, uniq);
 		if (!withinIssueKeyLimit(data.deployments)) {
-			this.logger.warn({ truncatedDeployments: getTruncatedIssuekeys(data.deployments) }, issueKeyLimitWarning);
+			this.logger.warn({ truncatedDeployments: getTruncatedIssueKeys(data.deployments) }, issueKeyLimitWarning);
 			updateIssueKeysFor(data.deployments, truncate);
 			const subscription = await Subscription.getSingleInstallation(this.jiraHost, this.gitHubInstallationId, this.gitHubAppId);
 			await subscription?.update({ syncWarning: issueKeyLimitWarning });
