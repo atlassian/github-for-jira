@@ -44,7 +44,6 @@ export const GithubSetupGet = async (req: Request, res: Response): Promise<void>
 	const { githubInstallation, info } = await getInstallationData(gitHubAppClient, githubInstallationId, req.log);
 
 	req.addLogFields({ githubInstallationId, appInfo: info });
-	req.addLogFields({ githubInstallationId, appInfo: info });
 	req.log.debug("Received get github setup page request");
 
 	// If we know enough about user and site, redirect to the app

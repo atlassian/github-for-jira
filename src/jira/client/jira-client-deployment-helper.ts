@@ -19,6 +19,7 @@ export const getDeploymentDebugInfo = (jiraPayload: JiraDeploymentBulkSubmitData
 	};
 };
 
+// TODO Tests required
 export const extractDeploymentDataForLoggingPurpose = (data: JiraDeploymentBulkSubmitData, logger: Logger): Record<string, any> => {
 	try {
 		return {
