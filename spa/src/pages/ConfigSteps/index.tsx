@@ -22,6 +22,7 @@ import { GitHubInstallationType } from "../../../../src/rest-interfaces";
 import OrganizationsList from "../ConfigSteps/OrgsContainer";
 import SkeletonForLoading from "../ConfigSteps/SkeletonForLoading";
 import OauthManager from "../../services/oauth-manager";
+import { ErrorForPopupBlocked } from "../../components/Error/KnownErrors";
 
 type HostUrlType = {
 	jiraHost: string;
@@ -339,9 +340,7 @@ const ConfigSteps = () => {
 			{isPopupBlocked && (
 				<ErrorUI
 					type={"error"}
-					message={
-						"Your browser is blocking pop-ups. Enable pop-ups for this site and select Next again."
-					}
+					message={<ErrorForPopupBlocked/>}
 				/>
 			)}
 
