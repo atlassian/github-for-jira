@@ -33,8 +33,7 @@ class RawLogStream extends Writable {
 		this.writeStream = bformat({ outputMode, levelInString: true, color: isNodeDev() });
 	}
 
-	public async _write(record: ChunkData, encoding: BufferEncoding, next: Callback): Promise<void> {
-
+	public _write(record: ChunkData, encoding: BufferEncoding, next: Callback): void {
 		// Skip unwanted logs
 		if (filterHttpRequests(record)) {
 			return next();
@@ -48,13 +47,13 @@ class RawLogStream extends Writable {
 
 export class SafeRawLogStream extends RawLogStream {
 
-	public async _write(record: ChunkData, encoding: BufferEncoding, next: Callback): Promise<void> {
+	public _write(record: ChunkData, encoding: BufferEncoding, next: Callback): void {
 		// Skip unsafe data
 		if (record.unsafe) {
 			return next();
 		}
 		const hashedRecord = this.hashSensitiveData(record);
-		await super._write(hashedRecord, encoding, next);
+		super._write(hashedRecord, encoding, next);
 	}
 
 	private hashSensitiveData(record: ChunkData): Record<string, string | undefined> {
