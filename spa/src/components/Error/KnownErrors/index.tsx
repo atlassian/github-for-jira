@@ -3,6 +3,8 @@ import { css } from "@emotion/react";
 import { token } from "@atlaskit/tokens";
 import analyticsClient from "../../../analytics";
 import { popup } from "../../../utils";
+import Api from "../../..//api";
+import { DeferredInstallationUrlParams } from "../../../rest-interfaces";
 
 const paragraphStyle = css`
 	color: ${token("color.text.subtle")};
@@ -31,28 +33,39 @@ export const ErrorForSSO = ({ orgName, accessUrl, resetCallback }: { orgName?: s
 	</div>
 </>;
 
-export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl, deferredInstallUrl }: {
+export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl, deferredInstallationOrgDetails }: {
 	orgName?: string;
 	adminOrgsUrl: string;
-	deferredInstallUrl?: string;
-}) => <div css={paragraphStyle}>
-	Can't connect, you're not the organization owner{orgName && <span> of <b>{orgName}</b></span>}.<br />
-	Ask an <a css={linkStyle} onClick={() => {
+	deferredInstallationOrgDetails: DeferredInstallationUrlParams;
+}) => {
+	const getOrgOwnerUrl = async () => {
 		// TODO: Need to get this URL for Enterprise users too, this is only for Cloud users
 		popup(adminOrgsUrl);
 		analyticsClient.sendUIEvent({ actionSubject: "checkOrgAdmin", action: "clicked"}, { type: "cloud" });
-	}}>organization owner</a> to complete this step.
-	{
-		// TODO: This will change later once the new designs are finalized
-		deferredInstallUrl && <>
-			Or send <a css={linkStyle} onClick={() => {
-				popup(deferredInstallUrl);
-				// TODO: Create events in amplitude
-				analyticsClient.sendUIEvent({ actionSubject: "deferredInstallUrl", action: "clicked"});
-			}}>this link</a>.
-		</>
-	}
-</div>;
+	};
+	const getDeferredInstallationUrl = async () => {
+		const response= await Api.app.getDeferredInstallationUrl({
+			gitHubInstallationId: deferredInstallationOrgDetails?.gitHubInstallationId ,
+			gitHubOrgName: deferredInstallationOrgDetails?.gitHubOrgName
+		});
+		console.log("Fetched the URL", response.data.deferredInstallUrl);
+		// TODO: Create events in amplitude
+		analyticsClient.sendUIEvent({ actionSubject: "deferredInstallUrl", action: "clicked"});
+	};
+
+	return (
+		<div css={paragraphStyle}>
+			Can't connect, you're not the organization owner{orgName && <span> of <b>{orgName}</b></span>}.<br />
+			Ask an <a css={linkStyle} onClick={getOrgOwnerUrl}>organization owner</a> to complete this step.<br />
+			{
+				// TODO: This will change later once the new designs are finalized
+				deferredInstallationOrgDetails?.gitHubOrgName && <>
+					Or send <a css={linkStyle} onClick={getDeferredInstallationUrl}>this link</a>.
+				</>
+			}
+		</div>
+	);
+};
 
 export const ErrorForIPBlocked = ({ orgName, resetCallback }: { orgName?: string; resetCallback: () => void }) => <>
 	<div css={paragraphStyle}>

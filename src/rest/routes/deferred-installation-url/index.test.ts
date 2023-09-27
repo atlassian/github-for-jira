@@ -35,7 +35,7 @@ describe("rest deferred installation url router", () => {
 				const gitHubOrgName = "sampleOrgName";
 
 				const resp = await supertest(app)
-					.get(`/rest/app/cloud/deferredInstallationUrl?gitHubOrgName=${gitHubOrgName}`)
+					.get(`/rest/app/cloud/deferred-installation-url?gitHubOrgName=${gitHubOrgName}`)
 					.set("authorization", `${getToken()}`);
 
 				expect(resp.status).toEqual(400);
@@ -45,7 +45,7 @@ describe("rest deferred installation url router", () => {
 				const gitHubInstallationId = 1234567890;
 
 				const resp = await supertest(app)
-					.get(`/rest/app/cloud/deferredInstallationUrl?gitHubInstallationId=${gitHubInstallationId}`)
+					.get(`/rest/app/cloud/deferred-installation-url?gitHubInstallationId=${gitHubInstallationId}`)
 					.set("authorization", `${getToken()}`);
 
 				expect(resp.status).toEqual(400);
@@ -56,7 +56,7 @@ describe("rest deferred installation url router", () => {
 				const gitHubOrgName = "sampleOrgName";
 
 				const resp = await supertest(app)
-					.get(`/rest/app/cloud/deferredInstallationUrl?gitHubInstallationId=${gitHubInstallationId}&gitHubOrgName=${gitHubOrgName}`)
+					.get(`/rest/app/cloud/deferred-installation-url?gitHubInstallationId=${gitHubInstallationId}&gitHubOrgName=${gitHubOrgName}`)
 					.set("authorization", `${getToken()}`);
 
 				expect(resp.status).toEqual(200);

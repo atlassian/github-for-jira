@@ -27,13 +27,15 @@ DeferredInstallationUrlRoute.get("/", errorWrapper("GetDeferredInstallationUrl",
 
 	const payload: SubscriptionDeferredInstallPayload = {
 		installationIdPk: installation.id,
+		jiraHost: installation.jiraHost,
 		gitHubInstallationId: parseInt(gitHubInstallationId.toString()),
 		orgName: gitHubOrgName.toString(),
 		gitHubServerAppIdPk: undefined // TODO: This only works for cloud, Add this value for GHE servers
 	};
 	const requestId = await registerSubscriptionDeferredInstallPayloadRequest(payload);
+
 	// TODO: This only works for cloud, Add this value for GHE servers
-	const	deferredInstallUrl = `${envVars.APP_URL}/github/subscription-deferred-install/request/${requestId}`;
+	const	deferredInstallUrl = `${envVars.APP_URL}/rest/deferred-installation/request/${requestId}`;
 	res.status(200).json({
 		deferredInstallUrl
 	});

@@ -12,6 +12,7 @@ import {
 	ErrorForSSO,
 } from "../../../components/Error/KnownErrors";
 import Scrollbars from "../../../common/Scrollbars";
+import { DeferredInstallationUrlParams } from "rest-interfaces";
 
 const MAX_HEIGHT_FOR_ORGS_CONTAINER = 250;
 const PADDING_RIGHT_FOR_ORGS_CONTAINER = 80;
@@ -80,8 +81,12 @@ const OrganizationsList = ({
 		if (!org.isAdmin) {
 			// TODO: Update this to support GHE
 			const adminOrgsUrl = `https://github.com/orgs/${org.account.login}/people?query=role%3Aowner`;
+			const deferredInstallationOrgDetails: DeferredInstallationUrlParams = {
+				gitHubInstallationId: org.id,
+				gitHubOrgName: org.account.login
+			};
 
-			return <ErrorForNonAdmins deferredInstallUrl={org?.deferredInstallUrl} adminOrgsUrl={adminOrgsUrl} />;
+			return <ErrorForNonAdmins deferredInstallationOrgDetails={deferredInstallationOrgDetails} adminOrgsUrl={adminOrgsUrl} />;
 		}
 	};
 	return (

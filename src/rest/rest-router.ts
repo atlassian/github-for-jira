@@ -9,11 +9,14 @@ import { JiraCloudIDRouter } from "./routes/jira";
 import { RestErrorHandler } from "./middleware/error";
 import { JiraAdminEnforceMiddleware } from "./middleware/jira-admin/jira-admin-check";
 import { AnalyticsProxyHandler } from "./routes/analytics-proxy";
-import { DeferredInstallationUrlRoute } from "~/src/rest/routes/deferred-installation-url";
+import { DeferredInstallationUrlRoute } from "./routes/deferred-installation-url";
+import { DeferredInstallRequestRoute } from "./routes/deferred-installation-url/redirected";
 
 export const RestRouter = Router({ mergeParams: true });
 
 const subRouter = Router({ mergeParams: true });
+
+RestRouter.use("/deferred-installation/request/:requestId", DeferredInstallRequestRoute);
 
 /**
  * For cloud flow, the path will be `/rest/app/cloud/XXX`,
@@ -38,7 +41,7 @@ subRouter.use("/installation", GitHubAppsRoute);
 
 subRouter.use("/jira/cloudid", JiraCloudIDRouter);
 
-subRouter.use("/deferredInstallationUrl", DeferredInstallationUrlRoute);
+subRouter.use("/deferred-installation-url", DeferredInstallationUrlRoute);
 
 subRouter.use(GitHubTokenHandler);
 

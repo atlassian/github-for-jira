@@ -5,6 +5,7 @@ import { v4 as newUUID } from "uuid";
 export interface SubscriptionDeferredInstallPayload {
 	installationIdPk: number,
 	gitHubServerAppIdPk?: number,
+	jiraHost?: string,
 	gitHubInstallationId: number,
 	orgName: string
 }
