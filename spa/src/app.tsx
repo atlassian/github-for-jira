@@ -18,7 +18,9 @@ const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
 const App = () => {
 	// to reset the local storage value on app reload
-	localStorage.removeItem("isPopupBlocked");
+	if(localStorage.getItem("isPopupBlocked")){
+		localStorage.removeItem("isPopupBlocked");
+	}
 	setGlobalTheme({
 		light: "light",
 		dark: "dark",

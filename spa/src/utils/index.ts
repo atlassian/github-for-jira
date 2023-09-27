@@ -13,7 +13,9 @@ export function popup (url: string) {
 		localStorage.setItem("isPopupBlocked", "true");
 		return null;
 	}
-	localStorage.removeItem("isPopupBlocked");
+	if(localStorage.getItem("isPopupBlocked")){
+		localStorage.removeItem("isPopupBlocked");
+	}
 	return openedPopup;
 }
 
