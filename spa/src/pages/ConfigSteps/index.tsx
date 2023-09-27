@@ -114,6 +114,7 @@ const errorMessageCounter: ErrorMessageCounterType = {
 const ERROR_THRESHOLD = 3;
 
 const ConfigSteps = () => {
+	const isPopupBlocked = localStorage.getItem("isPopupBlocked") === "true" ? true : false;
 	const navigate = useNavigate();
 	const { username } = OAuthManager.getUserDetails();
 	/**
@@ -329,13 +330,21 @@ const ConfigSteps = () => {
 		isLoggedIn && recheckValidity();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ isLoggedIn ]);
-
 	return (
 		<Wrapper>
 			<SyncHeader />
 			{
 				error && <ErrorUI type={error.type} message={error.message} />
 			}
+			{isPopupBlocked && (
+				<ErrorUI
+					type={"error"}
+					message={
+						"Your browser is blocking pop-ups. Enable pop-ups for this site and select Next again."
+					}
+				/>
+			)}
+
 			<div css={configContainerStyle}>
 				{
 					isLoggedIn ? <>

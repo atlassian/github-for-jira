@@ -1,8 +1,6 @@
 import Api from "../../api";
 import { AxiosError } from "axios";
 import { popup, reportError, } from "../../utils";
-import { ErrorWithErrorCode, CustomError } from "../../utils/modifyError";
-import { ErrorCode } from "../../rest-interfaces";
 
 let username: string | undefined;
 let email: string | undefined;
@@ -54,13 +52,6 @@ async function authenticateInGitHub(onWinClosed: () => void): Promise<void | Err
 					}
 				}
 			}, 1000);
-		}
-		else{
-			const popup_blocked_errorcode: ErrorCode = "POPUP_BLOCKED";
-			const popup_blocked: ErrorWithErrorCode = {
-				errorCode: popup_blocked_errorcode
-			};
-			throw new CustomError(popup_blocked);
 		}
 	} else {
 		reportError({

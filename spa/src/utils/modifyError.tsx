@@ -13,20 +13,9 @@ type SimpleError = {
 	message: string;
 }
 
-export type ErrorWithErrorCode = {
+type ErrorWithErrorCode = {
 	errorCode: ErrorCode;
 };
-
-
-export class CustomError extends Error {
-    public errorCode: string;
-    constructor(error: ErrorWithErrorCode) {
-        super("messages custm ");
-        this.name = "name custm";
-        this.errorCode = error.errorCode;
-        Object.setPrototypeOf(this, CustomError.prototype);
-    }
-}
 
 const GENERIC_MESSAGE = "Something went wrong and we couldn’t connect to GitHub, try again.";
 
@@ -58,14 +47,6 @@ export const modifyError = (
 	let result;
 	// TODO: map all of the remaining backend errors in frontend
 	switch (errorCode) {
-		case "POPUP_BLOCKED":
-			// TODO: Update this to support GHE
-			result =  {
-				...errorObj,
-				errorCode,
-				message: "If you are not redirected to GitHub’s page in a new tab, please enable pop-ups for this site.",
-			};
-			break;
 		case "IP_BLOCKED":
 			result = {
 				...warningObj,
