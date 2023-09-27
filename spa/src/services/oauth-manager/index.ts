@@ -1,6 +1,6 @@
 import Api from "../../api";
 import { AxiosError } from "axios";
-import { popup, reportError, } from "../../utils";
+import { popup, reportError } from "../../utils";
 
 let username: string | undefined;
 let email: string | undefined;
@@ -33,7 +33,7 @@ async function checkValidity(): Promise<boolean | AxiosError> {
 	}
 }
 
-async function authenticateInGitHub(onWinClosed: () => void): Promise<void>  {
+async function authenticateInGitHub(onWinClosed: () => void): Promise<void> {
 	const res = await Api.auth.generateOAuthUrl();
 	if (res.data.redirectUrl && res.data.state) {
 		oauthState = res.data.state;
