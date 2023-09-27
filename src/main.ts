@@ -73,7 +73,7 @@ const troubleshootUnresponsiveWorkers_master = () => {
 	);
 };
 
-const start = async () => {
+const start = () => {
 	initializeSentry();
 	const app: Express = getFrontendApp();
 	const port = Number(process.env.TUNNEL_PORT) || Number(process.env.PORT) || 8080;
@@ -90,8 +90,8 @@ if (isNodeProd()) {
 	// Production clustering (one process per core)
 	throng({
 		master: troubleshootUnresponsiveWorkers_master,
-		worker: async () => {
-			await start();
+		worker: () => {
+			start();
 			troubleshootUnresponsiveWorkers_worker();
 		},
 		lifetime: Infinity

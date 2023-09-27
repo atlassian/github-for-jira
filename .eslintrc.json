@@ -79,6 +79,15 @@
 			"@typescript-eslint/no-non-null-assertion": "off",
 			"jest/no-alias-methods": "off",
 			"jest/no-done-callback": "off",
+			"@typescript-eslint/no-unsafe-assignment": "off",
+			"@typescript-eslint/no-unsafe-argument": "off",
+			"@typescript-eslint/no-unsafe-member-access": "off",
+			"@typescript-eslint/no-unsafe-return": "off",
+			"@typescript-eslint/no-unsafe-call": "off",
+			"@typescript-eslint/unbound-method": "off",
+			"@typescript-eslint/require-await": "off",
+			"@typescript-eslint/await-thenable": "off",
+			"@typescript-eslint/no-misused-promises": "off",
 			"jest/expect-expect": [
 				"error",
 				{
@@ -95,14 +104,28 @@
 	},
 	{
 		"files": [ 
-			"test/**",
+			"src/routes/**"
+		],
+		"rules": {
+			// To be removed later
+			"@typescript-eslint/no-unsafe-assignment": "off",
+			"@typescript-eslint/no-unsafe-argument": "off",
+			"@typescript-eslint/no-unsafe-member-access": "off",
+			"@typescript-eslint/no-unsafe-return": "off",
+			"@typescript-eslint/no-unsafe-call": "off",
+			"@typescript-eslint/require-await": "off",
+			"@typescript-eslint/await-thenable": "off",
+			"@typescript-eslint/no-misused-promises": "off"
+		}
+	},
+	{
+		"files": [
 			"src/*.ts",
 			"src/config/**",
 			"src/github/**",
 			"src/jira/**",
 			"src/middleware/**",
 			"src/models/**",
-			"src/routes/**",
 			"src/sync/**",
 			"src/transforms/**",
 			"src/util/**"
@@ -113,11 +136,7 @@
 			"@typescript-eslint/no-unsafe-argument": "off",
 			"@typescript-eslint/no-unsafe-member-access": "off",
 			"@typescript-eslint/no-unsafe-return": "off",
-			"@typescript-eslint/no-unsafe-call": "off",
-			"@typescript-eslint/unbound-method": "off",
-			"@typescript-eslint/require-await": "off",
-			"@typescript-eslint/await-thenable": "off",
-			"@typescript-eslint/no-misused-promises": "off"
+			"@typescript-eslint/no-unsafe-call": "off"
 		}
 	}]
 }
