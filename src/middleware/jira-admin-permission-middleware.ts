@@ -21,7 +21,7 @@ export const fetchAndSaveUserJiraAdminStatus = async (req: Request, claims: Reco
 
 		req.session.isJiraAdmin = permissions.data.globalPermissions.includes(ADMIN_PERMISSION);
 		req.log.info({ isAdmin :req.session.isJiraAdmin }, "Admin permissions set");
-	} catch (err) {
+	} catch (err: unknown) {
 		req.log.error({ err }, "Failed to fetch Jira Admin rights");
 	}
 };

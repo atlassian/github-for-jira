@@ -167,7 +167,7 @@ export const getCodeScanningVulnDescription = (
 		const description = `**Vulnerability:** ${alert.rule.description}\n\n**Severity:** ${capitalize(alert.rule?.security_severity_level)}\n\nGitHub uses  [Common Vulnerability Scoring System (CVSS)](https://www.atlassian.com/trust/security/security-severity-levels) data to calculate security severity.\n\n**Status:** ${capitalize(alert.state)}\n\n**Weaknesses:** ${identifiersText}\n\nVisit the vulnerability’s [code scanning alert page](${alert.html_url}) in GitHub for a recommendation and relevant example.`;
 		// description cannot exceed 5000 characters
 		return truncate(description, { length: 4999 });
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.warn({ err }, "Failed to construct vulnerability description");
 		return alert.rule?.description;
 	}

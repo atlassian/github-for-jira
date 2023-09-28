@@ -36,7 +36,7 @@ export const 	getPullRequestReviews = async (
 		statsd.histogram(metricPrReviewers.submittedReviewsHist, submittedReviewsData.length, {}, { jiraHost });
 
 		return requestedReviewsData.users.map(user => ({ user })).concat(submittedReviewsData);
-	} catch (err) {
+	} catch (err: unknown) {
 		statsd.increment(metricPrReviewers.failedCount, {}, { jiraHost });
 		logger.warn({ pullRequestNumber, pullRequestId, repositoryId },"Get Pull Reviews Failed - Check Github Permissions: Can't retrieve reviewers");
 		return [];

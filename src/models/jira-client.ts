@@ -31,7 +31,7 @@ export class JiraClient {
 	async isAuthorized(): Promise<boolean> {
 		try {
 			return (await this.axios.get("/rest/devinfo/0.10/existsByProperties?fakeProperty=1")).status === 200;
-		} catch (error) {
+		} catch (error: unknown) {
 			if (!(error instanceof JiraClientError)) {
 				throw error;
 			}

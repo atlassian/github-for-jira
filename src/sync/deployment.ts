@@ -32,7 +32,7 @@ const fetchDeployments = async (jiraHost: string, gitHubInstallationClient: GitH
 				const extraDeploymentsItems = extraDeploymentsEdges?.map(({ node: item }) => item);
 				extraDeployments.push(...extraDeploymentsItems);
 				lastEdges = extraDeploymentsEdges;
-			} catch (e) {
+			} catch (e: unknown) {
 				logger.warn({ err: e }, "Error finding extraDeploymentData");
 				throw e;
 			}
@@ -118,7 +118,7 @@ const saveDeploymentsForLaterUse = async (deployments: FetchDeploymentResponse["
 
 		logger.info({ successCount, failedCount, isAllSuccess }, "All deployments saving operation settled.");
 
-	} catch (error) {
+	} catch (error: unknown) {
 		logger.error({ err: error }, "Error saving success deployments");
 	}
 };
