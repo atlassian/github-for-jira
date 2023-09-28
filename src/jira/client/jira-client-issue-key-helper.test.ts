@@ -272,7 +272,7 @@ describe("updateRepositoryIssueKeys", () => {
 	});
 
 	it("should not update if commits, branches, or pullRequests do not exist", () => {
-		const repositoryObj = {}; // No commits, branches, or pullRequests
+		const repositoryObj = {};
 
 		updateRepositoryIssueKeys(repositoryObj, mockMutatingFunc);
 
@@ -303,7 +303,7 @@ describe("findIssueKeyAssociation", () => {
 		});
 	});
 
-	it("should return undefined if no 'issueIdOrKeys' association exists", () => {
+	it("should return undefined if no 'issueIdOrKeys' association type exists", () => {
 		const resource: IssueKeyObject = {
 			associations: [
 				{
@@ -614,7 +614,6 @@ describe("extractAndHashIssueKeysForLoggingPurpose", () => {
 		expect(mockLogger.error).toHaveBeenCalled();
 	});
 });
-
 
 describe("safeParseAndHashUnknownIssueKeysForLoggingPurpose", () => {
 
