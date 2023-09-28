@@ -33,7 +33,7 @@ const withSentry = function(callback) {
 
 		try {
 			await callback(context);
-		} catch (err) {
+		} catch (err: unknown) {
 			context.log.error({ err, context }, "Error while processing webhook");
 			emitWebhookFailedMetrics(extractWebhookEventNameFromContext(context), undefined);
 			context.sentry?.captureException(err);
@@ -236,8 +236,9 @@ export const GithubWebhookMiddleware = (
 
 			try {
 				await callback(context, jiraClient, util, gitHubInstallationId, subscription);
-			} catch (err) {
-				const isWarning = warnOnErrorCodes.find(code => err.message.includes(code));
+			} catch (e: unknown) {
+				const err = e as { message?: string };
+				const isWarning = warnOnErrorCodes.find(code => err.message?.includes(code));
 				if (!isWarning) {
 					context.log.error(
 						{ err, jiraHost },

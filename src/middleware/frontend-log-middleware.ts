@@ -26,7 +26,7 @@ app.get('/foo', async (req, res) => {
   try {
     doThing()
     res.status(200)
-  } catch (err) {
+  } catch (err: unknown) {
     req.log.error('An error occurred') // ERROR -- An error occurred (userId=123)
     res.status(500)
   }

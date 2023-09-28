@@ -24,7 +24,7 @@ export const ApiPingGet = async (req: Request, res: Response): Promise<void> => 
 			statusCode: pingResponse.status,
 			statusText: pingResponse.statusText
 		});
-	} catch (err) {
+	} catch (err: unknown) {
 		res.json({
 			url: data.url,
 			method: "GET",

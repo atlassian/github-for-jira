@@ -71,7 +71,7 @@ const getLaunchDarklyValue = async <T = boolean | string | number>(flag: Boolean
 		await launchdarklyClient.waitForInitialization();
 		const user = createLaunchdarklyUser(key);
 		return launchdarklyClient.variation(flag, user, defaultValue);
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.error({ flag, err }, "Error resolving value for feature flag");
 		return defaultValue;
 	}
@@ -104,7 +104,7 @@ export const shouldSendAll = async (type: ShouldSendAllStringTypes, jiraHost: st
 		const sendAllString = await stringFlag(StringFlags.SEND_ALL, "[]", jiraHost);
 		const sendAllArray: string[] = JSON.parse(sendAllString);
 		return Array.isArray(sendAllArray) && sendAllArray.includes(type);
-	} catch (e) {
+	} catch (e: unknown) {
 		logger.error({ err: e, type }, "Cannot define if should send all");
 		return false;
 	}
@@ -115,7 +115,7 @@ export const isBlocked = async (jiraHost: string, installationId: number, logger
 		const blockedInstallationsString = await stringFlag(StringFlags.BLOCKED_INSTALLATIONS, "[]", jiraHost);
 		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString);
 		return Array.isArray(blockedInstallations) && blockedInstallations.includes(installationId);
-	} catch (e) {
+	} catch (e: unknown) {
 		logger.error({ err: e, installationId }, "Cannot define if isBlocked");
 		return false;
 	}
