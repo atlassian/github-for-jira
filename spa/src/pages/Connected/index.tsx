@@ -23,7 +23,7 @@ const titleStyle = css`
 const paragraphStyle = css`
 	color: ${token("color.text.subtle")};
 	margin: ${token("space.300")} ${token("space.0")};
-	padding: 0px ${token("space.500")};
+	padding: 0px ${token("space.800")};
 `;
 const flexWrapperStyle = css`
 	padding: ${token("space.400")} ${token("space.0")};
@@ -104,22 +104,20 @@ const Connected = () => {
 							To bring development work into issues and the code feature, add
 							issue keys in branches, pull request titles, and commit messages.
 						</div>
-						<div>
-							<Button
-								css={[buttonStyle, subtleBtnStyle]}
-								appearance="subtle"
-								onClick={() => navigate("/spa/steps")}
-							>
-								Add another organization
-							</Button>
-							<Button
-								css={buttonStyle}
-								appearance="primary"
-								onClick={learnAboutIssueLinking}
-							>
-								How to add issue keys
-							</Button>
-						</div>
+						<Button
+							css={[buttonStyle, subtleBtnStyle]}
+							appearance="subtle"
+							onClick={() => navigate("/spa/steps")}
+						>
+							Add another organization
+						</Button>
+						<Button
+							css={buttonStyle}
+							appearance="primary"
+							onClick={learnAboutIssueLinking}
+						>
+							How to add issue keys
+						</Button>
 					</div>
 				</div>
 				<Button
