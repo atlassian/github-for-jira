@@ -20,7 +20,7 @@ export const ApiJiraVerifyPost = async (req: Request, res: Response): Promise<vo
 				jiraHost: installation.jiraHost
 			}
 		});
-	} catch (err) {
+	} catch (err: unknown) {
 		req.log.error({ installationId, err }, "Error getting installation");
 		res.status(500).json(err);
 	}

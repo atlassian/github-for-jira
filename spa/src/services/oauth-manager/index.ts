@@ -27,7 +27,7 @@ async function checkValidity(): Promise<boolean | AxiosError> {
 
 		return ret;
 
-	} catch (e) {
+	} catch (e: unknown) {
 		reportError(new Error("Fail checkValidity", { cause: e }), { path: "checkValidity" });
 		return e as AxiosError;
 	}
@@ -44,7 +44,7 @@ async function authenticateInGitHub(onWinClosed: () => void): Promise<void> {
 					clearInterval(winCloseCheckHandler);
 					try {
 						onWinClosed();
-					} catch (e) {
+					} catch (e: unknown) {
 						reportError(new Error("Fail authenticateInGitHub", { cause: e }), {
 							path: "authenticateInGitHub",
 							reason: "error in onWinClosed"
@@ -100,7 +100,7 @@ async function finishOAuthFlow(code: string, state: string): Promise<boolean | A
 			reportError({ message: "fail to acquire accessToken (empty)" }, { path: "finishOAuthFlow", });
 			return false;
 		}
-	} catch (e) {
+	} catch (e: unknown) {
 		reportError(new Error("Fail exchangeToken", { cause: e }), { path: "finishOAuthFlow" });
 		return e as AxiosError;
 	}

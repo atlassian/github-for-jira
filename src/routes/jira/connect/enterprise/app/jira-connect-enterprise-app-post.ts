@@ -71,7 +71,7 @@ export const JiraConnectEnterpriseAppPost = async (
 		res.status(202).send();
 
 		req.log.debug("Jira Connect Enterprise App added successfully.");
-	} catch (err) {
+	} catch (err: unknown) {
 
 		await sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
 			action: AnalyticsTrackEventsEnum.CreateGitHubServerAppTrackEventName,

@@ -11,7 +11,7 @@ const isAlreadyEncryptedWithJiraHost = async (app: GitHubServerApp, field: strin
 	try {
 		await EncryptionClient.decrypt(app[field], { jiraHost });
 		return true;
-	} catch (e) {
+	} catch (e: unknown) {
 		return false;
 	}
 };

@@ -84,7 +84,8 @@ const getInstallation = async (subscription: Subscription, gitHubAppId: number |
 			jiraHost
 		};
 
-	} catch (err) {
+	} catch (e: unknown) {
+		const err = e as { status?: number };
 		log.error(
 			{ installationId: gitHubInstallationId, error: err, uninstalled: err.status === 404 },
 			"Failed connection"

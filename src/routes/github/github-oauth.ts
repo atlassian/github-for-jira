@@ -123,7 +123,7 @@ const finishOAuthFlow = async (
 
 		log.info({ redirectUrl: secureState.postLoginRedirectUrl }, "Github OAuth code valid, redirecting to internal URL");
 		return secureState.postLoginRedirectUrl;
-	} catch (err) {
+	} catch (err: unknown) {
 		log.warn({ err }, `Cannot retrieve access token from Github`);
 		return respondWithError(401, "Cannot retrieve access token from Github");
 	}
@@ -235,7 +235,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		// Everything's good, set it to res.locals
 		res.locals.githubToken = githubToken;
 		return next();
-	} catch (err) {
+	} catch (err: unknown) {
 		req.log.info({ err }, `Github token is not valid.`);
 		if (req.session?.githubRefreshToken) {
 			req.log.debug(`Trying to renew Github token...`);
@@ -283,7 +283,7 @@ const renewGitHubToken = async (githubRefreshToken: string, gitHubAppConfig: Git
 			const res = await gitHubAnonymousClient.renewGitHubToken(githubRefreshToken, gitHubAppConfig.clientId, clientSecret);
 			return { accessToken: res.accessToken, refreshToken: res.refreshToken };
 		}
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.warn({ err }, "Failed to renew Github token...");
 	}
 	logger.debug("Failed to renew Github token...");
