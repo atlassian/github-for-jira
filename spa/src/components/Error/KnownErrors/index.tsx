@@ -1,10 +1,20 @@
 /** @jsxImportSource @emotion/react */
+import { useState } from "react";
 import { css } from "@emotion/react";
 import { token } from "@atlaskit/tokens";
 import analyticsClient from "../../../analytics";
 import { popup } from "../../../utils";
-import Api from "../../..//api";
+import Api from "../../../api";
 import { DeferredInstallationUrlParams } from "../../../rest-interfaces";
+import Modal, {
+	ModalBody,
+	ModalFooter,
+	ModalHeader,
+	ModalTitle,
+	ModalTransition,
+} from "@atlaskit/modal-dialog";
+import Spinner from "@atlaskit/spinner";
+import Button from "@atlaskit/button";
 
 const paragraphStyle = css`
 	color: ${token("color.text.subtle")};
@@ -38,31 +48,72 @@ export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl, deferredInstallationO
 	adminOrgsUrl: string;
 	deferredInstallationOrgDetails: DeferredInstallationUrlParams;
 }) => {
+	const [isOpen, setIsOpen] = useState<boolean>(false);
+	const [isLoading, setIsLoading] = useState<boolean>(false);
+	const [deferredInstallationUrl, setDeferredInstallationUrl] = useState<string | null>(null);
+
 	const getOrgOwnerUrl = async () => {
 		// TODO: Need to get this URL for Enterprise users too, this is only for Cloud users
 		popup(adminOrgsUrl);
 		analyticsClient.sendUIEvent({ actionSubject: "checkOrgAdmin", action: "clicked"}, { type: "cloud" });
 	};
+
 	const getDeferredInstallationUrl = async () => {
-		const response= await Api.app.getDeferredInstallationUrl({
-			gitHubInstallationId: deferredInstallationOrgDetails?.gitHubInstallationId ,
-			gitHubOrgName: deferredInstallationOrgDetails?.gitHubOrgName
-		});
-		console.log("Fetched the URL", response.data.deferredInstallUrl);
-		// TODO: Create events in amplitude
-		analyticsClient.sendUIEvent({ actionSubject: "deferredInstallUrl", action: "clicked"});
+		try {
+			setIsOpen(true);
+			setIsLoading(true);
+			const response = await Api.app.getDeferredInstallationUrl({
+				gitHubInstallationId: deferredInstallationOrgDetails?.gitHubInstallationId ,
+				gitHubOrgName: deferredInstallationOrgDetails?.gitHubOrgName
+			});
+			setDeferredInstallationUrl(response.data.deferredInstallUrl);
+			// TODO: Create events in amplitude
+			analyticsClient.sendUIEvent({ actionSubject: "deferredInstallUrl", action: "clicked"});
+		} catch(e) {
+			console.error("Could not fetch the deferred installation url: ", e);
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	const closeModal = () => {
+		setIsOpen(false);
+		setDeferredInstallationUrl(null);
 	};
 
 	return (
 		<div css={paragraphStyle}>
 			Can't connect, you're not the organization owner{orgName && <span> of <b>{orgName}</b></span>}.<br />
-			Ask an <a css={linkStyle} onClick={getOrgOwnerUrl}>organization owner</a> to complete this step.<br />
+			Ask an <a css={linkStyle} onClick={getOrgOwnerUrl}>organization owner</a> to complete this step<br />
 			{
-				// TODO: This will change later once the new designs are finalized
 				deferredInstallationOrgDetails?.gitHubOrgName && <>
-					Or send <a css={linkStyle} onClick={getDeferredInstallationUrl}>this link</a>.
+					or send a <a css={linkStyle} onClick={getDeferredInstallationUrl}>this link</a>.
 				</>
 			}
+			<ModalTransition>
+				{
+					isOpen &&
+						<Modal onClose={closeModal}>
+							{
+								isLoading ? <Spinner interactionName="load" /> : <>
+									<ModalHeader>
+										<ModalTitle>
+											Send this URL to Github admin:
+										</ModalTitle>
+									</ModalHeader>
+									<ModalBody>
+										<b>{deferredInstallationUrl}</b>
+									</ModalBody>
+									<ModalFooter>
+										<Button appearance="warning" onClick={closeModal} autoFocus>
+											Got it!
+										</Button>
+									</ModalFooter>
+								</>
+							}
+						</Modal>
+				}
+			</ModalTransition>
 		</div>
 	);
 };
