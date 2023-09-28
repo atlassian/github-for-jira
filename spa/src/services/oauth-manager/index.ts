@@ -33,6 +33,28 @@ async function checkValidity(): Promise<boolean | AxiosError> {
 	}
 }
 
+async function checkGithubOwnership(githubInstallationId: number): Promise<boolean | AxiosError> {
+	if (!Api.token.hasGitHubToken()) return false;
+
+	try {
+		const res = await Api.orgs.checkOrgOwnership(githubInstallationId);
+		const ret = res.status === 200;
+
+		if(!ret) {
+			reportError({
+				message: "Response status is not 200 when checking GitHub ownership", status: res.status
+			}, {
+				path: "checkGithubOwnership"
+			});
+		}
+
+		return ret;
+	} catch (e: unknown) {
+		reportError(new Error("Fail checkGithubOwnership", { cause: e }), { path: "checkGithubOwnership" });
+		return e as AxiosError;
+	}
+}
+
 async function authenticateInGitHub(onWinClosed: () => void): Promise<void> {
 	const res = await Api.auth.generateOAuthUrl();
 	if (res.data.redirectUrl && res.data.state) {
@@ -121,6 +143,7 @@ function clear() {
 
 export default {
 	checkValidity,
+	checkGithubOwnership,
 	authenticateInGitHub,
 	finishOAuthFlow,
 	getUserDetails,

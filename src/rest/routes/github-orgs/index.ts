@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import fetchGitHubOrganizations from "./service";
 import { OrganizationsResponse } from "rest-interfaces";
-import { verifyAdminPermsAndFinishInstallation } from "services/subscription-installation-service";
+import { hasAdminAccess, verifyAdminPermsAndFinishInstallation } from "services/subscription-installation-service";
 import { errorWrapper } from "../../helper";
 import { InvalidArgumentError, InsufficientPermissionError } from "config/errors";
 import { BaseLocals } from "..";
@@ -15,6 +15,23 @@ GitHubOrgsRouter.get("/", errorWrapper("GitHubOrgsFetchOrgs", async (req: Reques
 		res.status(200).send({
 			orgs: organizations
 		});
+	}
+}));
+
+GitHubOrgsRouter.get("/ownership", errorWrapper("GitHubOrgsOwnership", async (req: Request, res: Response<OrganizationsResponse, BaseLocals>) => {
+	const { githubToken, installation } = res.locals;
+	const githubInstallationId = req.query.githubInstallationId;
+
+	if (!githubInstallationId) {
+		req.log.warn("Missing githubInstallationId in query");
+		throw new InvalidArgumentError("Missing githubInstallationId in query");
+	}
+
+	if (!await hasAdminAccess(githubToken, installation.jiraHost, parseInt(githubInstallationId.toString()), req.log, undefined)) {
+		req.log.warn(`User is not an admin of that installation`);
+		throw new InsufficientPermissionError("Not admin of org");
+	} else {
+		res.sendStatus(200);
 	}
 }));
 

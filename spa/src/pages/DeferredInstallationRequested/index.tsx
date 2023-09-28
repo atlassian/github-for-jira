@@ -27,6 +27,7 @@ const DeferredInstallationRequested = () => {
 	const [loggedInUser, setLoggedInUser] = useState<string | undefined>(username);
 	const [isLoading, setIsLoading] = useState(false);
 	const [isLoggedIn, setIsLoggedIn] = useState(false);
+	const [isAdmin, setIsAdmin] = useState(false);
 
 	// Authenticate if no token/username is set
 	useEffect(() => {
@@ -69,15 +70,32 @@ const DeferredInstallationRequested = () => {
 
 	// Set the token/username after authentication
 	useEffect(() => {
+		// Check if the current Github user is admin or not
+		const checkOrgOwnership = async () => {
+			if (githubInstallationId) {
+				const status: boolean | AxiosError = await OAuthManager.checkGithubOwnership(parseInt(githubInstallationId));
+				if (status instanceof AxiosError) {
+					console.log("Error", status);
+					setIsAdmin(false);
+				} else {
+					setIsAdmin(true);
+				}
+			}
+		};
+
+		// Check token validity
 		const recheckValidity = async () => {
+			setIsLoading(true);
 			const status: boolean | AxiosError = await OAuthManager.checkValidity();
 			if (status instanceof AxiosError) {
 				console.log("Error", status);
 				return;
 			}
 			setLoggedInUser(OAuthManager.getUserDetails().username);
+			await checkOrgOwnership();
 			setIsLoading(false);
 		};
+
 		isLoggedIn && recheckValidity();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ isLoggedIn ]);
@@ -86,9 +104,9 @@ const DeferredInstallationRequested = () => {
 		if (githubInstallationId) {
 			const connected: boolean | AxiosError = await AppManager.connectOrg(parseInt(githubInstallationId));
 			if (connected instanceof AxiosError) {
-				navigate("connected", { state: { successfulConnection: false }});
+				console.log("Error", status);
 			} else {
-				navigate("connected", { state: { successfulConnection: true }});
+				navigate("connected");
 			}
 		}
 	};
@@ -100,7 +118,7 @@ const DeferredInstallationRequested = () => {
 			{
 				isLoading ? <SkeletonForLoading /> : <>
 					{
-						githubInstallationId && <>
+						isAdmin ? <>
 							<Step title="Request sent">
 								<>
 									<div css={paragraphStyle}>
@@ -116,14 +134,22 @@ const DeferredInstallationRequested = () => {
 									</Button>
 								</>
 							</Step>
-							{
-								loggedInUser &&
-									<LoggedinInfo
-										username={loggedInUser}
-										logout={navigateBackToSteps}
-									/>
-							}
+						</> : <>
+							<Step title="You don't have owner permission">
+								<p>
+									Can’t connect ORG to JIRAHOST as you’re not the organisation’s owner.<br />
+									An organization owner needs to complete connection,
+									send them instructions on how to do this.
+								</p>
+							</Step>
 						</>
+					}
+					{
+						loggedInUser &&
+						<LoggedinInfo
+							username={loggedInUser}
+							logout={navigateBackToSteps}
+						/>
 					}
 				</>
 			}
