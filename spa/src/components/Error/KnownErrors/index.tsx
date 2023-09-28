@@ -59,20 +59,22 @@ export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl, deferredInstallationO
 	};
 
 	const getDeferredInstallationUrl = async () => {
-		try {
-			setIsOpen(true);
-			setIsLoading(true);
-			const response = await Api.app.getDeferredInstallationUrl({
-				gitHubInstallationId: deferredInstallationOrgDetails?.gitHubInstallationId ,
-				gitHubOrgName: deferredInstallationOrgDetails?.gitHubOrgName
-			});
-			setDeferredInstallationUrl(response.data.deferredInstallUrl);
-			// TODO: Create events in amplitude
-			analyticsClient.sendUIEvent({ actionSubject: "deferredInstallUrl", action: "clicked"});
-		} catch(e) {
-			console.error("Could not fetch the deferred installation url: ", e);
-		} finally {
-			setIsLoading(false);
+		if (!isOpen) {
+			try {
+				setIsOpen(true);
+				setIsLoading(true);
+				const response = await Api.app.getDeferredInstallationUrl({
+					gitHubInstallationId: deferredInstallationOrgDetails?.gitHubInstallationId ,
+					gitHubOrgName: deferredInstallationOrgDetails?.gitHubOrgName
+				});
+				setDeferredInstallationUrl(response.data.deferredInstallUrl);
+				// TODO: Create events in amplitude
+				analyticsClient.sendUIEvent({ actionSubject: "deferredInstallUrl", action: "clicked"});
+			} catch(e) {
+				console.error("Could not fetch the deferred installation url: ", e);
+			} finally {
+				setIsLoading(false);
+			}
 		}
 	};
 
