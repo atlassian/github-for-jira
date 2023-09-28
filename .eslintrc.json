@@ -122,7 +122,6 @@
 		"files": [
 			"src/github/**",
 			"src/jira/**",
-			"src/middleware/**",
 			"src/models/**",
 			"src/sync/**",
 			"src/transforms/**"
