@@ -7,6 +7,7 @@ import SyncHeader from "../../components/SyncHeader";
 import OAuthManager from "../../services/oauth-manager";
 import AppManager from "../../services/app-manager";
 import { css } from "@emotion/react";
+import SkeletonForLoading from "../ConfigSteps/SkeletonForLoading";
 import { token } from "@atlaskit/tokens";
 import Button from "@atlaskit/button";
 import { useEffect, useState } from "react";
@@ -27,7 +28,7 @@ const DeferredInstallationRequested = () => {
 	const [isLoading, setIsLoading] = useState(false);
 	const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-
+	// Authenticate if no token/username is set
 	useEffect(() => {
 		const authenticate = async () => {
 			setIsLoading(true);
@@ -42,9 +43,12 @@ const DeferredInstallationRequested = () => {
 				setIsLoading(false);
 			}
 		};
-		authenticate();
-	}, []);
+		if (!username) {
+			authenticate();
+		}
+	}, [username]);
 
+	// Finish the OAuth dance if authenticated
 	useEffect(() => {
 		const handler = async (event: MessageEvent) => {
 			if (event.data?.type === "oauth-callback" && event.data?.code) {
@@ -63,6 +67,7 @@ const DeferredInstallationRequested = () => {
 		};
 	}, []);
 
+	// Set the token/username after authentication
 	useEffect(() => {
 		const recheckValidity = async () => {
 			const status: boolean | AxiosError = await OAuthManager.checkValidity();
@@ -77,14 +82,13 @@ const DeferredInstallationRequested = () => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ isLoggedIn ]);
 
-	const signInAndInstall = async () => {
-		console.log("Sign in and install");
+	const connectOrg = async () => {
 		if (githubInstallationId) {
 			const connected: boolean | AxiosError = await AppManager.connectOrg(parseInt(githubInstallationId));
 			if (connected instanceof AxiosError) {
-				console.log("Error", connected);
+				navigate("connected", { state: { successfulConnection: false }});
 			} else {
-				navigate("/spa/connected");
+				navigate("connected", { state: { successfulConnection: true }});
 			}
 		}
 	};
@@ -94,9 +98,7 @@ const DeferredInstallationRequested = () => {
 		<Wrapper>
 			<SyncHeader />
 			{
-				isLoading ? <div>
-					Loading
-				</div> : <>
+				isLoading ? <SkeletonForLoading /> : <>
 					{
 						githubInstallationId && <>
 							<Step title="Request sent">
@@ -108,7 +110,7 @@ const DeferredInstallationRequested = () => {
 									<Button
 										style={{ paddingLeft: 0 }}
 										appearance="link"
-										onClick={signInAndInstall}
+										onClick={connectOrg}
 									>
 										Sign in & Install
 									</Button>
