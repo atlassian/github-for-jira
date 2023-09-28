@@ -22,6 +22,7 @@ import { GitHubInstallationType } from "../../../../src/rest-interfaces";
 import OrganizationsList from "../ConfigSteps/OrgsContainer";
 import SkeletonForLoading from "../ConfigSteps/SkeletonForLoading";
 import OauthManager from "../../services/oauth-manager";
+import { ErrorForPopupBlocked } from "../../components/Error/KnownErrors";
 
 type HostUrlType = {
 	jiraHost: string;
@@ -114,6 +115,7 @@ const errorMessageCounter: ErrorMessageCounterType = {
 const ERROR_THRESHOLD = 3;
 
 const ConfigSteps = () => {
+	const isPopupBlocked = localStorage.getItem("isPopupBlocked") === "true" ? true : false;
 	const navigate = useNavigate();
 	const { username } = OAuthManager.getUserDetails();
 	/**
@@ -329,13 +331,19 @@ const ConfigSteps = () => {
 		isLoggedIn && recheckValidity();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ isLoggedIn ]);
-
 	return (
 		<Wrapper>
 			<SyncHeader />
 			{
 				error && <ErrorUI type={error.type} message={error.message} />
 			}
+			{isPopupBlocked && (
+				<ErrorUI
+					type={"error"}
+					message={<ErrorForPopupBlocked/>}
+				/>
+			)}
+
 			<div css={configContainerStyle}>
 				{
 					isLoggedIn ? <>
