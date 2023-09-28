@@ -202,7 +202,7 @@ export const purgeItemsInTable = async (tableName: string) => {
 
 		await Promise.all(deleteRequests);
 
-	} catch (e) {
+	} catch (e: unknown) {
 		//do nothing as this method is for local test only
 	}
 

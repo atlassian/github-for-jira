@@ -120,6 +120,14 @@ export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl, deferredInstallationO
 	);
 };
 
+export const ErrorForPopupBlocked = () => (
+	<>
+		<div css={paragraphStyle}>
+			Your browser is blocking pop-ups. Enable pop-ups for this site and select{" "}
+			<b>Next</b> again.
+		</div>
+	</>
+);
 export const ErrorForIPBlocked = ({ orgName, resetCallback }: { orgName?: string; resetCallback: () => void }) => <>
 	<div css={paragraphStyle}>
 		Can't connect{orgName && <span> to <b>{orgName}</b></span>}, blocked by your IP allow list.

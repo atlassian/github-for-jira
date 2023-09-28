@@ -27,7 +27,7 @@ export const validateUrl = (url: string): UrlValidationResult => {
 				reason: "query parameters are not allowed"
 			};
 		}
-	} catch (err) {
+	} catch (err: unknown) {
 		return {
 			isValidUrl: false
 		};

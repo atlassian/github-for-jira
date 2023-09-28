@@ -24,7 +24,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		let issuer;
 		try {
 			issuer = getIssuer(token, req.log);
-		} catch (err) {
+		} catch (err: unknown) {
 			req.log.warn({ err }, "Could not get issuer");
 			return res.status(401).send("Unauthorised");
 		}
@@ -36,7 +36,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		let verifiedClaims;
 		try {
 			verifiedClaims = await verifySymmetricJwt(req, token, installation);
-		} catch (err) {
+		} catch (err: unknown) {
 			req.log.warn({ err }, "Could not verify symmetric JWT");
 			const errorMessage = req.path === "/create-branch-options" ? "Create branch link expired" : "Unauthorised";
 			return res.status(401).send(errorMessage);

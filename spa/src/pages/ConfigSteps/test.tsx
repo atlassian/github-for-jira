@@ -245,6 +245,7 @@ test("Connect GitHub Screen - Checking the GitHub Cloud flow when authenticated 
 	expect(screen.queryByText(GITHUB_CLOUD)).not.toBeInTheDocument();
 	expect(screen.queryByText(GITHUB_ENTERPRISE)).not.toBeInTheDocument();
 	expect(screen.queryByText(SELECT_GH_PRODUCT_CTA)).not.toBeInTheDocument();
+	expect(screen.queryByRole("button", { name: SELECT_GH_PRODUCT_CTA })).not.toBeInTheDocument();
 	expect(screen.queryByText(SELECT_GH_PRODUCT)).not.toBeInTheDocument();
 
 	// Checking to see no orgs are being displayed
@@ -280,7 +281,7 @@ test("Connect GitHub Screen - Changing GitHub login when authenticated", async (
 
 	expect(screen.queryByText(GITHUB_CLOUD)).toBeInTheDocument();
 	expect(screen.queryByText(GITHUB_ENTERPRISE)).toBeInTheDocument();
-	expect(screen.queryByText(SELECT_GH_PRODUCT_CTA)).toBeInTheDocument();
+	expect(screen.queryByRole("button", { name: SELECT_GH_PRODUCT_CTA })).toBeInTheDocument();
 });
 
 

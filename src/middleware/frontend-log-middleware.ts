@@ -26,7 +26,7 @@ app.get('/foo', async (req, res) => {
   try {
     doThing()
     res.status(200)
-  } catch (err) {
+  } catch (err: unknown) {
     req.log.error('An error occurred') // ERROR -- An error occurred (userId=123)
     res.status(500)
   }
@@ -62,10 +62,14 @@ export const LogMiddleware = async (req: Request, res: Response, next: NextFunct
 		id: req.headers["atl-traceid"] || newUUID()
 	});
 
-	res.once("finish", async () => {
-		if ((res.statusCode < 200 || res.statusCode >= 500) && !(res.statusCode === 503 && await booleanFlag(BooleanFlags.MAINTENANCE_MODE))) {
-			req.log.warn({ res, req }, `Returning HTTP response of '${res.statusCode}' for path '${req.path}'`);
-		}
+	res.once("finish", () => {
+		booleanFlag(BooleanFlags.MAINTENANCE_MODE).then(maintenanceMode => {
+			if ((res.statusCode < 200 || res.statusCode >= 500) && !(res.statusCode === 503 && maintenanceMode)) {
+				req.log.warn({ res, req }, `Returning HTTP response of '${res.statusCode}' for path '${req.path}'`);
+			}
+		}).catch(err => {
+			req.log.error({ err }, "Error while checking maintenance mode flag");
+		});
 	});
 	next();
 };

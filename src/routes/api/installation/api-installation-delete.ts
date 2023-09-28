@@ -37,7 +37,7 @@ export const ApiInstallationDelete = async (req: Request, res: Response): Promis
 		await jiraClient.devinfo.installation.delete(gitHubInstallationId);
 		await RepoSyncState.resetSyncFromSubscription(subscription);
 		res.status(200).send(`DevInfo deleted for jiraHost: ${jiraHost} gitHubInstallationId: ${gitHubInstallationId}`);
-	} catch (err) {
+	} catch (err: unknown) {
 		res.status(500).json(err);
 	}
 };
