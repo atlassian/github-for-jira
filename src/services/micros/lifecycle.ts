@@ -55,7 +55,7 @@ export const listenToMicrosLifecycle = (active: Callback, inactive: Callback): v
 							eventEmitter.emit(event, notification);
 						}
 					}
-				} catch (err) {
+				} catch (err: unknown) {
 					logger.error(err, "Could not parsed JSON data from Micros Lifecycle SQS queue.");
 				}
 			}

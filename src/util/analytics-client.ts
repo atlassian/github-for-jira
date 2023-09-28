@@ -58,7 +58,7 @@ export const sendAnalyticsWithSqs = async (
 		const sendMessageResult = await sqs.sendMessage(params)
 			.promise();
 		logger.debug({ sendMessageResult }, "Published an analytic event to SQS");
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.error({ err }, "Cannot publish the event to SQS");
 	}
 };

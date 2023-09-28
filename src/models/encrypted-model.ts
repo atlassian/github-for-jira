@@ -22,7 +22,7 @@ export abstract class EncryptedModel extends Model {
 		}
 		try {
 			return await EncryptionClient.decrypt(value, await this.getEncryptContext(field));
-		} catch (err) {
+		} catch (err: unknown) {
 			logger.error({ err }, `Failed to decrypt field ${String(field)}`);
 			throw err;
 		}
@@ -36,7 +36,7 @@ export abstract class EncryptedModel extends Model {
 		}
 		try {
 			return await EncryptionClient.encrypt(this.getEncryptionSecretKey(), value, await this.getEncryptContext(field));
-		} catch (err) {
+		} catch (err: unknown) {
 			logger.error({ err }, `Fail to encrypt field ${String(field)}`);
 			throw err;
 		}

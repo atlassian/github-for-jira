@@ -10,7 +10,7 @@ async function fetchOrgs(): Promise<OrganizationsResponse | AxiosError> {
 	try {
 		const response = await Api.orgs.getOrganizations();
 		return response.data;
-	} catch (e) {
+	} catch (e: unknown) {
 		reportError(new Error("Fail fetchOrgs", { cause: e } ), { path: "fetchOrgs" });
 		return e as AxiosError;
 	}
@@ -37,7 +37,7 @@ async function connectOrg(orgId: number): Promise<boolean | AxiosError> {
 
 		return ret;
 
-	} catch (e) {
+	} catch (e: unknown) {
 		reportError(new Error("Fail connectOrg", { cause: e }), { path: "connectOrg" });
 		return e as AxiosError;
 	}
@@ -85,7 +85,7 @@ async function installNewApp(callbacks: {
 			try {
 				lastOpenWin = null;
 				setTimeout(() => window.removeEventListener("message", handler), 1000); //give time for above message handler to kick off
-			} catch (e) {
+			} catch (e: unknown) {
 				reportError(new Error("Fail remove listener", { cause: e }), { path: "installNewApp", reason: "Fail remove message listener" });
 			} finally {
 				clearInterval(hdlWinInstall);

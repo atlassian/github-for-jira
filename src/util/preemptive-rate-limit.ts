@@ -42,7 +42,7 @@ export const preemptiveRateLimitCheck = async <T extends BaseMessagePayload>(con
 				resetTimeInSeconds
 			};
 		}
-	} catch (err) {
+	} catch (err: unknown) {
 		context.log.error({ err, gitHubServerAppId: context.payload.gitHubAppConfig?.gitHubAppId }, "Failed to fetch Rate Limit");
 	}
 

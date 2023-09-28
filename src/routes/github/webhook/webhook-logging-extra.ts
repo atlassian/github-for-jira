@@ -42,7 +42,7 @@ export const extraLoggerInfo = (payload: any, logger: Logger): Record<string, st
 			ret[key] = createHashWithSharedSecret(raw[key] ? String(raw[key]) : undefined);
 		}
 		return ret;
-	} catch (e) {
+	} catch (e: unknown) {
 		logger.error({ err: e }, "Error getting hash from webhook value");
 		return {};
 	}

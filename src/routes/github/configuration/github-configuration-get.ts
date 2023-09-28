@@ -239,7 +239,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		req.log.info({ method: req.method, requestUrl: req.originalUrl }, `Request finished in ${(new Date().getTime() - requestStartTime) / 1000} seconds`);
 		req.log.debug(`rendered page`);
 
-	} catch (err) {
+	} catch (err: unknown) {
 		// If we get here, there was either a problem decoding the JWT
 		// or getting the data we need from GitHub, so we'll show the user an error.
 		req.log.debug(`Error while getting github configuration page`);

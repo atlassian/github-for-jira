@@ -27,7 +27,7 @@ describe("heapdump-generator", () => {
 		try {
 			fs.unlinkSync(path);
 			// eslint-disable-next-line no-empty
-		} catch (err) {
+		} catch (err: unknown) {
 
 		}
 	};
