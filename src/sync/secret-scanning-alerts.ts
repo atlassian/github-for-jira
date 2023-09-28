@@ -88,7 +88,7 @@ const areAllBuildsEarlierThanFromDate = (alerts: SecretScanningAlertResponseItem
 };
 
 
-const transformSecretScanningAlert = async (
+export const transformSecretScanningAlert = async (
 	alerts: SecretScanningAlertResponseItem[],
 	repository: Repository,
 	jiraHost: string,
