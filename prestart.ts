@@ -38,7 +38,7 @@ const waitForTunnel = async () => {
 			envContents = envContents.replace(/WEBHOOK_PROXY_URL=.*/, `WEBHOOK_PROXY_URL=${ngrokDomain}/github/webhooks`);
 			fs.writeFileSync(envFilePath, envContents);
 			console.info(`Updated ${envFileName} file to use ngrok domain '${ngrokDomain}'.`);
-		} catch (e) {
+		} catch (e: unknown) {
 			console.info(`'${envFilePath}' not found, skipping...`);
 		}
 	} else {
@@ -68,7 +68,7 @@ const callQueues = async () => {
 				await axios.get(value);
 				console.info(`Queue ${value} is ready...`);
 				return Promise.resolve();
-			} catch (e) {
+			} catch (e: unknown) {
 				console.warn(`Queue ${value} not ready...`);
 				return Promise.reject();
 			}
@@ -111,7 +111,7 @@ const createEnvFile = async () => {
 			waitForQueues()
 		]);
 		process.exit();
-	} catch (e) {
+	} catch (e: unknown) {
 		process.exit(1);
 	}
 })();

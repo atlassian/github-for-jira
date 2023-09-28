@@ -76,7 +76,7 @@ export const getDependabotScanningVulnDescription = (
 		const description = `**Vulnerability:** ${alert.security_advisory.summary}\n\n**Impact:** ${alert.security_advisory.description}\n\n**Severity:** ${capitalize(alert.security_advisory?.severity)} - ${alert.security_advisory?.cvss?.score}\n\nGitHub uses  [Common Vulnerability Scoring System (CVSS)](https://www.atlassian.com/trust/security/security-severity-levels) data to calculate security severity.\n\n**State:** ${capitalize(alert.state)}\n\n**Patched version:** ${alert.security_vulnerability?.first_patched_version?.identifier}\n\n**Identifiers:**\n\n${identifiersText}\n\nVisit the vulnerability’s [dependabot alert page](${alert.html_url}) in GitHub to learn more about and see remediation options.`;
 		return truncate(description, { length: 4999 });
 
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.warn({ err }, "Failed to construct vulnerability description");
 		return alert.security_advisory?.summary;
 	}

@@ -514,7 +514,7 @@ const extractDeploymentDataForLoggingPurpose = (data: JiraDeploymentBulkSubmitDa
 					.flatMap(a => (a.values as string[] || []).map((v: string) => createHashWithSharedSecret(v)))
 			}))
 		};
-	} catch (error) {
+	} catch (error: unknown) {
 		logger.error({ error }, "Fail extractDeploymentDataForLoggingPurpose");
 		return {};
 	}
@@ -572,7 +572,7 @@ const extractAndHashIssueKeysForLoggingPurpose = (commitChunk: JiraCommit[], log
 			.flatMap((chunk: JiraCommit) => chunk.issueKeys)
 			.filter(key => !!key)
 			.map((key: string) => createHashWithSharedSecret(key));
-	} catch (error) {
+	} catch (error: unknown) {
 		logger.error({ error }, "Fail extract and hash issue keys before sending to jira");
 		return [];
 	}
@@ -581,7 +581,7 @@ const extractAndHashIssueKeysForLoggingPurpose = (commitChunk: JiraCommit[], log
 const safeParseAndHashUnknownIssueKeysForLoggingPurpose = (responseData: any, logger: Logger): string[] => {
 	try {
 		return (responseData["unknownIssueKeys"] || []).map((key: string) => createHashWithSharedSecret(key));
-	} catch (error) {
+	} catch (error: unknown) {
 		logger.error({ error }, "Error parsing unknownIssueKeys from jira api response");
 		return [];
 	}
