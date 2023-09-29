@@ -6,7 +6,7 @@ import { getNodeEnv } from "utils/is-node-env";
 import { EnvironmentEnum, MicrosEnvTypeEnum } from "interfaces/common";
 import { envCheck } from "utils/env-utils";
 
-const nodeEnv: EnvironmentEnum = EnvironmentEnum[getNodeEnv()];
+const nodeEnv: EnvironmentEnum = getNodeEnv();
 
 // Load environment files
 [
@@ -23,7 +23,7 @@ type Transforms<T, K extends keyof T = keyof T> = {
 };
 
 const transforms: Transforms<EnvVars> = {
-	MICROS_ENV: (value?: string) => EnvironmentEnum[value || EnvironmentEnum.development],
+	MICROS_ENV: (value?: string) =>  EnvironmentEnum[value || ""] as EnvironmentEnum || EnvironmentEnum.development,
 	MICROS_GROUP: (value?: string) => value || "",
 	NODE_ENV: () => nodeEnv,
 	S3_DUMPS_BUCKET_NAME: (value?: string) => value ?? "",

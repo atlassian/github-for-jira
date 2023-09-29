@@ -245,7 +245,7 @@ const ConfigSteps = () => {
 				analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail" }, { mode, errorCode: errorObj.errorCode });
 			} else {
 				analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: (connected === true ? "success" : "fail") }, { mode });
-				navigate("/spa/connected");
+				navigate("/spa/connected",{ state: { orgLogin } });
 			}
 		} catch (e: unknown) {
 			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail"}, { mode });
