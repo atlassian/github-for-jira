@@ -95,6 +95,8 @@ if (isNodeProd()) {
 			troubleshootUnresponsiveWorkers_worker();
 		},
 		lifetime: Infinity
+	}).catch((err: unknown) => {
+		getLogger("frontend-app").error({ err }, "Error running frontend-app");
 	});
 } else {
 	// Dev/test single process, don't need clustering
