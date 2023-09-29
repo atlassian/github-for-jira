@@ -42,7 +42,7 @@ expect.extend({
 				.map(result => result.value)
 			);
 			return { pass: true, message: () => `\n\nExpected mock calls to not resolve.\n\n` };
-		} catch (e) {
+		} catch (e: unknown) {
 			return {
 				pass: false,
 				message: () => `\n\nExpected mock calls to resolve.\n\n`

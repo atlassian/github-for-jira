@@ -16,7 +16,7 @@ export const isUserAdminOfOrganization = async (githubClient: GitHubUserClient, 
 			logger.info({ orgName, username, state, role }, `isUserAdminOfOrganization: User has role for org`);
 			return role === "admin" && state === "active";
 		}
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.error({ err }, "Fail checking permission using GitHub App Client, fallback to user client");
 	}
 
@@ -25,7 +25,7 @@ export const isUserAdminOfOrganization = async (githubClient: GitHubUserClient, 
 		const { data: { role } } = await githubClient.getMembershipForOrg(orgName);
 		logger.info({ orgName, username }, `isUserAdminOfOrganization: User has ${role} role for org`);
 		return role === "admin";
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.warn({ err, orgName, username }, `could not determine admin status of user in org`);
 		throw err;
 	}

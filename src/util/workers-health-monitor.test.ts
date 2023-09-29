@@ -170,13 +170,13 @@ describe("workers-health-monitor", () => {
 
 				try {
 					expect(cluster.workers[1]!.send).not.toBeCalled();
-				} catch (err) {
+				} catch (err: unknown) {
 					// eslint-disable-next-line jest/no-conditional-expect
 					expect(cluster.workers[1]!.send).toBeCalledWith("heapdump_on_crash");
 				}
 				try {
 					expect(cluster.workers[2]!.send).not.toBeCalled();
-				} catch (err) {
+				} catch (err: unknown) {
 					// eslint-disable-next-line jest/no-conditional-expect
 					expect(cluster.workers[2]!.send).toBeCalledWith("heapdump_on_crash");
 				}
@@ -236,7 +236,7 @@ describe("workers-health-monitor", () => {
 			try {
 				fs.unlinkSync(path);
 				// eslint-disable-next-line no-empty
-			} catch (err) {
+			} catch (err: unknown) {
 
 			}
 		};

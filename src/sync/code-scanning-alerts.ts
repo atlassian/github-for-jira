@@ -41,7 +41,8 @@ export const getCodeScanningAlertTask = async (
 			direction: SortDirection.DES
 		});
 		codeScanningAlerts = response.data;
-	} catch (err) {
+	} catch (e: unknown) {
+		const err = e as { cause?: { response?: { status?: number, data?: { message?: string } } } };
 		if (err.cause?.response?.status == 403 && err.cause?.response?.data?.message?.includes("Advanced Security must be enabled for this repository to use code scanning")) {
 			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Advanced Security disabled, so marking code scanning backfill task complete");
 			return {
@@ -86,7 +87,7 @@ export const getCodeScanningAlertTask = async (
 	const nextPageCursorStr = smartCursor.copyWithPageNo(smartCursor.pageNo + 1).serialise();
 	const edgesWithCursor = [{ codeScanningAlerts: codeScanningAlerts, cursor: nextPageCursorStr }];
 
-	const jiraPayload = await transformCodeScanningAlert(codeScanningAlerts, repository, jiraHost, logger, messagePayload.gitHubAppConfig?.gitHubAppId, gitHubClient);
+	const jiraPayload = await transformCodeScanningAlert(codeScanningAlerts, repository, jiraHost, logger, messagePayload.gitHubAppConfig?.gitHubAppId);
 	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload?.vulnerabilities?.length }, "Backfill task complete");
 	return {
 		edges: edgesWithCursor,
@@ -111,8 +112,7 @@ const transformCodeScanningAlert = async (
 	repository: Repository,
 	jiraHost: string,
 	logger: Logger,
-	gitHubAppId: number | undefined,
-	gitHubClient: GitHubInstallationClient
+	gitHubAppId: number | undefined
 ): Promise<JiraVulnerabilityBulkSubmitData> => {
 
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
@@ -120,8 +120,7 @@ const transformCodeScanningAlert = async (
 	const handleUnmappedState = (state: string) => logger.info(`Received unmapped state from code_scanning_alert sync: ${state}`);
 	const handleUnmappedSeverity = (severity: string | null) => logger.info(`Received unmapped severity from code_scanning_alert sync: ${severity ?? "Missing Severity"}`);
 
-	const vulnerabilities = await Promise.all(alerts.map(async (alert) => {
-		const { data: alertInstances } = await gitHubClient.getCodeScanningAlertInstances(repository.owner.login, repository.name, alert.number);
+	const vulnerabilities = alerts.map((alert) => {
 		const identifiers = transformRuleTagsToIdentifiers(alert.rule.tags);
 
 		return {
@@ -131,7 +130,7 @@ const transformCodeScanningAlert = async (
 			containerId: transformRepositoryId(repository.id, gitHubClientConfig.baseUrl),
 			// display name cannot exceed 255 characters
 			displayName: truncate(alert.rule.description || alert.rule.name || `Code scanning alert #${alert.number}`, { length: 254 }),
-			description: getCodeScanningVulnDescription(alert, identifiers, alertInstances, logger),
+			description: getCodeScanningVulnDescription(alert, identifiers, logger),
 			url: alert.html_url,
 			type: "sast",
 			introducedDate: alert.created_at,
@@ -145,7 +144,7 @@ const transformCodeScanningAlert = async (
 				content: truncate(alert.tool.name, { length: 254 })
 			}
 		};
-	}));
+	});
 	return { vulnerabilities };
 
 };

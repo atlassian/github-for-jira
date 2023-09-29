@@ -62,7 +62,7 @@ export const 	pullRequestWebhookHandler = async (context: WebhookContext, jiraCl
 
 	try {
 		await updateGithubIssues(gitHubInstallationClient, context, util, repoName, owner, pull_request);
-	} catch (err) {
+	} catch (err: unknown) {
 		context.log.warn(
 			{ err },
 			"Error while trying to update PR body with links to Jira ticket"
