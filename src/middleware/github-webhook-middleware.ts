@@ -21,8 +21,8 @@ export const LOGGER_NAME = "github.webhooks";
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
 // A new Sentry hub is assigned to context.sentry and can be used later to add context to the error message.
-const withSentry = function(callback) {
-	return async (context: WebhookContext) => {
+const withSentry = function(callback: (context: WebhookContext<{ action?: string }>) => Promise<void>) {
+	return async (context: WebhookContext<{ action?: string }>) => {
 		context.sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
 		context.sentry?.configureScope((scope) =>
 			scope.addEventProcessor(AxiosErrorEventDecorator.decorate)
@@ -43,7 +43,10 @@ const withSentry = function(callback) {
 };
 
 // TODO: We really should fix this...
-const isFromIgnoredRepo = (payload) =>
+const isFromIgnoredRepo = (payload: {
+	installation?: { id?: number };
+	repository?: { id?: number };
+}) =>
 	// These point back to a repository for an installation that
 	// is generating an unusually high number of push events. This
 	// disables it temporarily. See https://github.com/github/integrations-jira-internal/issues/24.
@@ -52,20 +55,20 @@ const isFromIgnoredRepo = (payload) =>
 	// Repository: https://admin.github.com/stafftools/repositories/seequent/lf_github_testing
 	payload.installation?.id === 491520 && payload.repository?.id === 205972230;
 
-const isStateChangeBranchCreateOrDeploymentAction = (action) =>
+const isStateChangeBranchCreateOrDeploymentAction = (action: string) =>
 	["opened", "closed", "reopened", "deployment", "deployment_status", "create"].includes(
 		action
 	);
 
-const extractWebhookEventNameFromContext = (context: WebhookContext): string => {
+const extractWebhookEventNameFromContext = (context: WebhookContext<{ action?: string }>): string => {
 	let webhookEvent = context.name;
 	if (context.payload?.action) {
-		webhookEvent = `${webhookEvent}.${context.payload.action as string}`;
+		webhookEvent = `${webhookEvent}.${context.payload.action}`;
 	}
 	return webhookEvent;
 };
 
-const moreWebhookSpecificTags = (webhookContext: WebhookContext): Record<string, string | undefined> => {
+const moreWebhookSpecificTags = (webhookContext: WebhookContext<{ deployment_status?: { state?: string } }>): Record<string, string | undefined> => {
 	if (webhookContext.name === "deployment_status") {
 		return {
 			deploymentStatusState: webhookContext.payload?.deployment_status?.state
@@ -78,7 +81,14 @@ const moreWebhookSpecificTags = (webhookContext: WebhookContext): Record<string,
 export const GithubWebhookMiddleware = (
 	callback: (webhookContext: WebhookContext, jiraClient: any, util: any, githubInstallationId: number, subscription: Subscription) => Promise<void>
 ) => {
-	return withSentry(async (context: WebhookContext) => {
+	return withSentry(async (context: WebhookContext<
+	{
+		installation?: { id?: number };
+		repository?: { id?: number, name?: string, owner?: { login?: string } };
+		sender?: { type?: string; id?: number; login?: string };
+		action?: string;
+		deployment_status?: { state?: string };
+	}>): Promise<void> => {
 		const webhookEvent = extractWebhookEventNameFromContext(context);
 
 		// Metrics for webhook payload size
@@ -92,7 +102,7 @@ export const GithubWebhookMiddleware = (
 			action: context.payload?.action,
 			id: context.id,
 			repo: context.payload?.repository ? {
-				owner: context.payload.repository.owner.login,
+				owner: context.payload.repository?.owner?.login,
 				repo: context.payload.repository.name
 			} : undefined,
 			payload: context.payload,
@@ -113,6 +123,7 @@ export const GithubWebhookMiddleware = (
 		const jiraHost = subscriptions.length ? subscriptions[0].jiraHost : undefined;
 		context.log = getLogger(LOGGER_NAME, {
 			level: await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, jiraHost),
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			fields: {
 				webhookId,
 				gitHubInstallationId,
@@ -129,10 +140,11 @@ export const GithubWebhookMiddleware = (
 
 		const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 
+		const action = String(payload?.action);
 		statsd.increment(metricWebhooks.webhookEvent, {
 			name: "webhooks",
 			event: name,
-			action: payload.action,
+			action: action,
 			gitHubProduct,
 			...moreWebhookSpecificTags(context)
 		}, { jiraHost });
@@ -141,7 +153,7 @@ export const GithubWebhookMiddleware = (
 		// State change actions are allowed because they're one-time actions, therefore they won’t cause a loop.
 		if (
 			context.payload?.sender?.type === "Bot" &&
-			!isStateChangeBranchCreateOrDeploymentAction(context.payload.action) &&
+			!isStateChangeBranchCreateOrDeploymentAction(action) &&
 			!isStateChangeBranchCreateOrDeploymentAction(context.name)
 		) {
 			context.log.info(
@@ -181,7 +193,7 @@ export const GithubWebhookMiddleware = (
 
 		context.sentry?.setTag(
 			"transaction",
-			`webhook:${context.name}.${context.payload.action as string}`
+			`webhook:${context.name}.${context.payload?.action as string}`
 		);
 
 		for (const subscription of subscriptions) {

@@ -3,7 +3,7 @@ import Logger from "bunyan";
 import cluster from "cluster";
 import { exec } from "child_process";
 import { logInfoSampled } from "utils/log-sampled";
-import glob from "glob";
+import G from "glob";
 import fs from "fs";
 import AWS from "aws-sdk";
 import { v4 as UUID } from "uuid";
@@ -12,6 +12,7 @@ import { GenerateOnceCoredumpGenerator } from "services/generate-once-coredump-g
 import { GenerateOncePerNodeHeadumpGenerator } from "services/generate-once-per-node-headump-generator";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import oom from "node-oom-heapdump";
+import { ManagedUpload } from "aws-sdk/clients/s3";
 
 const SHUTDOWN_MSG = "shutdown";
 const HEAPDUMP_ON_CRASH_MSG = "heapdump_on_crash";
@@ -40,7 +41,7 @@ export const startMonitorOnWorker = (parentLogger: Logger, workerConfig: {
 	const flagInterval = setInterval(() => {
 		booleanFlag(BooleanFlags.GENERATE_CORE_HEAP_DUMPS_ON_LOW_MEM).then((value) => {
 			dumpsFlagValue = value;
-		}).catch((err) => {
+		}).catch((err: unknown) => {
 			logger.error({ err }, "cannot get flag value");
 		});
 	}, 1000);
@@ -71,6 +72,7 @@ export const startMonitorOnWorker = (parentLogger: Logger, workerConfig: {
 		if (msg === HEAPDUMP_ON_CRASH_MSG) {
 			if (dumpsFlagValue) {
 				logger.warn("charging heapdump on crash");
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 				oom({
 					path: generateHeapdumpPathOnOom(process.pid.toString())
 				});
@@ -131,7 +133,7 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 						liveWorkers[workerPid] = Date.now();
 					});
 					worker.on("exit", (code, signal) => {
-						glob("/tmp/*", (err: Error, tmpFiles: Array<string>) => {
+						G("/tmp/*", (err: Error | null, tmpFiles: string[]) => {
 							if (err) {
 								logger.error("Cannot get /tmp files using glob");
 								return;
@@ -244,7 +246,7 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 	const maybeUploadeDumpFiles = () => {
 		const now = new Date(); // fix time early for testing, while timers are still frozen
 
-		glob("/tmp/dump*.ready", (err: Error, dumpFiles: Array<string>) => {
+		G("/tmp/dump*.ready", (err: Error | null, dumpFiles: string[]) => {
 			if (err) {
 				logger.error("Cannot get dump files using glob");
 				return;
@@ -269,7 +271,7 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 
 				uploadLogger.info({ uploadParams }, "about to upload dump");
 
-				s3.upload(uploadParams, (err, data) => {
+				s3.upload(uploadParams, (err: unknown, data: ManagedUpload.SendData) => {
 					if (err) {
 						uploadLogger.error({ err }, `cannot upload ${uploadInProgressFile}`);
 					} else {
