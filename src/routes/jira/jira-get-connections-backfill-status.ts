@@ -2,17 +2,18 @@ import { NextFunction, Request, Response } from "express";
 import { groupBy } from "lodash";
 import { RepoSyncState } from "~/src/models/reposyncstate";
 import {
-	TaskStatus,
 	Subscription,
 	SyncStatus
 } from "~/src/models/subscription";
-import { mapSyncStatus, ConnectionSyncStatus } from "./jira-get";
+import { mapSyncStatus, ConnectionSyncStatus, getRetryableFailedSyncErrors } from "./jira-get";
 
 type SubscriptionBackfillState = {
 	totalRepos?: number;
 	isSyncComplete: boolean;
 	syncedRepos?: number;
 	backfillSince?: string;
+	syncWarning?: string;
+	failedSyncErrors?: Record<string, number>;
 	syncStatus: ConnectionSyncStatus;
 };
 type BackFillType = {
@@ -63,16 +64,8 @@ export const JiraGetConnectionsBackfillStatus = async (
 			res.status(403).send("mismatched Jira Host");
 			return;
 		}
-
-		const repoSyncStates = await RepoSyncState.findAll({
-			where: {
-				subscriptionId: resultSubscriptionIds
-			}
-		});
-		const repos = groupBy(repoSyncStates, "subscriptionId");
 		const subscriptionsById = groupBy(subscriptions, "id");
-		const backfillStatus = getBackfillStatus(repos, subscriptionsById);
-
+		const backfillStatus = await getBackfillStatus(subscriptionsById);
 		const isBackfillComplete = getBackfillCompletionStatus(backfillStatus);
 		res.status(200).send({
 			data: {
@@ -90,57 +83,29 @@ const getBackfillCompletionStatus = (backfillStatus: BackFillType): boolean => O
 	(backFill: SubscriptionBackfillState): boolean => backFill?.isSyncComplete
 );
 
-const getBackfillStatus = (connections, subscriptionsById): BackFillType => {
+const getBackfillStatus = async (subscriptionsById): Promise<BackFillType>=> {
 	const backfillStatus: BackFillType = {};
-	for (const subscriptionId in connections) {
+	for (const subscriptionId in subscriptionsById) {
 		backfillStatus[subscriptionId] = {
 			isSyncComplete: true,
 			syncStatus: SyncStatus.PENDING
 		};
-		const subscriptionRepos = connections[subscriptionId];
-		const totalRepos = subscriptionRepos?.length;
+		const subscription = subscriptionsById[subscriptionId][0];
+		const totalRepos = subscription?.totalNumberOfRepos;
 		backfillStatus[subscriptionId]["totalRepos"] = totalRepos;
-		let isSyncComplete = subscriptionsById[subscriptionId][0]?.syncStatus;
+		let isSyncComplete = subscription?.syncStatus;
 		isSyncComplete = isSyncComplete === SyncStatus.COMPLETE || isSyncComplete === SyncStatus.FAILED;
 		const syncStatus = mapSyncStatus(
-			subscriptionsById[subscriptionId][0]?.syncStatus
+			subscription?.syncStatus
 		);
-		const repos = subscriptionRepos.map((repoSyncState) => {
-			return {
-				name: repoSyncState?.repoFullName,
-				repoSyncStatus: getSyncStatus(repoSyncState),
-				syncStatus: syncStatus
-			};
-		});
-		const syncedRepos = repos.filter((repo) =>
-			["complete", "failed"].includes(repo?.repoSyncStatus)
-		).length;
-		backfillStatus[subscriptionId]["syncedRepos"] = syncedRepos;
+		backfillStatus[subscriptionId]["syncedRepos"] = await RepoSyncState.countFullySyncedReposForSubscription(subscription);
+		const failedSyncErrors=  await getRetryableFailedSyncErrors(subscription);
+		backfillStatus[subscriptionId]["failedSyncErrors"] = failedSyncErrors;
 		backfillStatus[subscriptionId]["backfillSince"] =
-			subscriptionsById[subscriptionId][0]?.backfillSince || null;
+			subscription?.backfillSince || null;
 		backfillStatus[subscriptionId]["isSyncComplete"] = isSyncComplete;
 		backfillStatus[subscriptionId]["syncStatus"] = syncStatus;
+		backfillStatus[subscriptionId]["syncWarning"] = subscription.syncWarning;
 	}
 	return backfillStatus;
-};
-
-const getSyncStatus = (repoSyncState: RepoSyncState): TaskStatus => {
-	const statuses = [
-		repoSyncState?.branchStatus,
-		repoSyncState?.commitStatus,
-		repoSyncState?.pullStatus,
-		repoSyncState?.buildStatus,
-		repoSyncState?.deploymentStatus
-	];
-	if (statuses.includes("pending")) {
-		return "pending";
-	}
-	if (statuses.includes("failed")) {
-		return "failed";
-	}
-	const hasCompleteStatus = statuses.every((status) => status == "complete");
-	if (hasCompleteStatus) {
-		return "complete";
-	}
-	return "pending";
 };

@@ -384,10 +384,10 @@ const getInprogressSubIds = () => {
 	return subscriptionIds;
 };
 
-const updateBackfilledRepoCount = ({ subscriptionId, subscriptions, self }) => {
+const updateBackfilledRepoCount = ({ subscription, self }) => {
 
-	const totalRepos = Number(subscriptions[subscriptionId].totalRepos);
-	const syncedRepos = Number(subscriptions[subscriptionId].syncedRepos);
+	const totalRepos = Number(subscription.totalRepos);
+	const syncedRepos = Number(subscription.syncedRepos);
 	const inprogressSyncStatus =
 		syncedRepos === totalRepos ? `${totalRepos} ` : `${syncedRepos}/${totalRepos} `;
 	const repoCountTd = $(self).children("td.repo-count");
@@ -400,11 +400,11 @@ const toLowercaseHelper = (str) =>
 const replaceSpaceWithHyphenHelper = (str) =>
 	(str?.toString?.().replace(/ /g, "-")) || "";
 
-const updateBackfilledStatus = ({ subscriptionId, subscriptions, self }) => {
+const updateBackfilledStatus = ({ subscription, self }) => {
 
-	const isSyncComplete = subscriptions[subscriptionId].isSyncComplete;
-	const backfillSince = subscriptions[subscriptionId].backfillSince;
-	const syncStatus = subscriptions[subscriptionId].syncStatus;
+	const isSyncComplete = subscription.isSyncComplete;
+	const backfillSince = subscription.backfillSince;
+	const syncStatus = subscription.syncStatus;
 	const repoStatusTd = $(self).children("td.repo-status");
 	const infoContainer = repoStatusTd.children(
 		`div.jiraConfiguration__infoContainer`
@@ -469,14 +469,14 @@ function fetchAllConnectionsBackfillStatus() {
 					let subscriptionId = $(self).data("subscription-id");
 
 					if (subscriptionId in subscriptions) {
+						const subscription = subscriptions[subscriptionId];
 						// repo count set
 						updateBackfilledRepoCount({
-							subscriptions,
-							subscriptionId,
-							self,
+							subscription,
+							self
 						});
 						// repo status set
-						updateBackfilledStatus({ subscriptionId, subscriptions, self });
+						updateBackfilledStatus({ subscription, self });
 					} else {
 						$(`#${subscriptionId}-syncCount`).css("display", "none");
 					}
