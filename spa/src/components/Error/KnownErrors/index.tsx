@@ -69,7 +69,6 @@ export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl, deferredInstallationO
 				});
 				setDeferredInstallationUrl(response.data.deferredInstallUrl);
 				// TODO: Create events in amplitude
-				analyticsClient.sendUIEvent({ actionSubject: "deferredInstallUrl", action: "clicked"});
 			} catch(e) {
 				console.error("Could not fetch the deferred installation url: ", e);
 			} finally {
@@ -86,10 +85,10 @@ export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl, deferredInstallationO
 	return (
 		<div css={paragraphStyle}>
 			Can't connect, you're not the organization owner{orgName && <span> of <b>{orgName}</b></span>}.<br />
-			Ask an <a css={linkStyle} onClick={getOrgOwnerUrl}>organization owner</a> to complete this step<br />
+			Ask an <a css={linkStyle} onClick={getOrgOwnerUrl}>organization owner</a> to complete this step <br />
 			{
 				deferredInstallationOrgDetails?.gitHubOrgName && <>
-					or send a <a css={linkStyle} onClick={getDeferredInstallationUrl}>this link</a>.
+					or send a link to them by <a css={linkStyle} onClick={getDeferredInstallationUrl}>clicking here</a>.
 				</>
 			}
 			<ModalTransition>
