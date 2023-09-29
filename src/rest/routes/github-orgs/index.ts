@@ -1,7 +1,10 @@
 import { Router, Request, Response } from "express";
-import fetchGitHubOrganizations from "./service";
-import { OrganizationsResponse } from "rest-interfaces";
-import { hasAdminAccess, verifyAdminPermsAndFinishInstallation } from "services/subscription-installation-service";
+import { checkGitHubOrgOwnership, fetchGitHubOrganizations } from "./service";
+import {
+	OrganizationsResponse,
+	OrgOwnershipResponse
+} from "rest-interfaces";
+import { verifyAdminPermsAndFinishInstallation } from "services/subscription-installation-service";
 import { errorWrapper } from "../../helper";
 import { InvalidArgumentError, InsufficientPermissionError } from "config/errors";
 import { BaseLocals } from "..";
@@ -18,20 +21,22 @@ GitHubOrgsRouter.get("/", errorWrapper("GitHubOrgsFetchOrgs", async (req: Reques
 	}
 }));
 
-GitHubOrgsRouter.get("/ownership", errorWrapper("GitHubOrgsOwnership", async (req: Request, res: Response<OrganizationsResponse, BaseLocals>) => {
-	const { githubToken, installation } = res.locals;
-	const githubInstallationId = req.query.githubInstallationId;
+GitHubOrgsRouter.get("/ownership", errorWrapper("GitHubOrgsOwnership", async (req: Request, res: Response<OrgOwnershipResponse, BaseLocals>) => {
+	const { githubToken, installation: { jiraHost } } = res.locals;
 
-	if (!githubInstallationId) {
+	if (!req.query.githubInstallationId) {
 		req.log.warn("Missing githubInstallationId in query");
 		throw new InvalidArgumentError("Missing githubInstallationId in query");
 	}
+	const githubInstallationId = parseInt(req.query.githubInstallationId.toString());
 
-	if (!await hasAdminAccess(githubToken, installation.jiraHost, parseInt(githubInstallationId.toString()), req.log, undefined)) {
+	const { isAdmin, orgName } = await checkGitHubOrgOwnership(githubToken, jiraHost, githubInstallationId, req.log);
+
+	if (!isAdmin) {
 		req.log.warn(`User is not an admin of that installation`);
-		throw new InsufficientPermissionError("Not admin of org");
+		res.status(403).json({ orgName });
 	} else {
-		res.sendStatus(200);
+		res.status(200).json({ orgName });
 	}
 }));
 

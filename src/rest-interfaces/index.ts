@@ -31,6 +31,10 @@ export type OrganizationsResponse = {
 	orgs: Array<GitHubInstallationType>;
 }
 
+export type OrgOwnershipResponse = {
+	orgName: string;
+}
+
 export type GitHubInstallationType = {
 	account: GitHubInstallationAccountType;
 	app_id: number;
@@ -48,6 +52,11 @@ type GitHubInstallationAccountType = {
 	url: string;
 	site_admin?: boolean;
 	type?: string;
+};
+
+export type CheckOrgOwnershipResponse = {
+	isAdmin: boolean;
+	orgName: string;
 };
 
 export type JiraCloudIDResponse = {

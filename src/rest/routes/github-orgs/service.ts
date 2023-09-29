@@ -1,13 +1,17 @@
 import Logger from "bunyan";
-import { createUserClient } from "utils/get-github-client-config";
+import { createAppClient, createInstallationClient, createUserClient } from "utils/get-github-client-config";
 import {
 	getInstallationsWithAdmin,
 	installationConnectedStatus
 } from "routes/github/configuration/github-configuration-get";
 import { Installation } from "models/installation";
-import { GitHubInstallationType } from "rest-interfaces";
+import {
+	CheckOrgOwnershipResponse,
+	GitHubInstallationType
+} from "rest-interfaces";
+import { isUserAdminOfOrganization } from "utils/github-utils";
 
-const fetchGitHubOrganizations = async (
+export const fetchGitHubOrganizations = async (
 	githubToken: string,
 	jiraHost: string,
 	installation: Installation,
@@ -44,4 +48,23 @@ const fetchGitHubOrganizations = async (
 	return connectedInstallations.filter(installation => !installation.syncStatus);
 };
 
-export default fetchGitHubOrganizations;
+export const checkGitHubOrgOwnership = async (githubToken: string, jiraHost: string, githubInstallationId: number, logger: Logger): Promise<CheckOrgOwnershipResponse> => {
+	const metrics = {
+		trigger: "check-github-ownership"
+	};
+	const gitHubUserClient = await createUserClient(githubToken, jiraHost, metrics, logger, undefined);
+	const gitHubAppClient = await createAppClient(logger, jiraHost, undefined, metrics);
+
+	logger.info("Fetching info about user");
+	const { data: { login } } = await gitHubUserClient.getUser();
+
+	logger.info("Fetching info about installation");
+	const { data: installation } = await gitHubAppClient.getInstallation(githubInstallationId);
+	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraHost, { trigger: "hasAdminAccess" }, logger, undefined);
+	const hasAdminAccess = await isUserAdminOfOrganization(gitHubUserClient, jiraHost, gitHubInstallationClient, installation.account.login, login, installation.target_type, logger);
+
+	return {
+		isAdmin: hasAdminAccess,
+		orgName: installation.account.login
+	};
+};

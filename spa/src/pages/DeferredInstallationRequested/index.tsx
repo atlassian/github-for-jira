@@ -12,6 +12,9 @@ import { token } from "@atlaskit/tokens";
 import Button from "@atlaskit/button";
 import { useEffect, useState } from "react";
 import { AxiosError } from "axios";
+import { CheckOrgOwnershipResponse } from "../../rest-interfaces";
+import { ErrorObjType, modifyError } from "../../utils/modifyError";
+import ErrorUI from "../../components/Error";
 
 const paragraphStyle = css`
 	color: ${token("color.text.subtle")};
@@ -26,13 +29,24 @@ const DeferredInstallationRequested = () => {
 	const navigate = useNavigate();
 	const username = OAuthManager.getUserDetails().username || "";
 
+	const [hostUrl, setHostUrl] = useState("");
 	const [loggedInUser, setLoggedInUser] = useState<string | undefined>(username);
 	const [isLoading, setIsLoading] = useState(false);
 	const [isLoggedIn, setIsLoggedIn] = useState(false);
 	const [userRole, setUserRole] = useState<UserRole>("notSet");
+	const [orgName, setOrgName] = useState("");
+	const [error, setError] = useState<ErrorObjType | undefined>(undefined);
+
+	const getJiraHostUrls = () => {
+		AP.getLocation((location: string) => {
+			const locationUrl = new URL(location);
+			setHostUrl( locationUrl.origin);
+		});
+	};
 
 	// Authenticate if no token/username is set
 	useEffect(() => {
+		getJiraHostUrls();
 		const authenticate = async () => {
 			setIsLoading(true);
 			try {
@@ -75,12 +89,12 @@ const DeferredInstallationRequested = () => {
 		// Check if the current Github user is admin or not
 		const checkOrgOwnership = async () => {
 			if (githubInstallationId) {
-				const status: boolean | AxiosError = await OAuthManager.checkGithubOwnership(parseInt(githubInstallationId));
-				if (status instanceof AxiosError) {
-					console.log("Error", status);
+				const response: CheckOrgOwnershipResponse | AxiosError = await OAuthManager.checkGithubOwnership(parseInt(githubInstallationId));
+				if (response instanceof AxiosError) {
 					setUserRole("nonAdmin");
 				} else {
-					setUserRole("admin");
+					setUserRole(response.isAdmin ? "admin" : "nonAdmin");
+					setOrgName(response.orgName);
 				}
 			}
 		};
@@ -104,12 +118,14 @@ const DeferredInstallationRequested = () => {
 
 	const connectOrg = async () => {
 		if (githubInstallationId) {
-			const connected: boolean | AxiosError = await AppManager.connectOrg(parseInt(githubInstallationId));
+			setIsLoading(true);
+			const connected: boolean | AxiosError = await AppManager.connectOrg(parseInt(githubInstallationId + 51));
 			if (connected instanceof AxiosError) {
-				console.log("Error", status);
+				setError(modifyError(connected, {}, { onClearGitHubToken: () => {}, onRelogin: () => {} }));
 			} else {
 				navigate("connected");
 			}
+			setIsLoading(true);
 		}
 	};
 	const navigateBackToSteps = () => navigate("/spa/steps");
@@ -118,6 +134,9 @@ const DeferredInstallationRequested = () => {
 		<Wrapper>
 			<SyncHeader />
 			{
+				error && <ErrorUI type={error.type} message={error.message} />
+			}
+			{
 				isLoading ? <SkeletonForLoading /> : <>
 					{
 						userRole === "notSet" && <SkeletonForLoading />
@@ -125,7 +144,7 @@ const DeferredInstallationRequested = () => {
 					{
 						userRole === "nonAdmin" && 	<Step title="You don't have owner permission">
 							<p>
-								Can’t connect ORG to JIRAHOST as you’re not the organisation’s owner.<br />
+								Can’t connect <b>{orgName}</b> to <b>{hostUrl}</b> as you’re not the organisation’s owner.<br />
 								An organization owner needs to complete connection,
 								send them instructions on how to do this.
 							</p>
@@ -135,15 +154,15 @@ const DeferredInstallationRequested = () => {
 						userRole === "admin" && <Step title="Request sent">
 							<>
 								<div css={paragraphStyle}>
-									Repositories in <b>ORG NAME</b> will be available<br />
-									to all projects in <b>JIRAHOST</b>.
+									Repositories in <b>{orgName}</b> will be available<br />
+									to all projects in <b>{hostUrl}</b>.
 								</div>
 								<Button
 									style={{ paddingLeft: 0 }}
 									appearance="link"
 									onClick={connectOrg}
 								>
-									Sign in & Install
+									Install
 								</Button>
 							</>
 						</Step>

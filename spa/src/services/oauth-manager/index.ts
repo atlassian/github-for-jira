@@ -1,6 +1,7 @@
 import Api from "../../api";
 import { AxiosError } from "axios";
 import { popup, reportError } from "../../utils";
+import { CheckOrgOwnershipResponse } from "../../../../src/rest-interfaces";
 
 let username: string | undefined;
 let email: string | undefined;
@@ -33,8 +34,8 @@ async function checkValidity(): Promise<boolean | AxiosError> {
 	}
 }
 
-async function checkGithubOwnership(githubInstallationId: number): Promise<boolean | AxiosError> {
-	if (!Api.token.hasGitHubToken()) return false;
+async function checkGithubOwnership(githubInstallationId: number): Promise<CheckOrgOwnershipResponse | AxiosError> {
+	if (!Api.token.hasGitHubToken()) return { isAdmin: false, orgName: "" };
 
 	try {
 		const res = await Api.orgs.checkOrgOwnership(githubInstallationId);
@@ -48,8 +49,11 @@ async function checkGithubOwnership(githubInstallationId: number): Promise<boole
 			});
 		}
 
-		return ret;
+		return { isAdmin: ret, orgName: res.data.orgName };
 	} catch (e: unknown) {
+		if ((e as any).response.status === 403) {
+			return { isAdmin: false, orgName: (e as any).response.data.orgName };
+		}
 		reportError(new Error("Fail checkGithubOwnership", { cause: e }), { path: "checkGithubOwnership" });
 		return e as AxiosError;
 	}
