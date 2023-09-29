@@ -119,7 +119,7 @@ const DeferredInstallationRequested = () => {
 	const connectOrg = async () => {
 		if (githubInstallationId) {
 			setIsLoading(true);
-			const connected: boolean | AxiosError = await AppManager.connectOrg(parseInt(githubInstallationId ));
+			const connected: boolean | AxiosError = await AppManager.connectOrg(parseInt(githubInstallationId));
 			if (connected instanceof AxiosError) {
 				setError(modifyError(connected, {}, { onClearGitHubToken: () => {}, onRelogin: () => {} }));
 			} else {
