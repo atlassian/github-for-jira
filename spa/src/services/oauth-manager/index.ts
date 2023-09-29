@@ -51,11 +51,12 @@ async function checkGithubOwnership(githubInstallationId: number): Promise<Check
 
 		return { isAdmin: ret, orgName: res.data.orgName };
 	} catch (e: unknown) {
-		if ((e as any).response.status === 403) {
-			return { isAdmin: false, orgName: (e as any).response.data.orgName };
+		const err = e as { response: { status?: number, data: { orgName: string } } };
+		if (err.response.status === 403) {
+			return { isAdmin: false, orgName: err.response.data.orgName };
 		}
-		reportError(new Error("Fail checkGithubOwnership", { cause: e }), { path: "checkGithubOwnership" });
-		return e as AxiosError;
+		reportError(new Error("Fail checkGithubOwnership", { cause: err }), { path: "checkGithubOwnership" });
+		return err as AxiosError;
 	}
 }
 
