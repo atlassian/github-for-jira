@@ -49,8 +49,10 @@ const getPostMessageScript = function(opts: Record<string, unknown>) {
 	return `<html>
 			<body></body>
 			<script>
+			if (window.opener) {
 				window.opener.postMessage(${JSON.stringify({ ...opts })}, window.origin);
 				window.close();
+			}
 			</script>
 		</html>
 	`;
