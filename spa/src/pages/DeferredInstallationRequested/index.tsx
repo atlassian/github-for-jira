@@ -18,6 +18,8 @@ const paragraphStyle = css`
 	margin-bottom: ${token("space.100")};
 `;
 
+type UserRole = "admin" | "nonAdmin" | "notSet";
+
 const DeferredInstallationRequested = () => {
 	const [searchParams] = useSearchParams();
 	const githubInstallationId = searchParams.get("gitHubInstallationId");
@@ -27,7 +29,7 @@ const DeferredInstallationRequested = () => {
 	const [loggedInUser, setLoggedInUser] = useState<string | undefined>(username);
 	const [isLoading, setIsLoading] = useState(false);
 	const [isLoggedIn, setIsLoggedIn] = useState(false);
-	const [isAdmin, setIsAdmin] = useState(false);
+	const [userRole, setUserRole] = useState<UserRole>("notSet");
 
 	// Authenticate if no token/username is set
 	useEffect(() => {
@@ -76,9 +78,9 @@ const DeferredInstallationRequested = () => {
 				const status: boolean | AxiosError = await OAuthManager.checkGithubOwnership(parseInt(githubInstallationId));
 				if (status instanceof AxiosError) {
 					console.log("Error", status);
-					setIsAdmin(false);
+					setUserRole("nonAdmin");
 				} else {
-					setIsAdmin(true);
+					setUserRole("admin");
 				}
 			}
 		};
@@ -118,31 +120,33 @@ const DeferredInstallationRequested = () => {
 			{
 				isLoading ? <SkeletonForLoading /> : <>
 					{
-						isAdmin ? <>
-							<Step title="Request sent">
-								<>
-									<div css={paragraphStyle}>
-										Repositories in <b>ORG NAME</b> will be available<br />
-										to all projects in <b>JIRAHOST</b>.
-									</div>
-									<Button
-										style={{ paddingLeft: 0 }}
-										appearance="link"
-										onClick={connectOrg}
-									>
-										Sign in & Install
-									</Button>
-								</>
-							</Step>
-						</> : <>
-							<Step title="You don't have owner permission">
-								<p>
-									Can’t connect ORG to JIRAHOST as you’re not the organisation’s owner.<br />
-									An organization owner needs to complete connection,
-									send them instructions on how to do this.
-								</p>
-							</Step>
-						</>
+						userRole === "notSet" && <SkeletonForLoading />
+					}
+					{
+						userRole === "nonAdmin" && 	<Step title="You don't have owner permission">
+							<p>
+								Can’t connect ORG to JIRAHOST as you’re not the organisation’s owner.<br />
+								An organization owner needs to complete connection,
+								send them instructions on how to do this.
+							</p>
+						</Step>
+					}
+					{
+						userRole === "admin" && <Step title="Request sent">
+							<>
+								<div css={paragraphStyle}>
+									Repositories in <b>ORG NAME</b> will be available<br />
+									to all projects in <b>JIRAHOST</b>.
+								</div>
+								<Button
+									style={{ paddingLeft: 0 }}
+									appearance="link"
+									onClick={connectOrg}
+								>
+									Sign in & Install
+								</Button>
+							</>
+						</Step>
 					}
 					{
 						loggedInUser &&
