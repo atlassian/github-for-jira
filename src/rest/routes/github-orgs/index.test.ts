@@ -159,4 +159,76 @@ describe("Test cases for GitHub Org Route", () => {
 			expect(body.errorCode).toBe("INVALID_OR_MISSING_ARG");
 		});
 	});
+
+	describe("Checking Github orgs ownership", function () {
+		it("Should return error if no githubInstallationId is passed", async () => {
+			const resp = await supertest(app)
+				.get("/rest/app/cloud/org/ownership")
+				.set("authorization", `${getToken()}`)
+				.set("github-auth", "github-token");
+
+			expect(resp.status).toBe(400);
+			expect(resp.body.errorCode).toBe("INVALID_OR_MISSING_ARG");
+		});
+		it("Should return error for non-admin users", async () => {
+			githubNock
+				.get("/user")
+				.reply(200, { login: "test-user" });
+			githubNock
+				.get("/app/installations/15")
+				.reply(200, {
+					"id": 4,
+					"account": {
+						"login": "test-org-1",
+						"id": 11,
+						"type": "User",
+						"site_admin": false
+					},
+					"app_id": 111
+				});
+			githubNock
+				.get("/user/memberships/orgs/test-org-1")
+				.reply(200, {
+					role: "user"
+				});
+
+			const resp = await supertest(app)
+				.get("/rest/app/cloud/org/ownership?githubInstallationId=15")
+				.set("authorization", `${getToken()}`)
+				.set("github-auth", "github-token");
+
+			expect(resp.status).toBe(403);
+			expect(resp.body.orgName).toBe("test-org-1");
+		});
+		it("Should return valid response for admin users", async () => {
+			githubNock
+				.get("/user")
+				.reply(200, { login: "test-user" });
+			githubNock
+				.get("/app/installations/15")
+				.reply(200, {
+					"id": 4,
+					"account": {
+						"login": "test-org-1",
+						"id": 11,
+						"type": "User",
+						"site_admin": false
+					},
+					"app_id": 111
+				});
+			githubNock
+				.get("/user/memberships/orgs/test-org-1")
+				.reply(200, {
+					role: "admin"
+				});
+
+			const resp = await supertest(app)
+				.get("/rest/app/cloud/org/ownership?githubInstallationId=15")
+				.set("authorization", `${getToken()}`)
+				.set("github-auth", "github-token");
+
+			expect(resp.status).toBe(200);
+			expect(resp.body.orgName).toBe("test-org-1");
+		});
+	});
 });
