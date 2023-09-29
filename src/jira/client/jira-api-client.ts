@@ -105,7 +105,6 @@ export class JiraClient {
 		return await this.axios.delete(`/rest/security/1.0/linkedWorkspaces/bulk?workspaceIds=${subscriptionId}`);
 	}
 
-	// TODO TEST
 	async checkAdminPermissions(accountId: string) {
 		const payload = {
 			accountId,
@@ -116,7 +115,6 @@ export class JiraClient {
 		return await this.axios.post("/rest/api/latest/permissions/check", payload);
 	}
 
-	// TODO TEST
 	// ISSUES
 	async getIssue(issueId: string, query = { fields: "summary" }): Promise<AxiosResponse<JiraIssue>> {
 		return this.axios.get("/rest/api/latest/issue/{issue_id}", {
@@ -126,8 +124,6 @@ export class JiraClient {
 			}
 		});
 	}
-
-	// TODO TEST
 	async getAllIssues(issueIds: string[], query?: { fields: string }): Promise<JiraIssue[]> {
 		const responses = await Promise.all<AxiosResponse<JiraIssue> | undefined>(
 			issueIds.map((issueId) => this.getIssue(issueId, query).catch(() => undefined))
@@ -140,13 +136,11 @@ export class JiraClient {
 		}, []);
 	}
 
-	// TODO TEST
 	static parseIssueText(text: string): string[] | undefined {
 		if (!text) return undefined;
 		return jiraIssueKeyParser(text);
 	}
 
-	// TODO TEST
 	// ISSUE COMMENTS
 	async listIssueComments(issueId: string) {
 		return this.axios.get("/rest/api/latest/issue/{issue_id}/comment?expand=properties", {
@@ -156,7 +150,6 @@ export class JiraClient {
 		});
 	}
 
-	// TODO TEST
 	async addIssueComment(issueId: string, payload: any) {
 		return this.axios.post("/rest/api/latest/issue/{issue_id}/comment", payload, {
 			urlParams: {
@@ -165,7 +158,6 @@ export class JiraClient {
 		});
 	}
 
-	// TODO TEST
 	async updateIssueComment(issueId: string, commentId: string, payload: any) {
 		return this.axios.put("rest/api/latest/issue/{issue_id}/comment/{comment_id}", payload, {
 			urlParams: {
@@ -175,7 +167,6 @@ export class JiraClient {
 		});
 	}
 
-	// TODO TEST
 	async deleteIssueComment(issueId: string, commentId: string) {
 		return this.axios.delete("rest/api/latest/issue/{issue_id}/comment/{comment_id}", {
 			urlParams: {
@@ -185,7 +176,6 @@ export class JiraClient {
 		});
 	}
 
-	// TODO TEST
 	// ISSUE TRANSITIONS
 	async listIssueTransistions(issueId: string) {
 		return this.axios.get("/rest/api/latest/issue/{issue_id}/transitions", {
@@ -195,7 +185,6 @@ export class JiraClient {
 		});
 	}
 
-	// TODO TEST
 	async updateIssueTransistions(issueId: string, transitionId: string) {
 		return this.axios.post("/rest/api/latest/issue/{issue_id}/transitions", {
 			transition: {
@@ -208,7 +197,6 @@ export class JiraClient {
 		});
 	}
 
-	// TODO TEST
 	// ISSUE WORKLOGS
 	async addWorklogForIssue(issueId: string, payload: any) {
 		return this.axios.post("/rest/api/latest/issue/{issue_id}/worklog", payload, {
@@ -218,7 +206,6 @@ export class JiraClient {
 		});
 	}
 
-	// TODO TEST
 	// DELETE INSTALLATION
 	async deleteInstallation(gitHubInstallationId: string | number) {
 		return Promise.all([
@@ -243,7 +230,6 @@ export class JiraClient {
 		]);
 	}
 
-	// TODO TEST
 	// DEV INFO
 	async deleteBranch(transformedRepositoryId: TransformedRepositoryId, branchRef: string) {
 		return this.axios.delete("/rest/devinfo/0.10/repository/{transformedRepositoryId}/branch/{branchJiraId}",
@@ -259,7 +245,6 @@ export class JiraClient {
 		);
 	}
 
-	// TODO TEST
 	async deletePullRequest(transformedRepositoryId: TransformedRepositoryId, pullRequestId: string) {
 		return this.axios.delete("/rest/devinfo/0.10/repository/{transformedRepositoryId}/pull_request/{pullRequestId}", {
 			params: {
@@ -272,7 +257,6 @@ export class JiraClient {
 		});
 	}
 
-	// TODO TEST
 	async deleteRepository(repositoryId: number, gitHubBaseUrl?: string) {
 		const transformedRepositoryId = transformRepositoryId(repositoryId, gitHubBaseUrl);
 		return Promise.all([
@@ -324,7 +308,6 @@ export class JiraClient {
 		);
 	}
 
-	// TODO TEST
 	async submitBuilds(data: JiraBuildBulkSubmitData, repositoryId: number, options?: JiraSubmitOptions) {
 		updateIssueKeysFor(data.builds, uniq);
 		if (!withinIssueKeyLimit(data.builds)) {
@@ -348,7 +331,7 @@ export class JiraClient {
 		};
 
 		this.logger.info("Sending builds payload to jira.");
-		return await this.axios.post("/rest/builds/0.1/bulk", payload);
+		return this.axios.post("/rest/builds/0.1/bulk", payload);
 	}
 
 	// TODO TEST
@@ -400,7 +383,6 @@ export class JiraClient {
 		};
 	}
 
-	// TODO TEST
 	async submitRemoteLinks(data, options?: JiraSubmitOptions) {
 		// Note: RemoteLinks doesn't have an issueKey field and takes in associations instead
 		updateIssueKeyAssociationValuesFor(data.remoteLinks, uniq);
@@ -418,10 +400,9 @@ export class JiraClient {
 			operationType: options?.operationType || "NORMAL"
 		};
 		this.logger.info("Sending remoteLinks payload to jira.");
-		await this.axios.post("/rest/remotelinks/1.0/bulk", payload);
+		return this.axios.post("/rest/remotelinks/1.0/bulk", payload);
 	}
 
-	// TODO TEST
 	async submitVulnerabilities(data: JiraVulnerabilityBulkSubmitData, options?: JiraSubmitOptions): Promise<AxiosResponse> {
 		const payload = {
 			vulnerabilities: data.vulnerabilities,
