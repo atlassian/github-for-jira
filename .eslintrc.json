@@ -120,15 +120,11 @@
 	},
 	{
 		"files": [
-			"src/*.ts",
-			"src/config/**",
 			"src/github/**",
 			"src/jira/**",
-			"src/middleware/**",
 			"src/models/**",
 			"src/sync/**",
-			"src/transforms/**",
-			"src/util/**"
+			"src/transforms/**"
 		],
 		"rules": {
 			// To be removed later

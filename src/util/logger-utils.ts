@@ -61,7 +61,7 @@ export class SafeRawLogStream extends RawLogStream {
 
 		Object.keys(recordClone).forEach(key => {
 			if (SENSITIVE_DATA_FIELDS.includes(key)) {
-				recordClone[key] = createHashWithSharedSecret(recordClone[key]);
+				recordClone[key] = createHashWithSharedSecret(recordClone[key] as string | undefined);
 			}
 		});
 
