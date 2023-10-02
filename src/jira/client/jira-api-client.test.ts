@@ -62,6 +62,17 @@ describe("JiraClient", () => {
 		});
 	});
 
+	describe("getCloudId()", () => {
+		it("should return cloudId data",  async () => {
+			jiraNock
+				.get("_edge/tenant_info")
+				.reply(200, { data: "cat" });
+
+			const data = await jiraClient?.getCloudId();
+			expect(data).toEqual("cat");
+		});
+	});
+
 	describe("appPropertiesGet()", () => {
 		it("returns data",  async () => {
 			jiraNock
