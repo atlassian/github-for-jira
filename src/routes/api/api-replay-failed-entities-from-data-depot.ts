@@ -44,10 +44,14 @@ export const ApiReplyFailedEntitiesFromDataDepotPost = async (req: Request, res:
 
 	let successfulCount = 0;
 
-	replayEntities.forEach(async (replayEntity) => {
+	await Promise.all(replayEntities.map(async (replayEntity) => {
 		try {
 			const { repoId, alertNumber } = getRepoIdAndAlertNumber(replayEntity.identifier);
 			const subscription = await getSubscription(replayEntity.gitHubInstallationId, replayEntity.hashedJiraHost);
+			if (!subscription) {
+				info(`No subscription found for ${replayEntity.identifier}`);
+				return Promise.resolve();
+			}
 			const gitHubInstallationClient = await createInstallationClient(replayEntity.gitHubInstallationId, subscription.jiraHost, { trigger: "replay-rejected-entities-from-data-depot" }, log, undefined);
 
 			const jiraPayload: JiraVulnerabilityBulkSubmitData = { vulnerabilities: [] };
@@ -83,7 +87,7 @@ export const ApiReplyFailedEntitiesFromDataDepotPost = async (req: Request, res:
 		} catch (err) {
 			info(`Failed to process replay entity with identifier ${replayEntity.identifier}`);
 		}
-	});
+	}));
 	info(`Total replay entities processed successfully - ${successfulCount}/${replayEntities.length}`);
 	res.end();
 };
@@ -175,16 +179,14 @@ const getSecretScanningVulnPayload = async (
 	return undefined;
 };
 
-const getSubscription = async (gitHubInstallationId: number, hashedJiraHost: string): Promise<Subscription> => {
+const getSubscription = async (gitHubInstallationId: number, hashedJiraHost: string): Promise<Subscription | undefined> => {
 	const subscriptions = await Subscription.getAllForInstallation(gitHubInstallationId, undefined);
-	return findSubscriptionForJiraHost(subscriptions, hashedJiraHost);
-};
-
-const findSubscriptionForJiraHost = (subscriptions: Subscription[], hashedJiraHost: string): Subscription => {
 	const filteredSubscriptions = subscriptions.filter(subscription => createHashWithSharedSecret(subscription.jiraHost) == hashedJiraHost);
-	if (filteredSubscriptions.length > 1) {
-		info(`Found ${filteredSubscriptions.length} subscription for Jira ${hashedJiraHost}`);
+	if (filteredSubscriptions.length == 0) {
+		info(`Not found any subscription for GitHub Installation Id ${gitHubInstallationId}, Jira ${hashedJiraHost}`);
+		return undefined;
 	}
+	info(`Found ${filteredSubscriptions.length} subscription for Jira ${hashedJiraHost}`);
 	return filteredSubscriptions[0];
 };
 
