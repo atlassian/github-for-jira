@@ -157,6 +157,7 @@ const FillMemAndGenerateCoreDump = (req: Request, res: Response) => {
 ApiRouter.post("/fill-mem-and-generate-coredump", FillMemAndGenerateCoreDump);
 
 const AbortPost = (_req: Request, res: Response) => {
+	res.json({ message: "should never happen" });
 	process.abort();
 };
 
