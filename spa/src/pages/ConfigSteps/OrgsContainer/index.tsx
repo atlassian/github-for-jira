@@ -11,13 +11,12 @@ import {
 	ErrorForNonAdmins,
 	ErrorForSSO,
 } from "../../../components/Error/KnownErrors";
-import useOrgListScroll from "../../../helper/useOrgListScroll";
+import Scrollbars from "../../../common/Scrollbars";
 
-const orgsWrapperStyle = css`
-	max-height: 250px;
-	overflow-y: auto;
-	width: 100%;
-`;
+const MAX_HEIGHT_FOR_ORGS_CONTAINER = 250;
+const PADDING_RIGHT_FOR_ORGS_CONTAINER = 80;
+const MARGIN_RIGHT_FOR_ORGS_CONTAINER = -80;
+
 const orgDivStyle = css`
 	display: flex;
 	justify-content: space-between;
@@ -25,26 +24,15 @@ const orgDivStyle = css`
 	padding: ${token("space.150")} 0;
 	margin-bottom: ${token("space.100")};
 `;
-
 const orgDivWithErrorStyle = css`
 	align-items: start;
 `;
-
 const orgNameStyle = css`
 	color: ${token("color.text")};
 	font-weight: 590;
 `;
 const iconWrapperStyle = css`
 	padding-top: ${token("space.150")};
-`;
-
-const gradientStyle = css`
-	background: linear-gradient(rgba(255, 255, 255, 0), rgb(255, 255, 255));
-	height: 70px;
-	margin-top: -70px;
-	position: relative;
-	width: 100%;
-	display: block;
 `;
 
 const OrganizationsList = ({
@@ -61,12 +49,6 @@ const OrganizationsList = ({
 	resetCallback: (args: boolean) => void;
 	connectingOrg: (org: GitHubInstallationType) => void;
 }) => {
-	const {
-		isScrolledToBottom,
-		isListScrollable,
-		containerRef,
-		hasUserScrolledRef,
-	} = useOrgListScroll();
 	const [clickedOrg, setClickedOrg] = useState<
 		GitHubInstallationType | undefined
 	>(undefined);
@@ -103,66 +85,68 @@ const OrganizationsList = ({
 		}
 	};
 	return (
-		<>
-			<div css={orgsWrapperStyle} ref={containerRef}>
+		<Scrollbars
+			style={{
+			maxHeight: MAX_HEIGHT_FOR_ORGS_CONTAINER,
+			paddingRight: PADDING_RIGHT_FOR_ORGS_CONTAINER,
+			marginRight: MARGIN_RIGHT_FOR_ORGS_CONTAINER
+			}}
+		>
+			<>
 				{organizations.map((org) => {
-					const hasError = !canConnect(org);
-					const orgDivStyles = hasError
-						? [orgDivStyle, orgDivWithErrorStyle]
-						: [orgDivStyle];
-					return (
-						<div key={org.id} css={orgDivStyles}>
-							{canConnect(org) ? (
-								<>
-									<span css={orgNameStyle}>{org.account.login}</span>
-									{loaderForOrgClicked && clickedOrg?.id === org.id ? (
-										<LoadingButton style={{ width: 80 }} isLoading>
-											Loading button
-										</LoadingButton>
-									) : (
-										<Button
-											isDisabled={
-												loaderForOrgClicked && clickedOrg?.id !== org.id
-											}
-											onClick={async () => {
-												setLoaderForOrgClicked(true);
-												setClickedOrg(org);
-												try {
-													// Calling the create connection function that is passed from the parent
-													await connectingOrg(org);
-												} finally {
-													setLoaderForOrgClicked(false);
-												}
-											}}
-										>
-											Connect
-										</Button>
-									)}
-								</>
-							) : (
-								<>
-									<div>
+						const hasError = !canConnect(org);
+						const orgDivStyles = hasError
+							? [orgDivStyle, orgDivWithErrorStyle]
+							: [orgDivStyle];
+						return (
+							<div key={org.id} css={orgDivStyles}>
+								{canConnect(org) ? (
+									<>
 										<span css={orgNameStyle}>{org.account.login}</span>
-										<div>{errorMessage(org)}</div>
-									</div>
-									<div css={iconWrapperStyle}>
-										<WarningIcon
-											label="warning"
-											primaryColor={token("color.background.warning.bold")}
-											size="medium"
-										/>
-									</div>
-								</>
-							)}
-						</div>
-					);
-				})}
-			</div>
-			{isListScrollable &&
-				(hasUserScrolledRef.current ? !isScrolledToBottom : true) && (
-					<div css={gradientStyle} />
-				)}
-		</>
+										{loaderForOrgClicked && clickedOrg?.id === org.id ? (
+											<LoadingButton style={{ width: 80 }} isLoading>
+												Loading button
+											</LoadingButton>
+										) : (
+											<Button
+												isDisabled={
+													loaderForOrgClicked && clickedOrg?.id !== org.id
+												}
+												onClick={async () => {
+													setLoaderForOrgClicked(true);
+													setClickedOrg(org);
+													try {
+														// Calling the create connection function that is passed from the parent
+														await connectingOrg(org);
+													} finally {
+														setLoaderForOrgClicked(false);
+													}
+												}}
+											>
+												Connect
+											</Button>
+										)}
+									</>
+								) : (
+									<>
+										<div>
+											<span css={orgNameStyle}>{org.account.login}</span>
+											<div>{errorMessage(org)}</div>
+										</div>
+										<div css={iconWrapperStyle}>
+											<WarningIcon
+												label="warning"
+												primaryColor={token("color.background.warning.bold")}
+												size="medium"
+											/>
+										</div>
+									</>
+								)}
+							</div>
+						);
+					})}
+			</>
+		</Scrollbars>
 	);
 };
 

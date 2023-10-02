@@ -177,7 +177,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 						updateSequenceId: Date.now(),
 						flags: isMergeCommit ? ["MERGE_COMMIT"] : undefined
 					};
-				} catch (err) {
+				} catch (err: unknown) {
 					log.warn({ err }, "Failed to fetch data from GitHub");
 					throw err;
 				}
@@ -209,13 +209,13 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 					jiraResponse?.status,
 					gitHubAppId
 				);
-			} catch (err) {
+			} catch (err: unknown) {
 				log.warn({ err }, "Failed to send data to Jira");
 				throw err;
 			}
 		}
 		log.info("Push has succeeded");
-	} catch (err) {
+	} catch (err: unknown) {
 		log.warn({ err }, "Push has failed");
 		throw err;
 	}

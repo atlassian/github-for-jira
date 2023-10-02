@@ -70,7 +70,8 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 		});
 
 		res.redirect(`/github/${uuid}/configuration`);
-	} catch (error) {
+	} catch (err: unknown) {
+		const error = err as { response?: { status?: number } };
 		const errorQueryParam = error?.response?.status === 422 ? Errors.MISSING_GITHUB_APP_NAME : "";
 		req.log.error({ reason: error }, "Error during GitHub App manifest flow");
 		/**

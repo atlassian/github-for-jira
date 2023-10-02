@@ -9,7 +9,7 @@ import { envVars } from "config/env";
 export class JiraClient {
 	axios: AxiosInstance;
 
-	static async getNewClient(installation: Installation, log: Logger) {
+	static async getNewClient(this: void, installation: Installation, log: Logger) {
 		const jiraClient = new JiraClient();
 		jiraClient.axios = getAxiosInstance(
 			installation.jiraHost,
@@ -31,7 +31,7 @@ export class JiraClient {
 	async isAuthorized(): Promise<boolean> {
 		try {
 			return (await this.axios.get("/rest/devinfo/0.10/existsByProperties?fakeProperty=1")).status === 200;
-		} catch (error) {
+		} catch (error: unknown) {
 			if (!(error instanceof JiraClientError)) {
 				throw error;
 			}

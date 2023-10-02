@@ -81,7 +81,7 @@ const finishOAuthFlow = async (
 	code: string,
 	log: Logger,
 	respondWithError: (status: number, msg: string) => void,
-	populateSession: (gitHubToken: string, gitHubRefreshToke: string, gitHubServerUuid?: string) => void
+	populateSession: (gitHubToken: string, gitHubRefreshToke: string | undefined, gitHubServerUuid?: string) => void
 ) => {
 	const jiraHost = (await Installation.findByPk(secureState.installationIdPk))?.jiraHost;
 	if (!jiraHost) {
@@ -108,20 +108,22 @@ const finishOAuthFlow = async (
 			jiraHost, metrics, log
 		);
 
-		const { accessToken, refreshToken } = await gitHubAnonymousClient.exchangeGitHubToken({
+		const exchangeGitHubToken = await gitHubAnonymousClient.exchangeGitHubToken({
 			clientId: secureState.gitHubClientId, clientSecret: gitHubClientSecret, code, state: stateKey
 		});
 
-		if (!accessToken) {
+		if (!exchangeGitHubToken) {
 			return respondWithError(400, `didn't get access token from GitHub`);
 		}
+
+		const { accessToken, refreshToken } = exchangeGitHubToken;
 		populateSession(accessToken, refreshToken, secureState.gitHubServerUuid);
 
 		log.debug(`got access token from GitHub, redirecting to ${secureState.postLoginRedirectUrl}`);
 
 		log.info({ redirectUrl: secureState.postLoginRedirectUrl }, "Github OAuth code valid, redirecting to internal URL");
 		return secureState.postLoginRedirectUrl;
-	} catch (err) {
+	} catch (err: unknown) {
 		log.warn({ err }, `Cannot retrieve access token from Github`);
 		return respondWithError(401, "Cannot retrieve access token from Github");
 	}
@@ -176,7 +178,7 @@ export const GithubOAuthCallbackGet = async (req: Request, res: Response, next: 
 			res.status(status).send(message);
 		},
 
-		(gitHubToken: string, gitHubRefreshToken: string, gitHubServerUuid?: string) => {
+		(gitHubToken: string, gitHubRefreshToken: string | undefined, gitHubServerUuid?: string) => {
 			req.session.githubToken = gitHubToken;
 			req.session.githubRefreshToken = gitHubRefreshToken;
 			req.session.gitHubUuid = gitHubServerUuid;
@@ -233,7 +235,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		// Everything's good, set it to res.locals
 		res.locals.githubToken = githubToken;
 		return next();
-	} catch (err) {
+	} catch (err: unknown) {
 		req.log.info({ err }, `Github token is not valid.`);
 		if (req.session?.githubRefreshToken) {
 			req.log.debug(`Trying to renew Github token...`);
@@ -281,7 +283,7 @@ const renewGitHubToken = async (githubRefreshToken: string, gitHubAppConfig: Git
 			const res = await gitHubAnonymousClient.renewGitHubToken(githubRefreshToken, gitHubAppConfig.clientId, clientSecret);
 			return { accessToken: res.accessToken, refreshToken: res.refreshToken };
 		}
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.warn({ err }, "Failed to renew Github token...");
 	}
 	logger.debug("Failed to renew Github token...");

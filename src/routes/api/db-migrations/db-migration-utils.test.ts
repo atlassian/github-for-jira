@@ -48,10 +48,10 @@ describe("DB migration utils", () => {
 				.resolves.not.toThrow();
 		});
 		it("should throw error when it is not last script is db folder", async () => {
-			let err = null;
+			let err: Error | null = null;
 			try {
 				await validateScriptLocally(MIGRATION_SCRIPT_FIRST);
-			} catch (e) {err = e;}
+			} catch (e: unknown) {err = e  as Error;}
 			expect(err).toEqual(expect.objectContaining({
 				statusCode: 400
 			}));

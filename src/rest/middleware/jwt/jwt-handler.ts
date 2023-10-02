@@ -1,13 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import Logger from "bunyan";
-import { decodeSymmetric, getAlgorithm } from "atlassian-jwt";
+import { decodeSymmetric, getAlgorithm, AsymmetricAlgorithm, SymmetricAlgorithm } from "atlassian-jwt";
 import { Installation } from "models/installation";
 import { errorWrapper } from "../../helper";
 import { InvalidTokenError } from "config/errors";
+import { BaseLocals } from "../../routes";
 
 const INVALID_SECRET = "some-invalid-secret";
 
-export const JwtHandler = errorWrapper("JwtHandler", async (req: Request, res: Response, next: NextFunction) => {
+export const JwtHandler = errorWrapper("JwtHandler", async (req: Request, res: Response<any, BaseLocals>, next: NextFunction) => {
 
 	const token = req.headers["authorization"];
 
@@ -22,7 +23,7 @@ export const JwtHandler = errorWrapper("JwtHandler", async (req: Request, res: R
 		res.locals.accountId = accountId;
 		next();
 
-	} catch (e) {
+	} catch (e: unknown) {
 		req.log.warn({ err: e }, "Failed to verify JWT token");
 		throw new InvalidTokenError("Unauthorised");
 	}
@@ -30,10 +31,10 @@ export const JwtHandler = errorWrapper("JwtHandler", async (req: Request, res: R
 });
 
 const verifySymmetricJwt = async (token: string, logger: Logger) => {
-	const algorithm = getAlgorithm(token);
+	const algorithm = getAlgorithm(token) as AsymmetricAlgorithm | SymmetricAlgorithm;
 
 	// Decode without verification;
-	const unverifiedClaims = decodeSymmetric(token, INVALID_SECRET, algorithm, true);
+	const unverifiedClaims = decodeSymmetric(token, INVALID_SECRET, algorithm, true) as { iss?: string };
 	if (!unverifiedClaims.iss) {
 		throw new Error("JWT claim did not contain the issuer (iss) claim");
 	}
@@ -47,7 +48,7 @@ const verifySymmetricJwt = async (token: string, logger: Logger) => {
 	const secret = await installation.decrypt("encryptedSharedSecret", logger);
 
 	//decode and verify
-	const claims = decodeSymmetric(token, secret, algorithm, false);
+	const claims = decodeSymmetric(token, secret, algorithm, false) as { sub?: string, exp?: number, qsh?: string };
 
 	const expiry = claims.exp;
 

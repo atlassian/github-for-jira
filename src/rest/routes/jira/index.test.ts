@@ -35,8 +35,9 @@ describe("Testing the route for fetching the Cloud Id", () => {
 			.get("/rest/app/cloud/jira/cloudid")
 			.set("authorization", `${getToken()}`);
 
+		const body = resp.body as { cloudId: string };
 		expect(resp.status).toBe(200);
-		expect(resp.body).toHaveProperty("cloudId");
-		expect(resp.body.cloudId).toBe("1234567890");
+		expect(body).toHaveProperty("cloudId");
+		expect(body.cloudId).toBe("1234567890");
 	});
 });
