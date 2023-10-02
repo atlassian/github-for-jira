@@ -136,7 +136,7 @@ const getCodeScanningVulnPayload = async (
 				html_url: repoSyncState.repoUrl,
 				updated_at: repoSyncState.updatedAt.toString()
 			};
-			const vulnPayload = await transformCodeScanningAlert([codeScanningAlertResponseItem], repository, subscription.jiraHost, logger, undefined, gitHubInstallationClient);
+			const vulnPayload = await transformCodeScanningAlert([codeScanningAlertResponseItem], repository, subscription.jiraHost, logger, undefined);
 			if (vulnPayload.vulnerabilities?.length > 0) {
 				return vulnPayload.vulnerabilities[0];
 			}
