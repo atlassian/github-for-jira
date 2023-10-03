@@ -189,7 +189,7 @@ describe("code_scanning_alert transform", () => {
 					},
 					"containerId": "119484675",
 					"displayName": "Hard-coded credentials",
-					"description": "**Vulnerability:** Hard-coded credentials\n\n**Severity:** Critical\n\nGitHub uses  [Common Vulnerability Scoring System (CVSS)](https://www.atlassian.com/trust/security/security-severity-levels) data to calculate security severity.\n\n**Status:** Open\n\n**Weaknesses:** [CWE-259](https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=259), [CWE-321](https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=321), [CWE-798](https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=798)\n\nVisit the vulnerability’s [code scanning alert page](https://github.com/auzwang/sequelize-playground/security/code-scanning/2) in GitHub for a recommendation and relevant example.",
+					"description": "**Vulnerability:** Hard-coded credentials\n\n**Severity:** Critical\n\nGitHub uses  [Common Vulnerability Scoring System (CVSS)](https://www.atlassian.com/trust/security/security-severity-levels) data to calculate security severity.\n\n**Status:** Open\n\n**Weaknesses:** [CWE-259](https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=259), [CWE-321](https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=321), [CWE-798](https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=798)\n\nVisit the vulnerability’s [code scanning alert page](https://github.com/auzwang/sequelize-playground/security/code-scanning/2) in GitHub for impact, a recommendation, and a relevant example.",
 					"id": "c-119484675-2",
 					"identifiers": [
 						{
