@@ -6,6 +6,7 @@ import supertest from "supertest";
 import { Subscription, SyncStatus } from "~/src/models/subscription";
 import { Installation } from "~/src/models/installation";
 import { createHashWithSharedSecret } from "~/src/util/encryption";
+import { RepoSyncState } from "~/src/models/reposyncstate";
 
 describe("api-replay-failed-entities-from-data-depot", () => {
 
@@ -36,6 +37,15 @@ describe("api-replay-failed-entities-from-data-depot", () => {
 			jiraHost,
 			jiraClientKey: "client-key",
 			syncStatus: SyncStatus.PENDING
+		});
+
+		await RepoSyncState.create({
+			subscriptionId: subscription.id,
+			repoId: 1,
+			repoName: "repo-0",
+			repoOwner: "atlassian",
+			repoFullName: "atlassian/github-for-jira",
+			repoUrl: "github.com/atlassian/github-for-jira"
 		});
 
 	});
@@ -98,5 +108,102 @@ describe("api-replay-failed-entities-from-data-depot", () => {
 			});
 	});
 
+	it("should replay dependabot alert", async () => {
+		app = createApp();
+		githubUserTokenNock(subscription.gitHubInstallationId).persist();
+		githubNock
+			.get("/repos/atlassian/repo-0/dependabot/alerts/10")
+			.reply(200, dependabotAlert);
+
+		jiraNock
+			.post("/rest/security/1.0/bulk")
+			.reply(200, { rejectedEntities:[] });
+
+		await supertest(app)
+			.post(`/api/replay-rejected-entities-from-data-depot`)
+			.send({
+				replayEntities: [{
+					"gitHubInstallationId": subscription.gitHubInstallationId,
+					"hashedJiraHost": createHashWithSharedSecret(subscription.jiraHost),
+					"identifier": "d-1-10"
+				}]
+			})
+			.set("X-Slauth-Mechanism", "asap")
+			.then((res) => {
+				expect(res.text).toContain("Replay entity processed successfully for d-1-10");
+			});
+	});
+
 
 });
+
+const dependabotAlert = {
+	"number": 10,
+	"state": "OPEN",
+	"created_at": "2023-07-13T06:24:50Z",
+	"updated_at": "2023-07-13T06:24:50Z",
+	"dismissed_at": null,
+	"dependency": {
+		"scope": "runtime",
+		"manifest_path": "yarn.lock"
+	},
+	"security_vulnerability": {
+		"severity": "MODERATE"
+	},
+	"security_advisory": {
+		"summary": "semver vulnerable to Regular Expression Denial of Service",
+		"description": "Versions of the package semver before 7.5.2 on the 7.x branch, before 6.3.1 on the 6.x branch, and all other versions before 5.7.2 are vulnerable to Regular Expression Denial of Service (ReDoS) via the function new Range, when untrusted user data is provided as a range.",
+		"identifiers": [
+			{
+				"type": "GHSA",
+				"value": "GHSA-c2qf-rxjj-qqgw"
+			},
+			{
+				"type": "CVE",
+				"value": "CVE-2022-25883"
+			}
+		],
+		"references": [
+			{
+				"url": "https://nvd.nist.gov/vuln/detail/CVE-2022-25883"
+			},
+			{
+				"url": "https://github.com/npm/node-semver/pull/564"
+			},
+			{
+				"url": "https://github.com/npm/node-semver/commit/717534ee353682f3bcf33e60a8af4292626d4441"
+			},
+			{
+				"url": "https://security.snyk.io/vuln/SNYK-JS-SEMVER-3247795"
+			},
+			{
+				"url": "https://github.com/npm/node-semver/blob/main/classes/range.js#L97-L104"
+			},
+			{
+				"url": "https://github.com/npm/node-semver/blob/main/internal/re.js#L138"
+			},
+			{
+				"url": "https://github.com/npm/node-semver/blob/main/internal/re.js#L160"
+			},
+			{
+				"url": "https://github.com/npm/node-semver/pull/585"
+			},
+			{
+				"url": "https://github.com/npm/node-semver/commit/928e56d21150da0413a3333a3148b20e741a920c"
+			},
+			{
+				"url": "https://github.com/npm/node-semver/pull/593"
+			},
+			{
+				"url": "https://github.com/npm/node-semver/commit/2f8fd41487acf380194579ecb6f8b1bbfe116be0"
+			},
+			{
+				"url": "https://github.com/advisories/GHSA-c2qf-rxjj-qqgw"
+			}
+		]
+	},
+	"repository": {
+		"id": 586512978,
+		"url": "https://github.com/atlassian/repo-0"
+	}
+};
