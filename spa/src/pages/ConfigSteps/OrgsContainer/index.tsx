@@ -1,19 +1,22 @@
 /** @jsxImportSource @emotion/react */
+import { useState } from "react";
 import Button, { LoadingButton } from "@atlaskit/button";
 import { GitHubInstallationType } from "../../../../../src/rest-interfaces";
 import { css } from "@emotion/react";
 import { token } from "@atlaskit/tokens";
-import { useState } from "react";
 import WarningIcon from "@atlaskit/icon/glyph/warning";
 import OauthManager from "../../../services/oauth-manager";
-import { ErrorForIPBlocked, ErrorForNonAdmins, ErrorForSSO } from "../../../components/Error/KnownErrors";
+import {
+	ErrorForIPBlocked,
+	ErrorForNonAdmins,
+	ErrorForSSO,
+} from "../../../components/Error/KnownErrors";
+import Scrollbars from "../../../common/Scrollbars";
 
-const orgsWrapperStyle = css`
-	max-height: 250px;
-	overflow-y: auto;
-	padding-right: 80px;
-	margin-right: -80px;
-`;
+const MAX_HEIGHT_FOR_ORGS_CONTAINER = 250;
+const PADDING_RIGHT_FOR_ORGS_CONTAINER = 80;
+const MARGIN_RIGHT_FOR_ORGS_CONTAINER = -80;
+
 const orgDivStyle = css`
 	display: flex;
 	justify-content: space-between;
@@ -21,11 +24,9 @@ const orgDivStyle = css`
 	padding: ${token("space.150")} 0;
 	margin-bottom: ${token("space.100")};
 `;
-
 const orgDivWithErrorStyle = css`
 	align-items: start;
 `;
-
 const orgNameStyle = css`
 	color: ${token("color.text")};
 	font-weight: 590;
@@ -33,7 +34,6 @@ const orgNameStyle = css`
 const iconWrapperStyle = css`
 	padding-top: ${token("space.150")};
 `;
-
 
 const OrganizationsList = ({
 	organizations,
@@ -49,8 +49,12 @@ const OrganizationsList = ({
 	resetCallback: (args: boolean) => void;
 	connectingOrg: (org: GitHubInstallationType) => void;
 }) => {
-	const [clickedOrg, setClickedOrg] = useState<GitHubInstallationType | undefined>(undefined);
-	const canConnect = (org: GitHubInstallationType) => !org.requiresSsoLogin && !org.isIPBlocked && org.isAdmin;
+	const [clickedOrg, setClickedOrg] = useState<
+		GitHubInstallationType | undefined
+	>(undefined);
+
+	const canConnect = (org: GitHubInstallationType) =>
+		!org.requiresSsoLogin && !org.isIPBlocked && org.isAdmin;
 
 	// This method clears the tokens and then re-authenticates
 	const resetToken = async () => {
@@ -81,60 +85,68 @@ const OrganizationsList = ({
 		}
 	};
 	return (
-		<div css={orgsWrapperStyle}>
-			{organizations.map((org) => {
-				const hasError = !canConnect(org);
-				const orgDivStyles = hasError
-					? [orgDivStyle, orgDivWithErrorStyle]
-					: [orgDivStyle];
-				return (
-					<div key={org.id} css={orgDivStyles}>
-						{canConnect(org) ? (
-							<>
-								<span css={orgNameStyle}>{org.account.login}</span>
-								{loaderForOrgClicked && clickedOrg?.id === org.id ? (
-									<LoadingButton style={{ width: 80 }} isLoading>
-										Loading button
-									</LoadingButton>
+		<Scrollbars
+			style={{
+			maxHeight: MAX_HEIGHT_FOR_ORGS_CONTAINER,
+			paddingRight: PADDING_RIGHT_FOR_ORGS_CONTAINER,
+			marginRight: MARGIN_RIGHT_FOR_ORGS_CONTAINER
+			}}
+		>
+			<>
+				{organizations.map((org) => {
+						const hasError = !canConnect(org);
+						const orgDivStyles = hasError
+							? [orgDivStyle, orgDivWithErrorStyle]
+							: [orgDivStyle];
+						return (
+							<div key={org.id} css={orgDivStyles}>
+								{canConnect(org) ? (
+									<>
+										<span css={orgNameStyle}>{org.account.login}</span>
+										{loaderForOrgClicked && clickedOrg?.id === org.id ? (
+											<LoadingButton style={{ width: 80 }} isLoading>
+												Loading button
+											</LoadingButton>
+										) : (
+											<Button
+												isDisabled={
+													loaderForOrgClicked && clickedOrg?.id !== org.id
+												}
+												onClick={async () => {
+													setLoaderForOrgClicked(true);
+													setClickedOrg(org);
+													try {
+														// Calling the create connection function that is passed from the parent
+														await connectingOrg(org);
+													} finally {
+														setLoaderForOrgClicked(false);
+													}
+												}}
+											>
+												Connect
+											</Button>
+										)}
+									</>
 								) : (
-									<Button
-										isDisabled={
-											loaderForOrgClicked && clickedOrg?.id !== org.id
-										}
-										onClick={async () => {
-											setLoaderForOrgClicked(true);
-											setClickedOrg(org);
-											try {
-												// Calling the create connection function that is passed from the parent
-												await connectingOrg(org);
-											} finally {
-												setLoaderForOrgClicked(false);
-											}
-										}}
-									>
-										Connect
-									</Button>
+									<>
+										<div>
+											<span css={orgNameStyle}>{org.account.login}</span>
+											<div>{errorMessage(org)}</div>
+										</div>
+										<div css={iconWrapperStyle}>
+											<WarningIcon
+												label="warning"
+												primaryColor={token("color.background.warning.bold")}
+												size="medium"
+											/>
+										</div>
+									</>
 								)}
-							</>
-						) : (
-							<>
-								<div>
-									<span css={orgNameStyle}>{org.account.login}</span>
-									<div>{errorMessage(org)}</div>
-								</div>
-								<div css={iconWrapperStyle}>
-									<WarningIcon
-										label="warning"
-										primaryColor={token("color.background.warning.bold")}
-										size="medium"
-									/>
-								</div>
-							</>
-						)}
-					</div>
-				);
-			})}
-		</div>
+							</div>
+						);
+					})}
+			</>
+		</Scrollbars>
 	);
 };
 

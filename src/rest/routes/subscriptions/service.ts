@@ -3,8 +3,16 @@ import { Request } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 import { chain, difference } from "lodash";
 import {
-	getConnectionsAndInstallations
+	getConnectionsAndInstallations, InstallationResults
 } from "utils/github-installations-helper";
+import { FailedConnection, SuccessfulConnection } from "rest-interfaces";
+
+type GHEServerWithConnection = {
+	server: GitHubServerApp;
+	successfulConnections: SuccessfulConnection[];
+	failedConnections: FailedConnection[];
+	installations: InstallationResults;
+};
 
 export const getAllSubscriptions = async (jiraHost: string, installationId: number, req: Request) => {
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
@@ -29,7 +37,7 @@ export const getAllSubscriptions = async (jiraHost: string, installationId: numb
 		 * Directly fetching the values using `dataValues`,
 		 * Couldn't get the value using `{plan: true}`, it throws a crypto error,
 		 */
-		return { ...(server as any).dataValues, successfulConnections, failedConnections, installations };
+		return { ...server.dataValues, successfulConnections, failedConnections, installations } as GHEServerWithConnection;
 	}));
 
 	// Grouping the list of servers by `gitHubBaseUrl`

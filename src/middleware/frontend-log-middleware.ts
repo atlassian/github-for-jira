@@ -6,6 +6,7 @@ import { merge } from "lodash";
 import { v4 as newUUID } from "uuid";
 import { moduleUrls } from "~/src/routes/jira/atlassian-connect/jira-atlassian-connect-get";
 import { matchRouteWithPattern } from "~/src/util/match-route-with-pattern";
+import { ParamsDictionary } from "express-serve-static-core";
 
 /*
 
@@ -26,7 +27,7 @@ app.get('/foo', async (req, res) => {
   try {
     doThing()
     res.status(200)
-  } catch (err) {
+  } catch (err: unknown) {
     req.log.error('An error occurred') // ERROR -- An error occurred (userId=123)
     res.status(500)
   }
@@ -45,8 +46,9 @@ declare global {
 	}
 }
 
-export const LogMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const LogMiddleware = async (req: Request<ParamsDictionary, any, { jiraHost?: string }>, res: Response, next: NextFunction): Promise<void> => {
 	req.log = getLogger("frontend-log-middleware", {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		fields: req.log?.fields,
 		level: await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, getUnvalidatedJiraHost(req)),
 		filterHttpRequests: true
@@ -54,6 +56,7 @@ export const LogMiddleware = async (req: Request, res: Response, next: NextFunct
 
 	req.addLogFields = (fields: Record<string, unknown>): void => {
 		if (req.log) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			req.log.fields = merge(req.log.fields, fields);
 		}
 	};
@@ -62,15 +65,19 @@ export const LogMiddleware = async (req: Request, res: Response, next: NextFunct
 		id: req.headers["atl-traceid"] || newUUID()
 	});
 
-	res.once("finish", async () => {
-		if ((res.statusCode < 200 || res.statusCode >= 500) && !(res.statusCode === 503 && await booleanFlag(BooleanFlags.MAINTENANCE_MODE))) {
-			req.log.warn({ res, req }, `Returning HTTP response of '${res.statusCode}' for path '${req.path}'`);
-		}
+	res.once("finish", () => {
+		booleanFlag(BooleanFlags.MAINTENANCE_MODE).then(maintenanceMode => {
+			if ((res.statusCode < 200 || res.statusCode >= 500) && !(res.statusCode === 503 && maintenanceMode)) {
+				req.log.warn({ res, req }, `Returning HTTP response of '${res.statusCode}' for path '${req.path}'`);
+			}
+		}).catch((err: unknown) => {
+			req.log.error({ err }, "Error while checking maintenance mode flag");
+		});
 	});
 	next();
 };
 
-const getUnvalidatedJiraHost = (req: Request): string | undefined =>
+const getUnvalidatedJiraHost = (req: Request<ParamsDictionary, any, { jiraHost?: string }>): string | undefined =>
 	req.session?.jiraHost || extractUnsafeJiraHost(req);
 
 /**
@@ -78,14 +85,20 @@ const getUnvalidatedJiraHost = (req: Request): string | undefined =>
  */
 const checkPathValidity = (url: string) => moduleUrls.some(moduleUrl => matchRouteWithPattern(moduleUrl, url));
 
-const extractUnsafeJiraHost = (req: Request): string | undefined => {
+const extractUnsafeJiraHost = (req: Request<ParamsDictionary, any, { jiraHost?: string }>): string | undefined => {
 	if (checkPathValidity(req.path) && req.method == "GET") {
 		// Only save xdm_e query when on the GET post install url (iframe url)
 		return req.query.xdm_e as string;
-	} else if (["POST", "DELETE", "PUT"].includes(req.method)) {
-		return req.body?.jiraHost;
-	} else if (req.cookies && req.cookies.jiraHost) {
-		return req.cookies.jiraHost;
 	}
+
+	if (["POST", "DELETE", "PUT"].includes(req.method)) {
+		return req.body?.jiraHost;
+	}
+
+	const cookies = req.cookies as { jiraHost?: string };
+	if (cookies && cookies.jiraHost) {
+		return cookies.jiraHost;
+	}
+
 	return undefined;
 };

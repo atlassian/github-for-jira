@@ -27,7 +27,7 @@ export const ApiInstallationSyncPost = async (req: Request, res: Response): Prom
 		res.status(202).json({
 			message: `Successfully (re)started sync for ${githubInstallationId}`
 		});
-	} catch (err) {
+	} catch (err: unknown) {
 		req.log.info(err);
 		res.sendStatus(401);
 	}

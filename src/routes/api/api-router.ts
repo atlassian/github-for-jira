@@ -26,6 +26,7 @@ import { ResetFailedAndPendingDeploymentCursorPost } from "./commits-from-date/r
 import { ApiRecryptPost } from "./api-recrypt-post";
 import { GenerateOnceCoredumpGenerator } from "services/generate-once-coredump-generator";
 import { GenerateOncePerNodeHeadumpGenerator } from "services/generate-once-per-node-headump-generator";
+import { RepoSyncState } from "models/reposyncstate";
 
 export const ApiRouter = Router();
 
@@ -153,6 +154,20 @@ const FillMemAndGenerateCoreDump = (req: Request, res: Response) => {
 };
 
 ApiRouter.post("/fill-mem-and-generate-coredump", FillMemAndGenerateCoreDump);
+
+const AbortPost = (_req: Request, res: Response) => {
+	process.abort();
+	res.json({ message: "should never happen" });
+};
+
+ApiRouter.post("/abort", AbortPost);
+
+const DropAllPrCursor = async (_req: Request, res: Response) => {
+	await RepoSyncState.update({ pullCursor: null }, { where: { } });
+	res.json({ ok: true });
+};
+
+ApiRouter.post("/drop-all-pr-cursor", DropAllPrCursor);
 
 // TODO: remove once move to DELETE /:installationId/:jiraHost
 ApiRouter.delete(

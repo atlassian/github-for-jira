@@ -12,7 +12,7 @@ jest.mock("utils/get-github-client-config");
 const redis = new IORedis(getRedisInfo("oauth-state-nonce"));
 const log = getLogger("oauth service test");
 
-const expectRedirectUrl = (state) => `https://github.com/login/oauth/authorize?client_id=${envVars.GITHUB_CLIENT_ID}&scope=user%20repo&redirect_uri=${encodeURIComponent(envVars.APP_URL + "/rest/app/cloud/github-callback")}&state=${encodeURIComponent(state)}`;
+const expectRedirectUrl = (state: string) => `https://github.com/login/oauth/authorize?client_id=${envVars.GITHUB_CLIENT_ID}&scope=user%20repo&redirect_uri=${encodeURIComponent(envVars.APP_URL + "/rest/app/cloud/github-callback")}&state=${encodeURIComponent(state)}`;
 
 describe("getRedirectUrl", () => {
 	describe("cloud", () => {
@@ -34,7 +34,7 @@ describe("Exchange token", () => {
 	describe("cloud", () => {
 		it("should throw error state is empty", async () => {
 			jest.mocked(createAnonymousClientByGitHubAppId).mockResolvedValue({
-				exchangeGitHubToken: async () => ({
+				exchangeGitHubToken: () => ({
 					accessToken: "abcd",
 					refreshToken: "wert"
 				})
@@ -47,7 +47,7 @@ describe("Exchange token", () => {
 			const redirectUrl = await getRedirectUrl(jiraHost, undefined);
 			const state = redirectUrl.state;
 			jest.mocked(createAnonymousClientByGitHubAppId).mockResolvedValue({
-				exchangeGitHubToken: async () => ({
+				exchangeGitHubToken: () => ({
 					accessToken: "abcd",
 					refreshToken: "wert"
 				})
@@ -60,7 +60,7 @@ describe("Exchange token", () => {
 			const redirectUrl = await getRedirectUrl(jiraHost, undefined);
 			const state = redirectUrl.state;
 			jest.mocked(createAnonymousClientByGitHubAppId).mockResolvedValue({
-				exchangeGitHubToken: async () => ({
+				exchangeGitHubToken: () => ({
 					accessToken: "abcd",
 					refreshToken: "wert"
 				})
@@ -75,7 +75,7 @@ describe("Exchange token", () => {
 			const redirectUrl = await getRedirectUrl(jiraHost, undefined);
 			const state = redirectUrl.state;
 			jest.mocked(createAnonymousClientByGitHubAppId).mockResolvedValue({
-				exchangeGitHubToken: async () => ({
+				exchangeGitHubToken: () => ({
 					accessToken: "abcd",
 					refreshToken: "wert"
 				})

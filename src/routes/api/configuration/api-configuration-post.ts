@@ -35,7 +35,7 @@ export const ApiConfigurationPost = async (req: Request, res: Response): Promise
 		await Promise.all(tasks);
 		res.status(200).send({ message: "jiraHosts Updated", jiraHosts });
 		logger.info({ jiraHosts }, "jiraHosts updated");
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.info({ err }, "Failed to set jiraHosts configurations");
 	}
 

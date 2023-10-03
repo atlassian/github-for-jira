@@ -87,11 +87,11 @@ const getInstallation = async (subscription: Subscription, gitHubAppId: number |
 
 	} catch (err) {
 		log.error(
-			{ installationId: gitHubInstallationId, error: err, uninstalled: err.status === 404 },
+			{ installationId: gitHubInstallationId, error: err as unknown, uninstalled: (err as Response).status === 404 },
 			"Failed connection"
 		);
 		statsd.increment(metricError.failedConnection, { gitHubProduct }, { jiraHost });
-		return Promise.reject({ error: err, id: gitHubInstallationId, deleted: err.status === 404 });
+		return Promise.reject({ error: err as unknown, id: gitHubInstallationId, deleted: (err as Response).status === 404 });
 	}
 };
 

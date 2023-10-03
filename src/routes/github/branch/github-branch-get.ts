@@ -32,7 +32,8 @@ export const GithubBranchGet = async (req: Request, res: Response): Promise<void
 		const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, { trigger: "github-branch-get" }, req.log, gitHubAppConfig.gitHubAppId);
 		await gitHubInstallationClient.getReference(owner, repo, ref);
 		res.sendStatus(200);
-	} catch (err) {
+	} catch (e: unknown) {
+		const err = e as { status?: number };
 		if (err.status === 404) {
 			logger.error("Branch not found.");
 			res.sendStatus(404);

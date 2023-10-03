@@ -109,7 +109,7 @@ describe("deduplicator", () => {
 		});
 
 		it("should refresh the flag periodically", async () => {
-			storage.setInProgressFlag = jest.fn();
+			storage.setInProgressFlag = jest.fn(() => { return Promise.resolve(); });
 			await new Deduplicator(storage, 1000).executeWithDeduplication(key, async () => {
 				jest.advanceTimersByTime(60000);
 				return Promise.resolve();

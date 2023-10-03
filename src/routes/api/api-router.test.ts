@@ -375,6 +375,46 @@ describe("API Router", () => {
 			});
 		});
 
+		describe("abort", () => {
+			let origAbort: () => never;
+			beforeEach(() => {
+				origAbort = process.abort;
+				process.abort = jest.fn() as unknown as () => never;
+			});
+
+			afterEach(() => {
+				process.abort = origAbort;
+			});
+
+			it("should abort the process", () => {
+				return supertest(app)
+					.post("/api/abort")
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.expect(200)
+					.then(() => {
+						expect(process.abort).toBeCalled();
+					});
+			});
+		});
+
+		describe("drop-all-pr-cursor", () => {
+			it("drops pullCursor field of all RepoSyncState records", async () => {
+				const repoSyncState = (await new DatabaseStateCreator().withActiveRepoSyncState().create()).repoSyncState!;
+				repoSyncState.set("pullCursor", "blah");
+				await repoSyncState.save();
+
+				await supertest(app)
+					.post("/api/drop-all-pr-cursor")
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.expect(200);
+
+				await repoSyncState.reload();
+				expect(repoSyncState.pullCursor).toBeNull();
+			});
+		});
+
 		describe("Ping", () => {
 
 			it("Should fail on missing url", () => {

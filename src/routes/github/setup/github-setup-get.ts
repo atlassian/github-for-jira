@@ -25,7 +25,7 @@ const getInstallationData = async (githubAppClient: GitHubAppClient, githubInsta
 	try {
 		const installationRequest = await githubAppClient.getInstallation(githubInstallationId);
 		githubInstallation = installationRequest.data;
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.warn("Cannot retrieve Github Installation from API");
 	}
 
