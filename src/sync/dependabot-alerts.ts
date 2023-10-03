@@ -30,12 +30,33 @@ export const getDependabotAlertTask = async (
 	const fromDate = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 	const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
 
-	const { data: dependabotAlerts } = await gitHubClient.getDependabotAlerts(repository.owner.login, repository.name, {
-		per_page: smartCursor.perPage,
-		page: smartCursor.pageNo,
-		sort: "created",
-		direction: SortDirection.DES
-	});
+	let dependabotAlerts: DependabotAlertResponseItem[];
+	try {
+		const response = await gitHubClient.getDependabotAlerts(repository.owner.login, repository.name, {
+			per_page: smartCursor.perPage,
+			page: smartCursor.pageNo,
+			sort: "created",
+			direction: SortDirection.DES
+		});
+		dependabotAlerts = response.data;
+	} catch (e: unknown) {
+		const err = e as { cause?: { response?: { status?: number, data?: { message?: string } } } };
+		if (err.cause?.response?.status == 403 && err.cause?.response?.data?.message?.includes("Dependabot alerts are disabled for this repository")) {
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Dependabot alerts disabled, so marking backfill task complete");
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
+		} else if (err.cause?.response?.status == 403 && err.cause?.response?.data?.message?.includes("Dependabot alerts are not available for archived repositories")) {
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Archived repository, backfill task complete");
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
+		}
+		logger.error({ err, reason: err.cause?.response?.data }, "Dependabot alert backfill failed");
+		throw err;
+	}
 
 	if (!dependabotAlerts?.length) {
 		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");

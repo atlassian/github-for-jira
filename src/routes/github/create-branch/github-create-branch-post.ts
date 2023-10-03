@@ -72,7 +72,13 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 			gitHubProduct: getCloudOrServerFromGitHubAppId(gitHubAppConfig.githubAppId)
 		};
 		statsd.increment(metricCreateBranch.created, tags, { jiraHost });
-	} catch (err) {
+	} catch (e: unknown) {
+		const err = e as { status?: number };
+		if (err.status === undefined) {
+			logger.error({ err }, "Error creating branch no status");
+			err.status = 500;
+		}
+
 		logger.error({ err }, getErrorMessages(err.status));
 		res.status(err.status).json({ error: getErrorMessages(err.status) });
 		await sendTrackEventAnalytics(AnalyticsTrackEventsEnum.CreateBranchErrorTrackEventName, jiraHost);

@@ -61,6 +61,10 @@ exports[`app getFrontendApp please review routes and update snapshot when adding
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,ApiPingPost
 :POST ^/?(?=/|$)^/api/?(?=/|$)^/fill-mem-and-generate-coredump/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,FillMemAndGenerateCoreDump
+:POST ^/?(?=/|$)^/api/?(?=/|$)^/abort/?$
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,AbortPost
+:POST ^/?(?=/|$)^/api/?(?=/|$)^/drop-all-pr-cursor/?$
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,DropAllPrCursor
 :DELETE ^/?(?=/|$)^/api/?(?=/|$)^/deleteInstallation/(?:([^/]+?))/(?:([^/]+?))/github-app-id/(?:([^/]+?))/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,middleware,middleware,returnOnValidationError,ApiInstallationDeleteForPollinator
 :DELETE ^/?(?=/|$)^/api/?(?=/|$)^/deleteInstallation/(?:([^/]+?))/(?:([^/]+?))/?$

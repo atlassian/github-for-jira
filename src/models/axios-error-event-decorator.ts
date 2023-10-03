@@ -82,7 +82,8 @@ export class AxiosErrorEventDecorator {
 		if (body && this.isJsonRequest()) {
 			try {
 				return JSON.parse(body);
-			} catch (error) {
+			} catch (err: unknown) {
+				const error = err as { name?: string };
 				if (error.name !== "SyntaxError") {
 					throw error;
 				}

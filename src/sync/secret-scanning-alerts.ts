@@ -35,7 +35,8 @@ export const getSecretScanningAlertTask = async (
 			direction: SortDirection.DES
 		});
 		secretScanningAlerts = response.data;
-	} catch (err) {
+	} catch (e: unknown) {
+		const err = e as { cause?: { response?: { status?: number, data?: { message?: string } } } };
 		if (err.cause?.response?.status == 404 && err.cause?.response?.data?.message?.includes("Secret scanning is disabled on this repository")) {
 			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Secret scanning disabled, so marking backfill task complete");
 			return {
@@ -43,6 +44,7 @@ export const getSecretScanningAlertTask = async (
 				jiraPayload: undefined
 			};
 		}
+		logger.error({ err, reason: err.cause?.response?.data }, "Secret scanning backfill failed");
 		throw err;
 	}
 

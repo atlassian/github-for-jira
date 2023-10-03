@@ -33,7 +33,8 @@ export const DBMigrationUp = async (req: Request, res: Response): Promise<void> 
 			${stderr}
 		`);
 
-	} catch (e){
+	} catch (err: unknown) {
+		const e = err as { statusCode?: number };
 		logger.error("Error doing db migration up", e);
 		res.status(e.statusCode || 500);
 		res.send(safeJsonStringify(e));

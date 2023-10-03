@@ -25,7 +25,11 @@ if (isNodeProd()) {
 	throng({
 		worker: () => {
 			listenForClusterCommand(ClusterCommand.start, start);
-			listenForClusterCommand(ClusterCommand.stop, stop);
+			listenForClusterCommand(ClusterCommand.stop, () => {
+				stop().catch((e: unknown) => {
+					getLogger("worker").error({ err: e }, "Error stopping worker");
+				});
+			});
 		},
 		master: () => {
 			initialize();
@@ -38,6 +42,8 @@ if (isNodeProd()) {
 			);
 		},
 		lifetime: Infinity
+	}).catch((err: unknown) => {
+		getLogger("worker").error({ err }, "Error running worker");
 	});
 } else {
 	initialize();
