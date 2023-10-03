@@ -1,3 +1,4 @@
+
 FROM docker.atl-paas.net/sox/micros-node-14:1.0.5 as build
 
 # root user for installs
@@ -16,21 +17,18 @@ COPY . /opt/service
 
 WORKDIR /opt/service
 
-# Change ownership of the /opt/service directory to appuser
+# Change ownership of the /opt/service directory to root
 USER root
-RUN chown -R appuser:appuser /opt/service
-USER appuser
+RUN chown -R root:root /opt/service
 
 # Installing packages
+USER appuser
 RUN rm .yarnrc
 RUN yarn install --frozen-lockfile
 RUN yarn list
 
 # Building TypeScript files
 RUN yarn run build:release
-
-# https://stackoverflow.com/questions/57108751/docker-build-failed-when-copying-in-multi-step-build
-# RUN chown root:root -R /opt/service
 
 FROM docker.atl-paas.net/sox/micros-node-14:1.0.5
 
@@ -43,11 +41,18 @@ RUN apt-get install -y curl
 # For coredumps
 RUN apt-get install -y gdb
 
-# non-root user
-USER appuser
-COPY --chown=appuser:appuser --from=build /opt/service /opt/service
+# Copy files as root
+COPY --from=build /opt/service /opt/service
+
+# Change ownership back to appuser after COPY
+RUN chown -R appuser:appuser /opt/service
+
 # Add this the service Dockerfile, at the final stage if multi-stage
 COPY --from=docker.atl-paas.net/sox/brahmos-deps/stress-ng:latest /usr/bin/stress-ng /usr/bin/stress-ng
+
+# non-root user
+USER appuser
+
 WORKDIR /opt/service
 ENV NODE_ENV production
 
