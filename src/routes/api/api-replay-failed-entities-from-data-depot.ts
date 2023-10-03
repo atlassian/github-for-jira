@@ -1,5 +1,4 @@
 import Logger from "bunyan";
-import { info } from "console";
 import { Request, Response } from "express";
 import { getLogger } from "~/src/config/logger";
 import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
@@ -46,8 +45,8 @@ export const ApiReplyFailedEntitiesFromDataDepotPost = async (req: Request, res:
 
 	await Promise.all(replayEntities.map(async (replayEntity) => {
 		try {
-			const { repoId, alertNumber } = getRepoIdAndAlertNumber(replayEntity.identifier);
-			const subscription = await getSubscription(replayEntity.gitHubInstallationId, replayEntity.hashedJiraHost);
+			const { repoId, alertNumber } = getRepoIdAndAlertNumber(replayEntity.identifier, log);
+			const subscription = await getSubscription(replayEntity.gitHubInstallationId, replayEntity.hashedJiraHost, log);
 			if (!subscription) {
 				info(`No subscription found for ${replayEntity.identifier}`);
 				return Promise.resolve();
@@ -104,7 +103,7 @@ const getDependabotVulnPayload = async (
 	if (repoSyncState) {
 		const { data: dependabotAlertResponseItem } = await gitHubInstallationClient.getDependabotAlert(repoSyncState.repoOwner, repoSyncState.repoName, alertNumber);
 		if (dependabotAlertResponseItem) {
-			info(`Fetched dependabot alert successfully from GitHub repoId - ${repoId}, alert ${alertNumber}`);
+			logger.info(`Fetched dependabot alert successfully from GitHub repoId - ${repoId}, alert ${alertNumber}`);
 			const repository: Repository = {
 				id: repoId,
 				full_name: repoSyncState.repoFullName,
@@ -114,13 +113,13 @@ const getDependabotVulnPayload = async (
 				updated_at: repoSyncState.updatedAt.toString()
 			};
 			const vulnPayload = await transformDependabotAlerts([dependabotAlertResponseItem], repository, subscription.jiraHost, logger, undefined);
-			info(`Transformed to Jira vulnerability successfully repoId - ${repoId}, alert ${alertNumber}`);
+			logger.info(`Transformed to Jira vulnerability successfully repoId - ${repoId}, alert ${alertNumber}`);
 			if (vulnPayload.vulnerabilities?.length > 0) {
 				return vulnPayload.vulnerabilities[0];
 			}
 
 		}
-		info(`Failed to fetch dependabot alert from GitHub repoId - ${repoId}, alert ${alertNumber}`);
+		logger.info(`Failed to fetch dependabot alert from GitHub repoId - ${repoId}, alert ${alertNumber}`);
 	}
 	return undefined;
 };
@@ -136,7 +135,7 @@ const getCodeScanningVulnPayload = async (
 	if (repoSyncState) {
 		const { data: codeScanningAlertResponseItem } = await gitHubInstallationClient.getCodeScanningAlert(repoSyncState.repoOwner, repoSyncState.repoName, alertNumber);
 		if (codeScanningAlertResponseItem) {
-			info(`Fetched code scanning alert successfully from GitHub repoId - ${repoId}, alert ${alertNumber}`);
+			logger.info(`Fetched code scanning alert successfully from GitHub repoId - ${repoId}, alert ${alertNumber}`);
 			const repository: Repository = {
 				id: repoId,
 				full_name: repoSyncState.repoFullName,
@@ -145,14 +144,14 @@ const getCodeScanningVulnPayload = async (
 				html_url: repoSyncState.repoUrl,
 				updated_at: repoSyncState.updatedAt.toString()
 			};
-			info(`Transformed to Jira vulnerability successfully repoId - ${repoId}, alert ${alertNumber}`);
+			logger.info(`Transformed to Jira vulnerability successfully repoId - ${repoId}, alert ${alertNumber}`);
 			const vulnPayload = await transformCodeScanningAlert([codeScanningAlertResponseItem], repository, subscription.jiraHost, logger, undefined);
 			if (vulnPayload.vulnerabilities?.length > 0) {
 				return vulnPayload.vulnerabilities[0];
 			}
 
 		}
-		info(`Failed to fetch code scanning alert from GitHub repoId - ${repoId}, alert ${alertNumber}`);
+		logger.info(`Failed to fetch code scanning alert from GitHub repoId - ${repoId}, alert ${alertNumber}`);
 	}
 	return undefined;
 };
@@ -168,7 +167,7 @@ const getSecretScanningVulnPayload = async (
 	if (repoSyncState) {
 		const { data: secretScanningAlertResponseItem } = await gitHubInstallationClient.getSecretScanningAlert(alertNumber, repoSyncState.repoOwner, repoSyncState.repoName);
 		if (secretScanningAlertResponseItem) {
-			info(`Fetched secret scanning alert successfully from GitHub repoId - ${repoId}, alert ${alertNumber}`);
+			logger.info(`Fetched secret scanning alert successfully from GitHub repoId - ${repoId}, alert ${alertNumber}`);
 			const repository: Repository = {
 				id: repoId,
 				full_name: repoSyncState.repoFullName,
@@ -177,33 +176,33 @@ const getSecretScanningVulnPayload = async (
 				html_url: repoSyncState.repoUrl,
 				updated_at: repoSyncState.updatedAt.toString()
 			};
-			info(`Transformed to Jira vulnerability successfully repoId - ${repoId}, alert ${alertNumber}`);
+			logger.info(`Transformed to Jira vulnerability successfully repoId - ${repoId}, alert ${alertNumber}`);
 			const vulnPayload = await transformSecretScanningAlert([secretScanningAlertResponseItem], repository, subscription.jiraHost, logger, undefined);
 			if (vulnPayload.vulnerabilities?.length > 0) {
 				return vulnPayload.vulnerabilities[0];
 			}
 
 		}
-		info(`Failed to fetch secret scanning alert from GitHub repoId - ${repoId}, alert ${alertNumber}`);
+		logger.info(`Failed to fetch secret scanning alert from GitHub repoId - ${repoId}, alert ${alertNumber}`);
 	}
 	return undefined;
 };
 
-const getSubscription = async (gitHubInstallationId: number, hashedJiraHost: string): Promise<Subscription | undefined> => {
+const getSubscription = async (gitHubInstallationId: number, hashedJiraHost: string, logger: Logger): Promise<Subscription | undefined> => {
 	const subscriptions = await Subscription.getAllForInstallation(gitHubInstallationId, undefined);
 	const filteredSubscriptions = subscriptions.filter(subscription => createHashWithSharedSecret(subscription.jiraHost) == hashedJiraHost);
 	if (filteredSubscriptions.length == 0) {
-		info(`Not found any subscription for GitHub Installation Id ${gitHubInstallationId}, Jira ${hashedJiraHost}`);
+		logger.info(`Not found any subscription for GitHub Installation Id ${gitHubInstallationId}, Jira ${hashedJiraHost}`);
 		return undefined;
 	}
-	info(`Found ${filteredSubscriptions.length} subscription for Jira ${hashedJiraHost}`);
+	logger.info(`Found ${filteredSubscriptions.length} subscription for Jira ${hashedJiraHost}`);
 	return filteredSubscriptions[0];
 };
 
-const getRepoIdAndAlertNumber = (identifier: string) => {
+const getRepoIdAndAlertNumber = (identifier: string, logger: Logger) => {
 	const identifierParts = identifier?.split("-");
 	if (identifierParts.length !== 3) {
-		info(`Incorrect identifier format ${identifier}`);
+		logger.info(`Incorrect identifier format ${identifier}`);
 	}
 	return { repoId: +identifierParts[1], alertNumber: +identifierParts[2] };
 };
