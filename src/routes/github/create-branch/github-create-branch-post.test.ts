@@ -108,7 +108,7 @@ describe("github-create-branch", () => {
 
 		expect(res.status).toHaveBeenCalledWith(403);
 		expect(res.json).toBeCalledWith({
-			error: "We couldn’t create this branch, possibly because this GitHub repository hasn't been configured to your Jira site."
+			error: "We couldn’t create this branch, because GitHub for Jira app does not have permission to write to the GitHub repository. If you want to enable this feature, please contact your GitHub admin to grant permission."
 		});
 	});
 
