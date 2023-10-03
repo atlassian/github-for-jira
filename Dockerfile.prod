@@ -30,7 +30,7 @@ RUN yarn list
 RUN yarn run build:release
 
 # https://stackoverflow.com/questions/57108751/docker-build-failed-when-copying-in-multi-step-build
-# RUN chown root:root -R /opt/service
+RUN chown root:root -R /opt/service
 
 FROM docker.atl-paas.net/sox/micros-node-14:1.0.5
 
