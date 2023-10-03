@@ -8,10 +8,9 @@ RUN apt-get update && apt-get install -y g++ make python3
 
 # For coredumps
 RUN apt-get install -y gdb
-RUN apt-get install -y bash
 
 # non-root user
-USER node
+USER appuser
 
 COPY . /opt/service
 
@@ -38,10 +37,9 @@ RUN apt-get install -y curl
 
 # For coredumps
 RUN apt-get install -y gdb
-RUN apt-get install -y bash
 
 # non-root user
-USER node
+USER appuser
 COPY --chown=node:node --from=build /opt/service /opt/service
 # Add this the service Dockerfile, at the final stage if multi-stage
 COPY --from=docker.atl-paas.net/sox/brahmos-deps/stress-ng:latest /usr/bin/stress-ng /usr/bin/stress-ng
