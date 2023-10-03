@@ -16,6 +16,11 @@ COPY . /opt/service
 
 WORKDIR /opt/service
 
+# Change ownership of the /opt/service directory to appuser
+USER root
+RUN chown -R appuser:appuser /opt/service
+USER appuser
+
 # Installing packages
 RUN rm .yarnrc
 RUN yarn install --frozen-lockfile
