@@ -22,6 +22,9 @@ jest.mock("react-router-dom", () => ({
 		},
 	  }),
 }));
+jest.mock("./../../feature-flags", () => ({
+	enableBackfillStatusPage: false
+}));
 
 jest.mock("../../analytics/analytics-proxy-client", () => {
 	return {
@@ -52,5 +55,4 @@ test("Basic check for the Connected Page", async () => {
 
 	await act(() => userEvent.click(screen.getByText("Add another organization")));
 	expect(navigate).toHaveBeenCalledWith("/spa/steps");
-
 });
