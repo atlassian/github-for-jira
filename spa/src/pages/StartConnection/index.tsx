@@ -12,6 +12,7 @@ import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
 import analyticsClient, { useEffectScreenEvent } from "../../analytics";
 import { reportError } from "../../utils";
+import { enableBackfillStatusPage } from "./../../feature-flags";
 
 const beforeTextStyle = css`
 	color: ${token("color.text.subtle")};
@@ -130,14 +131,17 @@ const StartConnection = () => {
 				>
 					Continue
 				</Button>
-				<Button
-					appearance="subtle"
-					onClick={() => {
-						navigate("connections");
-					}}
-				>
-					Go to backfill page
-				</Button>
+				{
+					enableBackfillStatusPage &&
+						<Button
+							appearance="subtle"
+							onClick={() => {
+								navigate("/spa/connections");
+							}}
+						>
+							Go to backfill page
+						</Button>
+				}
 			</div>
 		</Wrapper>
 	);
