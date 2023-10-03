@@ -5,11 +5,12 @@ import { ApiRouter } from "./api-router";
 import supertest from "supertest";
 import { Subscription, SyncStatus } from "~/src/models/subscription";
 import { Installation } from "~/src/models/installation";
+import { createHashWithSharedSecret } from "~/src/util/encryption";
 
 describe("api-replay-failed-entities-from-data-depot", () => {
 
 	let app: Application;
-	//let subscription: Subscription;
+	let subscription: Subscription;
 	const gitHubInstallationId = 1234;
 
 	const createApp = () => {
@@ -30,7 +31,7 @@ describe("api-replay-failed-entities-from-data-depot", () => {
 			clientKey: "client-key"
 		});
 
-		await Subscription.create({
+		subscription = await Subscription.create({
 			gitHubInstallationId,
 			jiraHost,
 			jiraClientKey: "client-key",
@@ -78,5 +79,24 @@ describe("api-replay-failed-entities-from-data-depot", () => {
 				expect(res.text).toContain("No subscription found");
 			});
 	});
+
+	it("should log error message if unknown identifier passed", async () => {
+		app = createApp();
+
+		await supertest(app)
+			.post(`/api/replay-rejected-entities-from-data-depot`)
+			.send({
+				replayEntities: [{
+					"gitHubInstallationId": subscription.gitHubInstallationId,
+					"hashedJiraHost": createHashWithSharedSecret(subscription.jiraHost),
+					"identifier": "x-1234567-1"
+				}]
+			})
+			.set("X-Slauth-Mechanism", "asap")
+			.then((res) => {
+				expect(res.text).toContain("Identifier format unknown");
+			});
+	});
+
 
 });
