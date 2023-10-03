@@ -400,6 +400,10 @@ const toLowercaseHelper = (str) =>
 const replaceSpaceWithHyphenHelper = (str) =>
 	(str?.toString?.().replace(/ /g, "-")) || "";
 
+const isAllSyncSuccess = (conn) => {
+	return conn && conn.syncStatus === "FINISHED" && !conn.syncWarning ? true : false;
+};
+
 const updateBackfilledStatus = ({ subscription, self }) => {
 
 	const isSyncComplete = subscription.isSyncComplete;
@@ -428,7 +432,7 @@ const updateBackfilledStatus = ({ subscription, self }) => {
 
 	if (isSyncComplete) {
 		inprogressIcon.css("display", "none");
-		if(syncStatus === 'FINISHED')
+		if(isAllSyncSuccess(subscription))
 		{
 			if (backfillSince) {
 				const backfillSinceDate = new Date(backfillSince);
