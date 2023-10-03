@@ -66,11 +66,13 @@ export const ApiReplyFailedEntitiesFromDataDepotPost = async (req: Request, res:
 			} else if (replayEntity.identifier.startsWith("c")) {
 				jiraVulnerability = await getCodeScanningVulnPayload(gitHubInstallationClient, subscription, repoId, alertNumber, log);
 
+			} else {
+				info(`Identifier format unknown ${replayEntity.identifier}`);
 			}
 
 			if (!jiraVulnerability) {
 				info(`Unable to get alert details for identifier ${replayEntity.identifier}`);
-				return;
+				return Promise.resolve();
 			}
 
 			jiraPayload.vulnerabilities.push(jiraVulnerability);
@@ -195,7 +197,7 @@ const getSubscription = async (gitHubInstallationId: number, hashedJiraHost: str
 		logger.info(`Not found any subscription for GitHub Installation Id ${gitHubInstallationId}, Jira ${hashedJiraHost}`);
 		return undefined;
 	}
-	logger.info(`Found ${filteredSubscriptions.length} subscription for Jira ${hashedJiraHost}`);
+	logger.info({ subscriptions: filteredSubscriptions, count: filteredSubscriptions.length }, `Found subscription for Jira ${hashedJiraHost}`);
 	return filteredSubscriptions[0];
 };
 
