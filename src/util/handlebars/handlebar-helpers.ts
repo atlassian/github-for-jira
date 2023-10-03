@@ -7,7 +7,6 @@ export const toLowercaseHelper = (str?: string) => !isPlainObject(str) && str?.t
 export const replaceSpaceWithHyphenHelper = (str?: string) => !isPlainObject(str) && str?.toString?.().replace(/ /g, "-") || "";
 export const toISOStringHelper = (date?: Date) => date ? date.toISOString() : undefined;
 
-
 type Connection = { syncStatus?: ConnectionSyncStatus, syncWarning?: string };
 export const isAllSyncSuccess = (conn?: Connection) => {
 	return conn && conn.syncStatus === "FINISHED" && !conn.syncWarning ? true : false;
