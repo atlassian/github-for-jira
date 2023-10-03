@@ -85,7 +85,8 @@ export const ApiReplyFailedEntitiesFromDataDepotPost = async (req: Request, res:
 				successfulCount++;
 			}
 		} catch (err) {
-			info(`Failed to process replay entity with identifier ${replayEntity.identifier}`);
+			res.write(`Failed to process replay entity with identifier ${replayEntity.identifier}\n`);
+			log.error({ err }, `Failed to process replay entity with identifier ${replayEntity.identifier}\n`);
 		}
 	}));
 	info(`Total replay entities processed successfully - ${successfulCount}/${replayEntities.length}`);
@@ -103,6 +104,7 @@ const getDependabotVulnPayload = async (
 	if (repoSyncState) {
 		const { data: dependabotAlertResponseItem } = await gitHubInstallationClient.getDependabotAlert(repoSyncState.repoOwner, repoSyncState.repoName, alertNumber);
 		if (dependabotAlertResponseItem) {
+			info(`Fetched dependabot alert successfully from GitHub repoId - ${repoId}, alert ${alertNumber}`);
 			const repository: Repository = {
 				id: repoId,
 				full_name: repoSyncState.repoFullName,
@@ -112,11 +114,13 @@ const getDependabotVulnPayload = async (
 				updated_at: repoSyncState.updatedAt.toString()
 			};
 			const vulnPayload = await transformDependabotAlerts([dependabotAlertResponseItem], repository, subscription.jiraHost, logger, undefined);
+			info(`Transformed to Jira vulnerability successfully repoId - ${repoId}, alert ${alertNumber}`);
 			if (vulnPayload.vulnerabilities?.length > 0) {
 				return vulnPayload.vulnerabilities[0];
 			}
 
 		}
+		info(`Failed to fetch dependabot alert from GitHub repoId - ${repoId}, alert ${alertNumber}`);
 	}
 	return undefined;
 };
@@ -132,6 +136,7 @@ const getCodeScanningVulnPayload = async (
 	if (repoSyncState) {
 		const { data: codeScanningAlertResponseItem } = await gitHubInstallationClient.getCodeScanningAlert(repoSyncState.repoOwner, repoSyncState.repoName, alertNumber);
 		if (codeScanningAlertResponseItem) {
+			info(`Fetched code scanning alert successfully from GitHub repoId - ${repoId}, alert ${alertNumber}`);
 			const repository: Repository = {
 				id: repoId,
 				full_name: repoSyncState.repoFullName,
@@ -140,12 +145,14 @@ const getCodeScanningVulnPayload = async (
 				html_url: repoSyncState.repoUrl,
 				updated_at: repoSyncState.updatedAt.toString()
 			};
+			info(`Transformed to Jira vulnerability successfully repoId - ${repoId}, alert ${alertNumber}`);
 			const vulnPayload = await transformCodeScanningAlert([codeScanningAlertResponseItem], repository, subscription.jiraHost, logger, undefined);
 			if (vulnPayload.vulnerabilities?.length > 0) {
 				return vulnPayload.vulnerabilities[0];
 			}
 
 		}
+		info(`Failed to fetch code scanning alert from GitHub repoId - ${repoId}, alert ${alertNumber}`);
 	}
 	return undefined;
 };
@@ -161,6 +168,7 @@ const getSecretScanningVulnPayload = async (
 	if (repoSyncState) {
 		const { data: secretScanningAlertResponseItem } = await gitHubInstallationClient.getSecretScanningAlert(alertNumber, repoSyncState.repoOwner, repoSyncState.repoName);
 		if (secretScanningAlertResponseItem) {
+			info(`Fetched secret scanning alert successfully from GitHub repoId - ${repoId}, alert ${alertNumber}`);
 			const repository: Repository = {
 				id: repoId,
 				full_name: repoSyncState.repoFullName,
@@ -169,12 +177,14 @@ const getSecretScanningVulnPayload = async (
 				html_url: repoSyncState.repoUrl,
 				updated_at: repoSyncState.updatedAt.toString()
 			};
+			info(`Transformed to Jira vulnerability successfully repoId - ${repoId}, alert ${alertNumber}`);
 			const vulnPayload = await transformSecretScanningAlert([secretScanningAlertResponseItem], repository, subscription.jiraHost, logger, undefined);
 			if (vulnPayload.vulnerabilities?.length > 0) {
 				return vulnPayload.vulnerabilities[0];
 			}
 
 		}
+		info(`Failed to fetch secret scanning alert from GitHub repoId - ${repoId}, alert ${alertNumber}`);
 	}
 	return undefined;
 };
