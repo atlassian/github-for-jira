@@ -25,7 +25,7 @@ const ifAllReposSynced = (
 	numberOfSyncedRepos: number,
 	totalNumberOfRepos: number
 ): number | string => {
-	if (!totalNumberOfRepos) return "";// If the total number of repos is 0, then show nothing
+	if (!totalNumberOfRepos) return ""; // If the total number of repos is 0, then show nothing
 	if (numberOfSyncedRepos === totalNumberOfRepos) {
 		return totalNumberOfRepos;
 	} else {

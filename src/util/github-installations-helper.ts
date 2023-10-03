@@ -44,7 +44,7 @@ const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): ConnectionS
 
 export const getInstallations = async (subscriptions: Subscription[], log: Logger, gitHubAppId: number | undefined): Promise<InstallationResults> => {
 	const installations = await Promise.allSettled(subscriptions.map((sub) => getInstallation(sub, gitHubAppId, log)));
-	// Had to add "unknown" in between type as lodash types is incorrect for
+	// Had to add "unknown" in between type as lodash, types is incorrect for groupBy of `installations`
 	const connections = groupBy(installations, "status") as unknown as { fulfilled: PromiseFulfilledResult<AppInstallation>[], rejected: PromiseRejectedResult[] };
 	const fulfilled = connections.fulfilled?.map(v => v.value) || [];
 	const rejected = connections.rejected?.map(v => v.reason as FailedAppInstallation) || [];
