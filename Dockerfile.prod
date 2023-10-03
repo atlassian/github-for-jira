@@ -1,11 +1,17 @@
 FROM docker.atl-paas.net/sox/micros-node-14:1.0.5 as build
 
+# root user for installs
+USER root
+
 # adding python for node-gyp
 RUN apt-get update && apt-get install -y g++ make python3
 
 # For coredumps
 RUN apt-get install -y gdb
 RUN apt-get install -y bash
+
+# non-root user
+USER node
 
 COPY . /opt/service
 
@@ -24,6 +30,8 @@ RUN chown root:root -R /opt/service
 
 FROM docker.atl-paas.net/sox/micros-node-14:1.0.5
 
+# root user for installs
+USER root
 
 # For debugging curl command
 RUN apt-get install -y curl
@@ -32,6 +40,7 @@ RUN apt-get install -y curl
 RUN apt-get install -y gdb
 RUN apt-get install -y bash
 
+# non-root user
 USER node
 COPY --chown=node:node --from=build /opt/service /opt/service
 # Add this the service Dockerfile, at the final stage if multi-stage
