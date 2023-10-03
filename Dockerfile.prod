@@ -1,17 +1,11 @@
 FROM docker.atl-paas.net/sox/micros-node-14:1.0.5 as build
 
 # adding python for node-gyp
-RUN apk add g++ make python3
+RUN apt-get update && apt-get install -y g++ make python3
 
 # For coredumps
-RUN apk add gdb
-RUN apk add bash
-
-# adding to solve vuln
-RUN apk add --update --upgrade busybox
-RUN apk add --update --upgrade libretls
-RUN apk add --update --upgrade openssl
-RUN apk add --update --upgrade zlib
+RUN apt-get install -y gdb
+RUN apt-get install -y bash
 
 COPY . /opt/service
 
@@ -30,17 +24,13 @@ RUN chown root:root -R /opt/service
 
 FROM docker.atl-paas.net/sox/micros-node-14:1.0.5
 
-# adding to solve vuln
-RUN apk add --update --upgrade busybox
-RUN apk add --update --upgrade openssl
-RUN apk add --update --upgrade zlib
 
 # For debugging curl command
-RUN apk add curl
+RUN apt-get install -y curl
 
 # For coredumps
-RUN apk add gdb
-RUN apk add bash
+RUN apt-get install -y gdb
+RUN apt-get install -y bash
 
 USER node
 COPY --chown=node:node --from=build /opt/service /opt/service
