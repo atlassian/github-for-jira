@@ -1,3 +1,4 @@
+
 FROM docker.atl-paas.net/sox/micros-node-14:1.0.5 as build
 
 # root user for installs
@@ -9,17 +10,9 @@ RUN apt-get update && apt-get install -y g++ make python3
 # For coredumps
 RUN apt-get install -y gdb
 
-# non-root user
-USER appuser
-
 COPY . /opt/service
 
 WORKDIR /opt/service
-
-# Change ownership of the /opt/service directory to appuser
-USER root
-RUN chown -R appuser:appuser /opt/service
-USER appuser
 
 # Installing packages
 RUN rm .yarnrc
@@ -28,10 +21,6 @@ RUN yarn list
 
 # Building TypeScript files
 RUN yarn run build:release
-
-# Change back to root user to change ownership
-USER root
-RUN chown root:root -R /opt/service
 
 FROM docker.atl-paas.net/sox/micros-node-14:1.0.5
 
