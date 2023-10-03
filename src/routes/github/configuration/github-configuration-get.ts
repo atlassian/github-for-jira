@@ -1,6 +1,6 @@
 import { Subscription } from "models/subscription";
 import { NextFunction, Request, Response } from "express";
-import { getInstallations, InstallationResults } from "routes/jira/jira-get";
+import { getInstallations, InstallationResults } from "utils/github-installations-helper";
 import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import Logger from "bunyan";
