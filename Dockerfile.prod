@@ -36,7 +36,7 @@ RUN yarn run build:release
 FROM docker.atl-paas.net/sox/micros-node-14:1.0.5
 
 # root user for installs
-####### USER root
+USER root
 
 # For debugging curl command
 RUN apt-get install -y curl
