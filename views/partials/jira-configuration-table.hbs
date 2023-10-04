@@ -50,12 +50,12 @@
               {{/if}}
             {{/if}}
 
-            {{#if connection.totalNumberOfRepos}}
+            {{#if (hasTotalNumberOfRepos connection.totalNumberOfRepos)}}
               <span class="jiraConfiguration__table__syncCount">
-                {{ifAllReposSynced
-                    connection.numberOfSyncedRepos
-                    connection.totalNumberOfRepos
-                }}
+                  {{ifAllReposSynced
+                      connection.numberOfSyncedRepos
+                      connection.totalNumberOfRepos
+                  }}
               </span>
             {{/if}}
             <a
