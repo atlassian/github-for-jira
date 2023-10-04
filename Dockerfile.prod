@@ -1,21 +1,25 @@
-FROM node:14.21-alpine3.16 as build
+FROM docker.atl-paas.net/sox/micros-node-14:1.0.5 as build
+
+# root user for installs
+USER root
 
 # adding python for node-gyp
-RUN apk add g++ make python3
+RUN apt-get update && apt-get install -y g++ make python3
 
 # For coredumps
-RUN apk add gdb
-RUN apk add bash
+RUN apt-get install -y gdb
 
-# adding to solve vuln
-RUN apk add --update --upgrade busybox
-RUN apk add --update --upgrade libretls
-RUN apk add --update --upgrade openssl
-RUN apk add --update --upgrade zlib
+# non-root user
+USER appuser
 
-COPY . /app
+COPY . /opt/service
 
-WORKDIR /app
+WORKDIR /opt/service
+
+# Change ownership of the /opt/service directory to appuser
+USER root
+RUN chown -R appuser:appuser /opt/service
+USER appuser
 
 # Installing packages
 RUN rm .yarnrc
@@ -25,38 +29,27 @@ RUN yarn list
 # Building TypeScript files
 RUN yarn run build:release
 
-# https://stackoverflow.com/questions/57108751/docker-build-failed-when-copying-in-multi-step-build
-RUN chown root:root -R /app
+# Change back to root user to change ownership
+USER root
+RUN chown root:root -R /opt/service
 
-FROM node:14.21-alpine3.16
+FROM docker.atl-paas.net/sox/micros-node-14:1.0.5
 
-# adding to solve vuln
-RUN apk add --update --upgrade busybox
-RUN apk add --update --upgrade openssl
-RUN apk add --update --upgrade zlib
+# root user for installs
+USER root
 
 # For debugging curl command
-RUN apk add curl
+RUN apt-get install -y curl
 
 # For coredumps
-RUN apk add gdb
-RUN apk add bash
+RUN apt-get install -y gdb
 
-USER node
-COPY --chown=node:node --from=build /app /app
+# non-root user
+USER appuser
+COPY --chown=appuser:appuser --from=build /opt/service /opt/service
 # Add this the service Dockerfile, at the final stage if multi-stage
 COPY --from=docker.atl-paas.net/sox/brahmos-deps/stress-ng:latest /usr/bin/stress-ng /usr/bin/stress-ng
-WORKDIR /app
+WORKDIR /opt/service
 ENV NODE_ENV production
-
-#
-# If you are going to remove this, please make sure that it doesn't break existing GitHubServerApps:
-#   1. create an API endpoint that calls all prod servers and checks for SSL checks in stg
-#   2. deploy change without this line to stg
-#   3. call the API endpoint again; compare results with the ones from #1
-# Details:
-#   https://github.com/nodejs/node/issues/16336#issuecomment-568845447
-#
-# ENV NODE_EXTRA_CA_CERTS=node_modules/node_extra_ca_certs_mozilla_bundle/ca_bundle/ca_intermediate_root_bundle.pem
 
 CMD ["./bin/start-server-micros.sh"]
