@@ -175,6 +175,7 @@ const syncStatusCloseBtn = document.getElementById("status-close");
 const genericModal = document.getElementById("modal");
 const genericModalClose = document.getElementById("modal-close-btn");
 const genericModalAction = document.getElementById("modal-action-btn");
+const modalAdditionalContent = document.getElementsByClassName("modal__additionalContent");
 const disconnectServerBtn = document.getElementsByClassName("disconnect-server-btn");
 const disconnectAppBtn = document.getElementsByClassName("disconnect-app-btn");
 const disconnectOrgBtn = document.getElementsByClassName("delete-connection-link");
@@ -254,6 +255,27 @@ const handleModalDisplay = (title, info, type, data) => {
 		.attr("data-optional-modal-data", data.appId);
 }
 
+const additionalContent = (GHEServerUrl, appName) => {
+	let content = "";
+	if (!appName) {
+		// Get the list of all the apps within the GH Enterprise server
+		const apps = $(`.jiraConfiguration__enterpriseServer__header__container[data-server-baseurl='${GHEServerUrl}'] + .jiraConfiguration__enterpriseConnections > details`);
+		if ($(apps).length > 0) {
+			content += "Please make sure you delete these apps in GitHub too<br/>";
+			$(apps).map((index, app) => {
+				const serverAppName = $(app).find(".jiraConfiguration__optionHeader").text();
+				content += "<span style='padding-right: 24px;'>";
+				content += `<span>&#8226;</span><a target="_blank" href="${GHEServerUrl}/settings/apps/${serverAppName}/advanced">${serverAppName}</a>`;
+				content += "</span>";
+			});
+		}
+	} else {
+		content += "Please make sure you delete this app in GitHub as well <br/>";
+		content += `<span>&#8226;</span><a target="_blank" href="${GHEServerUrl}/settings/apps/${appName}/advanced">${appName}</a>`;
+	}
+	$(modalAdditionalContent).append(content);
+}
+
 if (disconnectServerBtn != null) {
 	$(disconnectServerBtn).click((event) => {
 		event.preventDefault();
@@ -263,7 +285,7 @@ if (disconnectServerBtn != null) {
 		const disconnectType = "server";
 		const data = { modalData: serverUrl }
 		handleModalDisplay(modalTitle, modalInfo, disconnectType, data);
-		$(".modal__additionalContent").append(serverUrl).css('font-weight', 'bold');
+		additionalContent(serverUrl);
 	});
 }
 
@@ -272,11 +294,13 @@ if (disconnectAppBtn != null) {
 		event.preventDefault();
 		const appName = $(event.target).data("app-name");
 		const uuid = $(event.target).data("app-uuid");
+		const serverUrl = $(event.target).data("app-server-url");
 		const modalTitle = `Disconnect ${appName}?`;
 		const modalInfo = `Are you sure you want to delete your application, ${appName}? You’ll need to backfill your historical data again if you ever want to reconnect.`;
 		const disconnectType = "app";
 		const data = { modalData: uuid }
 		handleModalDisplay(modalTitle, modalInfo, disconnectType, data);
+		additionalContent(serverUrl, appName);
 	});
 }
 
@@ -300,7 +324,7 @@ if (genericModalClose != null) {
 		event.preventDefault();
 		$(genericModal).hide();
 		$(".modal__footer__actionBtn").removeAttr("data-disconnect-type");
-		$(".modal__additionalContent").empty();
+		$(modalAdditionalContent).empty();
 	});
 }
 
