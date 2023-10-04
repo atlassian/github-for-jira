@@ -245,8 +245,8 @@ export const getJiraClient = async (
 			},
 			// Add methods for handling installationId properties that exist in Jira
 			installation: {
-				delete: async (gitHubInstallationId: string | number) =>
-					Promise.all([
+				delete: async (gitHubInstallationId: string | number) => {
+					const deleteResponse =  Promise.all([
 
 						// We are sending devinfo events with the property "installationId", so we delete by this property.
 						instance.delete(
@@ -277,7 +277,10 @@ export const getJiraClient = async (
 								}
 							}
 						)
-					])
+					]);
+					logger.info({ deleteResponse }, "Deleted data for installation");
+					return deleteResponse;
+				}
 			},
 			pullRequest: {
 				delete: (transformedRepositoryId: TransformedRepositoryId, pullRequestId: string) =>

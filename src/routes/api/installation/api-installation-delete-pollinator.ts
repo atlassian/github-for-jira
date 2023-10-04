@@ -43,7 +43,7 @@ export const ApiInstallationDeleteForPollinator = async (req: Request, res: Resp
 			throw new Error("Unable to get Jira client for undefined githubAppId");
 		}
 
-		req.log.info({ jiraHost, gitHubInstallationId }, "Deleting DevInfo");
+		req.log.info({ jiraHost, gitHubInstallationId }, "Deleting DevInfo for pollinator");
 		await jiraClient.devinfo.installation.delete(gitHubInstallationId);
 		await subscription.update({
 			syncStatus: null,
