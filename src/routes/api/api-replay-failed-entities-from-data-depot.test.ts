@@ -7,6 +7,12 @@ import { Subscription, SyncStatus } from "~/src/models/subscription";
 import { Installation } from "~/src/models/installation";
 import { createHashWithSharedSecret } from "~/src/util/encryption";
 import { RepoSyncState } from "~/src/models/reposyncstate";
+import {  booleanFlag } from "../../config/feature-flags";
+import { mocked } from "ts-jest/utils";
+
+
+jest.mock("config/feature-flags");
+const mockBooleanFlag = mocked(booleanFlag);
 
 describe("api-replay-failed-entities-from-data-depot", () => {
 
@@ -51,6 +57,7 @@ describe("api-replay-failed-entities-from-data-depot", () => {
 		});
 
 		mockSystemTime(MOCK_SYSTEM_TIMESTAMP_SEC);
+		mockBooleanFlag.mockResolvedValue(true);
 
 	});
 
