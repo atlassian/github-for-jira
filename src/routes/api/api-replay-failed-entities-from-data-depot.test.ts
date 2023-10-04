@@ -10,6 +10,8 @@ import { RepoSyncState } from "~/src/models/reposyncstate";
 
 describe("api-replay-failed-entities-from-data-depot", () => {
 
+	const MOCK_SYSTEM_TIMESTAMP_SEC = 12345678;
+
 	let app: Application;
 	let subscription: Subscription;
 	const gitHubInstallationId = 1234;
@@ -47,6 +49,8 @@ describe("api-replay-failed-entities-from-data-depot", () => {
 			repoFullName: "atlassian/github-for-jira",
 			repoUrl: "github.com/atlassian/github-for-jira"
 		});
+
+		mockSystemTime(MOCK_SYSTEM_TIMESTAMP_SEC);
 
 	});
 
@@ -116,8 +120,8 @@ describe("api-replay-failed-entities-from-data-depot", () => {
 			.reply(200, dependabotAlert);
 
 		jiraNock
-			.post("/rest/security/1.0/bulk")
-			.reply(200, { rejectedEntities:[] });
+			.post("/rest/security/1.0/bulk", expectedDependabotAlertResponse(subscription))
+			.reply(200, { rejectedEntities: [] });
 
 		await supertest(app)
 			.post(`/api/replay-rejected-entities-from-data-depot`)
@@ -207,3 +211,41 @@ const dependabotAlert = {
 		"url": "https://github.com/atlassian/repo-0"
 	}
 };
+
+const expectedDependabotAlertResponse = (subscription: Subscription) => ({
+	"vulnerabilities": [
+		{
+			"schemaVersion": "1.0",
+			"id": "d-1-10",
+			"updateSequenceNumber": 12345678,
+			"containerId": "1",
+			"displayName": "semver vulnerable to Regular Expression Denial of Service",
+			"description": "**Vulnerability:** semver vulnerable to Regular Expression Denial of Service\n\n**Impact:** Versions of the package semver before 7.5.2 on the 7.x branch, before 6.3.1 on the 6.x branch, and all other versions before 5.7.2 are vulnerable to Regular Expression Denial of Service (ReDoS) via the function new Range, when untrusted user data is provided as a range.\n\n**Severity:**  - undefined\n\nGitHub uses  [Common Vulnerability Scoring System (CVSS)](https://www.atlassian.com/trust/security/security-severity-levels) data to calculate security severity.\n\n**State:** Open\n\n**Patched version:** undefined\n\n**Identifiers:**\n\n- [GHSA-c2qf-rxjj-qqgw](https://github.com/advisories/GHSA-c2qf-rxjj-qqgw)\n- [CVE-2022-25883](https://nvd.nist.gov/vuln/detail/CVE-2022-25883)\n\nVisit the vulnerability’s [dependabot alert page](undefined) in GitHub to learn more about and see remediation options.",
+			"type": "sca",
+			"introducedDate": "2023-07-13T06:24:50Z",
+			"lastUpdated": "2023-07-13T06:24:50Z",
+			"severity": {
+				"level": "medium"
+			},
+			"identifiers": [
+				{
+					"displayName": "GHSA-c2qf-rxjj-qqgw",
+					"url": "https://github.com/advisories/GHSA-c2qf-rxjj-qqgw"
+				},
+				{
+					"displayName": "CVE-2022-25883",
+					"url": "https://nvd.nist.gov/vuln/detail/CVE-2022-25883"
+				}
+			],
+			"status": "open",
+			"additionalInfo": {
+				"content": "yarn.lock"
+			}
+		}
+	],
+	"properties": {
+		"gitHubInstallationId": subscription.gitHubInstallationId,
+		"workspaceId": subscription.id
+	},
+	"operationType": "NORMAL"
+});
