@@ -145,6 +145,32 @@ describe("api-replay-failed-entities-from-data-depot", () => {
 			});
 	});
 
+	it("should replay code scanning alert", async () => {
+		app = createApp();
+		githubUserTokenNock(subscription.gitHubInstallationId).persist();
+		githubNock
+			.get("/repos/atlassian/repo-0/code-scanning/alerts/11")
+			.reply(200, codeScanningAlert);
+
+		jiraNock
+			.post("/rest/security/1.0/bulk")
+			.reply(200, { rejectedEntities: [] });
+
+		await supertest(app)
+			.post(`/api/replay-rejected-entities-from-data-depot`)
+			.send({
+				replayEntities: [{
+					"gitHubInstallationId": subscription.gitHubInstallationId,
+					"hashedJiraHost": createHashWithSharedSecret(subscription.jiraHost),
+					"identifier": "c-1-11"
+				}]
+			})
+			.set("X-Slauth-Mechanism", "asap")
+			.then((res) => {
+				expect(res.text).toContain("Replay entity processed successfully for c-1-11");
+			});
+	});
+
 
 });
 
@@ -256,3 +282,46 @@ const expectedDependabotAlertResponse = (subscription: Subscription) => ({
 	},
 	"operationType": "NORMAL"
 });
+
+const codeScanningAlert = {
+	"number": 11,
+	"created_at": "2023-08-18T04:33:51Z",
+	"updated_at": "2023-08-18T04:33:51Z",
+	"url": "https://api.github.com/repos/auzwang/sequelize-playground/code-scanning/alerts/9",
+	"html_url": "https://github.com/auzwang/sequelize-playground/security/code-scanning/9",
+	"state": "open",
+	"fixed_at": null,
+	"dismissed_by": null,
+	"dismissed_at": null,
+	"dismissed_reason": null,
+	"dismissed_comment": null,
+	"rule": {
+		"id": "js/reflected-xss",
+		"severity": "error",
+		"description": "Reflected cross-site scripting",
+		"name": "js/reflected-xss",
+		"tags": ["external/cwe/cwe-079", "external/cwe/cwe-116", "security"],
+		"security_severity_level": "medium"
+	},
+	"tool": { "name": "CodeQL", "guid": null, "version": "2.14.1" },
+	"most_recent_instance": {
+		"ref": "refs/heads/master",
+		"analysis_key": "dynamic/github-code-scanning/codeql:analyze",
+		"environment": "{\"language\":\"javascript\"}",
+		"category": "/language:javascript",
+		"state": "open",
+		"commit_sha": "0177549c9c9eb86de42f4689f0a681f72acdfa65",
+		"message": {
+			"text": "Cross-site scripting vulnerability due to a user-provided value."
+		},
+		"location": {
+			"path": "index.js",
+			"start_line": 10,
+			"end_line": 10,
+			"start_column": 12,
+			"end_column": 24
+		},
+		"classifications": []
+	},
+	"instances_url": "https://api.github.com/repos/auzwang/sequelize-playground/code-scanning/alerts/9/instances"
+};
