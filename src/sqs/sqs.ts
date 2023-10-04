@@ -425,7 +425,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 		};
 		try {
 			await this.sqs.changeMessageVisibility(params).promise();
-		} catch (err) {
+		} catch (err: unknown) {
 			logger.error("Message visibility timeout change failed");
 		}
 	}

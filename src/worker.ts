@@ -26,7 +26,7 @@ if (isNodeProd()) {
 		worker: () => {
 			listenForClusterCommand(ClusterCommand.start, start);
 			listenForClusterCommand(ClusterCommand.stop, () => {
-				stop().catch(e => {
+				stop().catch((e: unknown) => {
 					getLogger("worker").error({ err: e }, "Error stopping worker");
 				});
 			});
@@ -42,6 +42,8 @@ if (isNodeProd()) {
 			);
 		},
 		lifetime: Infinity
+	}).catch((err: unknown) => {
+		getLogger("worker").error({ err }, "Error running worker");
 	});
 } else {
 	initialize();

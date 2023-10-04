@@ -8,6 +8,7 @@ import StartConnection from "./pages/StartConnection";
 import ConfigSteps from "./pages/ConfigSteps";
 import Connected from "./pages/Connected";
 import InstallationRequested from "./pages/InstallationRequested";
+import Connections from "./pages/Connections";
 
 import * as Sentry from "@sentry/react";
 import { initSentry } from "./sentry";
@@ -17,7 +18,10 @@ initSentry();
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
 const App = () => {
-
+	// to reset the local storage value on app reload
+	if(localStorage.getItem("isPopupBlocked")){
+		localStorage.removeItem("isPopupBlocked");
+	}
 	setGlobalTheme({
 		light: "light",
 		dark: "dark",
@@ -31,6 +35,7 @@ const App = () => {
 			<SentryRoutes>
 				<Route path="/spa">
 					<Route index element={<StartConnection/>}/>
+					<Route path="connections" element={<Connections />}/>
 					<Route path="steps" element={<ConfigSteps/>}/>
 					<Route path="connected" element={<Connected />}/>
 					<Route path="installationRequested" element={<InstallationRequested />}/>

@@ -45,7 +45,7 @@ const getLastSuccessfulDeployCommitSha = async (
 				return deployment.sha;
 			}
 		}
-	} catch (e) {
+	} catch (e: unknown) {
 		logger?.debug(`Failed to get deployment statuses.`);
 	}
 
@@ -117,7 +117,7 @@ const getLastSuccessDeploymentShaFromCache = async (
 			return lastSuccessful.commitSha;
 		}
 
-	} catch (e) {
+	} catch (e: unknown) {
 		statsd.increment(metricDeploymentCache.failed, { failType: "lookup", ...tags }, info);
 		logger.error({ err: e }, "Error look up deployment information from dynamodb");
 		throw e;

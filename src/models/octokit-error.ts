@@ -51,7 +51,8 @@ export class OctokitError extends Error {
 	deserializeMessage(message) {
 		try {
 			return JSON.parse(message);
-		} catch (error) {
+		} catch (err: unknown) {
+			const error = err as { name?: string };
 			if (error.name !== "SyntaxError") {
 				throw error;
 			}

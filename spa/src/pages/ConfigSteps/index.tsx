@@ -22,6 +22,7 @@ import { GitHubInstallationType } from "../../../../src/rest-interfaces";
 import OrganizationsList from "../ConfigSteps/OrgsContainer";
 import SkeletonForLoading from "../ConfigSteps/SkeletonForLoading";
 import OauthManager from "../../services/oauth-manager";
+import { ErrorForPopupBlocked } from "../../components/Error/KnownErrors";
 
 type HostUrlType = {
 	jiraHost: string;
@@ -114,6 +115,7 @@ const errorMessageCounter: ErrorMessageCounterType = {
 const ERROR_THRESHOLD = 3;
 
 const ConfigSteps = () => {
+	const isPopupBlocked = localStorage.getItem("isPopupBlocked") === "true" ? true : false;
 	const navigate = useNavigate();
 	const { username } = OAuthManager.getUserDetails();
 	/**
@@ -184,7 +186,7 @@ const ConfigSteps = () => {
 					await OAuthManager.authenticateInGitHub(() => {
 						setLoaderForLogin(false);
 					});
-				} catch (e) {
+				} catch (e: unknown) {
 					const errorObj = modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
 					showError(errorObj);
 					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail"}, { errorCode: errorObj.errorCode, step: "initiate-oauth"});
@@ -243,9 +245,9 @@ const ConfigSteps = () => {
 				analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail" }, { mode, errorCode: errorObj.errorCode });
 			} else {
 				analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: (connected === true ? "success" : "fail") }, { mode });
-				navigate("/spa/connected");
+				navigate("/spa/connected",{ state: { orgLogin } });
 			}
-		} catch (e) {
+		} catch (e: unknown) {
 			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail"}, { mode });
 			reportError(new Error("Fail doCreateConnection", { cause: e }), {
 				path: "doCreateConnection",
@@ -271,7 +273,7 @@ const ConfigSteps = () => {
 					navigate("/spa/installationRequested");
 				}
 			});
-		} catch (e) {
+		} catch (e: unknown) {
 			const errorObj = modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
 			showError(errorObj);
 			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail"}, { mode, errorCode: errorObj.errorCode });
@@ -329,13 +331,19 @@ const ConfigSteps = () => {
 		isLoggedIn && recheckValidity();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ isLoggedIn ]);
-
 	return (
 		<Wrapper>
 			<SyncHeader />
 			{
 				error && <ErrorUI type={error.type} message={error.message} />
 			}
+			{isPopupBlocked && (
+				<ErrorUI
+					type={"error"}
+					message={<ErrorForPopupBlocked/>}
+				/>
+			)}
+
 			<div css={configContainerStyle}>
 				{
 					isLoggedIn ? <>
@@ -434,7 +442,7 @@ const setAnalyticsEventsForFetchedOrgs  = (orgs: Array<GitHubInstallationType>) 
 			requiresSsoLoginCount,
 			isIPBlockedCount,
 		});
-	} catch (e) {
+	} catch (e: unknown) {
 		reportError(new Error("Fail setAnalyticsEventsForFetchedOrgs", { cause: e }), {
 			path: "setAnalyticsEventsForFetchedOrgs"
 		});

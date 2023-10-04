@@ -21,7 +21,7 @@ export const JiraEventsUninstallPost = async (req: Request, res: Response): Prom
 
 	try {
 		await jiraClient.appPropertiesDelete();
-	} catch (err) {
+	} catch (err: unknown) {
 		req.log.warn({ err }, "Cannot delete properties");
 	}
 	await installation.uninstall();

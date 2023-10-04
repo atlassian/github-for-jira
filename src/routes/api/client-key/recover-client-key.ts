@@ -61,7 +61,8 @@ export const RecoverClientKeyPost = async (req: Request, res: Response): Promise
 						log.info({ id: installation.id, subId: sub.id }, `Saved plainClientKey successfully for subscription`);
 					}
 					successCount++;
-				} catch (e) {
+				} catch (err: unknown) {
+					const e = err as { msg?: string };
 					errors.push({ id: installation.id, err: e });
 				}
 			})();
@@ -102,7 +103,8 @@ const getAndVerifyplainClientKey = async ({ id, jiraHost, clientKey: hashedClien
 			proxy: false
 		}).get("/plugins/servlet/oauth/consumer-info");
 		text = result.data;
-	} catch (e) {
+	} catch (err: unknown) {
+		const e = err as { message?: string };
 		throw { msg: e.message, jiraHost, id };
 	}
 

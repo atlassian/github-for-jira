@@ -1,21 +1,12 @@
 {
-  "development": {
-    "dialect": "postgres",
-    "use_env_variable": "DATABASE_URL",
-		"pool": {
-			"acquire": 60000,
-			"max": 15,
-			"min": 0,
-			"idle": 10000
-		}
-  },
-  "test": {
-    "dialect": "postgres",
-    "use_env_variable": "DATABASE_URL"
-  },
-	"e2e": {
+	"development": {
 		"dialect": "postgres",
 		"use_env_variable": "DATABASE_URL",
+		"disable_sql_logging": false,
+		"ssl": false,
+		"dialectOptions": {
+			"ssl": false
+		},
 		"pool": {
 			"acquire": 60000,
 			"max": 15,
@@ -23,20 +14,50 @@
 			"idle": 10000
 		}
 	},
-  "production": {
-    "dialect": "postgres",
-    "use_env_variable": "DATABASE_URL",
-    "disable_sql_logging": true,
-    "ssl": false,
-    "dialectOptions": {
-      "ssl": false
-    },
-    "pool": {
+	"test": {
+		"dialect": "postgres",
+		"use_env_variable": "DATABASE_URL",
+		"disable_sql_logging": false,
+		"ssl": false,
+		"dialectOptions": {
+			"ssl": false
+		},
+		"pool": {
+			"acquire": 60000,
 			"max": 15,
 			"min": 0,
 			"idle": 10000
-    }
-  },
+		}
+	},
+	"e2e": {
+		"dialect": "postgres",
+		"use_env_variable": "DATABASE_URL",
+		"disable_sql_logging": false,
+		"ssl": false,
+		"dialectOptions": {
+			"ssl": false
+		},
+		"pool": {
+			"acquire": 60000,
+			"max": 15,
+			"min": 0,
+			"idle": 10000
+		}
+	},
+	"production": {
+		"dialect": "postgres",
+		"use_env_variable": "DATABASE_URL",
+		"disable_sql_logging": true,
+		"ssl": false,
+		"dialectOptions": {
+			"ssl": false
+		},
+		"pool": {
+			"max": 15,
+			"min": 0,
+			"idle": 10000
+		}
+	},
 	"production-migrate": {
 		"dialect": "postgres",
 		"use_env_variable": "PG_DATABASE_URL",

@@ -8,7 +8,7 @@ export const waitUntil = <T>(
 	const tryPredicate = async () => {
 		try {
 			return await predicate();
-		} catch (error) {
+		} catch (error: unknown) {
 			attempts++;
 			if (attempts >= maxAttempts) {
 				return Promise.reject(error);

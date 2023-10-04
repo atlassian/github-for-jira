@@ -39,7 +39,7 @@ const estimateNumberOfSubtasks = async (subscription: Subscription, logger: Logg
 
 		logger.info({ nSubTasks, rateLimitData }, `Using subtasks: ${nSubTasks}`);
 		return nSubTasks;
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.warn({ err }, "Cannot determine rate limit, return only main task");
 		return 0;
 	}

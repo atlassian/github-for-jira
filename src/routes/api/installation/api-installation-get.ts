@@ -33,7 +33,8 @@ export const ApiInstallationGet = async (req: Request, res: Response): Promise<v
 						isGlobalInstall: response.data.repository_selection === "all",
 						syncState: subscription.syncStatus
 					};
-				} catch (err) {
+				} catch (e: unknown) {
+					const err = e as { status?: number };
 					return { err, id, deleted: err.status === 404 };
 				}
 			})
@@ -59,7 +60,7 @@ export const ApiInstallationGet = async (req: Request, res: Response): Promise<v
 			hasConnections: connections.length > 0 || failedConnections.length > 0,
 			syncStateUrl: `${req.protocol}://${req.get("host") ?? ""}/api/${installationId}/${encodeURIComponent(jiraHost)}/syncstate`
 		});
-	} catch (err) {
+	} catch (err: unknown) {
 		req.log.error({ installationId, err }, "Error getting installation");
 		res.status(500).json(err);
 	}
