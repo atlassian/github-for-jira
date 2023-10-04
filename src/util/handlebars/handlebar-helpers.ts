@@ -27,8 +27,7 @@ export const registerHandlebarsHelpers = () => {
 				: `${numberOfSyncedRepos} / ${totalNumberOfRepos}`
 	);
 
-	//check to display repo count as zero in case of org with zero repos
-	hbs.registerHelper("hasTotalNumberOfRepos", (totalNumberOfRepos: number) => (totalNumberOfRepos || totalNumberOfRepos === 0));
+	hbs.registerHelper("checkRepos", (totalNumberOfRepos: number) => (totalNumberOfRepos >= 0));
 
 	hbs.registerHelper("repoAccessType", (repository_selection: string) =>
 		repository_selection === "all" ? "All repos" : "Only select repos"
