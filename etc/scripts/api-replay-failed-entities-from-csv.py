@@ -1,3 +1,20 @@
+"""
+Script replay the rejected vulnerabilities by data depot. Simply export the logs of rejected vulnerabilities from the splunk and run the script with the log file
+
+1. Run the following splunk query to search for rejected vulnerabilities 
+    `micros_github-for-jira` env=prod* "Data depot rejected" 
+2. Export the splunk logs in csv format
+3. Running the script:
+    $ python3 ./api-replay-failed-entities-from-csv.py --env [ dev | staging | prod ] --sleep [ sleep-duration ] --input [ input-file-name.csv ]
+Example
+    $ python3 ./api-replay-failed-entities-from-csv.py --env staging --batchsize 100 --input failed-entities.csv  --sleep 10
+
+First time setup:
+
+1. virtualenv env -p python3
+2. source env/bin/activate
+3. pip install requests
+"""
 
 import argparse
 import csv
@@ -6,11 +23,12 @@ import requests
 import subprocess
 import sys
 import time
-import jsonpickle
+import json
 from requests import Request
 from requests.auth import AuthBase
 from typing import NamedTuple
 from dataclasses import dataclass
+from json import JSONEncoder
 
 LOG = logging.getLogger(__name__)
 
@@ -93,14 +111,24 @@ class ReplayEntity:
         self.hashedJiraHost = hashedJiraHost
         self.identifier = identifier
 
+    def to_json(self):
+        return {
+            'gitHubInstallationId': self.gitHubInstallationId,
+            'hashedJiraHost': self.hashedJiraHost,
+            'identifier': self.identifier
+        }
 
 def process_replayEntities(env: Environment, replayEntities: list) -> bool:
     url = '{}/api/replay-rejected-entities-from-data-depot'.format(env.github_for_jira_url)
+    
+    replayEntitiesJson = []
+    for replayEntity in replayEntities:
+        replayEntitiesJson.append(replayEntity.to_json())
 
     response = session.post(url,
       auth=env.github_for_jira_auth,
       json={
-        "replayEntities": jsonpickle.encode(replayEntities)
+        "replayEntities": replayEntitiesJson
       },
       headers = {"Content-Type": "application/json"})
 
@@ -127,16 +155,14 @@ def main():
     for row in input_reader:
         failedEntity = FailedEntity.from_dict(row)
         for identifier in failedEntity.identifiers:
-            replayEntities.append(ReplayEntity(failedEntity.gitHubInstallationId, failedEntity.hashedJiraHost, identifier))
+            replayEntities.append(ReplayEntity(failedEntity.gitHubInstallationId, failedEntity.hashedJiraHost, identifier.strip()))
     
 
+    LOG.info("Total failed entities to process %s", len(replayEntities))
     for i in range(0, len(replayEntities), args.batchsize):
         replayEntitiesBatch = replayEntities[i:i+args.batchsize]
         print("processing batch ", args.batchsize);
-        status = process_replayEntities(env, replayEntitiesBatch)
-        if status == 'error':
-            LOG.error('Stopping due to error. To skip a particular jiraHost, add a row to output file')
-            sys.exit(1)
+        process_replayEntities(env, replayEntitiesBatch)
         time.sleep(args.sleep)
 
 if __name__ == '__main__':
