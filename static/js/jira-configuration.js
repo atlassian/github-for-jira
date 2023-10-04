@@ -261,7 +261,7 @@ const additionalContent = (GHEServerUrl, appName) => {
 		// Get the list of all the apps within the GH Enterprise server
 		const apps = $(`.jiraConfiguration__enterpriseServer__header__container[data-server-baseurl='${GHEServerUrl}'] + .jiraConfiguration__enterpriseConnections > details`);
 		if ($(apps).length > 0) {
-			content += "Please make sure you delete these apps in GitHub too<br/>";
+			content += "Please make sure you delete these apps in GitHub too.<br/>";
 			$(apps).map((index, app) => {
 				const serverAppName = $(app).find(".jiraConfiguration__optionHeader").text();
 				content += "<span style='padding-right: 24px;'>";
@@ -270,7 +270,7 @@ const additionalContent = (GHEServerUrl, appName) => {
 			});
 		}
 	} else {
-		content += "Please make sure you delete this app in GitHub as well <br/>";
+		content += "Please make sure you delete this app in GitHub as well.<br/>";
 		content += `<span>&#8226;</span><a target="_blank" href="${GHEServerUrl}/settings/apps/${appName}/advanced">${appName}</a>`;
 	}
 	$(modalAdditionalContent).append(content);
