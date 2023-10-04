@@ -1,42 +1,38 @@
 
+# BUILD
 FROM docker.atl-paas.net/sox/micros-node-14:1.0.5 as build
 
-# root user for installs
+# Switch to root user
 USER root
 
-# adding python for node-gyp
-RUN apt-get update && apt-get install -y g++ make python3
-
-# For coredumps
-RUN apt-get install -y gdb
-
+# Copy the necessary files and install dependencies
 COPY . /opt/service
-
 WORKDIR /opt/service
+RUN yarn global add node-gyp
+RUN yarn --frozen-lockfile --non-interactive --no-progress
 
-# Installing packages
-RUN rm .yarnrc
-RUN yarn install --frozen-lockfile
-RUN yarn list
-
-# Building TypeScript files
+# Set environment variable and build the application
+ENV NODE_ENV=production
 RUN yarn run build:release
+RUN chown -R root:root /opt/service
 
-FROM docker.atl-paas.net/sox/micros-node-14:1.0.5
+# CLEANUP
+FROM build AS cleanup
 
-# root user for installs
-USER root
-
-# For debugging curl command
-RUN apt-get install -y curl
-
-# For coredumps
-RUN apt-get install -y gdb
-
-COPY --from=build /opt/service /opt/service
-# Add this the service Dockerfile, at the final stage if multi-stage
-COPY --from=docker.atl-paas.net/sox/brahmos-deps/stress-ng:latest /usr/bin/stress-ng /usr/bin/stress-ng
 WORKDIR /opt/service
-ENV NODE_ENV production
+RUN yarn --production --frozen-lockfile --non-interactive --no-progress
 
+# RUN
+FROM docker.atl-paas.net/sox/micros-node-14:1.0.5 as run
+COPY --chown=appuser:appuser --from=cleanup /opt/service /opt/service
+
+# Switch to appuser
+USER appuser
+
+WORKDIR /opt/service
+
+# Copy necessary files for stress tests
+COPY --from=docker.atl-paas.net/sox/brahmos-deps/stress-ng:latest /usr/bin/stress-ng /usr/bin/stress-ng
+
+ENV NODE_ENV production
 CMD ["./bin/start-server-micros.sh"]
