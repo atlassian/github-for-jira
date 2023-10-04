@@ -305,7 +305,7 @@ describe.each([
 			.get(url)
 			.expect(200)
 			.then(response => {
-				expect(response.text).toContain("<h1 class=\"jiraConfiguration__header__title\">GitHub configuration</h1>");
+				expect(response.text).toContain("<html>\n			<body></body>\n    	<script src=\"https://connect-cdn.atl-paas.net/all.js\"></script>\n			<script>AP.navigator.go( \"addonmodule\", { moduleKey: \"spa-index-page\", customData: { from: \"homepage\" } });</script>\n		</html>");
 			});
 	});
 
