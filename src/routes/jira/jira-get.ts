@@ -54,7 +54,15 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 
 	const useNewSPAExperience = await booleanFlag(BooleanFlags.USE_NEW_5KU_SPA_EXPERIENCE, jiraHost);
 	if (useNewSPAExperience && !hasConnections) {
-		res.redirect("/spa?from=homepage");
+		/**
+		 * Using AP.navigator to redirect because `/spa` page now needs JWT token,
+		 * `/spa` pages need JWT token to get the FeatureFlag and pass it to the React app
+		 */
+		res.send(`<html>
+			<body></body>
+    	<script src="https://connect-cdn.atl-paas.net/all.js"></script>
+			<script>AP.navigator.go( "addonmodule", { moduleKey: "spa-index-page", customData: { from: "homepage" } });</script>
+		</html>`);
 	} else {
 		res.render("jira-configuration.hbs", {
 			host: jiraHost,
