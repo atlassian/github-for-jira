@@ -147,7 +147,8 @@ export class DatabaseStateCreator {
 			syncStatus: "ACTIVE",
 			repositoryStatus: "complete",
 			gitHubAppId: gitHubServerApp?.id,
-			isSecurityPermissionsAccepted: this.securityPermissionsAccepted
+			isSecurityPermissionsAccepted: this.securityPermissionsAccepted,
+			totalNumberOfRepos: 33
 		});
 
 		const repoSyncState = this.withActiveRepoSyncStateFlag ? await RepoSyncState.create({

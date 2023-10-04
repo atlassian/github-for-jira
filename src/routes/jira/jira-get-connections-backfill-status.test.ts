@@ -176,8 +176,8 @@ describe("jira-get-connections-backfillStatus.test", () => {
 							[subscription.id]: {
 								isSyncComplete: false,
 								syncStatus: "IN PROGRESS",
-								totalRepos: 50,
-								syncedRepos: 33,
+								totalRepos: 33,
+								syncedRepos: 17,
 								backfillSince: null
 							}
 						},
