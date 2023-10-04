@@ -34,6 +34,9 @@ FROM docker.atl-paas.net/sox/micros-node-14:1.0.5
 # root user for installs
 USER root
 
+# Create the node user inside the Docker container with a new user ID
+RUN useradd -u 1000 node
+
 # For debugging curl command
 RUN apt-get install -y curl
 
