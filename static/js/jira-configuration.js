@@ -338,6 +338,7 @@ const setSyncErrorModal = ({ modal, failedSyncErrors }) => {
 	const ulElement = $(modal).find(
 		".jiraConfiguration__errorSummaryModalContent .error-summary-border-top ul"
 	);
+	let htmlUrl = $(modal).data("html-url");
 	ulElement.empty();
 	if (failedSyncErrors?.PERMISSIONS_ERROR) {
 		const liElement = $("<li>")
@@ -351,11 +352,10 @@ const setSyncErrorModal = ({ modal, failedSyncErrors }) => {
 			)
 			.append(" not been backfilled. Please ")
 			.append(
-				$("<a>", {
-					href: "{{html_url}}",
-					"data-installation-link": "{{html_url}}",
-					target: "_blank",
-				}).text("accept permissions on GitHub")
+				`<a href="${htmlUrl}"
+           			data-installation-link="${htmlUrl}"
+           			target="_blank">accept permissions on GitHub
+				</a>`
 			)
 			.append(
 				" (you must be the admin of your organization), then retry backfill."
