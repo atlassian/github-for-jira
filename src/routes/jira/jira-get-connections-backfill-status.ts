@@ -5,7 +5,7 @@ import {
 	Subscription,
 	SyncStatus
 } from "~/src/models/subscription";
-import { mapSyncStatus, ConnectionSyncStatus, getRetryableFailedSyncErrors } from "./jira-get";
+import { mapSyncStatus, ConnectionSyncStatus, getRetryableFailedSyncErrors } from "~/src/util/github-installations-helper";
 
 type SubscriptionBackfillState = {
 	totalRepos?: number;
