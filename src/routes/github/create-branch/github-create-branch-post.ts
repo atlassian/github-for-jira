@@ -12,7 +12,7 @@ import { Errors } from "config/errors";
 const getErrorMessages = (statusCode: number): string => {
 	switch (statusCode) {
 		case 403: {
-			return "We couldn’t create this branch, possibly because this GitHub repository hasn't been configured to your Jira site.";
+			return "We couldn’t create this branch, because GitHub for Jira app does not have permission to write to the GitHub repository. If you want to enable this feature, please contact your GitHub admin to grant permission.";
 		}
 		case 400: {
 			return "We couldn’t create this branch. Check that you’ve entered valid values for repository, source branch name, and new branch name.";
