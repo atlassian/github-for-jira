@@ -8,6 +8,7 @@ import StartConnection from "./pages/StartConnection";
 import ConfigSteps from "./pages/ConfigSteps";
 import Connected from "./pages/Connected";
 import InstallationRequested from "./pages/InstallationRequested";
+import Connections from "./pages/Connections";
 import DeferredInstallationRequested from "./pages/DeferredInstallationRequested";
 import DeferredInstallationConnected from "./pages/DeferredInstallationRequested/Connected";
 
@@ -36,6 +37,7 @@ const App = () => {
 			<SentryRoutes>
 				<Route path="/spa">
 					<Route index element={<StartConnection/>}/>
+					<Route path="connections" element={<Connections />}/>
 					<Route path="steps" element={<ConfigSteps/>}/>
 					<Route path="connected" element={<Connected />}/>
 					<Route path="installationRequested" element={<InstallationRequested />}/>

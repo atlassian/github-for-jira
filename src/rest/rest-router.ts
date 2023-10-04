@@ -9,12 +9,18 @@ import { JiraCloudIDRouter } from "./routes/jira";
 import { RestErrorHandler } from "./middleware/error";
 import { JiraAdminEnforceMiddleware } from "./middleware/jira-admin/jira-admin-check";
 import { AnalyticsProxyHandler } from "./routes/analytics-proxy";
+import { SubscriptionsRouter } from "./routes/subscriptions";
 import { DeferredInstallationUrlRoute } from "./routes/deferred-installation-url";
 import { DeferredInstallRequestRoute } from "./routes/deferred-installation-url/redirect-route";
 
 export const RestRouter = Router({ mergeParams: true });
 
 const subRouter = Router({ mergeParams: true });
+
+/**
+ * Separate route which returns the list of both cloud and server subscriptions
+ */
+RestRouter.use("/subscriptions", JwtHandler, JiraAdminEnforceMiddleware, SubscriptionsRouter);
 
 RestRouter.use("/deferred-installation/request/:requestId", DeferredInstallRequestRoute);
 
