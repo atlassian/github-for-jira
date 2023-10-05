@@ -15,6 +15,7 @@ type SubscriptionBackfillState = {
 	isSyncComplete: boolean;
 	backfillSince?: string;
 	failedSyncErrors?: Record<string, number>;
+	syncWarning?: string;
 };
 
 type BackFillType = {
@@ -104,7 +105,8 @@ const getBackfillStatus = async (subscriptionsById): Promise<BackFillType> => {
 				subscription
 			),
 			failedSyncErrors,
-			backfillSince: subscription?.backfillSince || null
+			backfillSince: subscription?.backfillSince || null,
+			syncWarning: subscription.syncWarning
 		};
 	}
 	return backfillStatus;
