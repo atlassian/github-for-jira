@@ -6,7 +6,7 @@ import axios from "axios";
  * Makes a call to the TCS sidecar to get tenant state
  */
 // const TENANT_CONTEXT_SIDECAR_BASE_URL = "http://tcs-sidecar:24143"; // TODO SET AS ENV VAR
-const TENANT_CONTEXT_SIDECAR_BASE_URL = "http://tcs-sidecar:50050"; // TODO SET AS ENV VAR
+const TENANT_CONTEXT_SIDECAR_BASE_URL = "http://tcs-sidecar:24143"; // TODO SET AS ENV VAR
 // const TENANT_CONTEXT_SIDECAR_BASE_URL = "127.0.0.1:24143"; // TODO SET AS ENV VAR
 // const TENANT_CONTEXT_SIDECAR_BASE_URL = "http://tcs-sidecar:24143/"; // TODO SET AS ENV VAR
 export const ApiTenantContextGet = async (req: Request, res: Response): Promise<void> => {
