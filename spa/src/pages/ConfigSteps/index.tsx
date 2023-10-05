@@ -262,18 +262,24 @@ const ConfigSteps = () => {
 			analyticsClient.sendUIEvent({ actionSubject: "installToNewOrganisation", action: "clicked"}, { mode });
 			await AppManager.installNewApp({
 				onFinish: async (gitHubInstallationId: number | undefined) => {
-					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: gitHubInstallationId ? "success" : "fail" }, { mode });
+					analyticsClient.sendTrackEvent(
+						{
+							actionSubject: "installNewOrgInGithubResponse",
+							action: gitHubInstallationId ? "success" : "fail",
+						},
+						{ mode }
+					);
 					const orgsResults = await getOrganizations();
 					let orgLogin;
 					if (orgsResults?.success) {
-					  const orgs = orgsResults?.orgs;
-					  const newOrg = orgs.find(org => org?.id === gitHubInstallationId);
-					  orgLogin = newOrg?.account?.login;
+						const orgs = orgsResults?.orgs;
+						const newOrg = orgs.find((org) => org?.id === gitHubInstallationId);
+						orgLogin = newOrg?.account?.login;
 					}
 					if (gitHubInstallationId && orgLogin) {
-					  await doCreateConnection(gitHubInstallationId, "auto", orgLogin);
+						await doCreateConnection(gitHubInstallationId, "auto", orgLogin);
 					}
-				  },
+				},
 				onRequested: async (_setupAction: string) => {
 					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "requested"}, { mode });
 					navigate("/spa/installationRequested");
