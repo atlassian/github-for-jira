@@ -90,6 +90,8 @@ const maybeHandleRateLimitingError = <MessagePayload extends BaseMessagePayload>
 		context.log.warn({ error }, `Rate limiting error, retrying`);
 		const buffer = Math.max(DELAY_BUFFER_STEP, BASE_RATE_LIMITING_DELAY_BUFFER_SEC - context.receiveCount * DELAY_BUFFER_STEP);
 		const rateLimitReset = error.rateLimitReset + buffer - Date.now() / 1000;
+		// GitHub Rate limit resets hourly, in the scenario of burst traffic it continues to overwhelm the rate limit
+		// this attempts to ease the load across multiple refreshes
 		const retryDelaySec = rateLimitReset + ONE_HOUR_IN_SECONDS * (context.receiveCount - 1);
 		return { retryable: true, retryDelaySec, isFailure: true };
 	}
