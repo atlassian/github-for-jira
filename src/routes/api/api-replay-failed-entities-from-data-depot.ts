@@ -28,7 +28,7 @@ export const ApiReplyFailedEntitiesFromDataDepotPost = async (req: Request, res:
 
 	const replayEntities: ReplayEntity[] = req.body?.replayEntities;
 
-	if (!replayEntities?.length || replayEntities.length == 0) {
+	if (!replayEntities?.length) {
 		info("Replay entities are empty.");
 		res.end();
 		return;
