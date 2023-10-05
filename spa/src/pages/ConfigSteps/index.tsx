@@ -272,8 +272,7 @@ const ConfigSteps = () => {
 					const orgsResults = await getOrganizations();
 					let orgLogin;
 					if (orgsResults?.success) {
-						const orgs = orgsResults?.orgs;
-						const newOrg = orgs.find((org) => org?.id === gitHubInstallationId);
+						const newOrg = orgsResults?.orgs?.find((org) => org?.id === gitHubInstallationId);
 						orgLogin = newOrg?.account?.login;
 					}
 					if (gitHubInstallationId && orgLogin) {
