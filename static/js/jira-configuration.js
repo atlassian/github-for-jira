@@ -533,6 +533,10 @@ const updateBackfilledStatus = ({ subscription, self, installationId }) => {
 			}
 		}
 		if (failedSyncErrors) {
+			var oldErrorLink = document.getElementById("error-summary");
+			if (oldErrorLink) {
+				oldErrorLink.remove();
+			}
 			infoContainer.append(
 				`<a
 				class="jiraConfiguration__errorSummary__btn"
