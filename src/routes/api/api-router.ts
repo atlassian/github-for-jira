@@ -38,7 +38,7 @@ ApiRouter.use(LogMiddleware);
 
 // Verify SLAuth headers to make sure that no open access was allowed for these endpoints
 // And also log how the request was authenticated
-const slauthMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+const slauthMiddleware = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
 	const mechanism = req.get("X-Slauth-Mechanism");
 	const issuer = req.get("X-Slauth-Issuer");
 	const principal = req.get("X-Slauth-Principal");
