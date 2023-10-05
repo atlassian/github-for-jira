@@ -86,8 +86,9 @@ const maybeHandleNonRetryableResponseCode = <MessagePayload extends BaseMessageP
 
 const maybeHandleRateLimitingError = <MessagePayload extends BaseMessagePayload>(error: Error, context: SQSMessageContext<MessagePayload>): ErrorHandlingResult | undefined => {
 	if (error instanceof GithubClientRateLimitingError) {
+		const DELAY_BUFFER_STEP = 10;
 		context.log.warn({ error }, `Rate limiting error, retrying`);
-		const buffer = BASE_RATE_LIMITING_DELAY_BUFFER_SEC - context.receiveCount * 10;
+		const buffer = BASE_RATE_LIMITING_DELAY_BUFFER_SEC - context.receiveCount * DELAY_BUFFER_STEP;
 		const rateLimitReset = error.rateLimitReset + buffer - Date.now() / 1000;
 		const retryDelaySec = rateLimitReset + ONE_HOUR_IN_SECONDS * (context.receiveCount - 1);
 		return { retryable: true, retryDelaySec, isFailure: true };
