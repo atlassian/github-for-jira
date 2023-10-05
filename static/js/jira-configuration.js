@@ -364,7 +364,6 @@ const setSyncErrorModal = ({ modal, failedSyncErrors }) => {
 		ulElement.append(liElement);
 	}
 	if (failedSyncErrors?.CONNECTION_ERROR) {
-		console.log("CONNECTION_ERROR");
 		const liElement = $("<li>")
 			.append("We were unable to complete backfill for ")
 			.append($("<b>").text(`${failedSyncErrors?.CONNECTION_ERROR} `))
@@ -388,12 +387,9 @@ const setErrorSummaryIconClick = ({
 	failedSyncErrors = null,
 }) => {
 	$(".jiraConfiguration__errorSummary__btn").click((event) => {
-		console.log("I AM CLICKED");
 		const installationId = $(event.currentTarget).data("installation-id");
-		console.log("I AM CLICKED installationId", installationId);
 
 		const appId = $(event.currentTarget).data("app-id");
-		console.log("I AM CLICKED appId", appId);
 
 		const csrfToken = document.getElementById("_csrf").value;
 		const modal = document.getElementById(
