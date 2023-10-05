@@ -13,9 +13,10 @@ import { GithubClientRateLimitingError } from "../github/client/github-client-er
  */
 const UNRETRYABLE_STATUS_CODES = [401, 404, 403];
 
-const RATE_LIMITING_DELAY_BUFFER_SEC = 10;
+const BASE_RATE_LIMITING_DELAY_BUFFER_SEC = 60;
 const EXPONENTIAL_BACKOFF_BASE_SEC = 60;
 const EXPONENTIAL_BACKOFF_MULTIPLIER = 3;
+const ONE_HOUR_IN_SECONDS = 3600;
 
 export const handleUnknownError: ErrorHandler<BaseMessagePayload> = <MessagePayload extends BaseMessagePayload>(
 	err: Error,
@@ -83,12 +84,15 @@ const maybeHandleNonRetryableResponseCode = <MessagePayload extends BaseMessageP
 	return undefined;
 };
 
-const maybeHandleRateLimitingError = <MessagePayload extends BaseMessagePayload>(error: Error, context: SQSMessageContext<MessagePayload>): ErrorHandlingResult | undefined => {
+export const maybeHandleRateLimitingError = <MessagePayload extends BaseMessagePayload>(error: Error, context: SQSMessageContext<MessagePayload>): ErrorHandlingResult | undefined => {
 	if (error instanceof GithubClientRateLimitingError) {
 		context.log.warn({ error }, `Rate limiting error, retrying`);
-		const delaySec = error.rateLimitReset + RATE_LIMITING_DELAY_BUFFER_SEC - (Date.now() / 1000);
-		return { retryable: true, retryDelaySec: delaySec, isFailure: true };
+		const buffer = BASE_RATE_LIMITING_DELAY_BUFFER_SEC - context.receiveCount * 10;
+		const rateLimitReset = error.rateLimitReset + buffer - Date.now() / 1000;
+		const retryDelaySec = rateLimitReset + ONE_HOUR_IN_SECONDS * (context.receiveCount - 1);
+		return { retryable: true, retryDelaySec, isFailure: true };
 	}
 
 	return undefined;
 };
+
