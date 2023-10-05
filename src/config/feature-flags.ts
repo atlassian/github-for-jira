@@ -31,6 +31,7 @@ export enum BooleanFlags {
 	ENABLE_GITHUB_SECURITY_IN_JIRA = "enable-github-security-in-jira",
 	DELETE_MESSAGE_ON_BACKFILL_WHEN_OTHERS_WORKING_ON_IT = "delete-message-on-backfill-when-others-working-on-it",
 	USE_NEW_5KU_SPA_EXPERIENCE = "enable-5ku-experience--cloud-connect",
+	ENABLE_5KU_BACKFILL_PAGE = "enable-5ku-experience-backfill-page",
 	USE_INSTALLATION_CLIENT_CHECK_PERMISSION = "use-installation-client-to-check-permission",
 	USE_CUSTOM_ROOT_CA_BUNDLE = "use-custom-root-ca-bundle",
 	GENERATE_CORE_HEAP_DUMPS_ON_LOW_MEM = "generate-core-heap-dumps-on-low-mem"
@@ -70,7 +71,7 @@ const getLaunchDarklyValue = async <T = boolean | string | number>(flag: Boolean
 	try {
 		await launchdarklyClient.waitForInitialization();
 		const user = createLaunchdarklyUser(key);
-		return launchdarklyClient.variation(flag, user, defaultValue);
+		return launchdarklyClient.variation(flag, user, defaultValue) as Promise<T>;
 	} catch (err: unknown) {
 		logger.error({ flag, err }, "Error resolving value for feature flag");
 		return defaultValue;
@@ -102,7 +103,7 @@ export const shouldSendAll = async (type: ShouldSendAllStringTypes, jiraHost: st
 		// Full set:
 		// ["branches-backfill", "builds-backfill", "commits-backfill", "deployments-backfill", "prs-backfill", "branches", "builds", "commits", "deployments", "prs"]
 		const sendAllString = await stringFlag(StringFlags.SEND_ALL, "[]", jiraHost);
-		const sendAllArray: string[] = JSON.parse(sendAllString);
+		const sendAllArray: string[] = JSON.parse(sendAllString) as string[];
 		return Array.isArray(sendAllArray) && sendAllArray.includes(type);
 	} catch (e: unknown) {
 		logger.error({ err: e, type }, "Cannot define if should send all");
@@ -113,7 +114,7 @@ export const shouldSendAll = async (type: ShouldSendAllStringTypes, jiraHost: st
 export const isBlocked = async (jiraHost: string, installationId: number, logger: Logger): Promise<boolean> => {
 	try {
 		const blockedInstallationsString = await stringFlag(StringFlags.BLOCKED_INSTALLATIONS, "[]", jiraHost);
-		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString);
+		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString) as number[];
 		return Array.isArray(blockedInstallations) && blockedInstallations.includes(installationId);
 	} catch (e: unknown) {
 		logger.error({ err: e, installationId }, "Cannot define if isBlocked");

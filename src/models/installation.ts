@@ -27,7 +27,7 @@ export class Installation extends EncryptedModel {
 	}
 
 	static async getForClientKey(
-		clientKey: string
+		clientKey: string | undefined
 	): Promise<Installation | null> {
 		if (!clientKey?.length) {
 			return null;

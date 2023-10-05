@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,@typescript-eslint/no-var-requires */
-import { getInstallations, JiraGet } from "./jira-get";
+import { JiraGet } from "./jira-get";
+import { getInstallations } from "utils/github-installations-helper";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
@@ -314,8 +315,10 @@ describe.each([
 				.mockResolvedValue(true);
 			await supertest(frontendApp)
 				.get(url)
-				.expect(302)
-				.expect("location", "/spa?from=homepage");
+				.expect(200)
+				.then(response => {
+					expect(response.text).toContain("<html>\n			<body></body>\n    	<script src=\"https://connect-cdn.atl-paas.net/all.js\"></script>\n			<script>AP.navigator.go( \"addonmodule\", { moduleKey: \"spa-index-page\", customData: { from: \"homepage\" } });</script>\n		</html>");
+				});
 		});
 		it("should show existing page on empty state if ff off", async () => {
 			when(booleanFlag).calledWith(BooleanFlags.USE_NEW_5KU_SPA_EXPERIENCE, jiraHost)

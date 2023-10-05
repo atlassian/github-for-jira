@@ -7,6 +7,7 @@ import Heading from "@atlaskit/heading";
 import Button from "@atlaskit/button";
 import analyticsClient, { useEffectScreenEvent } from "../../analytics";
 import { useNavigate } from "react-router-dom";
+import { enableBackfillStatusPage } from "./../../feature-flags";
 
 const connectedContainerStyle = css`
 	margin: 0 auto;
@@ -59,11 +60,13 @@ const Connected = () => {
 	const { colorMode } = useThemeObserver();
 
 	const navigateToBackfillPage = () => {
-		analyticsClient.sendUIEvent({
-			actionSubject: "checkBackfillStatus",
-			action: "clicked",
-		});
-		AP.navigator.go("addonmodule", { moduleKey: "gh-addon-admin" });
+		analyticsClient.sendUIEvent({ actionSubject: "checkBackfillStatus", action: "clicked" });
+
+		if (enableBackfillStatusPage) {
+			navigate("/spa/connections");
+		} else {
+			AP.navigator.go( "addonmodule", { moduleKey: "gh-addon-admin" });
+		}
 	};
 
 	const learnAboutIssueLinking = () => {
