@@ -439,7 +439,6 @@ const setBackfillDateToolTip = () =>{
 
 const getInprogressSubIds = () => {
 	let subscriptionIds = [];
-	// store ids of subscription whose repo backfill is in progress
 	$(".jiraConfiguration__table__row").each(function () {
 		const repoStatusTd = $(this).children("td.repo-status");
 		const subscriptionId = $(this).data("subscription-id");
@@ -449,7 +448,6 @@ const getInprogressSubIds = () => {
 		const syncStatusProgress = infoContainer.children(
 			`span.jiraConfiguration__table__syncStatus`
 		);
-		// repo status check if it is finished
 		if (
 			!syncStatusProgress.hasClass("jiraConfiguration__table__finished") &&
 			subscriptionId
@@ -550,7 +548,6 @@ const updateBackfilledStatus = ({ subscription, self, installationId }) => {
 let fetchBackfillStateTimeout;
 function fetchAllConnectionsBackfillStatus() {
 	const subscriptionIds = getInprogressSubIds();
-	// check if we have atleast one subscription backfill in progress
 	if (subscriptionIds.length > 0) {
 		$.ajax({
 			type: "GET",
@@ -568,12 +565,10 @@ function fetchAllConnectionsBackfillStatus() {
 
 					if (subscriptionId in subscriptions) {
 						const subscription = subscriptions[subscriptionId];
-						// repo count set
 						updateBackfilledRepoCount({
 							subscription,
 							self,
 						});
-						// repo status set
 						updateBackfilledStatus({ subscription, self, installationId });
 					} else {
 						$(`#${subscriptionId}-syncCount`).css("display", "none");
@@ -596,21 +591,17 @@ function fetchAllConnectionsBackfillStatus() {
 }
 
 $(document).ready(function () {
-	const enableBackfillingStatusPolling = $(".jiraConfiguration").data(
-		"enable-backfilling-status-polling"
-	);
-
-	if (enableBackfillingStatusPolling) {
-		const hasConnections = $(".jiraConfiguration").data("has-connections");
-		//1. read a meta data from loaded html page to see if the repo sync has started
-		if (hasConnections) {
-			//2. if its in progress (not in finished state) -> call the API to fetch live progress of backfill
-			fetchAllConnectionsBackfillStatus();
-		}
+	const isBackfillingStatusPollingEnabled = $(".jiraConfiguration").data("enable-backfilling-status-polling");
+  
+	if (isBackfillingStatusPollingEnabled) {
+	  const hasConnections = $(".jiraConfiguration").data("has-connections");
+	  if (hasConnections) {
+		fetchAllConnectionsBackfillStatus();
+	  }
 	}
+	
 	setBackfillDateToolTip();
 	setErrorSummaryIconClick({});
-	AJS.$(
-		".jiraConfiguration__restartBackfillModal__fullsync__label-icon"
-	).tooltip();
-});
+
+	AJS.$(".jiraConfiguration__restartBackfillModal__fullsync__label-icon").tooltip();
+  });

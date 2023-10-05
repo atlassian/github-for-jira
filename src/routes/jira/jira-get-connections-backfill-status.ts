@@ -1,21 +1,22 @@
 import { NextFunction, Request, Response } from "express";
 import { groupBy } from "lodash";
 import { RepoSyncState } from "~/src/models/reposyncstate";
+import { Subscription, SyncStatus } from "~/src/models/subscription";
 import {
-	Subscription,
-	SyncStatus
-} from "~/src/models/subscription";
-import { mapSyncStatus, ConnectionSyncStatus, getRetryableFailedSyncErrors } from "~/src/util/github-installations-helper";
+	mapSyncStatus,
+	ConnectionSyncStatus,
+	getRetryableFailedSyncErrors
+} from "~/src/util/github-installations-helper";
 
 type SubscriptionBackfillState = {
 	totalRepos?: number;
-	isSyncComplete: boolean;
 	syncedRepos?: number;
-	backfillSince?: string;
-	syncWarning?: string;
-	failedSyncErrors?: Record<string, number>;
 	syncStatus: ConnectionSyncStatus;
+	isSyncComplete: boolean;
+	backfillSince?: string;
+	failedSyncErrors?: Record<string, number>;
 };
+
 type BackFillType = {
 	[key: string]: SubscriptionBackfillState;
 };
@@ -27,29 +28,33 @@ export const JiraGetConnectionsBackfillStatus = async (
 ): Promise<void> => {
 	try {
 		const { jiraHost: localJiraHost } = res.locals;
-		const subscriptionIds: number[] = String(req.query?.subscriptionIds)
+		const subscriptionIds = String(req.query?.subscriptionIds)
 			.split(",")
-			.map((id) => Number(id))
+			.map(Number)
 			.filter(Boolean);
 
-		if (subscriptionIds?.length <= 0) {
+		if (subscriptionIds.length === 0) {
 			req.log.warn("Missing Subscription IDs");
 			res.status(400).send("Missing Subscription IDs");
 			return;
 		}
-		const subscriptions: Subscription[] = await Subscription.findAll({
+
+		const subscriptions = await Subscription.findAll({
 			where: {
 				id: subscriptionIds
 			}
 		});
-		const resultSubscriptionIds = subscriptions.map(subscription => subscription.id);
-		if (subscriptions?.length <= 0) {
+		const resultSubscriptionIds = subscriptions.map(
+			(subscription) => subscription.id
+		);
+
+		if (!subscriptions || subscriptions.length === 0) {
 			req.log.error("Missing Subscription");
 			res.status(400).send("Missing Subscription");
 			return;
 		}
 
-		const jiraHosts: string[] = subscriptions.map(
+		const jiraHosts = subscriptions.map(
 			(subscription) => subscription?.jiraHost
 		);
 
@@ -77,33 +82,30 @@ export const JiraGetConnectionsBackfillStatus = async (
 	}
 };
 
-const getBackfillCompletionStatus = (backfillStatus: BackFillType): boolean => Object.values(backfillStatus).every(
-	(backFill: SubscriptionBackfillState): boolean => backFill?.isSyncComplete
-);
+const getBackfillCompletionStatus = (backfillStatus: BackFillType): boolean =>
+	Object.values(backfillStatus).every(
+		(backFill: SubscriptionBackfillState): boolean => backFill?.isSyncComplete
+	);
 
-const getBackfillStatus = async (subscriptionsById): Promise<BackFillType>=> {
+const getBackfillStatus = async (subscriptionsById): Promise<BackFillType> => {
 	const backfillStatus: BackFillType = {};
 	for (const subscriptionId in subscriptionsById) {
-		backfillStatus[subscriptionId] = {
-			isSyncComplete: true,
-			syncStatus: SyncStatus.PENDING
-		};
 		const subscription = subscriptionsById[subscriptionId][0];
-		const totalRepos = subscription?.totalNumberOfRepos;
-		backfillStatus[subscriptionId]["totalRepos"] = totalRepos;
-		let isSyncComplete = subscription?.syncStatus;
-		isSyncComplete = isSyncComplete === SyncStatus.COMPLETE || isSyncComplete === SyncStatus.FAILED;
-		const syncStatus = mapSyncStatus(
-			subscription?.syncStatus
-		);
-		backfillStatus[subscriptionId]["syncedRepos"] = await RepoSyncState.countFullySyncedReposForSubscription(subscription);
-		const failedSyncErrors=  await getRetryableFailedSyncErrors(subscription);
-		backfillStatus[subscriptionId]["failedSyncErrors"] = failedSyncErrors;
-		backfillStatus[subscriptionId]["backfillSince"] =
-			subscription?.backfillSince || null;
-		backfillStatus[subscriptionId]["isSyncComplete"] = isSyncComplete;
-		backfillStatus[subscriptionId]["syncStatus"] = syncStatus;
-		backfillStatus[subscriptionId]["syncWarning"] = subscription.syncWarning;
+		const isSyncComplete =
+			subscription?.syncStatus === SyncStatus.COMPLETE ||
+			subscription?.syncStatus === SyncStatus.FAILED;
+		const failedSyncErrors = await getRetryableFailedSyncErrors(subscription);
+
+		backfillStatus[subscriptionId] = {
+			isSyncComplete,
+			syncStatus: mapSyncStatus(subscription?.syncStatus),
+			totalRepos: subscription?.totalNumberOfRepos,
+			syncedRepos: await RepoSyncState.countFullySyncedReposForSubscription(
+				subscription
+			),
+			failedSyncErrors,
+			backfillSince: subscription?.backfillSince || null
+		};
 	}
 	return backfillStatus;
 };
