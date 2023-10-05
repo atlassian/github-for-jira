@@ -38,6 +38,7 @@ export const getBuildTask = async (
 	const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
 	const numberOfPagesToFetchInParallel = await numberFlag(NumberFlags.NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL, 0, jiraHost);
 	if (!numberOfPagesToFetchInParallel || numberOfPagesToFetchInParallel <= 1) {
+		throw new Error();
 		return doGetBuildTask(logger, gitHubInstallationClient, repository, smartCursor, messagePayload);
 	} else {
 		return doGetBuildTaskInParallel(numberOfPagesToFetchInParallel, logger, gitHubInstallationClient, repository, smartCursor, messagePayload);

@@ -49,6 +49,27 @@ services:
     ports:
       - "26272:26272"
 
+
+  tcs-sidecar:
+    image: docker.atl-paas.net/sox/tcs-sidecar-application:1.1-stable-release
+    ports:
+      - '24143:24143'
+      - "50050:50050"
+      - "50051:50051"
+    networks:
+      default:
+        aliases:
+          - tcs-sidecar
+    environment:
+      MICROS_ENV: $MICROS_ENV
+      MICROS_SERVICE_ROLE: $MICROS_SERVICE_ROLE
+      MICROS_AWS_ROLE: $MICROS_AWS_ROLE
+      TCS_SIDECAR_SERVICE_NAME: 'github-for-jira'
+      #$MICROS_SERVICE
+      TCS_SIDECAR_ENVIRONMENT_TYPE: 'STAGE'
+      TCS_SIDECAR_AWS_REGION: 'ap-southeast-2'
+      TCS_SIDECAR_PREFER_DEPLOYMENT_KEYS_OVER_GROUP: 'true'
+
   app:
     container_name: app
     depends_on:
@@ -56,6 +77,9 @@ services:
       - postgres
       - localstack
       - cryptor
+      - tcs-sidecar
+    links:
+      - tcs-sidecar
     volumes:
       - .:/app
     build:

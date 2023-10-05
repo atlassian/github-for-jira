@@ -4,7 +4,7 @@
 	"description": "GitHub integration for Atlassian Jira",
 	"repository": "https://github.com/atlassian/github-for-jira.git",
 	"engines": {
-		"node": ">= 14.21 <15",
+		"node": ">= 14.19 <15",
 		"yarn": "^1.22.0"
 	},
 	"main": "src/main",
@@ -84,7 +84,6 @@
 		"date-fns": "^1.29.0",
 		"dotenv": "^16.0.1",
 		"dotenv-expand": "^8.0.3",
-		"dumpme": "^1.0.3",
 		"event-loop-lag": "^1.4.0",
 		"express": "^4.17.3",
 		"express-async-handler": "^1.2.0",

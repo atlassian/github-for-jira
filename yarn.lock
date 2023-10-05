@@ -2833,14 +2833,6 @@ dtrace-provider@~0.8:
   dependencies:
     nan "^2.14.0"
 
-dumpme@^1.0.3:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/dumpme/-/dumpme-1.0.3.tgz#0a33bfa7c6256ea35845d3e718ed658c12707c74"
-  integrity sha512-OKsH4VcOq5GopNwEo6Qb6KwtPFZ3mo7m1nutcQcN4VXhGxlZ/3xhfy2kKmx5cpqdN59uqIKWMXA+mw0y8PgKQg==
-  dependencies:
-    bindings "^1.5.0"
-    nan "^2.14.0"
-
 dynamic-dedupe@^0.3.0:
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/dynamic-dedupe/-/dynamic-dedupe-0.3.0.tgz#06e44c223f5e4e94d78ef9db23a6515ce2f962a1"

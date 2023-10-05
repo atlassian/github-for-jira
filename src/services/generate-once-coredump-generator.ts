@@ -1,5 +1,5 @@
 import Logger from "bunyan";
-import dumpme from "dumpme";
+// import dumpme from "dumpme";
 import fs from "fs";
 import { hasEnoughFreeHeap } from "utils/heap-size-utils";
 
@@ -35,7 +35,7 @@ export class GenerateOnceCoredumpGenerator {
 
 			const tsBeforeDump = Date.now();
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-			dumpme(undefined, `/tmp/dump_core`); // pid will be added by dumpme() as a suffix
+			// dumpme(undefined, `/tmp/dump_core`); // pid will be added by dumpme() as a suffix
 			const tsAfterDump = Date.now();
 
 			this.config.logger.info(`Core dump was created, took ${tsAfterDump - tsBeforeDump}`);

@@ -269,6 +269,7 @@ config:
     #   (5 web servers + 3 workers) * 15 pool size = 120 connections
     PGBOUNCER_SERVER_IDLE_TIMEOUT: "60"
     PGBOUNCER_MAX_CLIENT_CONN: "1000"
+    TCS_SIDECAR_ENVIRONMENT_TYPE: "STAGE"
 
 loadBalancer:
   type: ALB

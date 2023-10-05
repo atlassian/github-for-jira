@@ -27,6 +27,7 @@ import { ApiRecryptPost } from "./api-recrypt-post";
 import { GenerateOnceCoredumpGenerator } from "services/generate-once-coredump-generator";
 import { GenerateOncePerNodeHeadumpGenerator } from "services/generate-once-per-node-headump-generator";
 import { RepoSyncState } from "models/reposyncstate";
+import {ApiTenantContextGet} from "routes/api/api-tenant-context-get";
 
 export const ApiRouter = Router();
 
@@ -53,11 +54,11 @@ const slauthMiddleware = async (req: Request, res: Response, next: NextFunction)
 		}
 	});
 
-	if (!mechanism || mechanism === "open") {
-		req.log.warn("Attempt to access Admin API without authentication");
-		res.status(401).json({ error: "Open access not allowed" });
-		return;
-	}
+	// if (!mechanism || mechanism === "open") {
+	// 	req.log.warn("Attempt to access Admin API without authentication");
+	// 	res.status(401).json({ error: "Open access not allowed" });
+	// 	return;
+	// }
 
 	req.log.info("API Request successfully authenticated");
 
@@ -78,6 +79,9 @@ const pingGet = (_: Request, res: Response): void => {
 	res.send({});
 };
 ApiRouter.get("/", pingGet);
+
+
+ApiRouter.get("/tcs", ApiTenantContextGet);
 
 ApiRouter.use("/configuration", ApiConfigurationRouter);
 
