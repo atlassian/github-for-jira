@@ -27,7 +27,7 @@ import { ApiRecryptPost } from "./api-recrypt-post";
 import { GenerateOnceCoredumpGenerator } from "services/generate-once-coredump-generator";
 import { GenerateOncePerNodeHeadumpGenerator } from "services/generate-once-per-node-headump-generator";
 import { RepoSyncState } from "models/reposyncstate";
-import {ApiTenantContextGet} from "routes/api/api-tenant-context-get";
+import { ApiTenantContextGet } from "routes/api/api-tenant-context-get";
 
 export const ApiRouter = Router();
 

@@ -21,19 +21,18 @@ export const ApiTenantContextGet = async (req: Request, res: Response): Promise<
 	// }
 
 	try {
-		console.log('TCS REQUEST');
 
 		// https://tenant-context-service-useast.prod.atl-paas.net/entity/cloud/146563c5-090c-4c85-bb98-9979ad9bf3c0.abuse
 		// const tcsResponse = await axios.get(`https://tenant-context-service-useast.prod.atl-paas.net/entity/cloud/zxventures.atlassian.net.tps`);
 		const tcsResponse = await axios.get(`${TENANT_CONTEXT_SIDECAR_BASE_URL}/entity/cloud/joshkayjira.jira-dev.com.cloudid`);
-		console.log('tcsResponse');
-		console.log(tcsResponse);
-		console.log(tcsResponse.data);
+		req.log.info("JK_TCS tcsResponse");
+		req.log.info(tcsResponse);
+		req.log.info(tcsResponse.data);
 		res.json({ data: tcsResponse.data
 		});
 	} catch (err: unknown) {
-		console.log("error")
-		console.log(err)
+		req.log.info("error");
+		req.log.info(err);
 		res.json({
 			error: err
 		});
