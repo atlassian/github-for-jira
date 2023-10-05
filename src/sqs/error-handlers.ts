@@ -84,7 +84,7 @@ const maybeHandleNonRetryableResponseCode = <MessagePayload extends BaseMessageP
 	return undefined;
 };
 
-export const maybeHandleRateLimitingError = <MessagePayload extends BaseMessagePayload>(error: Error, context: SQSMessageContext<MessagePayload>): ErrorHandlingResult | undefined => {
+const maybeHandleRateLimitingError = <MessagePayload extends BaseMessagePayload>(error: Error, context: SQSMessageContext<MessagePayload>): ErrorHandlingResult | undefined => {
 	if (error instanceof GithubClientRateLimitingError) {
 		context.log.warn({ error }, `Rate limiting error, retrying`);
 		const buffer = BASE_RATE_LIMITING_DELAY_BUFFER_SEC - context.receiveCount * 10;
