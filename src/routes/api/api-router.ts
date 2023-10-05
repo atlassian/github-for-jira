@@ -26,6 +26,7 @@ import { ResetFailedAndPendingDeploymentCursorPost } from "./commits-from-date/r
 import { ApiRecryptPost } from "./api-recrypt-post";
 import { GenerateOnceCoredumpGenerator } from "services/generate-once-coredump-generator";
 import { GenerateOncePerNodeHeadumpGenerator } from "services/generate-once-per-node-headump-generator";
+import { ApiReplyFailedEntitiesFromDataDepotPost } from "./api-replay-failed-entities-from-data-depot";
 import { RepoSyncState } from "models/reposyncstate";
 
 export const ApiRouter = Router();
@@ -156,8 +157,8 @@ const FillMemAndGenerateCoreDump = (req: Request, res: Response) => {
 ApiRouter.post("/fill-mem-and-generate-coredump", FillMemAndGenerateCoreDump);
 
 const AbortPost = (_req: Request, res: Response) => {
-	process.abort();
 	res.json({ message: "should never happen" });
+	process.abort();
 };
 
 ApiRouter.post("/abort", AbortPost);
@@ -220,6 +221,7 @@ ApiRouter.post("/re-encrypt-ghes-app", ReEncryptGitHubServerAppKeysPost);
 ApiRouter.use("/data-cleanup", DataCleanupRouter);
 ApiRouter.post("/recover-commits-from-date", RecoverCommitsFromDatePost);
 ApiRouter.post("/reset-failed-pending-deployment-cursor", ResetFailedAndPendingDeploymentCursorPost);
+ApiRouter.post("/replay-rejected-entities-from-data-depot", ApiReplyFailedEntitiesFromDataDepotPost);
 
 ApiRouter.use("/jira", ApiJiraRouter);
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);
