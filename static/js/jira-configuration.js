@@ -419,19 +419,26 @@ const setErrorSummaryIconClick = ({
 	});
 };
 
-const setBackfillDateToolTip = () =>{
+const setBackfillDateToolTip = () => {
 	AJS.$(".jiraConfiguration__table__backfillInfoIcon").tooltip();
 	AJS.$(".jiraConfiguration__info__backfillDate-label").tooltip();
-	AJS.$(".jiraConfiguration__restartBackfillModal__fullsync__label-icon").tooltip();
+	AJS.$(
+		".jiraConfiguration__restartBackfillModal__fullsync__label-icon"
+	).tooltip();
 
 	$(".jiraConfiguration__info__backfillDate-label").each(function () {
 		if ($(this).attr("data-backfill-since")) {
 			const backfillDate = new Date($(this).attr("data-backfill-since"));
-			$(this).text(backfillDate.toLocaleDateString(undefined, { dateStyle: "short" }));
-			$(this).attr("title", (backfillDate.toLocaleDateString(undefined, { dateStyle: "long" })));
+			$(this).text(
+				backfillDate.toLocaleDateString(undefined, { dateStyle: "short" })
+			);
+			$(this).attr(
+				"title",
+				backfillDate.toLocaleDateString(undefined, { dateStyle: "long" })
+			);
 		}
 	});
-}
+};
 
 const getInprogressSubIds = () => {
 	let subscriptionIds = [];
@@ -458,19 +465,24 @@ const updateBackfilledRepoCount = ({ subscription, self }) => {
 	const totalRepos = Number(subscription.totalRepos);
 	const syncedRepos = Number(subscription.syncedRepos);
 	const inprogressSyncStatus =
-		syncedRepos === totalRepos ? `${totalRepos}` : `${syncedRepos} / ${totalRepos}`;
+		syncedRepos === totalRepos
+			? `${totalRepos}`
+			: `${syncedRepos} / ${totalRepos}`;
 	const repoCountTd = $(self).children("td.repo-count");
-	const syncProgress = repoCountTd.children("span.jiraConfiguration__table__syncCount");
+	const syncProgress = repoCountTd.children(
+		"span.jiraConfiguration__table__syncCount"
+	);
 	syncProgress.text(` ${inprogressSyncStatus} `);
 };
 
-const toLowercaseHelper = (str) =>
-	(str?.toString?.().toLowerCase()) || "";
+const toLowercaseHelper = (str) => str?.toString?.().toLowerCase() || "";
 const replaceSpaceWithHyphenHelper = (str) =>
-	(str?.toString?.().replace(/ /g, "-")) || "";
+	str?.toString?.().replace(/ /g, "-") || "";
 
 const isAllSyncSuccess = (conn) => {
-	return conn && conn.syncStatus === "FINISHED" && !conn.syncWarning ? true : false;
+	return conn && conn.syncStatus === "FINISHED" && !conn.syncWarning
+		? true
+		: false;
 };
 
 const updateBackfilledStatus = ({ subscription, self, installationId }) => {
@@ -587,17 +599,21 @@ function fetchAllConnectionsBackfillStatus() {
 }
 
 $(document).ready(function () {
-	const isBackfillingStatusPollingEnabled = $(".jiraConfiguration").data("enable-backfilling-status-polling");
-  
+	const isBackfillingStatusPollingEnabled = $(".jiraConfiguration").data(
+		"enable-backfilling-status-polling"
+	);
+
 	if (isBackfillingStatusPollingEnabled) {
-	  const hasConnections = $(".jiraConfiguration").data("has-connections");
-	  if (hasConnections) {
-		fetchAllConnectionsBackfillStatus();
-	  }
+		const hasConnections = $(".jiraConfiguration").data("has-connections");
+		if (hasConnections) {
+			fetchAllConnectionsBackfillStatus();
+		}
 	}
-	
+
 	setBackfillDateToolTip();
 	setErrorSummaryIconClick({});
 
-	AJS.$(".jiraConfiguration__restartBackfillModal__fullsync__label-icon").tooltip();
-  });
+	AJS.$(
+		".jiraConfiguration__restartBackfillModal__fullsync__label-icon"
+	).tooltip();
+});
