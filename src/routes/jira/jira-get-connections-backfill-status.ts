@@ -40,11 +40,8 @@ export const JiraGetConnectionsBackfillStatus = async (
 			return;
 		}
 
-		const subscriptions = await Subscription.findAll({
-			where: {
-				id: subscriptionIds
-			}
-		});
+		const subscriptions = await Subscription.findAllForSubscriptionIds(subscriptionIds);
+
 		const resultSubscriptionIds = subscriptions.map(
 			(subscription) => subscription.id
 		);
