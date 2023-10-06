@@ -52,12 +52,8 @@ export const JiraGetConnectionsBackfillStatus = async (
 			return;
 		}
 
-		const jiraHosts = subscriptions.map(
-			(subscription) => subscription?.jiraHost
-		);
-
-		const jiraHostsMatched = jiraHosts.every(
-			(jiraHost) => jiraHost === localJiraHost
+		const jiraHostsMatched = subscriptions.every(
+			(subscription) => subscription?.jiraHost === localJiraHost
 		);
 
 		if (!jiraHostsMatched) {
@@ -76,7 +72,8 @@ export const JiraGetConnectionsBackfillStatus = async (
 			}
 		});
 	} catch (error) {
-		return next(new Error(`Failed to render connected repos`));
+		req.log.error({ error }, "Failed to poll repo backfill status for provided subscription ID");
+		return next(new Error(`Failed to poll repo backfill status for provided subscription ID`));
 	}
 };
 
