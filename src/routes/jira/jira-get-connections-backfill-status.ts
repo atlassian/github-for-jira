@@ -18,6 +18,10 @@ type SubscriptionBackfillState = {
 	syncWarning?: string;
 };
 
+type ErrorType = {
+	subscriptionId: string;
+	error: string;
+};
 type BackFillType = {
 	[key: string]: SubscriptionBackfillState;
 };
@@ -40,7 +44,9 @@ export const JiraGetConnectionsBackfillStatus = async (
 			return;
 		}
 
-		const subscriptions = await Subscription.findAllForSubscriptionIds(subscriptionIds);
+		const subscriptions = await Subscription.findAllForSubscriptionIds(
+			subscriptionIds
+		);
 
 		const resultSubscriptionIds = subscriptions.map(
 			(subscription) => subscription.id
@@ -62,18 +68,28 @@ export const JiraGetConnectionsBackfillStatus = async (
 			return;
 		}
 		const subscriptionsById = groupBy(subscriptions, "id");
-		const backfillStatus = await getBackfillStatus(subscriptionsById);
+		const { backfillStatus, errors } = await getBackfillStatus(
+			subscriptionsById
+		);
 		const isBackfillComplete = getBackfillCompletionStatus(backfillStatus);
 		res.status(200).send({
 			data: {
 				subscriptions: backfillStatus,
 				isBackfillComplete,
-				subscriptionIds: resultSubscriptionIds
+				subscriptionIds: resultSubscriptionIds,
+				errors
 			}
 		});
 	} catch (error) {
-		req.log.error({ error }, "Failed to poll repo backfill status for provided subscription ID");
-		return next(new Error(`Failed to poll repo backfill status for provided subscription ID`));
+		req.log.error(
+			{ error },
+			"Failed to poll repo backfill status for provided subscription ID"
+		);
+		return next(
+			new Error(
+				`Failed to poll repo backfill status for provided subscription ID`
+			)
+		);
 	}
 };
 
@@ -82,26 +98,33 @@ const getBackfillCompletionStatus = (backfillStatus: BackFillType): boolean =>
 		(backFill: SubscriptionBackfillState): boolean => backFill?.isSyncComplete
 	);
 
-const getBackfillStatus = async (subscriptionsById): Promise<BackFillType> => {
+const getBackfillStatus = async (
+	subscriptionsById
+): Promise<{ backfillStatus: BackFillType; errors?: ErrorType[] }> => {
 	const backfillStatus: BackFillType = {};
+	const errors: ErrorType[] = [];
 	for (const subscriptionId in subscriptionsById) {
-		const subscription = subscriptionsById[subscriptionId][0];
-		const isSyncComplete =
-			subscription?.syncStatus === SyncStatus.COMPLETE ||
-			subscription?.syncStatus === SyncStatus.FAILED;
-		const failedSyncErrors = await getRetryableFailedSyncErrors(subscription);
+		try {
+			const subscription = subscriptionsById[subscriptionId][0];
+			const isSyncComplete =
+				subscription?.syncStatus === SyncStatus.COMPLETE ||
+				subscription?.syncStatus === SyncStatus.FAILED;
+			const failedSyncErrors = await getRetryableFailedSyncErrors(subscription);
 
-		backfillStatus[subscriptionId] = {
-			isSyncComplete,
-			syncStatus: mapSyncStatus(subscription?.syncStatus),
-			totalRepos: subscription?.totalNumberOfRepos,
-			syncedRepos: await RepoSyncState.countFullySyncedReposForSubscription(
-				subscription
-			),
-			failedSyncErrors,
-			backfillSince: subscription?.backfillSince || null,
-			syncWarning: subscription.syncWarning
-		};
+			backfillStatus[subscriptionId] = {
+				isSyncComplete,
+				syncStatus: mapSyncStatus(subscription?.syncStatus),
+				totalRepos: subscription?.totalNumberOfRepos,
+				syncedRepos: await RepoSyncState.countFullySyncedReposForSubscription(
+					subscription
+				),
+				failedSyncErrors,
+				backfillSince: subscription?.backfillSince || null,
+				syncWarning: subscription.syncWarning
+			};
+		} catch (error) {
+			errors.push({ subscriptionId, error });
+		}
 	}
-	return backfillStatus;
+	return { backfillStatus, errors };
 };
