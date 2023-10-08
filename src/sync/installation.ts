@@ -252,7 +252,7 @@ const sendPayloadToJira = async (task: TaskType, jiraClient, jiraPayload, reposi
 					operationType: "BACKFILL"
 				});
 		}
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.warn({ err }, "Failed to send data to Jira");
 		sendJiraFailureToSentry(err, sentry);
 		throw err;
@@ -334,7 +334,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 				sendBackfillMessage,
 				jiraHost
 			);
-		} catch (err) {
+		} catch (err: unknown) {
 			logger.warn({ err }, "Error while executing the task, rethrowing");
 			throw err;
 		}
@@ -525,7 +525,7 @@ export const processInstallation = (sendBackfillMessage: (message: BackfillMessa
 					}
 				}
 			}
-		} catch (err) {
+		} catch (err: unknown) {
 			logger.error({ err, installationId }, "Process installation failed.");
 			throw err;
 		}
@@ -546,7 +546,7 @@ const getBackfillSince = (data: BackfillMessagePayload, log: Logger): Date | nul
 		const commitSince = data.commitsFromDate ? new Date(data.commitsFromDate) : undefined;
 		//set it to null on falsy value so that we can override db with sequlize
 		return commitSince || null;
-	} catch (e) {
+	} catch (e: unknown) {
 		log.error({ err: e, commitsFromDate: data.commitsFromDate }, `Error parsing commitsFromDate in backfill message body`);
 		//do not change anything
 		return undefined;

@@ -186,7 +186,7 @@ const ConfigSteps = () => {
 					await OAuthManager.authenticateInGitHub(() => {
 						setLoaderForLogin(false);
 					});
-				} catch (e) {
+				} catch (e: unknown) {
 					const errorObj = modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
 					showError(errorObj);
 					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail"}, { errorCode: errorObj.errorCode, step: "initiate-oauth"});
@@ -235,7 +235,7 @@ const ConfigSteps = () => {
 		showError(undefined);
 	};
 
-	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual", orgLogin?: string) => {
+	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual", orgLogin: string) => {
 		try {
 			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" }, { mode });
 			const connected: boolean | AxiosError = await AppManager.connectOrg(gitHubInstallationId);
@@ -245,9 +245,9 @@ const ConfigSteps = () => {
 				analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail" }, { mode, errorCode: errorObj.errorCode });
 			} else {
 				analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: (connected === true ? "success" : "fail") }, { mode });
-				navigate("/spa/connected");
+				navigate("/spa/connected",{ state: { orgLogin } });
 			}
-		} catch (e) {
+		} catch (e: unknown) {
 			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail"}, { mode });
 			reportError(new Error("Fail doCreateConnection", { cause: e }), {
 				path: "doCreateConnection",
@@ -262,10 +262,21 @@ const ConfigSteps = () => {
 			analyticsClient.sendUIEvent({ actionSubject: "installToNewOrganisation", action: "clicked"}, { mode });
 			await AppManager.installNewApp({
 				onFinish: async (gitHubInstallationId: number | undefined) => {
-					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: gitHubInstallationId ? "success" : "fail"}, { mode });
-					getOrganizations();
-					if(gitHubInstallationId) {
-						await doCreateConnection(gitHubInstallationId, "auto");
+					analyticsClient.sendTrackEvent(
+						{
+							actionSubject: "installNewOrgInGithubResponse",
+							action: gitHubInstallationId ? "success" : "fail",
+						},
+						{ mode }
+					);
+					const orgsResults = await getOrganizations();
+					let orgLogin;
+					if (orgsResults?.success) {
+						const newOrg = orgsResults?.orgs?.find((org) => org?.id === gitHubInstallationId);
+						orgLogin = newOrg?.account?.login;
+					}
+					if (gitHubInstallationId && orgLogin) {
+						await doCreateConnection(gitHubInstallationId, "auto", orgLogin);
 					}
 				},
 				onRequested: async (_setupAction: string) => {
@@ -273,7 +284,7 @@ const ConfigSteps = () => {
 					navigate("/spa/installationRequested");
 				}
 			});
-		} catch (e) {
+		} catch (e: unknown) {
 			const errorObj = modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
 			showError(errorObj);
 			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail"}, { mode, errorCode: errorObj.errorCode });
@@ -442,7 +453,7 @@ const setAnalyticsEventsForFetchedOrgs  = (orgs: Array<GitHubInstallationType>) 
 			requiresSsoLoginCount,
 			isIPBlockedCount,
 		});
-	} catch (e) {
+	} catch (e: unknown) {
 		reportError(new Error("Fail setAnalyticsEventsForFetchedOrgs", { cause: e }), {
 			path: "setAnalyticsEventsForFetchedOrgs"
 		});

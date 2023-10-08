@@ -119,7 +119,7 @@ const getReposBySubscriptions = async (subscriptions: Subscription[], logger: Lo
 			const repoOwners = await RepoSyncState.findAllRepoOwners(subscription);
 			const filteredRepos =  response.viewer.repositories.edges.filter(edge => repoOwners.has(edge.node.owner.login));
 			return filteredRepos.slice(0, MAX_REPOS_RETURNED);
-		} catch (err) {
+		} catch (err: unknown) {
 			logger.error({ err }, "Create branch - Failed to fetch repos for installation");
 			throw err;
 		}

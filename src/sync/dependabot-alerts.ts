@@ -39,7 +39,8 @@ export const getDependabotAlertTask = async (
 			direction: SortDirection.DES
 		});
 		dependabotAlerts = response.data;
-	} catch (err) {
+	} catch (e: unknown) {
+		const err = e as { cause?: { response?: { status?: number, data?: { message?: string } } } };
 		if (err.cause?.response?.status == 403 && err.cause?.response?.data?.message?.includes("Dependabot alerts are disabled for this repository")) {
 			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Dependabot alerts disabled, so marking backfill task complete");
 			return {
@@ -97,7 +98,7 @@ const areAllBuildsEarlierThanFromDate = (alerts: DependabotAlertResponseItem[], 
 	});
 
 };
-const transformDependabotAlerts = async (
+export const transformDependabotAlerts = async (
 	alerts: DependabotAlertResponseItem[],
 	repository: Repository,
 	jiraHost: string,

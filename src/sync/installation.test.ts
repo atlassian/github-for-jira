@@ -420,7 +420,7 @@ describe("sync/installation", () => {
 				try {
 					// Both tasks will fail because no nock was not setup
 					await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD_BRANCHES_ONLY, sentry, TEST_LOGGER);
-				} catch (err) {
+				} catch (err: unknown) {
 					capturedError = err;
 				}
 				expect(capturedError).toBeInstanceOf(TaskError);

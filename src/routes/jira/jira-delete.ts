@@ -89,7 +89,7 @@ const deleteSecurityWorkspaceLinkAndVulns = async (
 			jiraClient.deleteWorkspace(subscription.id),
 			jiraClient.deleteVulnerabilities(subscription.id)
 		]);
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.warn({ err }, "Failed to delete security workspace or vulnerabilities from Jira");
 	}
 

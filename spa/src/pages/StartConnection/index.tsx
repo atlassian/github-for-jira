@@ -12,6 +12,7 @@ import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
 import analyticsClient, { useEffectScreenEvent } from "../../analytics";
 import { reportError } from "../../utils";
+import { enableBackfillStatusPage } from "./../../feature-flags";
 
 const beforeTextStyle = css`
 	color: ${token("color.text.subtle")};
@@ -34,6 +35,9 @@ const logoStyle = css`
 const buttonContainerStyle = css`
 	text-align: center;
 	margin: ${token("space.300")} 0 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
 `;
 const inlineDialogLinkStyle = css`
 	cursor: pointer;
@@ -75,7 +79,7 @@ const getAnalyticsSourceFrom = (): string => {
 	try {
 		const url = new URL(window.location.href);
 		return url.searchParams.get("from") || "";
-	} catch (e) {
+	} catch (e: unknown) {
 		reportError(new Error("Fail getAnalyticsSourceFrom", { cause: e }), { path: "getAnalyticsSourceFrom" });
 		return "";
 	}
@@ -127,6 +131,17 @@ const StartConnection = () => {
 				>
 					Continue
 				</Button>
+				{
+					enableBackfillStatusPage &&
+						<Button
+							appearance="subtle"
+							onClick={() => {
+								navigate("/spa/connections");
+							}}
+						>
+							Go to backfill page
+						</Button>
+				}
 			</div>
 		</Wrapper>
 	);

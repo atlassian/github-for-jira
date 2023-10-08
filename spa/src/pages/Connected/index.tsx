@@ -1,15 +1,19 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
+import { useLocation } from "react-router-dom";
 import { Wrapper } from "../../common/Wrapper";
 import { token, useThemeObserver } from "@atlaskit/tokens";
 import Heading from "@atlaskit/heading";
 import Button from "@atlaskit/button";
 import analyticsClient, { useEffectScreenEvent } from "../../analytics";
 import { useNavigate } from "react-router-dom";
+import { enableBackfillStatusPage } from "./../../feature-flags";
 
 const connectedContainerStyle = css`
 	margin: 0 auto;
 	text-align: center;
+	width: 100%;
+	min-height: 364px;
 `;
 const headerImgStyle = css`
 	height: 96px;
@@ -17,20 +21,13 @@ const headerImgStyle = css`
 const titleStyle = css`
 	margin: ${token("space.400")} ${token("space.0")} ${token("space.0")};
 `;
-const topContentStyle = css`
-	color: ${token("color.text.subtle")};
-	margin: ${token("space.300")} ${token("space.0")} ${token("space.100")};
-`;
 const paragraphStyle = css`
 	color: ${token("color.text.subtle")};
 	margin: ${token("space.300")} ${token("space.0")};
-`;
-const buttonContainerStyle = css`
-	margin: ${token("space.0")} ${token("space.0")} ${token("space.300")}
-		${token("space.0")};
+	padding: 0px ${token("space.800")};
 `;
 const flexWrapperStyle = css`
-	padding: ${token("space.300")} ${token("space.0")} ${token("space.0")};
+	padding: ${token("space.400")} ${token("space.0")};
 	display: flex;
 	justify-content: space-between;
 	margin: 0 auto;
@@ -38,7 +35,7 @@ const flexWrapperStyle = css`
 const sectionStyle = css`
 	background: ${token("elevation.surface.sunken")};
 	border-radius: 3px;
-	width: 300px;
+	width: 100%;
 	padding: ${token("space.200")} ${token("space.0")};
 	&:first-of-type {
 		margin-right: ${token("space.200")};
@@ -47,29 +44,29 @@ const sectionStyle = css`
 const sectionImgStyle = css`
 	height: 100px;
 `;
-const linkStyle = css`
-	cursor: pointer;
-`;
 
 const buttonStyle = css`
-	padding-left: 0;
-	height: 14px;
-	line-height: 14px;
-	display: inline-flex;
+	margin: 0px 10px;
 `;
-
+const subtleBtnStyle = css`
+	color: ${token("color.text.subtle")} !important;
+`;
 const Connected = () => {
+	const location = useLocation();
+	const { orgLogin } = location.state;
 	useEffectScreenEvent("SuccessfulConnectedScreen");
 
 	const navigate = useNavigate();
 	const { colorMode } = useThemeObserver();
 
 	const navigateToBackfillPage = () => {
-		analyticsClient.sendUIEvent({
-			actionSubject: "checkBackfillStatus",
-			action: "clicked",
-		});
-		AP.navigator.go("addonmodule", { moduleKey: "gh-addon-admin" });
+		analyticsClient.sendUIEvent({ actionSubject: "checkBackfillStatus", action: "clicked" });
+
+		if (enableBackfillStatusPage) {
+			navigate("/spa/connections");
+		} else {
+			AP.navigator.go( "addonmodule", { moduleKey: "gh-addon-admin" });
+		}
 	};
 
 	const learnAboutIssueLinking = () => {
@@ -83,103 +80,56 @@ const Connected = () => {
 		);
 	};
 
-	const learnAboutDevelopmentWork = () => {
-		analyticsClient.sendUIEvent({
-			actionSubject: "learnAboutDevelopmentWork",
-			action: "clicked",
-		});
-		window.open(
-			"https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-development-tools/",
-			"_blank"
-		);
-	};
-
 	return (
 		<Wrapper>
 			<div css={connectedContainerStyle}>
-				<div>
-					<img
-						css={headerImgStyle}
-						src={
-							colorMode === "dark"
-								? "/public/assets/jira-github-connected-dark-theme.svg"
-								: "/public/assets/jira-github-connected.svg"
-						}
-						alt=""
-					/>
-					<h2 css={titleStyle}>GitHub is connected!</h2>
-					<div css={topContentStyle}>
-						It’s time to let everyone know GitHub’s ready to use and your
-						<br />
-						team can use issue keys to link work to Jira.
-						<br />
-					</div>
-					<div css={buttonContainerStyle}>
+				<img
+					css={headerImgStyle}
+					src={
+						colorMode === "dark"
+							? "/public/assets/jira-github-connected-dark-theme.svg"
+							: "/public/assets/jira-github-connected.svg"
+					}
+					alt=""
+				/>
+				<h2 css={titleStyle}>{`${orgLogin} is now connected!`}</h2>
+				<div css={flexWrapperStyle}>
+					<div css={sectionStyle}>
+						<img
+							css={sectionImgStyle}
+							src="/public/assets/github-integration.svg"
+							alt=""
+						/>
+						<Heading level="h400">
+							Tell your teammates to add issue keys in GitHub
+						</Heading>
+						<div css={paragraphStyle}>
+							To bring development work into issues and the code feature, add
+							issue keys in branches, pull request titles, and commit messages.
+						</div>
 						<Button
-							css={buttonStyle}
-							appearance="link"
+							css={[buttonStyle, subtleBtnStyle]}
+							appearance="subtle"
 							onClick={() => navigate("/spa/steps")}
 						>
 							Add another organization
 						</Button>
+						<Button
+							css={buttonStyle}
+							appearance="primary"
+							onClick={learnAboutIssueLinking}
+						>
+							How to add issue keys
+						</Button>
 					</div>
 				</div>
-				<div>
-					<Heading level="h500">What's next?</Heading>
-					<div css={flexWrapperStyle}>
-						<div css={sectionStyle}>
-							<img
-								css={sectionImgStyle}
-								src="/public/assets/github-integration.svg"
-								alt=""
-							/>
-							<Heading level="h400">Add issue keys in GitHub</Heading>
-							<div css={paragraphStyle}>
-								Include issue keys in pull request
-								<br />
-								titles, commit messages and
-								<br />
-								more to bring them into Jira.
-							</div>
-							<a css={linkStyle} onClick={learnAboutIssueLinking}>
-								Learn about issue linking
-							</a>
-						</div>
-						<div css={sectionStyle}>
-							<img
-								css={sectionImgStyle}
-								src="/public/assets/collaborate-in-jira.svg"
-								alt=""
-							/>
-							<Heading level="h400">Collaborate in Jira</Heading>
-							<div css={paragraphStyle}>
-								Your team's development work
-								<br />
-								will appear in issues and the
-								<br />
-								code feature.
-							</div>
-							<a css={linkStyle} onClick={learnAboutDevelopmentWork}>
-								Learn about development work in Jira
-							</a>
-						</div>
-					</div>
-				</div>
-				<div css={paragraphStyle}>
-					We're backfilling your organization's repositories into Jira (this
-					<br />
-					can take a while, depending on how many repositories you
-					<br />
-					have).
-					<Button
-						css={buttonStyle}
-						appearance="link"
-						onClick={navigateToBackfillPage}
-					>
-						Check your backfill status
-					</Button>
-					.
-				</div>
+				<Button
+					css={[buttonStyle, subtleBtnStyle]}
+					appearance="subtle"
+					onClick={navigateToBackfillPage}
+				>
+					Exit setup
+				</Button>
 			</div>
 		</Wrapper>
 	);

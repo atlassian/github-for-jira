@@ -35,7 +35,8 @@ export const getSecretScanningAlertTask = async (
 			direction: SortDirection.DES
 		});
 		secretScanningAlerts = response.data;
-	} catch (err) {
+	} catch (e: unknown) {
+		const err = e as { cause?: { response?: { status?: number, data?: { message?: string } } } };
 		if (err.cause?.response?.status == 404 && err.cause?.response?.data?.message?.includes("Secret scanning is disabled on this repository")) {
 			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Secret scanning disabled, so marking backfill task complete");
 			return {
@@ -88,7 +89,7 @@ const areAllBuildsEarlierThanFromDate = (alerts: SecretScanningAlertResponseItem
 };
 
 
-const transformSecretScanningAlert = async (
+export const transformSecretScanningAlert = async (
 	alerts: SecretScanningAlertResponseItem[],
 	repository: Repository,
 	jiraHost: string,

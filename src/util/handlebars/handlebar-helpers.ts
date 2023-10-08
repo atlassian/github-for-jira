@@ -1,6 +1,6 @@
 import hbs from "hbs";
 import { isPlainObject } from "lodash";
-import { ConnectionSyncStatus } from "~/src/routes/jira/jira-get";
+import { ConnectionSyncStatus } from "utils/github-installations-helper";
 
 export const concatStringHelper = (...strings: string[]) => strings.filter((arg: unknown) => typeof arg !== "object").join(" ");
 export const toLowercaseHelper = (str?: string) => !isPlainObject(str) && str?.toString?.().toLowerCase() || "";
@@ -26,6 +26,8 @@ export const registerHandlebarsHelpers = () => {
 				? totalNumberOfRepos
 				: `${numberOfSyncedRepos} / ${totalNumberOfRepos}`
 	);
+
+	hbs.registerHelper("checkRepoCount", (totalNumberOfRepos: unknown | undefined) => (typeof totalNumberOfRepos === "number" &&  totalNumberOfRepos >= 0));
 
 	hbs.registerHelper("repoAccessType", (repository_selection: string) =>
 		repository_selection === "all" ? "All repos" : "Only select repos"

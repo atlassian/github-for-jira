@@ -36,7 +36,7 @@ export const JiraConnectEnterpriseAppDelete = async (
 
 		res.status(200).json({ success: true });
 		req.log.debug("Jira Connect Enterprise App deleted successfully.");
-	} catch (error) {
+	} catch (error: unknown) {
 
 		await sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
 			action: AnalyticsTrackEventsEnum.DeleteGitHubServerAppTrackEventName,
