@@ -98,7 +98,7 @@ const areAllBuildsEarlierThanFromDate = (alerts: DependabotAlertResponseItem[], 
 	});
 
 };
-const transformDependabotAlerts = async (
+export const transformDependabotAlerts = async (
 	alerts: DependabotAlertResponseItem[],
 	repository: Repository,
 	jiraHost: string,
