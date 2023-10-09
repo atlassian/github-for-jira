@@ -142,10 +142,14 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 			recentShas.map(async (sha): Promise<JiraCommit> => {
 				log.info("Calling GitHub to fetch commit info " + sha.id);
 				try {
+					const response = await github.getCommit(owner.login, repo, sha.id);
+					log.info({ author: response?.data?.author }, "Debug author");
+					log.info({ author: response?.data?.commit?.author }, "Debug commit.author");
+					log.info(response.data.author);
 					const {
 						data: {
 							files,
-							author,
+							author: author = {},
 							parents,
 							sha: commitSha,
 							html_url,
@@ -154,12 +158,12 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 								message
 							}
 						}
-					} = await github.getCommit(owner.login, repo, sha.id);
+					} = response;
 
 					// Jira only accepts a max of 10 files for each commit, so don't send all of them
 					const filesToSend = files.slice(0, 10) as GithubCommitFile[];
 
-					// merge commits will have 2 or more parents, depending how many are in the sequence
+					// merge commits will have 2 or more parents, depending on how many are in the sequence
 					const isMergeCommit = parents?.length > 1;
 
 					log.info("GitHub call succeeded");
