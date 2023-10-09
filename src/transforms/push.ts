@@ -142,17 +142,17 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 			recentShas.map(async (sha): Promise<JiraCommit> => {
 				log.info("Calling GitHub to fetch commit info " + sha.id);
 				try {
-					const response = await github.getCommit(owner.login, repo, sha.id);
+					const commitResponse = await github.getCommit(owner.login, repo, sha.id);
 					const {
 						files,
 						author: author = {},
 						parents,
 						sha: commitSha,
 						html_url
-					} = response.data;
+					} = commitResponse.data;
 
-					const githubCommitAuthor = response.data.commit?.author;
-					const message = response.data.commit?.message;
+					const githubCommitAuthor = commitResponse.data.commit?.author;
+					const message = commitResponse.data.commit?.message;
 
 					// Jira only accepts a max of 10 files for each commit, so don't send all of them
 					const filesToSend = files.slice(0, 10) as GithubCommitFile[];
