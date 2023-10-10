@@ -90,7 +90,7 @@ def create_environment(env: str) -> Environment:
           github_for_jira_auth=create_slauth(env))
   elif env == 'prod':
       return Environment(
-          github_for_jira_url='https://github-for-jira.us-west-1.prod.atl-paas.net',
+          github_for_jira_url='https://github-for-jira.sgw.prod.atl-paas.net',
           github_for_jira_auth=create_slauth(env))
   else:
       raise ValueError(f'Invalid environment {env}')
@@ -161,7 +161,7 @@ def main():
     LOG.info("Total failed entities to process %s", len(replayEntities))
     for i in range(0, len(replayEntities), args.batchsize):
         replayEntitiesBatch = replayEntities[i:i+args.batchsize]
-        print("processing batch ", args.batchsize);
+        LOG.info("processing batch from %s to %s", i+1, i+len(replayEntitiesBatch));
         process_replayEntities(env, replayEntitiesBatch)
         time.sleep(args.sleep)
 

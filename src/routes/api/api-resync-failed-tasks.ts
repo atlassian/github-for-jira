@@ -19,17 +19,25 @@ export const ApiResyncFailedTasksPost = async (req: Request, res: Response): Pro
 
 	const targetTasks = req.body.targetTasks as TaskType[];
 
-	if (!subscriptionsIds.length) {
-		res.status(400).send("Please provide at least one subscription id!");
+	if (!subscriptionsIds?.length) {
+		info("Please provide at least one subscription id!");
+		res.end();
+		return;
+	}
+
+	if (subscriptionsIds.length > 500) {
+		info(`Subscriptions can't be more than 500`);
+		res.end();
 		return;
 	}
 
 	if (!targetTasks) {
-		res.status(400).send("Please provide target type");
+		info("Please provide target type");
+		res.end();
 		return;
 	}
 
-	info(`Starting backfill for ${subscriptionsIds.length} for tasks ${JSON.stringify(subscriptionsIds)} `);
+	info(`Starting backfill for ${subscriptionsIds.length} for tasks ${JSON.stringify(targetTasks)} `);
 	let successfulCount = 0;
 	subscriptionsIds.forEach(async(subscriptionId) => {
 		const subscription = await Subscription.findByPk(subscriptionId);
@@ -41,5 +49,5 @@ export const ApiResyncFailedTasksPost = async (req: Request, res: Response): Pro
 		}
 	});
 	info(`Triggered backfill successfully for ${successfulCount}/${subscriptionsIds.length}`);
-
+	res.end();
 };

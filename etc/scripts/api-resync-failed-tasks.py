@@ -88,7 +88,7 @@ def create_environment(env: str) -> Environment:
           github_for_jira_auth=create_slauth(env))
   elif env == 'prod':
       return Environment(
-          github_for_jira_url='https://github-for-jira.us-west-1.prod.atl-paas.net',
+          github_for_jira_url='https://github-for-jira.sgw.prod.atl-paas.net',
           github_for_jira_auth=create_slauth(env))
   else:
       raise ValueError(f'Invalid environment {env}')
