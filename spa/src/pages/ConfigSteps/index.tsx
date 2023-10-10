@@ -235,7 +235,7 @@ const ConfigSteps = () => {
 		showError(undefined);
 	};
 
-	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual", orgLogin?: string) => {
+	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual", orgLogin: string) => {
 		try {
 			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" }, { mode });
 			const connected: boolean | AxiosError = await AppManager.connectOrg(gitHubInstallationId);
@@ -262,10 +262,21 @@ const ConfigSteps = () => {
 			analyticsClient.sendUIEvent({ actionSubject: "installToNewOrganisation", action: "clicked"}, { mode });
 			await AppManager.installNewApp({
 				onFinish: async (gitHubInstallationId: number | undefined) => {
-					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: gitHubInstallationId ? "success" : "fail"}, { mode });
-					getOrganizations();
-					if(gitHubInstallationId) {
-						await doCreateConnection(gitHubInstallationId, "auto");
+					analyticsClient.sendTrackEvent(
+						{
+							actionSubject: "installNewOrgInGithubResponse",
+							action: gitHubInstallationId ? "success" : "fail",
+						},
+						{ mode }
+					);
+					const orgsResults = await getOrganizations();
+					let orgLogin;
+					if (orgsResults?.success) {
+						const newOrg = orgsResults?.orgs?.find((org) => org?.id === gitHubInstallationId);
+						orgLogin = newOrg?.account?.login;
+					}
+					if (gitHubInstallationId && orgLogin) {
+						await doCreateConnection(gitHubInstallationId, "auto", orgLogin);
 					}
 				},
 				onRequested: async (_setupAction: string) => {

@@ -7,6 +7,7 @@ import Heading from "@atlaskit/heading";
 import Button from "@atlaskit/button";
 import analyticsClient, { useEffectScreenEvent } from "../../analytics";
 import { useNavigate } from "react-router-dom";
+import { enableBackfillStatusPage } from "./../../feature-flags";
 
 const connectedContainerStyle = css`
 	margin: 0 auto;
@@ -63,7 +64,12 @@ const Connected = () => {
 			actionSubject: "checkBackfillStatus",
 			action: "clicked",
 		});
-		AP.navigator.go("addonmodule", { moduleKey: "gh-addon-admin" });
+
+		if (enableBackfillStatusPage) {
+			navigate("/spa/connections");
+		} else {
+			AP.navigator.go("addonmodule", { moduleKey: "gh-addon-admin" });
+		}
 	};
 
 	const learnAboutIssueLinking = () => {
@@ -98,11 +104,12 @@ const Connected = () => {
 							alt=""
 						/>
 						<Heading level="h400">
-							Tell your teammates to add issue keys in GitHub
+							Your team needs to add issue keys in GitHub
 						</Heading>
 						<div css={paragraphStyle}>
-							To bring development work into issues and the code feature, add
-							issue keys in branches, pull request titles, and commit messages.
+							To import development work into Jira and track it in your issues,
+							add issue keys to branches, pull request titles, and commit
+							messages.
 						</div>
 						<Button
 							css={[buttonStyle, subtleBtnStyle]}
@@ -125,7 +132,7 @@ const Connected = () => {
 					appearance="subtle"
 					onClick={navigateToBackfillPage}
 				>
-					Exit setup
+					Exit set up
 				</Button>
 			</div>
 		</Wrapper>
