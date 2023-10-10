@@ -43,8 +43,8 @@ export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl }: { orgName?: string;
 export const ErrorForPopupBlocked = () => (
 	<>
 		<div css={paragraphStyle}>
-			Your browser is blocking pop-ups. Enable pop-ups for this site and select{" "}
-			<b>Next</b> again.
+			Your browser stopped a pop-up window from opening. Allow pop-ups and try
+			again.
 		</div>
 	</>
 );
