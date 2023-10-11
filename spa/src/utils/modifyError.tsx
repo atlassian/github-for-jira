@@ -9,6 +9,10 @@ export type ErrorObjType = {
 	errorCode: ErrorCode
 }
 
+export type HostUrlType = {
+	jiraHost: string;
+};
+
 type SimpleError = {
 	message: string;
 }
