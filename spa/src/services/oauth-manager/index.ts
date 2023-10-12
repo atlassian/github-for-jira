@@ -33,12 +33,20 @@ async function checkValidity(): Promise<boolean | AxiosError> {
 	}
 }
 
-async function authenticateInGitHub(onWinClosed: () => void): Promise<void> {
+async function authenticateInGitHub({
+	onWinClosed,
+	onPopupBlocked
+}: {
+	onWinClosed: () => void,
+	onPopupBlocked: () => void
+}): Promise<void> {
 	const res = await Api.auth.generateOAuthUrl();
 	if (res.data.redirectUrl && res.data.state) {
 		oauthState = res.data.state;
 		const win = popup(res.data.redirectUrl);
-		if (win) {
+		if (win === null) {
+			onPopupBlocked();
+		} else {
 			const winCloseCheckHandler = setInterval(() => {
 				if (win.closed) {
 					clearInterval(winCloseCheckHandler);
