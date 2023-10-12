@@ -43,6 +43,7 @@ const sectionStyle = css`
 `;
 const sectionImgStyle = css`
 	height: 100px;
+	margin-bottom: 24px;
 `;
 
 const buttonStyle = css`
