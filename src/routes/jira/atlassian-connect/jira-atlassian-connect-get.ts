@@ -224,7 +224,7 @@ const	modules = {
 			name: {
 				value: "GitHub for Jira SPA Deferred Installation Page"
 			},
-			url: "/spa/deferred?gitHubInstallationId={ac.gitHubInstallationId}",
+			url: "/spa/deferred?gitHubInstallationId={ac.gitHubInstallationId}&gitHubOrgName={ac.gitHubOrgName}",
 			location: "none",
 			conditions: adminCondition
 		},
