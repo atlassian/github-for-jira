@@ -43,7 +43,7 @@ const sectionStyle = css`
 `;
 const sectionImgStyle = css`
 	height: 100px;
-	margin-bottom: 24px;
+	margin-bottom: ${token("space.300")};
 `;
 
 const buttonStyle = css`
