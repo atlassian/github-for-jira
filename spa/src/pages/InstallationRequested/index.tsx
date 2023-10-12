@@ -42,9 +42,7 @@ const InstallationRequested = () => {
 			<LoggedinInfo
 				username={username}
 				logout={navigateBackToSteps}
-				onPopupBlocked={() => {
-					//TODO: show proper UI
-				}}
+				onPopupBlocked={() => { /* do nothing as ui flow will redirect to entry page anyway */ }}
 			/>
 		</Wrapper>
 	);
