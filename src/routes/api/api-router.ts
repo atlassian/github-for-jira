@@ -28,6 +28,7 @@ import { GenerateOnceCoredumpGenerator } from "services/generate-once-coredump-g
 import { GenerateOncePerNodeHeadumpGenerator } from "services/generate-once-per-node-headump-generator";
 import { ApiReplyFailedEntitiesFromDataDepotPost } from "./api-replay-failed-entities-from-data-depot";
 import { RepoSyncState } from "models/reposyncstate";
+import { ApiResyncFailedTasksPost } from "./api-resync-failed-tasks";
 
 export const ApiRouter = Router();
 
@@ -222,6 +223,7 @@ ApiRouter.use("/data-cleanup", DataCleanupRouter);
 ApiRouter.post("/recover-commits-from-date", RecoverCommitsFromDatePost);
 ApiRouter.post("/reset-failed-pending-deployment-cursor", ResetFailedAndPendingDeploymentCursorPost);
 ApiRouter.post("/replay-rejected-entities-from-data-depot", ApiReplyFailedEntitiesFromDataDepotPost);
+ApiRouter.post("/resync-failed-tasks",ApiResyncFailedTasksPost);
 
 ApiRouter.use("/jira", ApiJiraRouter);
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);
