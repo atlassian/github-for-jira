@@ -1,5 +1,5 @@
 import express, { Application, NextFunction, Request, Response } from "express";
-import { mocked } from "ts-jest/utils";
+import { mocked } from "jest-mock";
 import { booleanFlag } from "~/src/config/feature-flags";
 import { getLogger } from "~/src/config/logger";
 import { ApiRouter } from "./api-router";

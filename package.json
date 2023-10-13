@@ -166,6 +166,7 @@
 		"eslint-plugin-promise": "^6.0.0",
 		"husky": "^6.0.0",
 		"jest-diff": "^29.7",
+		"jest-environment-jsdom": "^29.7.0",
 		"jest-when": "^3.5.1",
 		"keygrip": "^1.0.2",
 		"nock": "^13.2.4",
