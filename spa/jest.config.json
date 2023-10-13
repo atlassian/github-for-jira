@@ -4,6 +4,6 @@
 		"^.+\\.tsx?$": "ts-jest"
 	},
 	"setupFilesAfterEnv": [
-		"<rootDir>/jest-setup.js"
+		"<rootDir>/setup.ts"
 	]
 }
