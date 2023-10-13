@@ -42,22 +42,32 @@ export const getCodeScanningAlertTask = async (
 		});
 		codeScanningAlerts = response.data;
 	} catch (e: unknown) {
-		const err = e as { cause?: { response?: { status?: number, data?: { message?: string } } } };
+		const err = e as { cause?: { response?: { status?: number, statusText?: string, data?: { message?: string } } } };
 		if (err.cause?.response?.status == 403 && err.cause?.response?.data?.message?.includes("Advanced Security must be enabled for this repository to use code scanning")) {
 			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Advanced Security disabled, so marking code scanning backfill task complete");
 			return {
 				edges: [],
 				jiraPayload: undefined
 			};
-		}
-		if (err.cause?.response?.status == 403 && err.cause?.response?.data?.message?.includes("Code scanning is not enabled for this repository")) {
+		} else if (err.cause?.response?.status == 403 && err.cause?.response?.data?.message?.includes("Code scanning is not enabled for this repository")) {
 			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Code scanning is not configured, so marking backfill task complete");
 			return {
 				edges: [],
 				jiraPayload: undefined
 			};
-		}
-		if (err.cause?.response?.status == 404 && err.cause?.response?.data?.message?.includes("no analysis found")) {
+		} else if (err.cause?.response?.status == 404 && err.cause?.response?.data?.message?.includes("no analysis found")) {
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Code scanning is not configured, so marking backfill task complete");
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
+		} else if (err.cause?.response?.status == 404 && err.cause?.response?.statusText?.includes("Not Found")) {
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Repo doesn't found, so marking backfill task complete");
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
+		} else if (err.cause?.response?.status == 451 && err.cause?.response?.statusText?.includes("Unavailable for Legal Reasons")) {
 			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Code scanning is not configured, so marking backfill task complete");
 			return {
 				edges: [],
