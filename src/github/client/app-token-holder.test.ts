@@ -6,7 +6,7 @@ jest.unmock("lru-cache");
 describe("AppTokenHolder", () => {
 
 	beforeEach(() => {
-		jest.useFakeTimers("modern");
+		jest.useFakeTimers();
 	});
 
 	afterEach(() => {

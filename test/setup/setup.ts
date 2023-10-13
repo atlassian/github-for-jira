@@ -132,27 +132,27 @@ beforeAll(async () => {
 
 beforeEach(() => {
 	const instance = envVars.APP_KEY.split(".").pop()!;
-	global.jiraHost = process.env.ATLASSIAN_URL || `https://${instance}.atlassian.net`;
-	global.jiraStaginHost = process.env.ATLASSIAN_URL?.replace(".atlassian.net", ".jira-dev.com") || `https://${instance}.jira-dev.com`;
-	global.jiraNock = nock(global.jiraHost);
-	global.jiraStagingNock = nock(global.jiraHost);
-	global.githubNock = nock("https://api.github.com");
-	global.gheUrl = "https://github.mydomain.com";
-	global.uuid = "c97806fc-c433-4ad5-b569-bf5191590be2";
-	global.gheNock = nock(global.gheUrl);
-	global.gheApiUrl = `${global.gheUrl}/api/v3`;
-	global.gheApiNock = nock(global.gheApiUrl);
-	global.githubUserTokenNock = githubUserToken(githubNock);
-	global.githubAppTokenNock = githubAppToken(githubNock);
-	global.gheUserTokenNock = githubUserToken(gheApiNock);
-	global.gheAppTokenNock = githubAppToken(gheApiNock);
-	global.testEnvVars = envVars as TestEnvVars;
-	global.mockSystemTime = (time: number | string | Date) => {
+	(global as any).jiraHost = process.env.ATLASSIAN_URL || `https://${instance}.atlassian.net`;
+	(global as any).jiraStaginHost = process.env.ATLASSIAN_URL?.replace(".atlassian.net", ".jira-dev.com") || `https://${instance}.jira-dev.com`;
+	(global as any).jiraNock = nock((global as any).jiraHost);
+	(global as any).jiraStagingNock = nock((global as any).jiraHost);
+	(global as any).githubNock = nock("https://api.github.com");
+	(global as any).gheUrl = "https://github.mydomain.com";
+	(global as any).uuid = "c97806fc-c433-4ad5-b569-bf5191590be2";
+	(global as any).gheNock = nock((global as any).gheUrl);
+	(global as any).gheApiUrl = `${gheUrl}/api/v3`;
+	(global as any).gheApiNock = nock((global as any).gheApiUrl);
+	(global as any).githubUserTokenNock = githubUserToken(githubNock);
+	(global as any).githubAppTokenNock = githubAppToken(githubNock);
+	(global as any).gheUserTokenNock = githubUserToken(gheApiNock);
+	(global as any).gheAppTokenNock = githubAppToken(gheApiNock);
+	(global as any).testEnvVars = envVars as TestEnvVars;
+	(global as any).mockSystemTime = (time: number | string | Date) => {
 		const mock = jest.isMockFunction(Date.now) ? jest.mocked(Date.now) : jest.spyOn(Date, "now");
 		mock.mockReturnValue(new Date(time).getTime());
 		return mock;
 	};
-	global.gitHubCloudConfig = {
+	(global as any).gitHubCloudConfig = {
 		hostname: "https://github.com",
 		baseUrl: "https://github.com",
 		apiUrl: "https://api.github.com",

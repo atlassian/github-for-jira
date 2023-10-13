@@ -9,7 +9,7 @@ describe("deduplicator", () => {
 	beforeEach(() => {
 		storage = new RedisInProgressStorageWithTimeout(redis);
 		key = new Date().toISOString() + Math.random().toString();
-		jest.useFakeTimers("modern").setSystemTime(new Date("2020-01-01").getTime());
+		jest.useFakeTimers().setSystemTime(new Date("2020-01-01").getTime());
 	});
 
 	afterEach(() => {

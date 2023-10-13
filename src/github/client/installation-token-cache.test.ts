@@ -11,7 +11,7 @@ describe("InstallationTokenCache", () => {
 	const in20Minutes = new Date(now.getTime() + 2 * TEN_MINUTES);
 
 	beforeAll(() => {
-		jest.useFakeTimers("modern");
+		jest.useFakeTimers();
 	});
 
 	afterAll(() => {

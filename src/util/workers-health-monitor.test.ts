@@ -33,7 +33,7 @@ describe("workers-health-monitor", () => {
 	let maybeGenerateHeapdump: jest.Mock;
 	const intervals: NodeJS.Timeout[] = [];
 	beforeEach(() => {
-		jest.useFakeTimers("modern").setSystemTime(new Date("2020-01-01"));
+		jest.useFakeTimers().setSystemTime(new Date("2020-01-01"));
 
 		originalProcessSend = process.send;
 		originalProcessOn = process.on;
@@ -146,8 +146,8 @@ describe("workers-health-monitor", () => {
 
 			jest.advanceTimersByTime(20);
 
-			expect(cluster.workers[1]!.on).toBeCalled();
-			expect(cluster.workers[2]!.on).toBeCalled();
+			expect(cluster.workers?.[1]?.on).toBeCalled();
+			expect(cluster.workers?.[2]?.on).toBeCalled();
 		});
 
 		it("should not stop healthchecks when workers emit IAmAlive signals", async () => {
@@ -159,9 +159,9 @@ describe("workers-health-monitor", () => {
 			}));
 
 			const workerSendingImAliveToMasterInterval = setInterval(() => {
-				if ((cluster.workers[1]!.on as jest.Mock).mock.calls.length > 0) {
-					(cluster.workers[1]!.on as jest.Mock).mock.calls[0][1]();
-					(cluster.workers[2]!.on as jest.Mock).mock.calls[0][1]();
+				if ((cluster.workers?.[1]?.on as jest.Mock).mock.calls.length > 0) {
+					(cluster.workers?.[1]?.on as jest.Mock).mock.calls[0][1]();
+					(cluster.workers?.[2]?.on as jest.Mock).mock.calls[0][1]();
 				}
 			}, 9);
 
@@ -169,16 +169,16 @@ describe("workers-health-monitor", () => {
 				jest.advanceTimersByTime(50);
 
 				try {
-					expect(cluster.workers[1]!.send).not.toBeCalled();
+					expect(cluster.workers?.[1]?.send).not.toBeCalled();
 				} catch (err: unknown) {
 					// eslint-disable-next-line jest/no-conditional-expect
-					expect(cluster.workers[1]!.send).toBeCalledWith("heapdump_on_crash");
+					expect(cluster.workers?.[1]?.send).toBeCalledWith("heapdump_on_crash");
 				}
 				try {
-					expect(cluster.workers[2]!.send).not.toBeCalled();
+					expect(cluster.workers?.[2]?.send).not.toBeCalled();
 				} catch (err: unknown) {
 					// eslint-disable-next-line jest/no-conditional-expect
-					expect(cluster.workers[2]!.send).toBeCalledWith("heapdump_on_crash");
+					expect(cluster.workers?.[2]?.send).toBeCalledWith("heapdump_on_crash");
 				}
 
 			} finally {
@@ -195,17 +195,17 @@ describe("workers-health-monitor", () => {
 			}));
 
 			const workerSendingImAliveToMasterInterval = setInterval(() => {
-				if ((cluster.workers[1]!.on as jest.Mock).mock.calls.length > 0) {
-					(cluster.workers[1]!.on as jest.Mock).mock.calls[0][1]();
-					(cluster.workers[2]!.on as jest.Mock).mock.calls[0][1]();
+				if ((cluster.workers?.[1]?.on as jest.Mock).mock.calls.length > 0) {
+					(cluster.workers?.[1]?.on as jest.Mock).mock.calls[0][1]();
+					(cluster.workers?.[2]?.on as jest.Mock).mock.calls[0][1]();
 				}
 			}, 9);
 
 			try {
 				jest.advanceTimersByTime(50);
 
-				const sendMsgs = (cluster.workers[1]!.send as jest.Mock).mock.calls.map(call => call[0]).join(",") +
-					(cluster.workers[2]!.send as jest.Mock).mock.calls.map(call => call[0]).join(",");
+				const sendMsgs = (cluster.workers?.[1]?.send as jest.Mock).mock.calls.map(call => call[0]).join(",") +
+					(cluster.workers?.[2]?.send as jest.Mock).mock.calls.map(call => call[0]).join(",");
 				expect(sendMsgs).toStrictEqual("heapdump_on_crash");
 
 			} finally {
@@ -223,8 +223,8 @@ describe("workers-health-monitor", () => {
 
 			jest.advanceTimersByTime(50);
 
-			expect(cluster.workers[1]!.send).toBeCalled();
-			expect(cluster.workers[2]!.send).toBeCalled();
+			expect(cluster.workers?.[1]?.send).toBeCalled();
+			expect(cluster.workers?.[2]?.send).toBeCalled();
 		});
 
 		const DUMP_READY_FILEPATH = "/tmp/dump_core.123.ready";
@@ -266,7 +266,7 @@ describe("workers-health-monitor", () => {
 			jest.advanceTimersByTime(50);
 
 			fs.writeFileSync(DUMP_OOM_FILEPATH, "foo");
-			(cluster.workers[1]!.on as jest.Mock).mock.calls.find(call => call[0] === "exit")![1]();
+			(cluster.workers?.[1]?.on as jest.Mock).mock.calls.find(call => call[0] === "exit")![1]();
 			expect(fs.existsSync(DUMP_OOM_READY_FILEPATH)).toBeTruthy();
 		});
 

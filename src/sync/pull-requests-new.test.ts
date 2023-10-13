@@ -310,7 +310,7 @@ describe("sync/pull-request", () => {
 
 		it("should sync to Jira when Pull Request Nodes have jira references", async () => {
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID).persist();
-			nock(global.gheUrl)
+			nock(gheUrl)
 				.post("/api/graphql")
 				.query(true)
 				.reply(200, {

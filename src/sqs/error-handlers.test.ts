@@ -14,7 +14,7 @@ describe("error-handlers", () => {
 	beforeEach(() => {
 		// Lock Time
 		statsdIncrementSpy = jest.spyOn(statsd, "increment");
-		jest.useFakeTimers("modern").setSystemTime(new Date("2020-01-01").getTime());
+		jest.useFakeTimers().setSystemTime(new Date("2020-01-01").getTime());
 	});
 
 	afterEach(() => {

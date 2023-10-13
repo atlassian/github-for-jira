@@ -122,9 +122,9 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 	const registerNewWorkers = () => {
 		logInfoSampled(logger, "monRegWorkers", `registering workers`, 100);
 
-		for (const worker of Object.values(cluster.workers)) {
+		for (const worker of Object.values(cluster.workers || {})) {
 			if (worker) {
-				const workerPid = worker.process.pid;
+				const workerPid = worker.process.pid || "";
 				if (!registeredWorkers[workerPid]) {
 					logger.info(`registering a new worker with pid=${workerPid}`);
 					registeredWorkers[workerPid] = true;
@@ -195,7 +195,7 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 			logger.info({
 				workerToReportOnCrashPid
 			}, "worker to generate heapdump on oom was picked");
-			const worker = Object.values(cluster.workers).find(worker => worker?.process.pid === workerToReportOnCrashPid);
+			const worker = Object.values(cluster.workers  || {}).find(worker => worker?.process.pid === workerToReportOnCrashPid);
 			if (!worker) {
 				logger.info("couldn't find the worker not found");
 				workerToReportOnCrashPid = undefined;
@@ -231,7 +231,7 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 			logger.info({
 				nLiveWorkers
 			}, `send shutdown signal to all workers`);
-			for (const worker of Object.values(cluster.workers)) {
+			for (const worker of Object.values(cluster.workers  || {})) {
 				worker?.send(SHUTDOWN_MSG);
 			}
 			logRunningProcesses(logger);

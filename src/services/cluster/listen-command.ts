@@ -13,12 +13,12 @@ export const listenForClusterCommand = (command: ClusterCommand, callback: () =>
 		logger.debug("Only workers can listen for commands, skipping.");
 		return;
 	}
-	logger.info({ command }, `Listening for command "${command}" on worker "${cluster.worker.id}"`);
+	logger.info({ command }, `Listening for command "${command}" on worker "${cluster?.worker?.id}"`);
 	// Listen to the `message` event, which is how node master process communicates with workers
 	// If message data is he same as the command we are meant to listen for, trigger callback function
 	process.on("message", msg => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		logger.info({ msg, command }, `Received message from master process on worker "${cluster.worker.id}"`);
+		logger.info({ msg, command }, `Received message from master process on worker "${cluster?.worker?.id}"`);
 		if (msg === command) {
 			callback();
 		}
