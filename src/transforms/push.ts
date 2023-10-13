@@ -165,12 +165,12 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 						hash: commitSha,
 						message: limitCommitMessage(message),
 						author: getJiraAuthor(author, githubCommitAuthor),
-						authorTimestamp: githubCommitAuthor.date,
+						authorTimestamp: githubCommitAuthor?.date,
 						displayId: commitSha.substring(0, 6),
 						fileCount: files.length, // Send the total count for all files
 						files: compact(filesToSend.map((file) => mapFile(file, repo, sha.id, owner.name))),
 						id: commitSha,
-						issueKeys: sha.issueKeys,
+						issueKeys: sha?.issueKeys || [],
 						url: html_url,
 						updateSequenceId: Date.now(),
 						flags: isMergeCommit ? ["MERGE_COMMIT"] : undefined
@@ -186,7 +186,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		// break the array up into chunks of 400
 		const chunks: JiraCommit[][] = [];
 
-		while (commits.length) {
+		while (commits?.length) {
 			chunks.push(commits.splice(0, 400));
 		}
 
