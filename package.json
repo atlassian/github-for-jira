@@ -4,7 +4,7 @@
 	"description": "GitHub integration for Atlassian Jira",
 	"repository": "https://github.com/atlassian/github-for-jira.git",
 	"engines": {
-		"node": ">= 18.18",
+		"node": ">= 18.18.1",
 		"yarn": "^1.22.0"
 	},
 	"main": "src/main",
@@ -147,7 +147,7 @@
 		"@types/lodash": "^4.14.178",
 		"@types/moo": "^0.5.4",
 		"@types/newrelic": "^6.2.0",
-		"@types/node": "~18.18",
+		"@types/node": "~18.18.1",
 		"@types/rate-limit-redis": "^1.7.1",
 		"@types/supertest": "^2.0.11",
 		"@types/uuid": "^8.3.4",
@@ -185,7 +185,7 @@
 		"@atlassian/sqs-queue-dlq-service": "^2.1.1"
 	},
 	"volta": {
-		"node": "18.18",
+		"node": "18.18.1",
 		"yarn": "1.22.18"
 	}
 }
