@@ -155,7 +155,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 					const message = commitResponse.data.commit?.message;
 
 					// Jira only accepts a max of 10 files for each commit, so don't send all of them
-					const filesToSend = files.slice(0, 10) as GithubCommitFile[];
+					const filesToSend = Array.isArray(files) ? files.slice(0, 10) as GithubCommitFile[] : [];
 
 					// merge commits will have 2 or more parents, depending on how many are in the sequence
 					const isMergeCommit = parents?.length > 1;

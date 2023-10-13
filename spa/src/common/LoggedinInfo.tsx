@@ -15,10 +15,17 @@ const buttonStyle = css`
 	padding-left: 0;
 `;
 
-const LoggedinInfo = ({ username, logout }: { username: string; logout: () => void;}) => {
+const LoggedinInfo = ({ username, logout, onPopupBlocked }: {
+	username: string;
+	logout: () => void;
+	onPopupBlocked: () => void;
+}) => {
 	const clicked = () => {
 		// Opens the popup for logging out of GitHub
-		popup("https://github.com/logout");
+		const win = popup("https://github.com/logout");
+		if (win === null) {
+			onPopupBlocked();
+		}
 		// Clearing the locally stored tokens
 		OAuthManager.clear();
 		// Passed callbacks, for re-rendering/changing states

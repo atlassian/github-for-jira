@@ -19,12 +19,20 @@ const linkStyle = css`
 /************************************************************************
  * UI view for the 3 known errors
  ************************************************************************/
-export const ErrorForSSO = ({ orgName, accessUrl, resetCallback }: { orgName?: string; accessUrl: string; resetCallback: () => void;}) => <>
+export const ErrorForSSO = ({ orgName, accessUrl, resetCallback, onPopupBlocked }: {
+	orgName?: string;
+	accessUrl: string;
+	resetCallback: () => void;
+	onPopupBlocked: () => void;
+}) => <>
 	<div css={paragraphStyle}>
 		Can't connect, single sign-on(SSO) required{orgName && <span> for <b>{orgName}</b></span>}.
 	</div>
 	<div css={paragraphStyle}>
-		1. <a css={linkStyle} onClick={() => popup(accessUrl)}>Log into GitHub with SSO</a>.
+		1. <a css={linkStyle} onClick={() => {
+			const win = popup(accessUrl);
+			if (win === null) onPopupBlocked();
+		}}>Log into GitHub with SSO</a>.
 	</div>
 	<div css={paragraphStyle}>
 		2. <a css={linkStyle} onClick={resetCallback}>Retry connection in Jira</a> (once logged in).
@@ -40,11 +48,11 @@ export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl }: { orgName?: string;
 	}}>organization owner</a> to complete this step.
 </div>;
 
-export const ErrorForPopupBlocked = () => (
+export const ErrorForPopupBlocked = ({ onDismiss }: { onDismiss: () => void }) => (
 	<>
 		<div css={paragraphStyle}>
 			Your browser stopped a pop-up window from opening. Allow pop-ups and try
-			again.
+			again. <a css={linkStyle} onClick={onDismiss}>Dismiss</a>
 		</div>
 	</>
 );
