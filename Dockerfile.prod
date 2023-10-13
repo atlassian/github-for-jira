@@ -1,4 +1,4 @@
-FROM docker.atl-paas.net/sox/micros-node-18:1.0.13 AS build
+FROM node:18-alpine3.18 as build
 
 # adding python for node-gyp
 RUN apk add g++ make python3
