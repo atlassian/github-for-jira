@@ -36,9 +36,27 @@ export const getSecretScanningAlertTask = async (
 		});
 		secretScanningAlerts = response.data;
 	} catch (e: unknown) {
-		const err = e as { cause?: { response?: { status?: number, data?: { message?: string } } } };
+		const err = e as { cause?: { response?: { status?: number, statusText?: string, data?: { message?: string } } } };
 		if (err.cause?.response?.status == 404 && err.cause?.response?.data?.message?.includes("Secret scanning is disabled on this repository")) {
 			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Secret scanning disabled, so marking backfill task complete");
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
+		} else if (err.cause?.response?.status == 404 && err.cause?.response?.statusText?.includes("Not Found")) {
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Repo doesn't found, so marking backfill task complete");
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
+		} else if (err.cause?.response?.status == 403 && err.cause?.response?.statusText?.includes("Forbidden")) {
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Repo doesn't accessible, so marking backfill task complete");
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
+		} else if (err.cause?.response?.status == 451 && err.cause?.response?.statusText?.includes("Unavailable for Legal Reasons")) {
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Repo doesn't available for legal reasons, so marking backfill task complete");
 			return {
 				edges: [],
 				jiraPayload: undefined
