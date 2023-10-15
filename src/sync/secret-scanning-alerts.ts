@@ -43,19 +43,13 @@ export const getSecretScanningAlertTask = async (
 				edges: [],
 				jiraPayload: undefined
 			};
-		} else if (err.cause?.response?.status == 404 && err.cause?.response?.statusText?.includes("Not Found")) {
+		} else if (err.cause?.response?.status == 404) {
 			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Repo doesn't found, so marking backfill task complete");
 			return {
 				edges: [],
 				jiraPayload: undefined
 			};
-		} else if (err.cause?.response?.status == 403 && err.cause?.response?.statusText?.includes("Forbidden")) {
-			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Repo doesn't accessible, so marking backfill task complete");
-			return {
-				edges: [],
-				jiraPayload: undefined
-			};
-		} else if (err.cause?.response?.status == 451 && err.cause?.response?.statusText?.includes("Unavailable for Legal Reasons")) {
+		} else if (err.cause?.response?.status == 451) {
 			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Repo doesn't available for legal reasons, so marking backfill task complete");
 			return {
 				edges: [],

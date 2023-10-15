@@ -61,13 +61,13 @@ export const getCodeScanningAlertTask = async (
 				edges: [],
 				jiraPayload: undefined
 			};
-		} else if (err.cause?.response?.status == 404 && err.cause?.response?.statusText?.includes("Not Found")) {
+		} else if (err.cause?.response?.status == 404) {
 			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Repo doesn't found, so marking backfill task complete");
 			return {
 				edges: [],
 				jiraPayload: undefined
 			};
-		} else if (err.cause?.response?.status == 451 && err.cause?.response?.statusText?.includes("Unavailable for Legal Reasons")) {
+		} else if (err.cause?.response?.status == 451) {
 			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Code scanning is not configured, so marking backfill task complete");
 			return {
 				edges: [],
