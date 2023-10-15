@@ -55,7 +55,7 @@ describe("rest deferred installation redirect route check", () => {
 
 			expect(resp.status).toEqual(302);
 			expect((resp.headers as ResponseHeaders).location)
-				.toBe("https://customJirahost.com/plugins/servlet/ac/com.github.integration.test-atlassian-instance/spa-deferred-page?ac.gitHubInstallationId=1234");
+				.toBe("https://customJirahost.com/plugins/servlet/ac/com.github.integration.test-atlassian-instance/spa-deferred-page?ac.gitHubInstallationId=1234&ac.gitHubOrgName=custom-orgName");
 		});
 	});
 });
