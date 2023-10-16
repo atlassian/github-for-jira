@@ -46,7 +46,8 @@ async function connectOrg(orgId: number): Promise<boolean | AxiosError> {
 let lastOpenWin: WindowProxy | null = null;
 async function installNewApp(callbacks: {
 	onFinish: (gitHubInstallationId: number | undefined) => void,
-	onRequested: (setupAction: string) => void
+	onRequested: (setupAction: string) => void,
+	onPopupBlocked: () => void
 }): Promise<void> {
 
 	const app = await Api.app.getAppNewInstallationUrl();
@@ -56,7 +57,13 @@ async function installNewApp(callbacks: {
 		return;
 	}
 
-	const winInstall = lastOpenWin = popup(app.data.appInstallationUrl);
+	const newPopWin = popup(app.data.appInstallationUrl);
+	if (newPopWin === null) {
+		callbacks.onPopupBlocked();
+		return;
+	}
+
+	const winInstall = lastOpenWin = newPopWin;
 
 	const handler = async (event: MessageEvent) => {
 		lastOpenWin = null;

@@ -138,7 +138,6 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		}
 
 		const recentShas = shas.slice(0, MAX_COMMIT_HISTORY);
-
 		const commitPromises: Promise<JiraCommit | null>[] = recentShas.map(async (sha): Promise<JiraCommit | null> => {
 			log.info("Calling GitHub to fetch commit info " + sha.id);
 			try {
@@ -151,7 +150,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 					html_url
 				} = commitResponse.data;
 
-				if (commitSha === undefined) {
+				if (!commitSha) {
 					return null;
 				}
 

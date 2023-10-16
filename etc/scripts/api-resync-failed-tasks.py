@@ -1,13 +1,13 @@
 """
-Script replay the rejected vulnerabilities by data depot. Simply export the logs of rejected vulnerabilities from the splunk and run the script with the log file
+Script triggers the backfill for the subscriptions. Download the failed subscriptions from database in a CSV format and run the script with the CSV file.
 
-1. Run the following splunk query to search for rejected vulnerabilities 
-    `micros_github-for-jira` env=prod* "Data depot rejected" 
-2. Export the splunk logs in csv format
+1. Run the following database query to search for failed backfilled tasks 
+    select distinct("subscriptionId")  from "RepoSyncStates" rss where "dependabotAlertStatus" = 'failed'
+2. Download the query result in csv format
 3. Running the script:
-    $ python3 ./api-replay-failed-entities-from-csv.py --env [ dev | staging | prod ] --sleep [ sleep-duration ] --input [ input-file-name.csv ]
+    $ python3 ./api-replay-failed-entities-from-csv.py --env [ dev | staging | prod ] --task [dependabotAlert | secretScanningAlert | codeScanningAlert] --sleep [ sleep-duration ] --input [ input-file-name.csv ]
 Example
-    $ python3 ./api-replay-failed-entities-from-csv.py --env staging --batchsize 100 --input failed-entities.csv  --sleep 10
+   $ python3 ./api-resync-failed-tasks.py --env staging --batchsize 100 --input sample.csv --task dependabotAlert  --sleep 1
 
 First time setup:
 
@@ -23,12 +23,10 @@ import requests
 import subprocess
 import sys
 import time
-import json
 from requests import Request
 from requests.auth import AuthBase
 from typing import NamedTuple
 from dataclasses import dataclass
-from json import JSONEncoder
 
 LOG = logging.getLogger(__name__)
 
@@ -95,40 +93,23 @@ def create_environment(env: str) -> Environment:
   else:
       raise ValueError(f'Invalid environment {env}')
   
+
 @dataclass(frozen=True)
-class FailedEntity:
-    gitHubInstallationId: int
-    hashedJiraHost: str
-    identifiers: list
+class Subscription:
+    subscriptionId: int
 
     @staticmethod
     def from_dict(d):
-        return FailedEntity(d['gitHubInstallationId'], d['jiraHost'], d['rejectedEntities{}.key.vulnerabilityId'].split("\n"))
+        return Subscription(d['subscriptionId'])
 
-class ReplayEntity:
-    def __init__(self, gitHubInstallationId, hashedJiraHost, identifier):
-        self.gitHubInstallationId = gitHubInstallationId
-        self.hashedJiraHost = hashedJiraHost
-        self.identifier = identifier
-
-    def to_json(self):
-        return {
-            'gitHubInstallationId': self.gitHubInstallationId,
-            'hashedJiraHost': self.hashedJiraHost,
-            'identifier': self.identifier
-        }
-
-def process_replayEntities(env: Environment, replayEntities: list) -> bool:
-    url = '{}/api/replay-rejected-entities-from-data-depot'.format(env.github_for_jira_url)
+def process_Subscription(env: Environment, subscriptionIds, targetTask) -> bool:
+    url = '{}/api//resync-failed-tasks'.format(env.github_for_jira_url)
     
-    replayEntitiesJson = []
-    for replayEntity in replayEntities:
-        replayEntitiesJson.append(replayEntity.to_json())
-
     response = session.post(url,
       auth=env.github_for_jira_auth,
       json={
-        "replayEntities": replayEntitiesJson
+        "subscriptionsIds": subscriptionIds,
+        "targetTasks": [targetTask]
       },
       headers = {"Content-Type": "application/json"})
 
@@ -138,8 +119,9 @@ def process_replayEntities(env: Environment, replayEntities: list) -> bool:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--env', choices=('dev', 'staging', 'prod'), required=True)
-    parser.add_argument('--batchsize', default=100, type=int, help='How many jiraHosts to process each iteration')
+    parser.add_argument('--batchsize', default=100, type=int)
     parser.add_argument('--input', type=argparse.FileType('r'), required=True)
+    parser.add_argument('--task', choices=("dependabotAlert", "secretScanningAlert", "codeScanningAlert"), required=True)
     parser.add_argument('--sleep', type=int, help='How long to wait between requests in seconds', required=True)
     parser.add_argument('--level', default='INFO', choices=('INFO', 'ERROR', 'WARNING', 'DEBUG', 'CRITICAL'))
     args = parser.parse_args()
@@ -148,21 +130,20 @@ def main():
 
     env = create_environment(args.env)
     input_file = args.input
+    targetTask = args.task
 
     input_reader = csv.DictReader(input_file)
 
-    replayEntities = []
+    subscriptionIds = []
     for row in input_reader:
-        failedEntity = FailedEntity.from_dict(row)
-        for identifier in failedEntity.identifiers:
-            replayEntities.append(ReplayEntity(failedEntity.gitHubInstallationId, failedEntity.hashedJiraHost, identifier.strip()))
-    
+        subscription  = Subscription.from_dict(row)
+        subscriptionIds.append(subscription.subscriptionId);
 
-    LOG.info("Total failed entities to process %s", len(replayEntities))
-    for i in range(0, len(replayEntities), args.batchsize):
-        replayEntitiesBatch = replayEntities[i:i+args.batchsize]
-        LOG.info("processing batch from %s to %s", i+1, i+len(replayEntitiesBatch));
-        process_replayEntities(env, replayEntitiesBatch)
+    LOG.info("Backfill to run for %s subscriptions", len(subscriptionIds))
+    for i in range(0, len(subscriptionIds), args.batchsize):
+        subscriptionIdsBatch = subscriptionIds[i:i+args.batchsize]
+        LOG.info("processing batch from %s to %s", i+1, i+len(subscriptionIdsBatch));
+        process_Subscription(env, subscriptionIdsBatch, targetTask)
         time.sleep(args.sleep)
 
 if __name__ == '__main__':

@@ -23,8 +23,8 @@ const titleStyle = css`
 `;
 const paragraphStyle = css`
 	color: ${token("color.text.subtle")};
-	margin: ${token("space.300")} ${token("space.0")};
-	padding: 0px ${token("space.800")};
+	margin: ${token("space.100")} ${token("space.0")} ${token("space.300")} ${token("space.0")};
+	padding: 0px ${token("space.600")};
 `;
 const flexWrapperStyle = css`
 	padding: ${token("space.400")} ${token("space.0")};
@@ -43,6 +43,7 @@ const sectionStyle = css`
 `;
 const sectionImgStyle = css`
 	height: 100px;
+	margin-bottom: ${token("space.300")};
 `;
 
 const buttonStyle = css`
