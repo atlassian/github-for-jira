@@ -1,5 +1,5 @@
 /** @jsxImportSource @emotion/react */
-import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import InfoIcon from "@atlaskit/icon/glyph/info";
 import LoggedinInfo from "../../common/LoggedinInfo";
 import { Wrapper } from "../../common/Wrapper";
@@ -50,11 +50,9 @@ const linkStyle = css`
 type UserRole = "admin" | "nonAdmin" | "notSet";
 
 const DeferredInstallationRequested = () => {
-	const laction = useLocation();
 	const [searchParams] = useSearchParams();
 	const githubInstallationId = searchParams.get("gitHubInstallationId");
 	const gitHubOrgName = searchParams.get("gitHubOrgName");
-	console.log(">>>",laction);
 	const navigate = useNavigate();
 	const username = OAuthManager.getUserDetails().username || "";
 
