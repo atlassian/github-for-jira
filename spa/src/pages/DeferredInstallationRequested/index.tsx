@@ -1,5 +1,5 @@
 /** @jsxImportSource @emotion/react */
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import InfoIcon from "@atlaskit/icon/glyph/info";
 import LoggedinInfo from "../../common/LoggedinInfo";
 import { Wrapper } from "../../common/Wrapper";
@@ -50,8 +50,11 @@ const linkStyle = css`
 type UserRole = "admin" | "nonAdmin" | "notSet";
 
 const DeferredInstallationRequested = () => {
+	const laction = useLocation();
 	const [searchParams] = useSearchParams();
+	const githubInstallationId = searchParams.get("gitHubInstallationId");
 	const gitHubOrgName = searchParams.get("gitHubOrgName");
+	console.log(">>>",laction);
 	const navigate = useNavigate();
 	const username = OAuthManager.getUserDetails().username || "";
 
@@ -107,18 +110,8 @@ const DeferredInstallationRequested = () => {
 	}, []);
 
 	// Set the token/username after authentication
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(() => {
-		const githubInstallationId = searchParams.get("gitHubInstallationId");
-		const connectOrg = async (orgName: string) => {
-			if (githubInstallationId) {
-				const connected: boolean | AxiosError = await AppManager.connectOrg(parseInt(githubInstallationId));
-				if (connected instanceof AxiosError) {
-					setError(modifyError(connected, {}, { onClearGitHubToken: () => {}, onRelogin: () => {} }));
-				} else {
-					navigate("/spa/connected",{ state: { orgLogin: orgName, isAddMoreOrgAvailable: false } });
-				}
-			}
-		};
 		// Check if the current Github user is admin or not
 		const checkOrgOwnership = async () => {
 			if (githubInstallationId) {
@@ -149,11 +142,20 @@ const DeferredInstallationRequested = () => {
 			setLoggedInUser(OAuthManager.getUserDetails().username);
 			await checkOrgOwnership();
 		};
-
+		
 		isLoggedIn && recheckValidity();
 	}, [ isLoggedIn ]);
 
-
+	const connectOrg = async (orgName: string) => {
+		if (githubInstallationId) {
+			const connected: boolean | AxiosError = await AppManager.connectOrg(parseInt(githubInstallationId));
+			if (connected instanceof AxiosError) {
+				setError(modifyError(connected, {}, { onClearGitHubToken: () => {}, onRelogin: () => {} }));
+			} else {
+				navigate("/spa/connected",{ state: { orgLogin: orgName, isAddMoreOrgAvailable: false } });
+			}
+		}
+	};
 	const navigateBackToSteps = () => navigate("/spa/steps");
 
 	const getOrgOwnerUrl = async () => {
