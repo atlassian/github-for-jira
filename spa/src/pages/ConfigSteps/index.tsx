@@ -241,6 +241,7 @@ const ConfigSteps = () => {
 	};
 
 	const clearLogin = () => {
+		setOrganizations([]);
 		setIsLoggedIn(false);
 		setLoaderForLogin(false);
 		setLoggedInUser("");
@@ -341,7 +342,6 @@ const ConfigSteps = () => {
 				return;
 			}
 			setLoggedInUser(OAuthManager.getUserDetails().username);
-			setLoaderForLogin(false);
 			setOrganizations([]);
 			if (status) {
 				const result = await getOrganizations();
@@ -356,6 +356,8 @@ const ConfigSteps = () => {
 		isLoggedIn && recheckValidity();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ isLoggedIn ]);
+
+	const showOrgList = !loaderForOrgFetching && organizations.length > 0;
 	return (
 		<Wrapper>
 			<SyncHeader />
@@ -373,7 +375,7 @@ const ConfigSteps = () => {
 				{
 					isLoggedIn ? <>
 						{
-							loaderForOrgFetching ? <SkeletonForLoading /> : <>
+							!showOrgList ? <SkeletonForLoading /> : <>
 									<Step title="Select a GitHub organization">
 												<>
 													<div css={paragraphStyle}>
