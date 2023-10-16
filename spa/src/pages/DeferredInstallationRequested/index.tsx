@@ -110,7 +110,6 @@ const DeferredInstallationRequested = () => {
 	}, []);
 
 	// Set the token/username after authentication
-	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(() => {
 		// Check if the current Github user is admin or not
 		const checkOrgOwnership = async () => {
@@ -144,6 +143,7 @@ const DeferredInstallationRequested = () => {
 		};
 		
 		isLoggedIn && recheckValidity();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ isLoggedIn ]);
 
 	const connectOrg = async (orgName: string) => {
