@@ -358,7 +358,7 @@ const ConfigSteps = () => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ isLoggedIn ]);
 
-	const showOrgList = !loaderForOrgFetching && organizations.length > 0;
+	const showOrgList = !loaderForOrgFetching;
 	return (
 		<Wrapper>
 			<SyncHeader />
