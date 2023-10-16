@@ -138,54 +138,60 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		}
 
 		const recentShas = shas.slice(0, MAX_COMMIT_HISTORY);
-		const commits: JiraCommit[] = await Promise.all(
-			recentShas.map(async (sha): Promise<JiraCommit> => {
-				log.info("Calling GitHub to fetch commit info " + sha.id);
-				try {
-					const commitResponse = await github.getCommit(owner.login, repo, sha.id);
-					const {
-						files,
-						author: author = {},
-						parents,
-						sha: commitSha,
-						html_url
-					} = commitResponse.data;
 
-					const githubCommitAuthor = commitResponse.data.commit?.author;
-					const message = commitResponse.data.commit?.message;
+		const commitPromises: Promise<JiraCommit | null>[] = recentShas.map(async (sha): Promise<JiraCommit | null> => {
+			log.info("Calling GitHub to fetch commit info " + sha.id);
+			try {
+				const commitResponse = await github.getCommit(owner.login, repo, sha.id);
+				const {
+					files,
+					author: author = {},
+					parents,
+					sha: commitSha,
+					html_url
+				} = commitResponse.data;
 
-					// Jira only accepts a max of 10 files for each commit, so don't send all of them
-					const filesToSend = Array.isArray(files) ? files.slice(0, 10) as GithubCommitFile[] : [];
-
-					// merge commits will have 2 or more parents, depending on how many are in the sequence
-					const isMergeCommit = parents?.length > 1;
-
-					log.info("GitHub call succeeded");
-					return {
-						hash: commitSha,
-						message: limitCommitMessage(message),
-						author: getJiraAuthor(author, githubCommitAuthor),
-						authorTimestamp: githubCommitAuthor?.date,
-						displayId: commitSha.substring(0, 6),
-						fileCount: files.length, // Send the total count for all files
-						files: compact(filesToSend.map((file) => mapFile(file, repo, sha.id, owner.name))),
-						id: commitSha,
-						issueKeys: sha?.issueKeys || [],
-						url: html_url,
-						updateSequenceId: Date.now(),
-						flags: isMergeCommit ? ["MERGE_COMMIT"] : undefined
-					};
-				} catch (err: unknown) {
-					log.warn({ err }, "Failed to fetch data from GitHub");
-					throw err;
+				if (commitSha === undefined) {
+					return null;
 				}
-			})
-		);
+
+				const githubCommitAuthor = commitResponse.data.commit?.author;
+				const message = commitResponse.data.commit?.message;
+
+				// Jira only accepts a max of 10 files for each commit, so don't send all of them
+				const filesToSend = Array.isArray(files) ? files.slice(0, 10) as GithubCommitFile[] : [];
+
+				// merge commits will have 2 or more parents, depending on how many are in the sequence
+				const isMergeCommit = parents?.length > 1;
+
+				log.info("GitHub call succeeded");
+				return {
+					hash: commitSha,
+					message: limitCommitMessage(message),
+					author: getJiraAuthor(author, githubCommitAuthor),
+					authorTimestamp: githubCommitAuthor?.date,
+					displayId: commitSha.substring(0, 6),
+					fileCount: files.length, // Send the total count for all files
+					files: compact(filesToSend.map((file) => mapFile(file, repo, sha.id, owner.name))),
+					id: commitSha,
+					issueKeys: sha.issueKeys,
+					url: html_url,
+					updateSequenceId: Date.now(),
+					flags: isMergeCommit ? ["MERGE_COMMIT"] : undefined
+				};
+			} catch (err: unknown) {
+				log.warn({ err }, "Failed to fetch data from GitHub");
+				throw err;
+			}
+		});
+
+		const commitResults: (JiraCommit | null)[] = await Promise.all(commitPromises);
+
+		const commits: JiraCommit[] = commitResults.filter(commit => commit !== null) as JiraCommit[];
 
 		// Jira accepts up to 400 commits per request
 		// break the array up into chunks of 400
 		const chunks: JiraCommit[][] = [];
-
 		while (commits?.length) {
 			chunks.push(commits.splice(0, 400));
 		}
