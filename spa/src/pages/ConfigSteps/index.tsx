@@ -235,11 +235,16 @@ const ConfigSteps = () => {
 			});
 	};
 
+	const clearAlerts = () =>{
+		showError(undefined);
+		setPopupBlocked(false);
+	};
+
 	const clearLogin = () => {
 		setIsLoggedIn(false);
 		setLoaderForLogin(false);
 		setLoggedInUser("");
-		showError(undefined);
+		clearAlerts();
 	};
 
 	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual", orgLogin: string) => {
@@ -309,6 +314,7 @@ const ConfigSteps = () => {
 			if (event.origin !== originalUrl) return;
 			if (event.data?.type === "oauth-callback" && event.data?.code) {
 				const response: boolean | AxiosError = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
+				clearAlerts();
 				setLoaderForLogin(false);
 				if (response instanceof AxiosError) {
 					showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin, onPopupBlocked }));
