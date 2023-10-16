@@ -220,7 +220,7 @@ const ConfigSteps = () => {
 
 	const reLogin = async () => {
 		// Clearing the errors
-		showError(undefined);
+		clearAlerts();
 		OauthManager.clear();
 		// This resets the token validity check in the parent component and resets the UI
 		setIsLoggedIn(false);
@@ -229,10 +229,10 @@ const ConfigSteps = () => {
 			onWinClosed: () => {},
 			onPopupBlocked
 		}).catch(e => {
-				const errorObj = modifyError(e, { }, { onClearGitHubToken: () => {}, onRelogin: () => {}, onPopupBlocked });
-				analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail"}, { errorCode: errorObj.errorCode, step: "initiate-oauth"});
-				reportError(new Error("Reset oauth flow on relogin", { cause: e }), { path: "reLogin" });
-			});
+			const errorObj = modifyError(e, { }, { onClearGitHubToken: () => {}, onRelogin: () => {}, onPopupBlocked });
+			analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail"}, { errorCode: errorObj.errorCode, step: "initiate-oauth"});
+			reportError(new Error("Reset oauth flow on relogin", { cause: e }), { path: "reLogin" });
+		});
 	};
 
 	const clearAlerts = () =>{
