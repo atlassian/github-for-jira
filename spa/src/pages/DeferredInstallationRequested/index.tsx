@@ -51,7 +51,6 @@ type UserRole = "admin" | "nonAdmin" | "notSet";
 
 const DeferredInstallationRequested = () => {
 	const [searchParams] = useSearchParams();
-	const githubInstallationId = searchParams.get("gitHubInstallationId");
 	const gitHubOrgName = searchParams.get("gitHubOrgName");
 	const navigate = useNavigate();
 	const username = OAuthManager.getUserDetails().username || "";
@@ -109,6 +108,17 @@ const DeferredInstallationRequested = () => {
 
 	// Set the token/username after authentication
 	useEffect(() => {
+		const githubInstallationId = searchParams.get("gitHubInstallationId");
+		const connectOrg = async (orgName: string) => {
+			if (githubInstallationId) {
+				const connected: boolean | AxiosError = await AppManager.connectOrg(parseInt(githubInstallationId));
+				if (connected instanceof AxiosError) {
+					setError(modifyError(connected, {}, { onClearGitHubToken: () => {}, onRelogin: () => {} }));
+				} else {
+					navigate("/spa/connected",{ state: { orgLogin: orgName, isAddMoreOrgAvailable: false } });
+				}
+			}
+		};
 		// Check if the current Github user is admin or not
 		const checkOrgOwnership = async () => {
 			if (githubInstallationId) {
@@ -143,16 +153,7 @@ const DeferredInstallationRequested = () => {
 		isLoggedIn && recheckValidity();
 	}, [ isLoggedIn ]);
 
-	const connectOrg = async (orgName: string) => {
-		if (githubInstallationId) {
-			const connected: boolean | AxiosError = await AppManager.connectOrg(parseInt(githubInstallationId));
-			if (connected instanceof AxiosError) {
-				setError(modifyError(connected, {}, { onClearGitHubToken: () => {}, onRelogin: () => {} }));
-			} else {
-				navigate("/spa/connected",{ state: { orgLogin: orgName, isAddMoreOrgAvailable: false } });
-			}
-		}
-	};
+
 	const navigateBackToSteps = () => navigate("/spa/steps");
 
 	const getOrgOwnerUrl = async () => {
