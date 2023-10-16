@@ -342,6 +342,7 @@ const ConfigSteps = () => {
 				return;
 			}
 			setLoggedInUser(OAuthManager.getUserDetails().username);
+			setLoaderForLogin(false);
 			setOrganizations([]);
 			if (status) {
 				const result = await getOrganizations();
