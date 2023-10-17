@@ -241,6 +241,7 @@ const ConfigSteps = () => {
 	};
 
 	const clearLogin = () => {
+		setOrganizations([]);
 		setIsLoggedIn(false);
 		setLoaderForLogin(false);
 		setLoggedInUser("");
@@ -356,6 +357,7 @@ const ConfigSteps = () => {
 		isLoggedIn && recheckValidity();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ isLoggedIn ]);
+
 	return (
 		<Wrapper>
 			<SyncHeader />
