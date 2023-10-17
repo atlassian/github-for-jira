@@ -53,7 +53,7 @@ const subtleBtnStyle = css`
 `;
 const Connected = () => {
 	const location = useLocation();
-	const { orgLogin } = location.state;
+	const { orgLogin, isAddMoreOrgAvailable = true } = location.state;
 	useEffectScreenEvent("SuccessfulConnectedScreen");
 
 	const navigate = useNavigate();
@@ -107,13 +107,15 @@ const Connected = () => {
 							To bring development work into issues and the code feature, add
 							issue keys in branches, pull request titles, and commit messages.
 						</div>
-						<Button
-							css={[buttonStyle, subtleBtnStyle]}
-							appearance="subtle"
-							onClick={() => navigate("/spa/steps")}
-						>
-							Add another organization
-						</Button>
+						{isAddMoreOrgAvailable && (
+							<Button
+								css={[buttonStyle, subtleBtnStyle]}
+								appearance="subtle"
+								onClick={() => navigate("/spa/steps")}
+							>
+								Add another organization
+							</Button>
+						)}
 						<Button
 							css={buttonStyle}
 							appearance="primary"

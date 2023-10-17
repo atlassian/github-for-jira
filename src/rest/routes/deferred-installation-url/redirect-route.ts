@@ -16,7 +16,7 @@ DeferredInstallRequestRoute.get("/", errorWrapper("DeferredInstallRequestRoute",
 		throw new InvalidArgumentError("Missing requestId");
 	}
 
-	const { gitHubInstallationId, jiraHost  } = await extractSubscriptionDeferredInstallPayload(requestId);
+	const { gitHubInstallationId, jiraHost, orgName  } = await extractSubscriptionDeferredInstallPayload(requestId);
 
-	return res.redirect(`${jiraHost}/plugins/servlet/ac/${envVars.APP_KEY}/spa-deferred-page?ac.gitHubInstallationId=${gitHubInstallationId}`);
+	return res.redirect(`${jiraHost}/plugins/servlet/ac/${envVars.APP_KEY}/spa-deferred-page?ac.gitHubInstallationId=${gitHubInstallationId}&ac.gitHubOrgName=${orgName}`);
 }));
