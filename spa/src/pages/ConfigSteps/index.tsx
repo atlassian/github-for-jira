@@ -220,7 +220,7 @@ const ConfigSteps = () => {
 
 	const reLogin = async () => {
 		// Clearing the errors
-		showError(undefined);
+		clearAlerts();
 		OauthManager.clear();
 		// This resets the token validity check in the parent component and resets the UI
 		setIsLoggedIn(false);
@@ -229,17 +229,23 @@ const ConfigSteps = () => {
 			onWinClosed: () => {},
 			onPopupBlocked
 		}).catch(e => {
-				const errorObj = modifyError(e, { }, { onClearGitHubToken: () => {}, onRelogin: () => {}, onPopupBlocked });
-				analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail"}, { errorCode: errorObj.errorCode, step: "initiate-oauth"});
-				reportError(new Error("Reset oauth flow on relogin", { cause: e }), { path: "reLogin" });
-			});
+			const errorObj = modifyError(e, { }, { onClearGitHubToken: () => {}, onRelogin: () => {}, onPopupBlocked });
+			analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail"}, { errorCode: errorObj.errorCode, step: "initiate-oauth"});
+			reportError(new Error("Reset oauth flow on relogin", { cause: e }), { path: "reLogin" });
+		});
+	};
+
+	const clearAlerts = () =>{
+		showError(undefined);
+		setPopupBlocked(false);
 	};
 
 	const clearLogin = () => {
+		setOrganizations([]);
 		setIsLoggedIn(false);
 		setLoaderForLogin(false);
 		setLoggedInUser("");
-		showError(undefined);
+		clearAlerts();
 	};
 
 	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual", orgLogin: string) => {
@@ -309,6 +315,7 @@ const ConfigSteps = () => {
 			if (event.origin !== originalUrl) return;
 			if (event.data?.type === "oauth-callback" && event.data?.code) {
 				const response: boolean | AxiosError = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
+				clearAlerts();
 				setLoaderForLogin(false);
 				if (response instanceof AxiosError) {
 					showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin, onPopupBlocked }));
@@ -350,6 +357,7 @@ const ConfigSteps = () => {
 		isLoggedIn && recheckValidity();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ isLoggedIn ]);
+
 	return (
 		<Wrapper>
 			<SyncHeader />
