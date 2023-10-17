@@ -358,7 +358,6 @@ const ConfigSteps = () => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ isLoggedIn ]);
 
-	const showOrgList = !loaderForOrgFetching;
 	return (
 		<Wrapper>
 			<SyncHeader />
@@ -376,7 +375,7 @@ const ConfigSteps = () => {
 				{
 					isLoggedIn ? <>
 						{
-							!showOrgList ? <SkeletonForLoading /> : <>
+							loaderForOrgFetching ? <SkeletonForLoading /> : <>
 									<Step title="Select a GitHub organization">
 												<>
 													<div css={paragraphStyle}>
