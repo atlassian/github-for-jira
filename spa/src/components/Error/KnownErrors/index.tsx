@@ -130,6 +130,7 @@ export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl, deferredInstallationO
 										id="deffered-installation-msg"
 										name="deffered-installation-msg"
 										defaultValue={`I want to connect the GitHub organization ${orgName} to the Jira site ${hostUrl?.jiraHost}, and I need your approval as an organization owner.\n\nIf you approve, can you go to this link and complete the connection?\n\n${deferredInstallationUrl}`}
+										readOnly
 									/>
 								</ModalBody>
 								<ModalFooter>
