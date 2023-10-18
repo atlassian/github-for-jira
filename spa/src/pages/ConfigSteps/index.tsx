@@ -23,10 +23,9 @@ import OrganizationsList from "../ConfigSteps/OrgsContainer";
 import SkeletonForLoading from "../ConfigSteps/SkeletonForLoading";
 import OauthManager from "../../services/oauth-manager";
 import { ErrorForPopupBlocked } from "../../components/Error/KnownErrors";
+import { HostUrlType } from "../../utils/modifyError";
 
-type HostUrlType = {
-	jiraHost: string;
-};
+
 type ErrorMessageCounterType = {
 	message: string | React.JSX.Element;
 	count: number;
@@ -360,6 +359,7 @@ const ConfigSteps = () => {
 														loaderForOrgClicked={loaderForOrgClicked}
 														setLoaderForOrgClicked={setLoaderForOrgClicked}
 														resetCallback={setIsLoggedIn}
+														hostUrl={hostUrl}
 														connectingOrg={(org) => doCreateConnection(org.id, "manual", org.account?.login)} />
 													<div css={addOrganizationContainerStyle}>
 														<Button

@@ -13,6 +13,7 @@ import {
 } from "../../../components/Error/KnownErrors";
 import Scrollbars from "../../../common/Scrollbars";
 import { DeferredInstallationUrlParams } from "rest-interfaces";
+import { HostUrlType } from "../../../utils/modifyError";
 
 const MAX_HEIGHT_FOR_ORGS_CONTAINER = 250;
 const PADDING_RIGHT_FOR_ORGS_CONTAINER = 80;
@@ -42,6 +43,7 @@ const OrganizationsList = ({
 	setLoaderForOrgClicked,
 	resetCallback,
 	connectingOrg,
+	hostUrl
 }: {
 	organizations: Array<GitHubInstallationType>;
 	// Passing down the states and methods from the parent component
@@ -49,10 +51,14 @@ const OrganizationsList = ({
 	setLoaderForOrgClicked: (args: boolean) => void;
 	resetCallback: (args: boolean) => void;
 	connectingOrg: (org: GitHubInstallationType) => void;
+	hostUrl: HostUrlType | undefined
 }) => {
 	const [clickedOrg, setClickedOrg] = useState<
 		GitHubInstallationType | undefined
 	>(undefined);
+
+	const checkWarnings = (org: GitHubInstallationType) =>
+		!org.requiresSsoLogin && !org.isIPBlocked && org.isAdmin;
 
 	const canConnect = (org: GitHubInstallationType) =>
 		!org.requiresSsoLogin && !org.isIPBlocked && org.isAdmin;
@@ -85,8 +91,7 @@ const OrganizationsList = ({
 				gitHubInstallationId: org.id,
 				gitHubOrgName: org.account.login
 			};
-
-			return <ErrorForNonAdmins deferredInstallationOrgDetails={deferredInstallationOrgDetails} adminOrgsUrl={adminOrgsUrl} />;
+			return <ErrorForNonAdmins deferredInstallationOrgDetails={deferredInstallationOrgDetails} adminOrgsUrl={adminOrgsUrl} orgName={org?.account?.login} hostUrl={hostUrl}/>;
 		}
 	};
 	return (
@@ -138,13 +143,13 @@ const OrganizationsList = ({
 											<span css={orgNameStyle}>{org.account.login}</span>
 											<div>{errorMessage(org)}</div>
 										</div>
-										<div css={iconWrapperStyle}>
+										{checkWarnings(org) && <div css={iconWrapperStyle}>
 											<WarningIcon
 												label="warning"
 												primaryColor={token("color.background.warning.bold")}
 												size="medium"
 											/>
-										</div>
+										</div>}
 									</>
 								)}
 							</div>
