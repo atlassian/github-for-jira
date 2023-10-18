@@ -149,7 +149,7 @@ Object {
         "name": Object {
           "value": "GitHub for Jira SPA Index Page",
         },
-        "url": "/spa",
+        "url": "/spa?from={ac.from}",
       },
       Object {
         "conditions": Array [

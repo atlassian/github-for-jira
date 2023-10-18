@@ -41,6 +41,7 @@ const OrganizationsList = ({
 	setLoaderForOrgClicked,
 	resetCallback,
 	connectingOrg,
+	onPopupBlocked,
 }: {
 	organizations: Array<GitHubInstallationType>;
 	// Passing down the states and methods from the parent component
@@ -48,6 +49,7 @@ const OrganizationsList = ({
 	setLoaderForOrgClicked: (args: boolean) => void;
 	resetCallback: (args: boolean) => void;
 	connectingOrg: (org: GitHubInstallationType) => void;
+	onPopupBlocked: () => void;
 }) => {
 	const [clickedOrg, setClickedOrg] = useState<
 		GitHubInstallationType | undefined
@@ -62,7 +64,10 @@ const OrganizationsList = ({
 		// This resets the token validity check in the parent component and resets the UI
 		resetCallback(false);
 		// Restart the whole auth flow
-		await OauthManager.authenticateInGitHub(() => {});
+		await OauthManager.authenticateInGitHub({
+			onWinClosed: () => {},
+			onPopupBlocked: onPopupBlocked
+		});
 	};
 
 	const errorMessage = (org: GitHubInstallationType) => {
@@ -70,7 +75,11 @@ const OrganizationsList = ({
 			// TODO: Update this to support GHE
 			const accessUrl = `https://github.com/organizations/${org.account.login}/settings/profile`;
 
-			return <ErrorForSSO resetCallback={resetToken} accessUrl={accessUrl} />;
+			return <ErrorForSSO
+				resetCallback={resetToken}
+				accessUrl={accessUrl}
+				onPopupBlocked={onPopupBlocked}
+			/>;
 		}
 
 		if (org.isIPBlocked) {

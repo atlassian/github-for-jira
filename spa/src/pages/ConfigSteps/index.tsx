@@ -115,7 +115,10 @@ const errorMessageCounter: ErrorMessageCounterType = {
 const ERROR_THRESHOLD = 3;
 
 const ConfigSteps = () => {
-	const isPopupBlocked = localStorage.getItem("isPopupBlocked") === "true" ? true : false;
+
+	const [isPopupBlocked, setPopupBlocked] = useState<boolean>(false);
+	const onPopupBlocked = () => setPopupBlocked(true);
+
 	const navigate = useNavigate();
 	const { username } = OAuthManager.getUserDetails();
 	/**
@@ -169,7 +172,7 @@ const ConfigSteps = () => {
 		const response = await AppManager.fetchOrgs();
 		setLoaderForOrgFetching(false);
 		if (response instanceof AxiosError) {
-			showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
+			showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin, onPopupBlocked }));
 			return { success: false, orgs: [] };
 		} else {
 			setOrganizations(response.orgs);
@@ -183,11 +186,13 @@ const ConfigSteps = () => {
 				setLoaderForLogin(true);
 				try {
 					analyticsClient.sendUIEvent({ actionSubject: "startOAuthAuthorisation", action: "clicked"}, { type: "cloud" });
-					await OAuthManager.authenticateInGitHub(() => {
-						setLoaderForLogin(false);
+					await OAuthManager.authenticateInGitHub({
+						onWinClosed: () => {
+							setLoaderForLogin(false);
+						}, onPopupBlocked
 					});
 				} catch (e: unknown) {
-					const errorObj = modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
+					const errorObj = modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin, onPopupBlocked });
 					showError(errorObj);
 					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail"}, { errorCode: errorObj.errorCode, step: "initiate-oauth"});
 					reportError(new Error("Fail initiate authorize", { cause: e }), {
@@ -215,32 +220,40 @@ const ConfigSteps = () => {
 
 	const reLogin = async () => {
 		// Clearing the errors
-		showError(undefined);
+		clearAlerts();
 		OauthManager.clear();
 		// This resets the token validity check in the parent component and resets the UI
 		setIsLoggedIn(false);
 		// Restart the whole auth flow
-		await OauthManager.authenticateInGitHub(() => {})
-			.catch(e => {
-				const errorObj = modifyError(e, { }, { onClearGitHubToken: () => {}, onRelogin: () => {} });
-				analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail"}, { errorCode: errorObj.errorCode, step: "initiate-oauth"});
-				reportError(new Error("Reset oauth flow on relogin", { cause: e }), { path: "reLogin" });
-			});
+		await OauthManager.authenticateInGitHub({
+			onWinClosed: () => {},
+			onPopupBlocked
+		}).catch(e => {
+			const errorObj = modifyError(e, { }, { onClearGitHubToken: () => {}, onRelogin: () => {}, onPopupBlocked });
+			analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail"}, { errorCode: errorObj.errorCode, step: "initiate-oauth"});
+			reportError(new Error("Reset oauth flow on relogin", { cause: e }), { path: "reLogin" });
+		});
+	};
+
+	const clearAlerts = () =>{
+		showError(undefined);
+		setPopupBlocked(false);
 	};
 
 	const clearLogin = () => {
+		setOrganizations([]);
 		setIsLoggedIn(false);
 		setLoaderForLogin(false);
 		setLoggedInUser("");
-		showError(undefined);
+		clearAlerts();
 	};
 
-	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual", orgLogin?: string) => {
+	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual", orgLogin: string) => {
 		try {
 			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" }, { mode });
 			const connected: boolean | AxiosError = await AppManager.connectOrg(gitHubInstallationId);
 			if (connected instanceof AxiosError) {
-				const errorObj = modifyError(connected, { orgLogin }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
+				const errorObj = modifyError(connected, { orgLogin }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin, onPopupBlocked });
 				showError(errorObj);
 				analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail" }, { mode, errorCode: errorObj.errorCode });
 			} else {
@@ -262,19 +275,31 @@ const ConfigSteps = () => {
 			analyticsClient.sendUIEvent({ actionSubject: "installToNewOrganisation", action: "clicked"}, { mode });
 			await AppManager.installNewApp({
 				onFinish: async (gitHubInstallationId: number | undefined) => {
-					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: gitHubInstallationId ? "success" : "fail"}, { mode });
-					getOrganizations();
-					if(gitHubInstallationId) {
-						await doCreateConnection(gitHubInstallationId, "auto");
+					analyticsClient.sendTrackEvent(
+						{
+							actionSubject: "installNewOrgInGithubResponse",
+							action: gitHubInstallationId ? "success" : "fail",
+						},
+						{ mode }
+					);
+					const orgsResults = await getOrganizations();
+					let orgLogin;
+					if (orgsResults?.success) {
+						const newOrg = orgsResults?.orgs?.find((org) => org?.id === gitHubInstallationId);
+						orgLogin = newOrg?.account?.login;
+					}
+					if (gitHubInstallationId && orgLogin) {
+						await doCreateConnection(gitHubInstallationId, "auto", orgLogin);
 					}
 				},
 				onRequested: async (_setupAction: string) => {
 					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "requested"}, { mode });
 					navigate("/spa/installationRequested");
-				}
+				},
+				onPopupBlocked
 			});
 		} catch (e: unknown) {
-			const errorObj = modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
+			const errorObj = modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin, onPopupBlocked });
 			showError(errorObj);
 			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail"}, { mode, errorCode: errorObj.errorCode });
 			reportError(new Error("Fail installNewOrg", { cause: e }), {
@@ -290,9 +315,10 @@ const ConfigSteps = () => {
 			if (event.origin !== originalUrl) return;
 			if (event.data?.type === "oauth-callback" && event.data?.code) {
 				const response: boolean | AxiosError = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
+				clearAlerts();
 				setLoaderForLogin(false);
 				if (response instanceof AxiosError) {
-					showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
+					showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin, onPopupBlocked }));
 					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail" });
 					return;
 				} else {
@@ -312,7 +338,7 @@ const ConfigSteps = () => {
 		const recheckValidity = async () => {
 			const status: boolean | AxiosError = await OAuthManager.checkValidity();
 			if (status instanceof AxiosError) {
-				showError(modifyError(status, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
+				showError(modifyError(status, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin, onPopupBlocked }));
 				return;
 			}
 			setLoggedInUser(OAuthManager.getUserDetails().username);
@@ -331,6 +357,7 @@ const ConfigSteps = () => {
 		isLoggedIn && recheckValidity();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ isLoggedIn ]);
+
 	return (
 		<Wrapper>
 			<SyncHeader />
@@ -340,7 +367,7 @@ const ConfigSteps = () => {
 			{isPopupBlocked && (
 				<ErrorUI
 					type={"error"}
-					message={<ErrorForPopupBlocked/>}
+					message={<ErrorForPopupBlocked onDismiss={() => setPopupBlocked(false)}/>}
 				/>
 			)}
 
@@ -360,6 +387,7 @@ const ConfigSteps = () => {
 														loaderForOrgClicked={loaderForOrgClicked}
 														setLoaderForOrgClicked={setLoaderForOrgClicked}
 														resetCallback={setIsLoggedIn}
+														onPopupBlocked={onPopupBlocked}
 														connectingOrg={(org) => doCreateConnection(org.id, "manual", org.account?.login)} />
 													<div css={addOrganizationContainerStyle}>
 														<Button
@@ -377,6 +405,7 @@ const ConfigSteps = () => {
 									<LoggedinInfo
 										username={loggedInUser || ""}
 										logout={clearLogin}
+										onPopupBlocked={onPopupBlocked}
 									/>
 								</>
 						}

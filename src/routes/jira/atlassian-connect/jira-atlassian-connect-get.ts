@@ -215,7 +215,7 @@ const	modules = {
 			name: {
 				value: "GitHub for Jira SPA Index Page"
 			},
-			url: "/spa",
+			url: "/spa?from={ac.from}",
 			location: "none",
 			conditions: adminCondition
 		}, {

@@ -99,7 +99,7 @@ describe("error-handlers", () => {
 			expect(result.isFailure).toBe(true);
 		});
 
-		it("Retryable with proper delay on Rate Limiting", async () => {
+		it("Retryable with proper delay on Rate Limiting - receiveCount 1", async () => {
 			const headers: AxiosResponseHeaders = { "x-ratelimit-reset": `${Math.floor(new Date("2020-01-01").getTime() / 1000) + 100}` };
 			const mockedResponse = { status: 403, headers: headers } as AxiosResponse;
 
@@ -112,8 +112,43 @@ describe("error-handlers", () => {
 			);
 
 			expect(result.retryable).toBe(true);
-			//Make sure delay is equal to recommended delay + 10 seconds
-			expect(result.retryDelaySec).toBe(110);
+			//Make sure delay is equal to recommended delay + 50 seconds
+			expect(result.retryDelaySec).toBe(150);
+			expect(result.isFailure).toBe(true);
+		});
+
+		it("Retryable with proper delay on Rate Limiting - receiveCount 3", async () => {
+			const headers: AxiosResponseHeaders = { "x-ratelimit-reset": `${Math.floor(new Date("2020-01-01").getTime() / 1000) + 100}` };
+			const mockedResponse = { status: 403, headers: headers } as AxiosResponse;
+
+			const result = await jiraAndGitHubErrorsHandler(
+				new GithubClientRateLimitingError({
+					response: mockedResponse
+				} as AxiosError),
+
+				createContext(3, false)
+			);
+
+			expect(result.retryable).toBe(true);
+			//Make sure delay is equal to recommended delay + 50 seconds
+			expect(result.retryDelaySec).toBe(7330);
+			expect(result.isFailure).toBe(true);
+		});
+
+		it("Retryable with proper delay on Rate Limiting - receiveCount 5", async () => {
+			const headers: AxiosResponseHeaders = { "x-ratelimit-reset": `${Math.floor(new Date("2020-01-01").getTime() / 1000) + 100}` };
+			const mockedResponse = { status: 403, headers: headers } as AxiosResponse;
+
+			const result = await jiraAndGitHubErrorsHandler(
+				new GithubClientRateLimitingError({
+					response: mockedResponse
+				} as AxiosError),
+
+				createContext(5, false)
+			);
+
+			expect(result.retryable).toBe(true);
+			expect(result.retryDelaySec).toBe(14510);
 			expect(result.isFailure).toBe(true);
 		});
 

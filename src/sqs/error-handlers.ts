@@ -13,9 +13,11 @@ import { GithubClientRateLimitingError } from "../github/client/github-client-er
  */
 const UNRETRYABLE_STATUS_CODES = [401, 404, 403];
 
-const RATE_LIMITING_DELAY_BUFFER_SEC = 10;
+const BASE_RATE_LIMITING_DELAY_BUFFER_SEC = 60;
+const RATE_LIMITING_BUFFER_STEP = 10;
 const EXPONENTIAL_BACKOFF_BASE_SEC = 60;
 const EXPONENTIAL_BACKOFF_MULTIPLIER = 3;
+const ONE_HOUR_IN_SECONDS = 3600;
 
 export const handleUnknownError: ErrorHandler<BaseMessagePayload> = <MessagePayload extends BaseMessagePayload>(
 	err: Error,
@@ -86,9 +88,17 @@ const maybeHandleNonRetryableResponseCode = <MessagePayload extends BaseMessageP
 const maybeHandleRateLimitingError = <MessagePayload extends BaseMessagePayload>(error: Error, context: SQSMessageContext<MessagePayload>): ErrorHandlingResult | undefined => {
 	if (error instanceof GithubClientRateLimitingError) {
 		context.log.warn({ error }, `Rate limiting error, retrying`);
-		const delaySec = error.rateLimitReset + RATE_LIMITING_DELAY_BUFFER_SEC - (Date.now() / 1000);
-		return { retryable: true, retryDelaySec: delaySec, isFailure: true };
+		// A stepped buffer to prioritize messages with a higher received count to get replayed slightly sooner than newer messages
+		// e.g. a receiveCount 5 message will be visible 50 seconds sooner than a receiveCount 1 message
+		const buffer = Math.max(RATE_LIMITING_BUFFER_STEP, BASE_RATE_LIMITING_DELAY_BUFFER_SEC - context.receiveCount * RATE_LIMITING_BUFFER_STEP);
+		// Takes the reset datetime of the ratelimit from GitHub and returns how many seconds away + buffer
+		const rateLimitReset = error.rateLimitReset + buffer - Date.now() / 1000;
+		// GitHub Rate limit resets hourly, in the scenario of burst traffic it continues to overwhelm the rate limit
+		// this attempts to ease the load across multiple refreshes
+		const retryDelaySec = rateLimitReset + ONE_HOUR_IN_SECONDS * (context.receiveCount - 1);
+		return { retryable: true, retryDelaySec, isFailure: true };
 	}
 
 	return undefined;
 };
+

@@ -106,6 +106,14 @@ export class GitHubInstallationClient extends GitHubClient {
 		});
 	}
 
+	public async getCodeScanningAlert(owner: string, repo: string, alertNumber: number): Promise<AxiosResponse<CodeScanningAlertResponseItem>> {
+		return await this.get<CodeScanningAlertResponseItem>(`/repos/{owner}/{repo}/code-scanning/alerts/{alertNumber}`, {}, {
+			owner,
+			repo,
+			alertNumber
+		});
+	}
+
 	/**
 	 * Lists pull requests for the given repository.
 	 */
@@ -398,6 +406,14 @@ export class GitHubInstallationClient extends GitHubClient {
 		return await this.get<DependabotAlertResponseItem[]>(`/repos/{owner}/{repo}/dependabot/alerts`, dependabotAlertRequestParams, {
 			owner,
 			repo
+		});
+	}
+
+	public async getDependabotAlert(owner: string, repo: string, alertNumber: number): Promise<AxiosResponse<DependabotAlertResponseItem>> {
+		return await this.get<DependabotAlertResponseItem>(`/repos/{owner}/{repo}/dependabot/alerts/{alertNumber}`, {}, {
+			owner,
+			repo,
+			alertNumber
 		});
 	}
 

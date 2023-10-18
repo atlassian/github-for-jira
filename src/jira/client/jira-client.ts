@@ -256,7 +256,25 @@ export const getJiraClient = async (
 									installationId: gitHubInstallationId
 								}
 							}
-						),
+						).then(response => {
+							log.info({
+								debugging: {
+									gitHubInstallationId,
+									status: response.status,
+									statusText: response.statusText,
+									headers: response.headers
+								}
+							},
+							"Debugging pollinator: Delete succeeded"
+							);
+							return Promise.resolve(response);
+						}).catch(err => {
+							log.info({
+								gitHubInstallationId,
+								err
+							}, "Debugging pollinator: Delete failed");
+							return Promise.reject(err);
+						}),
 
 						// We are sending build events with the property "gitHubInstallationId", so we delete by this property.
 						instance.delete(

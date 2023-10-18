@@ -50,12 +50,12 @@
               {{/if}}
             {{/if}}
 
-            {{#if connection.totalNumberOfRepos}}
+            {{#if (checkRepoCount connection.totalNumberOfRepos)}}
               <span class="jiraConfiguration__table__syncCount">
-                {{ifAllReposSynced
-                    connection.numberOfSyncedRepos
-                    connection.totalNumberOfRepos
-                }}
+                  {{ifAllReposSynced
+                      connection.numberOfSyncedRepos
+                      connection.totalNumberOfRepos
+                  }}
               </span>
             {{/if}}
             <a
@@ -183,7 +183,7 @@
           host=host
           html_url=html_url
           syncErrors=connection.failedSyncErrors
-          csrfToken=csrfToken
+          csrfToken=../csrfToken
         }}
 
       {{/each}}

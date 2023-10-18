@@ -23,8 +23,8 @@ const titleStyle = css`
 `;
 const paragraphStyle = css`
 	color: ${token("color.text.subtle")};
-	margin: ${token("space.300")} ${token("space.0")};
-	padding: 0px ${token("space.800")};
+	margin: ${token("space.100")} ${token("space.0")} ${token("space.300")} ${token("space.0")};
+	padding: 0px ${token("space.600")};
 `;
 const flexWrapperStyle = css`
 	padding: ${token("space.400")} ${token("space.0")};
@@ -43,6 +43,7 @@ const sectionStyle = css`
 `;
 const sectionImgStyle = css`
 	height: 100px;
+	margin-bottom: ${token("space.300")};
 `;
 
 const buttonStyle = css`
@@ -60,12 +61,15 @@ const Connected = () => {
 	const { colorMode } = useThemeObserver();
 
 	const navigateToBackfillPage = () => {
-		analyticsClient.sendUIEvent({ actionSubject: "checkBackfillStatus", action: "clicked" });
+		analyticsClient.sendUIEvent({
+			actionSubject: "checkBackfillStatus",
+			action: "clicked",
+		});
 
 		if (enableBackfillStatusPage) {
 			navigate("/spa/connections");
 		} else {
-			AP.navigator.go( "addonmodule", { moduleKey: "gh-addon-admin" });
+			AP.navigator.go("addonmodule", { moduleKey: "gh-addon-admin" });
 		}
 	};
 
@@ -101,11 +105,12 @@ const Connected = () => {
 							alt=""
 						/>
 						<Heading level="h400">
-							Tell your teammates to add issue keys in GitHub
+							Your team needs to add issue keys in GitHub
 						</Heading>
 						<div css={paragraphStyle}>
-							To bring development work into issues and the code feature, add
-							issue keys in branches, pull request titles, and commit messages.
+							To import development work into Jira and track it in your issues,
+							add issue keys to branches, pull request titles, and commit
+							messages.
 						</div>
 						<Button
 							css={[buttonStyle, subtleBtnStyle]}
@@ -128,7 +133,7 @@ const Connected = () => {
 					appearance="subtle"
 					onClick={navigateToBackfillPage}
 				>
-					Exit setup
+					Exit set up
 				</Button>
 			</div>
 		</Wrapper>
