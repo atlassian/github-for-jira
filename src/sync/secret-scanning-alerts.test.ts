@@ -79,6 +79,44 @@ describe("sync/secret-scanning-alerts", () => {
 			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			await verifyMessageSent(data);
 		});
+
+		it("should handle secret scanning disabled error", async () => {
+			when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
+			githubNock
+				.get("/repos/integrations/test-repo-name/secret-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
+				.reply(404, { message: "Secret scanning is disabled on this repository" });
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			// No Jira Nock
+
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
+			await verifyMessageSent(data);
+		});
+
+		it("should handle 404 error", async () => {
+			when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
+			githubNock
+				.get("/repos/integrations/test-repo-name/secret-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
+				.reply(404);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			// No Jira Nock
+
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
+			await verifyMessageSent(data);
+		});
+		it("should handle 451 error", async () => {
+			when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
+			githubNock
+				.get("/repos/integrations/test-repo-name/secret-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
+				.reply(451, { message: "Not Found" });
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			// No Jira Nock
+
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
+			await verifyMessageSent(data);
+		});
 	});
 
 	describe("server", () => {
