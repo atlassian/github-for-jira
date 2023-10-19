@@ -68,7 +68,7 @@ describe("JiraClient", () => {
 				.get("/_edge/tenant_info")
 				.reply(200, { data: "cat" });
 
-			const data = await jiraClient?.getCloudId();
+			const data = await jiraClient?.getCloudId().data;
 			expect(data).toEqual("cat");
 		});
 	});
