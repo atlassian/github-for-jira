@@ -31,6 +31,8 @@ subRouter.get("/github-callback", OAuthCallbackHandler);
 subRouter.get("/github-installed", OrgsInstalledHandler);
 subRouter.get("/github-requested", OrgsInstallRequestedHandler);
 
+subRouter.use("/oauth", OAuthRouter);
+
 subRouter.use("/deferred", DeferredRouter);
 
 // TODO: what about Jira admin validation (a.k.a. authorization, we
@@ -39,8 +41,6 @@ subRouter.use(JwtHandler);
 subRouter.use(JiraAdminEnforceMiddleware);
 
 subRouter.post("/analytics-proxy", AnalyticsProxyHandler);
-
-subRouter.use("/oauth", OAuthRouter);
 
 subRouter.use("/installation", GitHubAppsRoute);
 
