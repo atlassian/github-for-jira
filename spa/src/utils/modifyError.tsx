@@ -1,5 +1,5 @@
 import { AxiosError } from "axios";
-import { ErrorType, ApiError, ErrorCode } from "rest-interfaces";
+import { ErrorType, ApiError, ErrorCode, DeferredInstallationUrlParams } from "rest-interfaces";
 import React, { MouseEvent } from "react";
 import { ErrorForIPBlocked, ErrorForNonAdmins, ErrorForSSO } from "../components/Error/KnownErrors";
 
@@ -8,6 +8,10 @@ export type ErrorObjType = {
 	message: string | React.JSX.Element;
 	errorCode: ErrorCode
 }
+
+export type HostUrlType = {
+	jiraHost: string;
+};
 
 type SimpleError = {
 	message: string;
@@ -26,7 +30,7 @@ export const GENERIC_MESSAGE_WITH_LINK = <>
 
 export const modifyError = (
   error: AxiosError<ApiError> | SimpleError | ErrorWithErrorCode,
-  context: { orgLogin?: string; },
+  context: { orgLogin?: string; gitHubInstallationId?: number; },
 	callbacks: {
 		onClearGitHubToken: (e: MouseEvent<HTMLAnchorElement>) => void;
 		onRelogin: () => void;
@@ -65,11 +69,19 @@ export const modifyError = (
 	} else if (errorCode === "INSUFFICIENT_PERMISSION") {
 		// TODO: Update this to support GHE
 		const adminOrgsUrl = `https://github.com/orgs/${context.orgLogin}/people?query=role%3Aowner`;
-
+		const deferredInstallationOrgDetails: DeferredInstallationUrlParams = {
+			gitHubInstallationId: context.gitHubInstallationId || 0,
+			gitHubOrgName: context.orgLogin || ""
+		};
 		return {
 			...warningObj,
 			errorCode,
-			message: <ErrorForNonAdmins orgName={context.orgLogin} adminOrgsUrl={adminOrgsUrl} />
+			message: <ErrorForNonAdmins
+				onPopupBlocked={callbacks.onPopupBlocked}
+				deferredInstallationOrgDetails={deferredInstallationOrgDetails}
+				orgName={context.orgLogin}
+				adminOrgsUrl={adminOrgsUrl}
+			/>
 		};
 	} else if (errorCode === "TIMEOUT") {
 		return { ...errorObj, errorCode, message: "Request timeout. Please try again later." };

@@ -14,6 +14,11 @@ export type UsersGetAuthenticatedResponse = {
 	login: string;
 };
 
+export type DeferredInstallationUrlParams = {
+	gitHubInstallationId: number;
+	gitHubOrgName: string;
+};
+
 export type GetDeferredInstallationUrl = {
 	deferredInstallUrl: string;
 };

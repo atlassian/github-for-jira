@@ -216,7 +216,7 @@ test("Connect GitHub Screen - Checking the GitHub Cloud flow when authenticated 
 	expect(await screen.findAllByRole("button", { name: "Connect" })).toHaveLength(1);
 
 	const errorForNonAdmins = container.querySelectorAll("[class$='-ErrorForNonAdmins']");
-	expect(errorForNonAdmins[0].textContent).toBe("Can't connect, you're not the organization owner.Ask an organization owner to complete this step.");
+	expect(errorForNonAdmins[0].textContent).toBe("You’re not an owner for this organization. To connect:Find an organization owner.Send them a link and ask them to connect.");
 
 	const errorForSSO = container.querySelectorAll("[class$='-ErrorForSSO']");
 	expect(errorForSSO[0].textContent).toBe("Can't connect, single sign-on(SSO) required.");

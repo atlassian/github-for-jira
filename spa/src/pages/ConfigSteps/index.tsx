@@ -16,7 +16,7 @@ import AppManager from "../../services/app-manager";
 import OAuthManager from "../../services/oauth-manager";
 import analyticsClient from "../../analytics";
 import { AxiosError } from "axios";
-import { ErrorObjType, GENERIC_MESSAGE_WITH_LINK, modifyError } from "../../utils/modifyError";
+import { ErrorObjType, GENERIC_MESSAGE_WITH_LINK, HostUrlType, modifyError } from "../../utils/modifyError";
 import { reportError } from "../../utils";
 import { GitHubInstallationType } from "../../../../src/rest-interfaces";
 import OrganizationsList from "../ConfigSteps/OrgsContainer";
@@ -24,9 +24,6 @@ import SkeletonForLoading from "../ConfigSteps/SkeletonForLoading";
 import OauthManager from "../../services/oauth-manager";
 import { ErrorForPopupBlocked } from "../../components/Error/KnownErrors";
 
-type HostUrlType = {
-	jiraHost: string;
-};
 type ErrorMessageCounterType = {
 	message: string | React.JSX.Element;
 	count: number;
@@ -253,7 +250,7 @@ const ConfigSteps = () => {
 			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" }, { mode });
 			const connected: boolean | AxiosError = await AppManager.connectOrg(gitHubInstallationId);
 			if (connected instanceof AxiosError) {
-				const errorObj = modifyError(connected, { orgLogin }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin, onPopupBlocked });
+				const errorObj = modifyError(connected, { orgLogin, gitHubInstallationId }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin, onPopupBlocked });
 				showError(errorObj);
 				analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail" }, { mode, errorCode: errorObj.errorCode });
 			} else {
@@ -387,6 +384,7 @@ const ConfigSteps = () => {
 														loaderForOrgClicked={loaderForOrgClicked}
 														setLoaderForOrgClicked={setLoaderForOrgClicked}
 														resetCallback={setIsLoggedIn}
+														hostUrl={hostUrl}
 														onPopupBlocked={onPopupBlocked}
 														connectingOrg={(org) => doCreateConnection(org.id, "manual", org.account?.login)} />
 													<div css={addOrganizationContainerStyle}>
