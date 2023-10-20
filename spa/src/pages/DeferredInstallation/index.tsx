@@ -91,7 +91,6 @@ const DeferredInstallation = () => {
 				const response: boolean | AxiosError = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
 				setIsLoading(false);
 				if (response instanceof AxiosError) {
-					console.log("Error", response);
 					return;
 				}
 				setIsLoggedIn(true);
@@ -105,20 +104,25 @@ const DeferredInstallation = () => {
 
 	// Set the token/username after authentication
 	useEffect(() => {
-		// Check token validity
-		const recheckValidityAndConnect = async () => {
-			setIsLoading(true);
-			const status: boolean | AxiosError = await OAuthManager.checkValidity();
-			if (status instanceof AxiosError) {
-				console.log("Error", status);
-				return;
+		const checkAndConnectOrg = async () => {
+			if (requestId) {
+				setIsLoading(true);
+				const status: boolean | AxiosError = await DeferralManager.connectOrgByDeferral(requestId);
+				if (status instanceof AxiosError) {
+					setForbidden(true);
+				}
+				else if (status) {
+					console.log("Successfully connected now navigate");
+					setForbidden(false);
+					navigate("/spa/connected",{ state: { orgLogin: orgName, connectedByDeferral: true } });
+				} else {
+					setForbidden(true);
+				}
+				setIsLoading(false);
 			}
-
-			// Continue the connection after successfully validated
-			checkAndConnect();
 		};
 
-		isLoggedIn && recheckValidityAndConnect();
+		isLoggedIn && checkAndConnectOrg();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ isLoggedIn ]);
 
@@ -137,22 +141,6 @@ const DeferredInstallation = () => {
 			console.log("check error", e);
 		} finally {
 			setIsLoading(false);
-		}
-	};
-
-	const checkAndConnect = async () => {
-		if (requestId) {
-			const status: boolean | AxiosError = await DeferralManager.connectOrgByDeferral(requestId);
-			if (status instanceof AxiosError) {
-				setForbidden(true);
-			}
-			else if (status) {
-				console.log("Successfully connected now navigate");
-				setForbidden(false);
-				navigate("/spa/connected",{ state: { orgLogin: orgName, connectedByDeferral: true } });
-			} else {
-				setForbidden(true);
-			}
 		}
 	};
 
