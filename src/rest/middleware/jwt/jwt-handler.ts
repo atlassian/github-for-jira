@@ -7,6 +7,7 @@ import { InvalidTokenError } from "config/errors";
 import { BaseLocals } from "../../routes";
 
 const INVALID_SECRET = "some-invalid-secret";
+const SKIP_PATHS = ["/spa/deferred"];
 
 export const JwtHandler = errorWrapper("JwtHandler", async (req: Request, res: Response<any, BaseLocals>, next: NextFunction) => {
 
@@ -32,6 +33,12 @@ export const JwtHandler = errorWrapper("JwtHandler", async (req: Request, res: R
 
 export const JwtHandlerWithoutQsh = errorWrapper("JwtHandlerWithoutQsh", async (req: Request, res: Response, next: NextFunction) => {
 	const token = req.query.jwt?.toString();
+	const path = req.url.split("?")[0];
+
+	if (SKIP_PATHS.includes(path)) {
+		return next();
+	}
+
 	if (!token) {
 		throw new InvalidTokenError("Unauthorised");
 	}
