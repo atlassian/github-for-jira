@@ -14,6 +14,14 @@ export type UsersGetAuthenticatedResponse = {
 	login: string;
 };
 
+export type GetDeferredInstallationUrl = {
+	deferredInstallUrl: string;
+};
+
+export type OrgOwnershipResponse = {
+	orgName: string;
+}
+
 export type GetGitHubAppsUrlResponse = {
 	appInstallationUrl: string;
 }

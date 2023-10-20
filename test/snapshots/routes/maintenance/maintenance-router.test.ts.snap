@@ -157,6 +157,19 @@ Object {
             "condition": "user_is_admin",
           },
         ],
+        "key": "spa-deferred-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub for Jira SPA Deferred Installation Page",
+        },
+        "url": "/spa/deferred?requestId={ac.requestId}",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
         "key": "gh-addon-subscription-repos",
         "location": "none",
         "name": Object {
