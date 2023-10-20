@@ -33,7 +33,7 @@ export const JwtHandler = errorWrapper("JwtHandler", async (req: Request, res: R
 
 export const JwtHandlerWithoutQsh = errorWrapper("JwtHandlerWithoutQsh", async (req: Request, res: Response, next: NextFunction) => {
 	const token = req.query.jwt?.toString();
-	const path = req.url.split("?")[0];
+	const path = req.originalUrl.split("?")[0];
 
 	if (SKIP_PATHS.includes(path)) {
 		return next();
