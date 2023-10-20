@@ -82,7 +82,7 @@ export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl, onPopupBlocked, defer
 			try {
 				setIsOpen(true);
 				setIsLoading(true);
-				const response = await Api.app.getDeferredInstallationUrl({
+				const response = await Api.deferral.getDeferredInstallationUrl({
 					gitHubInstallationId: deferredInstallationOrgDetails?.gitHubInstallationId ,
 					gitHubOrgName: deferredInstallationOrgDetails?.gitHubOrgName
 				});

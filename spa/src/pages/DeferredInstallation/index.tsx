@@ -1,12 +1,10 @@
 /** @jsxImportSource @emotion/react */
 import { useSearchParams, useNavigate } from "react-router-dom";
 import InfoIcon from "@atlaskit/icon/glyph/info";
-import LoggedinInfo from "../../common/LoggedinInfo";
 import { Wrapper } from "../../common/Wrapper";
 import Step from "../../components/Step";
 import SyncHeader from "../../components/SyncHeader";
 import OAuthManager from "../../services/oauth-manager";
-import AppManager from "../../services/app-manager";
 import { css } from "@emotion/react";
 import { Box, xcss } from "@atlaskit/primitives";
 import SkeletonForLoading from "../ConfigSteps/SkeletonForLoading";
@@ -18,6 +16,8 @@ import { ErrorObjType, modifyError } from "../../utils/modifyError";
 import ErrorUI from "../../components/Error";
 import analyticsClient from "../../analytics";
 import { popup } from "../../utils";
+import { ErrorForPopupBlocked } from "../../components/Error/KnownErrors";
+import DeferralManager from "../../services/deferral-manager";
 
 const boxStyles = xcss({
 	borderBlockWidth: token("space.500"),
@@ -46,49 +46,46 @@ const linkStyle = css`
 	padding-right: 0;
 `;
 
-type UserRole = "admin" | "nonAdmin" | "notSet";
 
 const DeferredInstallation = () => {
 	const [searchParams] = useSearchParams();
-	const githubInstallationId = searchParams.get("gitHubInstallationId");
-	const gitHubOrgName = searchParams.get("gitHubOrgName");
+	const requestId = searchParams.get("requestId") || "";
 	const navigate = useNavigate();
 	const username = OAuthManager.getUserDetails().username || "";
 
-	const [hostUrl, setHostUrl] = useState("");
-	const [loggedInUser, setLoggedInUser] = useState<string | undefined>(username);
+	const [isPopupBlocked, setPopupBlocked] = useState<boolean>(false);
+	const onPopupBlocked = () => setPopupBlocked(true);
+
 	const [isLoading, setIsLoading] = useState(false);
 	const [isLoggedIn, setIsLoggedIn] = useState(false);
-	const [userRole, setUserRole] = useState<UserRole>("notSet");
-	const [orgName, setOrgName] = useState(gitHubOrgName);
 	const [error, setError] = useState<ErrorObjType | undefined>(undefined);
 
-	const setJiraHostUrls = () => {
-		AP.getLocation((location: string) => {
-			const locationUrl = new URL(location);
-			setHostUrl( locationUrl.origin);
-		});
-	};
+	const [jiraHost, setJiraHost] = useState("");
+	const [orgName, setOrgName] = useState("");
 
-	// Authenticate if no token/username is set
-	const authenticate = async () => {
-		setIsLoading(true);
-		try {
-			await OAuthManager.authenticateInGitHub(() => {
-				setIsLoading(false);
-				console.log("Successfully authenticated", username);
-			});
-		} catch (e) {
-			// TODO: print alert error
-			console.log("check error", e);
-		} finally {
-			setIsLoading(false);
-		}
-	};
+	const [forbidden, setForbidden] = useState(false);
+
+	// Extract the info from the requestId
+	useEffect(() => {
+		const extractFromRequestId = async () => {
+			const extractedPayload = await DeferralManager.extractFromRequestId(requestId);
+			if (extractedPayload instanceof AxiosError) {
+				setError(modifyError(
+					{ errorCode: "INVALID_DEFERRAL_REQUEST_ID"},
+					{},
+					{ onClearGitHubToken: () => {}, onRelogin: () => {}, onPopupBlocked }
+				));
+				setIsLoading(true);
+			} else {
+				setJiraHost(extractedPayload.jiraHost as string);
+				setOrgName(extractedPayload.orgName);
+			}
+		};
+		extractFromRequestId();
+	}, [ requestId ]);
 
 	// Finish the OAuth dance if authenticated
 	useEffect(() => {
-		setJiraHostUrls();
 		const handler = async (event: MessageEvent) => {
 			if (event.data?.type === "oauth-callback" && event.data?.code) {
 				const response: boolean | AxiosError = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
@@ -109,32 +106,55 @@ const DeferredInstallation = () => {
 	// Set the token/username after authentication
 	useEffect(() => {
 		// Check token validity
-		const recheckValidity = async () => {
+		const recheckValidityAndConnect = async () => {
 			setIsLoading(true);
 			const status: boolean | AxiosError = await OAuthManager.checkValidity();
 			if (status instanceof AxiosError) {
 				console.log("Error", status);
 				return;
 			}
-			setLoggedInUser(OAuthManager.getUserDetails().username);
-			// TODO: Connect
+
+			// Continue the connection after successfully validated
+			checkAndConnect();
 		};
 
-		isLoggedIn && recheckValidity();
+		isLoggedIn && recheckValidityAndConnect();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ isLoggedIn ]);
 
-	const connectOrg = async (orgName: string) => {
-		if (githubInstallationId) {
-			const connected: boolean | AxiosError = await AppManager.connectOrg(parseInt(githubInstallationId));
-			if (connected instanceof AxiosError) {
-				setError(modifyError(connected, {}, { onClearGitHubToken: () => {}, onRelogin: () => {} }));
+	// Authenticate if no token/username is set
+	const authenticate = async () => {
+		setIsLoading(true);
+		try {
+			await OAuthManager.authenticateInGitHub({
+				onWinClosed: () => {
+					setIsLoading(false);
+					console.log("Successfully authenticated", username);
+				}, onPopupBlocked
+			});
+		} catch (e) {
+			// TODO: print alert error
+			console.log("check error", e);
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	const checkAndConnect = async () => {
+		if (requestId) {
+			const status: boolean | AxiosError = await DeferralManager.connectOrgByDeferral(requestId);
+			if (status instanceof AxiosError) {
+				setForbidden(true);
+			}
+			else if (status) {
+				console.log("Successfully connected now navigate");
+				setForbidden(false);
+				navigate("/spa/connected",{ state: { orgLogin: orgName, connectedByDeferral: true } });
 			} else {
-				navigate("/spa/connected",{ state: { orgLogin: orgName, isAddMoreOrgAvailable: false } });
+				setForbidden(true);
 			}
 		}
 	};
-	const navigateBackToSteps = () => navigate("/spa/steps");
 
 	const getOrgOwnerUrl = async () => {
 		// TODO: Need to get this URL for Enterprise users too, this is only for Cloud users
@@ -143,36 +163,21 @@ const DeferredInstallation = () => {
 	};
 	// TODO: orgname is not appearing for all the cases, need to check
 	return (
-		<Wrapper>
+		<Wrapper insideIframe={false}>
 			<SyncHeader />
+			{isPopupBlocked && (
+				<ErrorUI
+					type={"error"}
+					message={<ErrorForPopupBlocked onDismiss={() => setPopupBlocked(false)}/>}
+				/>
+			)}
 			{error && <ErrorUI type={error.type} message={error.message} />}
-			{isLoading ? (
-				<SkeletonForLoading />
-			) : (
-				<>
-					{userRole === "notSet" && (
-						<Step
-							title={`Connect GitHub organization ${orgName} to Jira Software`}
-						>
-							<>
-								<p css={paragraphStyle}>
-									A Jira administrator has asked for approval to connect the
-									GitHub organization {orgName} to the Jira site {hostUrl}.
-								</p>
-								<Box padding="space.200" xcss={boxStyles}>
-									<InfoIcon label="differed-installation-info" size="small"/>
-									<p css={[paragraphStyle,infoParaStyle]}>
-										This will make all repositories in {orgName} available to all projects in {hostUrl}. Import work from those GitHub repositories into Jira.
-									</p>
-								</Box>
-								<Button appearance="primary" onClick={authenticate}>
-									sign in & connect
-								</Button>
-							</>
-						</Step>
-					)}
-					{userRole === "nonAdmin" && (
-						<Step title="Can’t connect this organization because you don’t have owner permissions">
+
+			{
+				isLoading ? <SkeletonForLoading /> : <>
+					{
+						forbidden ? (
+							<Step title="Can’t connect this organization because you don’t have owner permissions">
 							<div css={noAdminDivStyle}>
 								<p css={paragraphStyle}>
 									The GitHub account you’ve used doesn’t have owner permissions
@@ -187,15 +192,30 @@ const DeferredInstallation = () => {
 								</p>
 							</div>
 						</Step>
-					)}
-					{loggedInUser && (
-						<LoggedinInfo
-							username={loggedInUser}
-							logout={navigateBackToSteps}
-						/>
-					)}
+						) : (
+							<Step
+								title={`Connect GitHub organization ${orgName} to Jira Software`}
+							>
+								<>
+									<p css={paragraphStyle}>
+										A Jira administrator has asked for approval to connect the
+										GitHub organization {orgName} to the Jira site {jiraHost}.
+									</p>
+									<Box padding="space.200" xcss={boxStyles}>
+										<InfoIcon label="differed-installation-info" size="small"/>
+										<p css={[paragraphStyle,infoParaStyle]}>
+											This will make all repositories in {orgName} available to all projects in {jiraHost}. Import work from those GitHub repositories into Jira.
+										</p>
+									</Box>
+									<Button appearance="primary" onClick={authenticate}>
+										Sign in & connect
+									</Button>
+								</>
+							</Step>
+						)
+					}
 				</>
-			)}
+			}
 		</Wrapper>
 	);
 };

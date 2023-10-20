@@ -95,6 +95,12 @@ export const modifyError = (
 				<span>GitHub token seems invalid, please <a href="" onClick={callbacks.onClearGitHubToken}>login again</a>.</span>
 			</>
 		};
+	} else if (errorCode === "INVALID_DEFERRAL_REQUEST_ID") {
+		return {
+			...errorObj,
+			errorCode,
+			message: "Unable to parse, this link is either expired or invalid."
+		};
 	} else {
 		return { ...errorObj, errorCode, message: GENERIC_MESSAGE };
 	}

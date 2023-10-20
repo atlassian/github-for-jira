@@ -4,6 +4,14 @@ export type GetRedirectUrlResponse = {
 	state: string;
 };
 
+export type DeferralRequestPayload = {
+	installationIdPk: number;
+	gitHubServerAppIdPk?: number;
+	gitHubInstallationId: number;
+	jiraHost?: string;
+	orgName: string;
+};
+
 export type ExchangeTokenResponse = {
 	accessToken: string;
 	refreshToken?: string;
@@ -75,6 +83,7 @@ export type ErrorCode =
 	| "IP_BLOCKED"
 	| "SSO_LOGIN"
 	| "RESOURCE_NOT_FOUND"
+	| "INVALID_DEFERRAL_REQUEST_ID"
 	| "UNKNOWN";
 
 export type Account = {
