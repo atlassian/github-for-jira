@@ -60,7 +60,7 @@ describe("Jira Admin Check", () => {
 
 		const res = await sendRequestWithToken();
 
-		expect(res.status).toEqual(401);
+		expect(res.status).toEqual(403);
 		expect(JSON.parse(res.text)).toEqual(expect.objectContaining({
 			errorCode: "INSUFFICIENT_PERMISSION",
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
