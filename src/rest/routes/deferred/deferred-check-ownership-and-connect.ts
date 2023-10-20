@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+import { Request, Response } from "express";
 import { errorWrapper } from "../../helper";
 import { extractSubscriptionDeferredInstallPayload } from "services/subscription-deferred-install-service";
 import { InsufficientPermissionError, InvalidArgumentError } from "config/errors";
@@ -6,9 +6,7 @@ import { OrgOwnershipResponse } from "rest-interfaces";
 import { verifyAdminPermsAndFinishInstallation } from "services/subscription-installation-service";
 import { Installation } from "models/installation";
 
-export const DeferredCheckOwnershipAndConnectRoute = Router({ mergeParams: true });
-
-DeferredCheckOwnershipAndConnectRoute.post("/", errorWrapper("CheckOwnershipAndConnectRoute", async function DeferredCheckOwnershipAndConnectRoute(req: Request, res: Response<OrgOwnershipResponse>) {
+export const DeferredCheckOwnershipAndConnectRoute = errorWrapper("CheckOwnershipAndConnectRoute", async function DeferredCheckOwnershipAndConnectRoute(req: Request, res: Response<OrgOwnershipResponse>) {
 	const { githubToken } = res.locals;
 	const requestId = req.params.requestId;
 
@@ -40,5 +38,5 @@ DeferredCheckOwnershipAndConnectRoute.post("/", errorWrapper("CheckOwnershipAndC
 	} else {
 		res.sendStatus(200);
 	}
-}));
+});
 

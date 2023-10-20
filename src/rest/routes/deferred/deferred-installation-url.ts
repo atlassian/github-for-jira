@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+import { Request, Response } from "express";
 import { errorWrapper } from "../../helper";
 import { GetDeferredInstallationUrl } from "rest-interfaces";
 import { BaseLocals } from "..";
@@ -9,9 +9,7 @@ import {
 import { envVars } from "config/env";
 import { InvalidArgumentError } from "config/errors";
 
-export const DeferredInstallationUrlRoute = Router({ mergeParams: true });
-
-DeferredInstallationUrlRoute.get("/", errorWrapper("GetDeferredInstallationUrl", async function DeferredInstallationUrlRoute(req: Request, res: Response<GetDeferredInstallationUrl, BaseLocals>) {
+export const DeferredInstallationUrlRoute = errorWrapper("GetDeferredInstallationUrl", async function DeferredInstallationUrlRoute(req: Request, res: Response<GetDeferredInstallationUrl, BaseLocals>) {
 	const { gitHubInstallationId, gitHubOrgName } = req.query;
 	const { installation } = res.locals;
 
@@ -39,4 +37,4 @@ DeferredInstallationUrlRoute.get("/", errorWrapper("GetDeferredInstallationUrl",
 	res.status(200).json({
 		deferredInstallUrl
 	});
-}));
+});

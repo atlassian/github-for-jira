@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+import { Request, Response } from "express";
 import { errorWrapper } from "../../helper";
 import {
 	extractSubscriptionDeferredInstallPayload,
@@ -6,9 +6,7 @@ import {
 } from "services/subscription-deferred-install-service";
 import { InvalidArgumentError } from "config/errors";
 
-export const DeferredRequestParseRoute = Router({ mergeParams: true });
-
-DeferredRequestParseRoute.get("/", errorWrapper("ParseRequestId", async function DeferredRequestParseRoute(req: Request, res: Response<SubscriptionDeferredInstallPayload>) {
+export const DeferredRequestParseRoute = errorWrapper("ParseRequestId", async function DeferredRequestParseRoute(req: Request, res: Response<SubscriptionDeferredInstallPayload>) {
 	const requestId = req.params.requestId;
 	if (!requestId) {
 		req.log.warn("Missing requestId in query");
@@ -18,4 +16,4 @@ DeferredRequestParseRoute.get("/", errorWrapper("ParseRequestId", async function
 	const deferredInstallPayload = await extractSubscriptionDeferredInstallPayload(requestId);
 
 	res.status(200).send(deferredInstallPayload);
-}));
+});
