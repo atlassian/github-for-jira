@@ -18,7 +18,7 @@ const wrapperCenterStyle = css`
 	justify-content: center;
 `;
 
-export const Wrapper = (attr: { insideIframe?: boolean, children?: ReactNode | undefined }) => {
+export const Wrapper = (attr: { hideClosedBtn?: boolean, children?: ReactNode | undefined }) => {
 	const navigateToHomePage = () => {
 		analyticsClient.sendUIEvent({ actionSubject: "dropExperienceViaBackButton", action: "clicked" });
 		AP.getLocation((location: string) => {
@@ -30,7 +30,7 @@ export const Wrapper = (attr: { insideIframe?: boolean, children?: ReactNode | u
 	return (
 		<div css={wrapperStyle}>
 			{
-				attr.insideIframe && <Button
+				!attr.hideClosedBtn && <Button
 					style={{ float: "right" }}
 					iconBefore={<CrossIcon label="Close" size="medium" />}
 					appearance="subtle"

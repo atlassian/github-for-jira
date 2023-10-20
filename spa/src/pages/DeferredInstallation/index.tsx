@@ -151,7 +151,7 @@ const DeferredInstallation = () => {
 	};
 	// TODO: orgname is not appearing for all the cases, need to check
 	return (
-		<Wrapper insideIframe={false}>
+		<Wrapper hideClosedBtn={true}>
 			<SyncHeader />
 			{isPopupBlocked && (
 				<ErrorUI

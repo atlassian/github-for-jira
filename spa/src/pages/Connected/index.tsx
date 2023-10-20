@@ -85,7 +85,7 @@ const Connected = () => {
 	};
 
 	return (
-		<Wrapper insideIframe={!connectedByDeferral}>
+		<Wrapper hideClosedBtn={true}>
 			<div css={connectedContainerStyle}>
 				<img
 					css={headerImgStyle}
