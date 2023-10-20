@@ -104,7 +104,7 @@ const DeferredInstallation = () => {
 
 	// Set the token/username after authentication
 	useEffect(() => {
-		const checkAndConnectOrg = async () => {
+		const connectDeferredOrgOrg = async () => {
 			if (requestId) {
 				setIsLoading(true);
 				const status: boolean | AxiosError = await DeferralManager.connectOrgByDeferral(requestId);
@@ -122,7 +122,7 @@ const DeferredInstallation = () => {
 			}
 		};
 
-		isLoggedIn && checkAndConnectOrg();
+		isLoggedIn && connectDeferredOrgOrg();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ isLoggedIn ]);
 

@@ -24,7 +24,7 @@ async function extractFromRequestId(requestId: string): Promise<DeferralRequestP
 
 async function connectOrgByDeferral(requestId: string): Promise<boolean | AxiosError> {
 	try {
-		const response = await Api.deferral.checkAndConnect(requestId);
+		const response = await Api.deferral.connectDeferredOrg(requestId);
 		const ret = response.status === 200;
 		if (!ret) {
 			reportError(
