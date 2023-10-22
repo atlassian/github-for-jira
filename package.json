@@ -28,7 +28,7 @@
 		"lint:ts": "eslint . --ext .ts,.tsx",
 		"lint:yaml": "yamllint github-for-jira.sd.yml",
 		"pretest": "NODE_ENV=test run-p clean setup db:test",
-		"test": "yarn spa:test && jest --forceExit --coverage --runInBand --logHeapUsage --workerIdleMemoryLimit='1024MB'",
+		"test": "yarn spa:test && jest --forceExit --coverage --runInBand --logHeapUsage --workerIdleMemoryLimit='2GB'",
 		"test:watch": "jest --runInBand --watchAll --coverage=false",
 		"db": "run-s db:create db:migrate",
 		"db:create": "run-p db:create:dev db:create:test",
