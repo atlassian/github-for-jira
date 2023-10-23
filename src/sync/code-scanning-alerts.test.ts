@@ -78,6 +78,72 @@ describe("sync/code-scanning-alerts", () => {
 			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			await verifyMessageSent(data);
 		});
+
+		it("should handle code scanning disabled error", async () => {
+			when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
+			githubNock
+				.get("/repos/integrations/test-repo-name/code-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
+				.reply(403, { message: "Code scanning is not enabled for this repository" });
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			// No Jira Nock
+
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
+			await verifyMessageSent(data);
+		});
+
+		it("should handle GH advanced security disabled error", async () => {
+			when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
+			githubNock
+				.get("/repos/integrations/test-repo-name/code-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
+				.reply(403, { message: "Advanced Security must be enabled for this repository to use code scanning" });
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			// No Jira Nock
+
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
+			await verifyMessageSent(data);
+		});
+
+		it("should handle no analysis error", async () => {
+			when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
+			githubNock
+				.get("/repos/integrations/test-repo-name/code-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
+				.reply(404, { message: "Ano analysis found" });
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			// No Jira Nock
+
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
+			await verifyMessageSent(data);
+		});
+
+		it("should handle 404 error", async () => {
+			when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
+			githubNock
+				.get("/repos/integrations/test-repo-name/code-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
+				.reply(404);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			// No Jira Nock
+
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
+			await verifyMessageSent(data);
+		});
+
+		it("should handle 451 error", async () => {
+			when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
+			githubNock
+				.get("/repos/integrations/test-repo-name/code-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
+				.reply(451);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			// No Jira Nock
+
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
+			await verifyMessageSent(data);
+		});
+
 	});
 
 	describe("server", () => {

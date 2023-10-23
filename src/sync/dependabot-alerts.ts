@@ -40,7 +40,7 @@ export const getDependabotAlertTask = async (
 		});
 		dependabotAlerts = response.data;
 	} catch (e: unknown) {
-		const err = e as { cause?: { response?: { status?: number, data?: { message?: string } } } };
+		const err = e as { cause?: { response?: { status?: number, statusText?: string, data?: { message?: string } } } };
 		if (err.cause?.response?.status == 403 && err.cause?.response?.data?.message?.includes("Dependabot alerts are disabled for this repository")) {
 			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Dependabot alerts disabled, so marking backfill task complete");
 			return {
@@ -48,7 +48,19 @@ export const getDependabotAlertTask = async (
 				jiraPayload: undefined
 			};
 		} else if (err.cause?.response?.status == 403 && err.cause?.response?.data?.message?.includes("Dependabot alerts are not available for archived repositories")) {
-			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Archived repository, backfill task complete");
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Archived repository, so marking backfill task complete");
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
+		} else if (err.cause?.response?.status == 404) {
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Repo not found, so marking backfill task complete");
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
+		} else if (err.cause?.response?.status == 451) {
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Repo not available due to legal reasons, so marking backfill task complete");
 			return {
 				edges: [],
 				jiraPayload: undefined
