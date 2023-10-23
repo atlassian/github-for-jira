@@ -74,6 +74,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 			useNewSPAExperience,
 			APP_URL: process.env.APP_URL,
 			enableRepoConnectedPage: await booleanFlag(BooleanFlags.ENABLE_CONNECTED_REPOS_VIEW, jiraHost),
+			enableBackfillingStatusPolling: await booleanFlag(BooleanFlags.ENABLE_BACKFILLING_STATUS_POLLING, jiraHost),
 			csrfToken: req.csrfToken(),
 			nonce
 		});

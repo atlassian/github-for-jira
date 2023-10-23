@@ -124,20 +124,7 @@ $(".jiraConfiguration__syncErrorSummaryModal__closeBtn").click(event => {
 	document.getElementById(`error-summary-modal-${installationId}`).style.display = "none";
 });
 
-$(".jiraConfiguration__errorSummary__btn").click(event => {
-	const installationId = $(event.currentTarget).data("installation-id");
-	const appId = $(event.currentTarget).data("app-id");
-	const csrfToken = document.getElementById("_csrf").value;
 
-	document.getElementById(`error-summary-modal-${installationId}`).style.display = "block";
-
-	AJS.$(".jiraConfiguration__errorSummaryModal__form").on("aui-valid-submit", event => {
-		event.preventDefault();
-		window.AP.context.getToken(function (jwt) {
-			restartBackfillPost({jwt, _csrf: csrfToken, installationId, undefined, appId, source: "backfill-retry"});
-		});
-	});
-});
 
 $("#restart-backfill-action-button, #restart-backfill").click(initializeBackfillDateInput);
 
@@ -347,16 +334,290 @@ $(".jiraConfiguration__info__backfillDate-label").each((_, backfillSinceLabelEle
 	}
 });
 
-$(document).ready(function () {
+const setSyncErrorModal = ({ modal, failedSyncErrors }) => {
+	const ulElement = $(modal).find(
+		".jiraConfiguration__errorSummaryModalContent .error-summary-border-top ul"
+	);
+	let htmlUrl = $(modal).data("html-url");
+	ulElement.empty();
+	if (failedSyncErrors?.PERMISSIONS_ERROR) {
+		const liElement = $("<li>")
+			.append($("<b>").text(`${failedSyncErrors?.PERMISSIONS_ERROR} `))
+			.append(
+				$("<span>").text(function () {
+					return failedSyncErrors.PERMISSIONS_ERROR > 1
+						? "tasks have"
+						: "task has";
+				})
+			)
+			.append(" not been backfilled. Please ")
+			.append(
+				`<a href="${htmlUrl}"
+           			data-installation-link="${htmlUrl}"
+           			target="_blank">accept permissions on GitHub
+				</a>`
+			)
+			.append(
+				" (you must be the admin of your organization), then retry backfill."
+			);
+
+		ulElement.append(liElement);
+	}
+	if (failedSyncErrors?.CONNECTION_ERROR) {
+		const liElement = $("<li>")
+			.append("We were unable to complete backfill for ")
+			.append($("<b>").text(`${failedSyncErrors?.CONNECTION_ERROR} `))
+			.append(
+				$("<span>").text(function () {
+					return failedSyncErrors?.CONNECTION_ERROR > 1
+						? "repositories"
+						: "repository";
+				})
+			)
+			.append(
+				" because something unexpected occurred. Please retry the backfill or raise a support ticket."
+			);
+
+		ulElement.append(liElement);
+	}
+};
+
+const setErrorSummaryIconClick = ({
+	backfillStatusPolling = false,
+	failedSyncErrors = null,
+}) => {
+	$(".jiraConfiguration__errorSummary__btn").click((event) => {
+		const installationId = $(event.currentTarget).data("installation-id");
+
+		const appId = $(event.currentTarget).data("app-id");
+
+		const csrfToken = document.getElementById("_csrf").value;
+		const modal = document.getElementById(
+			`error-summary-modal-${installationId}`
+		);
+		modal.style.display = "block";
+
+		AJS.$(".jiraConfiguration__errorSummaryModal__form").on(
+			"aui-valid-submit",
+			(event) => {
+				event.preventDefault();
+				window.AP.context.getToken(function (jwt) {
+					restartBackfillPost({
+						jwt,
+						_csrf: csrfToken,
+						installationId,
+						undefined,
+						appId,
+						source: "backfill-retry",
+					});
+				});
+			}
+		);
+		if (backfillStatusPolling) {
+			setSyncErrorModal({ modal, failedSyncErrors });
+		}
+	});
+};
+
+const setBackfillDateToolTip = () => {
 	AJS.$(".jiraConfiguration__table__backfillInfoIcon").tooltip();
 	AJS.$(".jiraConfiguration__info__backfillDate-label").tooltip();
-	AJS.$(".jiraConfiguration__restartBackfillModal__fullsync__label-icon").tooltip();
+	AJS.$(
+		".jiraConfiguration__restartBackfillModal__fullsync__label-icon"
+	).tooltip();
 
 	$(".jiraConfiguration__info__backfillDate-label").each(function () {
 		if ($(this).attr("data-backfill-since")) {
 			const backfillDate = new Date($(this).attr("data-backfill-since"));
-			$(this).text(backfillDate.toLocaleDateString(undefined, { dateStyle: "short" }));
-			$(this).attr("title", (backfillDate.toLocaleDateString(undefined, { dateStyle: "long" })));
+			$(this).text(
+				backfillDate.toLocaleDateString(undefined, { dateStyle: "short" })
+			);
+			$(this).attr(
+				"title",
+				backfillDate.toLocaleDateString(undefined, { dateStyle: "long" })
+			);
 		}
 	});
+};
+
+const getInprogressSubIds = () => {
+	let subscriptionIds = [];
+	$(".jiraConfiguration__table__row").each(function () {
+		const repoStatusTd = $(this).children("td.repo-status");
+		const subscriptionId = $(this).data("subscription-id");
+		const infoContainer = repoStatusTd.children(
+			`div.jiraConfiguration__infoContainer`
+		);
+		const syncStatusProgress = infoContainer.children(
+			`span.jiraConfiguration__table__syncStatus`
+		);
+		if (
+			!syncStatusProgress.hasClass("jiraConfiguration__table__finished") &&
+			subscriptionId
+		) {
+			subscriptionIds.push(subscriptionId);
+		}
+	});
+	return subscriptionIds;
+};
+
+const updateBackfilledRepoCount = ({ subscription, self }) => {
+	const totalRepos = Number(subscription.totalRepos);
+	const syncedRepos = Number(subscription.syncedRepos);
+	const inprogressSyncStatus =
+		syncedRepos === totalRepos
+			? `${totalRepos}`
+			: `${syncedRepos} / ${totalRepos}`;
+	const repoCountTd = $(self).children("td.repo-count");
+	const syncProgress = repoCountTd.children(
+		"span.jiraConfiguration__table__syncCount"
+	);
+	syncProgress.text(` ${inprogressSyncStatus} `);
+};
+
+const toLowercaseHelper = (str) => str?.toString?.().toLowerCase() || "";
+const replaceSpaceWithHyphenHelper = (str) =>
+	str?.toString?.().replace(/ /g, "-") || "";
+
+const isAllSyncSuccess = (conn) => {
+	return conn && conn.syncStatus === "FINISHED" && !conn.syncWarning
+		? true
+		: false;
+};
+
+const updateBackfilledStatus = ({ subscription, self, installationId }) => {
+	const isSyncComplete = subscription.isSyncComplete;
+	const backfillSince = subscription.backfillSince;
+	const failedSyncErrors = subscription.failedSyncErrors;
+	const syncStatus = subscription.syncStatus;
+	const repoStatusTd = $(self).children("td.repo-status");
+	const infoContainer = repoStatusTd.children(
+		`div.jiraConfiguration__infoContainer`
+	);
+	const inprogressIcon = infoContainer.children(
+		`div.jiraConfiguration__infoSpinner`
+	);
+	const syncStatusProgress = infoContainer.children(
+		`span.jiraConfiguration__table__syncStatus`
+	);
+
+	syncStatusProgress.removeClass(function (index, className) {
+		return (className.match(/\bjiraConfiguration__table__\S*/g) || []).join(
+			" "
+		);
+	});
+	syncStatusProgress.addClass("jiraConfiguration__table__syncStatus");
+	let syncStatusClassName = toLowercaseHelper(syncStatus);
+	syncStatusClassName = replaceSpaceWithHyphenHelper(syncStatusClassName);
+	syncStatusProgress.addClass(
+		`jiraConfiguration__table__${syncStatusClassName}`
+	);
+
+	if (isSyncComplete) {
+		inprogressIcon.css("display", "none");
+		if (isAllSyncSuccess(subscription)) {
+			if (backfillSince) {
+				const backfillSinceDate = new Date(backfillSince);
+				const formattedDate = backfillSinceDate.toISOString();
+				infoContainer.append(
+					`<div class="jiraConfiguration__info__backfillDate">
+						<span>Backfilled from:</span><span class="jiraConfiguration__info__backfillDate-label" data-backfill-since="${backfillSince}">${formattedDate}</span>
+						<span class="jiraConfiguration__table__backfillInfoIcon aui-icon aui-iconfont-info-filled" title="If you want to backfill more data, choose &quot;Continue backfill&quot; in the settings menu on the right">Information</span>
+					</div>`
+				);
+				setBackfillDateToolTip();
+			} else {
+				infoContainer.append(
+					'<div class="jiraConfiguration__info__backfillDate">All commits backfilled</span>'
+				);
+			}
+		}
+		if (failedSyncErrors) {
+			var oldErrorLink = document.getElementById("error-summary");
+			if (oldErrorLink) {
+				oldErrorLink.remove();
+			}
+			infoContainer.append(
+				`<a
+				class="jiraConfiguration__errorSummary__btn"
+				href="#"
+				data-installation-id="${installationId}"
+				data-app-id
+				id="error-summary"
+				>
+		  			<span class="aui-icon aui-icon-small aui-iconfont-warning">Show Sync Warnings</span>
+				</a>`
+			);
+			setErrorSummaryIconClick({
+				backfillStatusPolling: true,
+				failedSyncErrors,
+			});
+		}
+	}
+	syncStatusProgress.text(syncStatus);
+};
+
+let fetchBackfillStateTimeout;
+function fetchAllConnectionsBackfillStatus() {
+	const subscriptionIds = getInprogressSubIds();
+	if (subscriptionIds.length > 0) {
+		$.ajax({
+			type: "GET",
+			url: `/jira/subscriptions/backfill-status/?subscriptionIds=${subscriptionIds}`,
+			success: (response) => {
+				const data = response.data;
+				const subscriptions = data.subscriptions;
+
+				const isBackfillComplete = data.isBackfillComplete;
+
+				$(".jiraConfiguration__table__row").each(function () {
+					const self = this;
+					let subscriptionId = $(self).data("subscription-id");
+					let installationId = $(self).data("installation-id");
+
+					if (subscriptionId in subscriptions) {
+						const subscription = subscriptions[subscriptionId];
+						updateBackfilledRepoCount({
+							subscription,
+							self,
+						});
+						updateBackfilledStatus({ subscription, self, installationId });
+					} else {
+						$(`#${subscriptionId}-syncCount`).css("display", "none");
+					}
+				});
+				if (!isBackfillComplete) {
+					fetchBackfillStateTimeout = setTimeout(
+						fetchAllConnectionsBackfillStatus,
+						6000
+					);
+				} else {
+					clearTimeout(fetchBackfillStateTimeout);
+				}
+			},
+			error: () => {
+				console.log("failure in fetching  backfill status of connections.");
+			},
+		});
+	}
+}
+
+$(document).ready(function () {
+	const isBackfillingStatusPollingEnabled = $(".jiraConfiguration").data(
+		"enable-backfilling-status-polling"
+	);
+
+	if (isBackfillingStatusPollingEnabled) {
+		const hasConnections = $(".jiraConfiguration").data("has-connections");
+		if (hasConnections) {
+			fetchAllConnectionsBackfillStatus();
+		}
+	}
+
+	setBackfillDateToolTip();
+	setErrorSummaryIconClick({});
+
+	AJS.$(
+		".jiraConfiguration__restartBackfillModal__fullsync__label-icon"
+	).tooltip();
 });

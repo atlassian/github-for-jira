@@ -26,6 +26,7 @@ export enum BooleanFlags {
 	ENABLE_SUBSCRIPTION_DEFERRED_INSTALL = "enable-subscription-deferred-install",
 	EARLY_EXIT_ON_VALIDATION_FAILED = "early-exit-on-validation-failed",
 	ENABLE_CONNECTED_REPOS_VIEW="enable-connected-repos-view",
+	ENABLE_BACKFILLING_STATUS_POLLING="enable-backfilling-status-polling",
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery-again",
 	ENABLE_GENERIC_CONTAINERS = "enable-generic-containers",
 	ENABLE_GITHUB_SECURITY_IN_JIRA = "enable-github-security-in-jira",

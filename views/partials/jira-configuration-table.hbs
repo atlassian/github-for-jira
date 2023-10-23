@@ -18,7 +18,7 @@
 
       <tbody class="jiraConfiguration__table__body">
       {{#each successfulConnections as |connection|}}
-        <tr class="jiraConfiguration__table__row">
+        <tr class="jiraConfiguration__table__row" data-subscription-id="{{subscriptionId}}" data-installation-id="{{connection.id}}">
           {{! Organization }}
           <td class="jiraConfiguration__table__cell">
             {{#unless ../hideAvatar}}
@@ -33,7 +33,7 @@
             <span class="jiraConfiguration__table__cell__orgName">{{connection.account.login}}</span>
           </td>
           {{! Repos Synced }}
-          <td class="jiraConfiguration__table__cell">
+          <td class="jiraConfiguration__table__cell repo-count">
             {{#if ../enableRepoConnectedPage}}
               <a href="#" class="jiraConfiguration__table__repo_access" data-subscription-id="{{subscriptionId}}">
                 {{#if connection.isGlobalInstall}}
@@ -72,7 +72,7 @@
           </td>
 
           {{! Backfill status }}
-          <td class="jiraConfiguration__table__cell">
+          <td class="jiraConfiguration__table__cell repo-status">
             <div class="jiraConfiguration__infoContainer">
               <span
                     id="{{id}}-status"

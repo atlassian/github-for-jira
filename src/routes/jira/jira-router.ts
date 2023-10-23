@@ -10,6 +10,7 @@ import { JiraConnectRouter } from "routes/jira/connect/jira-connect-router";
 import { body } from "express-validator";
 import { returnOnValidationError } from "routes/api/api-utils";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
+import { JiraGetConnectionsBackfillStatus } from "~/src/routes/jira/jira-get-connections-backfill-status";
 import { JiraConnectedReposGet } from "routes/jira/jira-connected-repos-get";
 import { jiraAdminPermissionsMiddleware } from "middleware/jira-admin-permission-middleware";
 import { JiraWorkspacesRouter } from "routes/jira/workspaces/jira-workspaces-router";
@@ -38,6 +39,7 @@ JiraRouter.use("/security", jiraSymmetricJwtMiddleware, JiraSecurityWorkspacesRo
 
 JiraRouter.get("/", csrfMiddleware, jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraGet);
 
+JiraRouter.get("/subscriptions/backfill-status", jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraGetConnectionsBackfillStatus);
 JiraRouter.get("/subscription/:subscriptionId/repos", csrfMiddleware, jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraConnectedReposGet);
 
 /********************************************************************************************************************

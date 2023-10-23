@@ -28,7 +28,7 @@
   </head>
 
   <body class="aui-page-hybrid" data-use-new-spa-experience="{{useNewSPAExperience}}" >
-    <div class="jiraConfiguration">
+    <div class="jiraConfiguration" data-has-connections="{{hasConnections}}" data-enable-backfilling-status-polling="{{enableBackfillingStatusPolling}}">
       <header class="jiraConfiguration__header">
         <h1 class="jiraConfiguration__header__title">GitHub configuration</h1>
         {{#if hasConnections}}
@@ -70,7 +70,7 @@
             commit messages, and pull request titles. <br/>
             Even if your organization is still backfilling historical data, you can start using issue keys in your
             development work immediately.
-        </p>
+          </p>
 
           {{!-- Backfill Status Info Modal --}}
           <div class='jiraConfiguration__syncRetryModal'  id="sync-status-modal">

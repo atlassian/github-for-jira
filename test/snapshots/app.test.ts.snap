@@ -213,6 +213,8 @@ exports[`app getFrontendApp please review routes and update snapshot when adding
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,jiraSymmetricJwtMiddleware,JiraSecurityWorkspacesPost
 :GET ^/?(?=/|$)^/jira/?(?=/|$)^/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,csrf,jiraSymmetricJwtMiddleware,jiraAdminPermissionsMiddleware,JiraGet
+:GET ^/?(?=/|$)^/jira/?(?=/|$)^/subscriptions/backfill-status/?$
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,jiraSymmetricJwtMiddleware,jiraAdminPermissionsMiddleware,JiraGetConnectionsBackfillStatus
 :GET ^/?(?=/|$)^/jira/?(?=/|$)^/subscription/(?:([^/]+?))/repos/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,csrf,jiraSymmetricJwtMiddleware,jiraAdminPermissionsMiddleware,JiraConnectedReposGet
 :GET ^/?(?=/|$)^/jira/?(?=/|$)^/configuration/?(?=/|$)^/?$
