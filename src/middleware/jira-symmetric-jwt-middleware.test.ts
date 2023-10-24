@@ -339,7 +339,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 					authorization: `JWT ${await generateJwt()}`
 				});
 
-			expect(await getTokenType("/jira/workspaces/search", "GET", jiraHost)).toEqual("normal");
+			expect(await getTokenType("/jira/workspaces/search", "GET")).toEqual("normal");
 		});
 
 		it("should return normal tokenType for search repositories", async () => {
@@ -364,7 +364,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 					)}`
 				});
 
-			expect(await getTokenType("/jira/workspaces/repositories/search?searchQuery=atlas", "GET", jiraHost)).toEqual("normal");
+			expect(await getTokenType("/jira/workspaces/repositories/search?searchQuery=atlas", "GET")).toEqual("normal");
 		});
 
 		it("should return normal tokenType for associate repository", async () => {
@@ -385,7 +385,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 					authorization: `JWT ${await generateJwt()}`
 				});
 
-			expect(await getTokenType("/jira/workspaces/repositories/associate", "POST", jiraHost)).toEqual("normal");
+			expect(await getTokenType("/jira/workspaces/repositories/associate", "POST")).toEqual("normal");
 		});
 
 		it("should return context tokenType for create branch", async () => {
@@ -397,7 +397,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 						githubToken: "random-token"
 					}));
 
-			expect(await getTokenType("/create-branch-options", "GET", jiraHost)).toEqual("context");
+			expect(await getTokenType("/create-branch-options", "GET")).toEqual("context");
 		});
 	});
 
