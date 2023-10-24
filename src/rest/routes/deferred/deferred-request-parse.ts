@@ -3,7 +3,7 @@ import { errorWrapper } from "../../helper";
 import {
 	extractSubscriptionDeferredInstallPayload
 } from "services/subscription-deferred-install-service";
-import { InvalidArgumentError, RestApiError } from "config/errors";
+import { InvalidArgumentError } from "config/errors";
 import { DeferralParsedRequest } from "rest-interfaces";
 
 export const DeferredRequestParseRoute = errorWrapper("ParseRequestId", async function DeferredRequestParseRoute(req: Request, res: Response<DeferralParsedRequest>) {
@@ -14,11 +14,6 @@ export const DeferredRequestParseRoute = errorWrapper("ParseRequestId", async fu
 	}
 
 	const deferredInstallPayload = await extractSubscriptionDeferredInstallPayload(requestId);
-
-	if (deferredInstallPayload.jiraHost !== res.locals.jiraHost) {
-		req.log.warn("Jirahost mismatch");
-		throw new RestApiError(500, "JIRAHOST_MISMATCH", "Jirahost mismatch");
-	}
 
 	res.status(200).send({
 		jiraHost: deferredInstallPayload.jiraHost as string,
