@@ -278,7 +278,7 @@ loadBalancer:
 workers:
   - name: Worker
     scaling:
-      instance: t2.small
+      instance: t2.medium
       min: 1
       max: 5
       metrics: &CpuMemAndQueuesScalingRules
@@ -387,7 +387,7 @@ environmentOverrides:
     workers:
       - name: Worker
         scaling:
-          instance: t2.small
+          instance: t2.medium
           min: 1
           max: 5
           metrics: *CpuMemAndQueuesScalingRules
