@@ -11,8 +11,6 @@ import express from "express";
 import supertest from "supertest";
 import { encodeSymmetric } from "atlassian-jwt";
 import { getFrontendApp } from "~/src/app";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 jest.mock("config/feature-flags");
 jest.mock("utils/app-properties-utils");
@@ -311,23 +309,11 @@ describe.each([
 
 	describe("5ku new experience", () => {
 		it("should redirect to new spa entry page on empty state if ff on", async () => {
-			when(booleanFlag).calledWith(BooleanFlags.USE_NEW_5KU_SPA_EXPERIENCE, jiraHost)
-				.mockResolvedValue(true);
 			await supertest(frontendApp)
 				.get(url)
 				.expect(200)
 				.then(response => {
 					expect(response.text).toContain("<html>\n			<body></body>\n    	<script src=\"https://connect-cdn.atl-paas.net/all.js\"></script>\n			<script>AP.navigator.go( \"addonmodule\", { moduleKey: \"spa-index-page\", customData: { from: \"homepage\" } });</script>\n		</html>");
-				});
-		});
-		it("should show existing page on empty state if ff off", async () => {
-			when(booleanFlag).calledWith(BooleanFlags.USE_NEW_5KU_SPA_EXPERIENCE, jiraHost)
-				.mockResolvedValue(false);
-			await supertest(frontendApp)
-				.get(url)
-				.expect(200)
-				.then(response => {
-					expect(response.text).toContain("<h1 class=\"jiraConfiguration__header__title\">GitHub configuration</h1>");
 				});
 		});
 	});

@@ -52,8 +52,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 
 	const hasConnections =  !!(installations.total || gheServers?.length);
 
-	const useNewSPAExperience = await booleanFlag(BooleanFlags.USE_NEW_5KU_SPA_EXPERIENCE, jiraHost);
-	if (useNewSPAExperience && !hasConnections) {
+	if (!hasConnections) {
 		/**
 		 * Using AP.navigator to redirect because `/spa` page now needs JWT token,
 		 * `/spa` pages need JWT token to get the FeatureFlag and pass it to the React app
@@ -71,7 +70,6 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 			hasCloudAndEnterpriseServers: !!((successfulCloudConnections.length || failedCloudConnections.length) && gheServers.length),
 			hasCloudServers: !!(successfulCloudConnections.length || failedCloudConnections.length),
 			hasConnections,
-			useNewSPAExperience,
 			APP_URL: process.env.APP_URL,
 			enableRepoConnectedPage: await booleanFlag(BooleanFlags.ENABLE_CONNECTED_REPOS_VIEW, jiraHost),
 			csrfToken: req.csrfToken(),
@@ -88,7 +86,6 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 		name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName
 	}, {
 		jiraHost,
-		pageExperience: useNewSPAExperience ? "spa" : "",
 		connectedOrgCountCloudCount: successfulCloudConnections.length,
 		connectedOrgCountServerCount: successfulServerConnections,
 		totalOrgCount: successfulCloudConnections.length + successfulServerConnections,
