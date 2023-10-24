@@ -25,7 +25,7 @@ export const DeferredCheckOwnershipAndConnectRoute = errorWrapper("CheckOwnershi
 		req.log.warn("Installation not found for this requestId");
 		throw new InvalidArgumentError("Installation not found for this requestId");
 	}
-	const result = await verifyAdminPermsAndFinishInstallation(
+	const isAdminResponse = await verifyAdminPermsAndFinishInstallation(
 		githubToken as string,
 		installation,
 		undefined,// TODO: Need to pass this value later for GHE apps
@@ -33,8 +33,9 @@ export const DeferredCheckOwnershipAndConnectRoute = errorWrapper("CheckOwnershi
 		true,
 		req.log
 	);
-	if (result.errorCode === "NOT_ADMIN") {
-		throw new InsufficientPermissionError(result.error || "Not admin of org");
+	if (isAdminResponse.errorCode === "NOT_ADMIN") {
+		req.log.warn("User is not an admin of the org");
+		throw new InsufficientPermissionError(isAdminResponse.error || "Not admin of org");
 	} else {
 		res.sendStatus(200);
 	}

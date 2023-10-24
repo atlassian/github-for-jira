@@ -84,6 +84,7 @@ export type ErrorCode =
 	| "SSO_LOGIN"
 	| "RESOURCE_NOT_FOUND"
 	| "INVALID_DEFERRAL_REQUEST_ID"
+	| "JIRAHOST_MISMATCH"
 	| "UNKNOWN";
 
 export type Account = {
