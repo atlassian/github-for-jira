@@ -15,8 +15,6 @@ async function extractFromRequestId(requestId: string): Promise<DeferralRequestP
 
 		return response.data;
 	} catch (e: unknown) {
-		console.log("What is hts");
-
 		reportError(new Error("Invalid Request id", { cause: e }), { path: "parseDeferredRequestId" });
 		return e as AxiosError;
 	}
