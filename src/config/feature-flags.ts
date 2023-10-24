@@ -16,7 +16,6 @@ export enum BooleanFlags {
 	INNO_DRAFT_PR = "inno-draft-pr",
 	VERBOSE_LOGGING = "verbose-logging",
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
-	JIRA_ADMIN_CHECK = "jira-admin-check",
 	REMOVE_STALE_MESSAGES = "remove-stale-messages",
 	USE_NEW_PULL_ALGO = "use-new-pull-algo",
 	USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK = "use-dynamodb-for-deployment-webhook",
