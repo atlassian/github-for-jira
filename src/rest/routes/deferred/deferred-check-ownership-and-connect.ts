@@ -30,7 +30,6 @@ export const DeferredCheckOwnershipAndConnectRoute = errorWrapper("CheckOwnershi
 		installation,
 		undefined,// TODO: Need to pass this value later for GHE apps
 		gitHubInstallationId,
-		true,
 		req.log
 	);
 
