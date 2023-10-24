@@ -75,7 +75,10 @@ describe("Checking the deferred request parsing route", () => {
 				.set("authorization", `${getToken()}`);
 
 			expect(resp.status).toEqual(200);
-			expect(resp.body).toMatchObject(validData);
+			expect(resp.body).toMatchObject({
+				"jiraHost": "https://test-atlassian-instance.atlassian.net",
+				"orgName": "custom-orgName"
+			});
 		});
 	});
 });

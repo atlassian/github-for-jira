@@ -1,12 +1,12 @@
 import { Request, Response } from "express";
 import { errorWrapper } from "../../helper";
 import {
-	extractSubscriptionDeferredInstallPayload,
-	SubscriptionDeferredInstallPayload
+	extractSubscriptionDeferredInstallPayload
 } from "services/subscription-deferred-install-service";
 import { InvalidArgumentError, RestApiError } from "config/errors";
+import { DeferralParsedRequest } from "rest-interfaces";
 
-export const DeferredRequestParseRoute = errorWrapper("ParseRequestId", async function DeferredRequestParseRoute(req: Request, res: Response<SubscriptionDeferredInstallPayload>) {
+export const DeferredRequestParseRoute = errorWrapper("ParseRequestId", async function DeferredRequestParseRoute(req: Request, res: Response<DeferralParsedRequest>) {
 	const requestId = req.params.requestId;
 	if (!requestId) {
 		req.log.warn("Missing requestId in query");
@@ -20,5 +20,8 @@ export const DeferredRequestParseRoute = errorWrapper("ParseRequestId", async fu
 		throw new RestApiError(500, "JIRAHOST_MISMATCH", "Jirahost mismatch");
 	}
 
-	res.status(200).send(deferredInstallPayload);
+	res.status(200).send({
+		jiraHost: deferredInstallPayload.jiraHost as string,
+		orgName: deferredInstallPayload.orgName
+	});
 });

@@ -14,6 +14,11 @@ export type UsersGetAuthenticatedResponse = {
 	login: string;
 };
 
+export type DeferralParsedRequest = {
+	orgName: string;
+	jiraHost: string;
+};
+
 export type GetDeferredInstallationUrl = {
 	deferredInstallUrl: string;
 };
