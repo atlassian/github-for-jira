@@ -7,8 +7,8 @@ import { GitHubTokenHandler } from "~/src/rest/middleware/jwt/github-token";
 
 export const DeferredRouter = Router({ mergeParams: true });
 
-DeferredRouter.get("/installation-url", JwtHandler, DeferredInstallationUrlRoute);
+DeferredRouter.get("/parse/:requestId", DeferredRequestParseRoute);
 
-DeferredRouter.get("/parse/:requestId", JwtHandler, DeferredRequestParseRoute);
+DeferredRouter.get("/installation-url", JwtHandler, DeferredInstallationUrlRoute);
 
 DeferredRouter.post("/connect/:requestId", GitHubTokenHandler, DeferredCheckOwnershipAndConnectRoute);

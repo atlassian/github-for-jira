@@ -54,7 +54,7 @@ const subtleBtnStyle = css`
 `;
 const Connected = () => {
 	const location = useLocation();
-	const { orgLogin } = location.state;
+	const { orgLogin, connectedByDeferral } = location.state;
 	useEffectScreenEvent("SuccessfulConnectedScreen");
 
 	const navigate = useNavigate();
@@ -85,7 +85,7 @@ const Connected = () => {
 	};
 
 	return (
-		<Wrapper>
+		<Wrapper hideClosedBtn={true}>
 			<div css={connectedContainerStyle}>
 				<img
 					css={headerImgStyle}
@@ -112,13 +112,15 @@ const Connected = () => {
 							add issue keys to branches, pull request titles, and commit
 							messages.
 						</div>
-						<Button
-							css={[buttonStyle, subtleBtnStyle]}
-							appearance="subtle"
-							onClick={() => navigate("/spa/steps")}
-						>
-							Add another organization
-						</Button>
+						{
+							!connectedByDeferral && <Button
+								css={[buttonStyle, subtleBtnStyle]}
+								appearance="subtle"
+								onClick={() => navigate("/spa/steps")}
+							>
+								Add another organization
+							</Button>
+						}
 						<Button
 							css={buttonStyle}
 							appearance="primary"
@@ -128,13 +130,15 @@ const Connected = () => {
 						</Button>
 					</div>
 				</div>
-				<Button
-					css={[buttonStyle, subtleBtnStyle]}
-					appearance="subtle"
-					onClick={navigateToBackfillPage}
-				>
-					Exit set up
-				</Button>
+				{
+					!connectedByDeferral && <Button
+						css={[buttonStyle, subtleBtnStyle]}
+						appearance="subtle"
+						onClick={navigateToBackfillPage}
+					>
+						Exit set up
+					</Button>
+				}
 			</div>
 		</Wrapper>
 	);

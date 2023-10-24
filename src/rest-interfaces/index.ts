@@ -14,6 +14,11 @@ export type UsersGetAuthenticatedResponse = {
 	login: string;
 };
 
+export type DeferredInstallationUrlParams = {
+	gitHubInstallationId: number;
+	gitHubOrgName: string;
+};
+
 export type DeferralParsedRequest = {
 	orgName: string;
 	jiraHost: string;
@@ -75,6 +80,7 @@ export type ErrorCode =
 	| "IP_BLOCKED"
 	| "SSO_LOGIN"
 	| "RESOURCE_NOT_FOUND"
+	| "INVALID_DEFERRAL_REQUEST_ID"
 	| "JIRAHOST_MISMATCH"
 	| "UNKNOWN";
 
