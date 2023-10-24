@@ -9,12 +9,8 @@ import {
 	jiraSymmetricJwtMiddleware
 } from "~/src/middleware/jira-symmetric-jwt-middleware";
 import { Installation } from "~/src/models/installation";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { generateSignedSessionCookieHeader } from "test/utils/cookies";
 
-
-jest.mock("config/feature-flags");
 const testSharedSecret = "test-secret";
 
 const getToken = ({
@@ -224,10 +220,6 @@ describe("jiraSymmetricJwtMiddleware", () => {
 				host: jiraHost,
 				sharedSecret: testSharedSecret
 			});
-
-			when(booleanFlag).calledWith(
-				BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
-			).mockResolvedValue(true);
 		});
 
 		it("should return true for search workspaces", async () => {
@@ -327,10 +319,6 @@ describe("jiraSymmetricJwtMiddleware", () => {
 				host: jiraHost,
 				sharedSecret: testSharedSecret
 			});
-
-			when(booleanFlag).calledWith(
-				BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
-			).mockResolvedValue(true);
 		});
 
 		it("should return normal tokenType for search workspaces", async () => {
