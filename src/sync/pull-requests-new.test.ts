@@ -4,8 +4,6 @@ import nock, { removeInterceptor } from "nock";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
 import { GitHubServerApp } from "models/github-server-app";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { RepoSyncState } from "models/reposyncstate";
@@ -19,11 +17,6 @@ describe("sync/pull-request", () => {
 
 	beforeEach(() => {
 		mockSystemTime(12345678);
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_PULL_ALGO,
-			jiraHost
-		).mockResolvedValue(true);
 	});
 
 	const buildJiraPayload = (repoId: string, _times = 1) => {
@@ -89,12 +82,6 @@ describe("sync/pull-request", () => {
 		const PRS_INITIAL_CURSOR = 21;
 
 		beforeEach(async () => {
-
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_NEW_PULL_ALGO,
-				jiraHost
-			).mockResolvedValue(true);
-
 			await new DatabaseStateCreator()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForPrs()
@@ -295,11 +282,6 @@ describe("sync/pull-request", () => {
 
 		beforeEach(async () => {
 
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_NEW_PULL_ALGO,
-				jiraHost
-			).mockResolvedValue(true);
-
 			const buildResult = await new DatabaseStateCreator()
 				.forServer()
 				.withActiveRepoSyncState()
@@ -401,10 +383,6 @@ describe("sync/pull-request", () => {
 
 		let repoSyncState: RepoSyncState;
 		beforeEach(async () => {
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_NEW_PULL_ALGO,
-				jiraHost
-			).mockResolvedValue(true);
 
 			const dbState = await new DatabaseStateCreator()
 				.withActiveRepoSyncState()
