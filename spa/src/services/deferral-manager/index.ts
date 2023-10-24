@@ -1,8 +1,8 @@
 import Api from "../../api";
 import { AxiosError } from "axios";
 import { reportError } from "../../utils";
-import { DeferralRequestPayload } from "rest-interfaces";
-async function extractFromRequestId(requestId: string): Promise<DeferralRequestPayload | AxiosError> {
+import { DeferralParsedRequest } from "rest-interfaces";
+async function extractFromRequestId(requestId: string): Promise<DeferralParsedRequest | AxiosError> {
 	try {
 		const response = await Api.deferral.parseDeferredRequestId(requestId);
 		const ret = response.status === 200;

@@ -4,14 +4,6 @@ export type GetRedirectUrlResponse = {
 	state: string;
 };
 
-export type DeferralRequestPayload = {
-	installationIdPk: number;
-	gitHubServerAppIdPk?: number;
-	gitHubInstallationId: number;
-	jiraHost?: string;
-	orgName: string;
-};
-
 export type ExchangeTokenResponse = {
 	accessToken: string;
 	refreshToken?: string;
@@ -25,6 +17,11 @@ export type UsersGetAuthenticatedResponse = {
 export type DeferredInstallationUrlParams = {
 	gitHubInstallationId: number;
 	gitHubOrgName: string;
+};
+
+export type DeferralParsedRequest = {
+	orgName: string;
+	jiraHost: string;
 };
 
 export type GetDeferredInstallationUrl = {
