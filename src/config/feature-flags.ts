@@ -29,7 +29,6 @@ export enum BooleanFlags {
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery-again",
 	ENABLE_GITHUB_SECURITY_IN_JIRA = "enable-github-security-in-jira",
 	DELETE_MESSAGE_ON_BACKFILL_WHEN_OTHERS_WORKING_ON_IT = "delete-message-on-backfill-when-others-working-on-it",
-	USE_NEW_5KU_SPA_EXPERIENCE = "enable-5ku-experience--cloud-connect",
 	ENABLE_5KU_BACKFILL_PAGE = "enable-5ku-experience-backfill-page",
 	USE_INSTALLATION_CLIENT_CHECK_PERMISSION = "use-installation-client-to-check-permission",
 	USE_CUSTOM_ROOT_CA_BUNDLE = "use-custom-root-ca-bundle",
