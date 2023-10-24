@@ -220,15 +220,6 @@ const	modules = {
 			conditions: adminCondition
 		},
 		{
-			key: "spa-deferred-page",
-			name: {
-				value: "GitHub for Jira SPA Deferred Installation Page"
-			},
-			url: "/spa/deferred?requestId={ac.requestId}",
-			location: "none",
-			conditions: adminCondition
-		},
-		{
 			url: "/jira/subscription/{ac.subscriptionId}/repos?pageNumber={ac.pageNumber}&repoName={ac.repoName}&syncStatus={ac.syncStatus}",
 			name: {
 				value: "Sync status"
