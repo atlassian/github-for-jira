@@ -4,10 +4,9 @@ import { waitUntil } from "test/utils/wait-until";
 import { statsd }  from "config/statsd";
 import { sqsQueueMetrics } from "config/metric-names";
 import { AWSError, Request as AwsRequest, Service, Response } from "aws-sdk";
-import { BaseMessagePayload, SQSMessageContext } from "~/src/sqs/sqs.types";
+import { BaseMessagePayload } from "~/src/sqs/sqs.types";
 import { preemptiveRateLimitCheck } from "utils/preemptive-rate-limit";
 import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { SendMessageResult } from "aws-sdk/clients/sqs";
 
 jest.mock("config/feature-flags");
@@ -59,10 +58,6 @@ describe("SQS", () => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			.calledWith(expect.anything(), expect.anything()) .mockResolvedValue({ isExceedThreshold: false });
 
-		when(booleanFlag).calledWith(
-			BooleanFlags.REMOVE_STALE_MESSAGES,
-			jiraHost
-		).mockResolvedValue(true);
 	});
 
 	afterEach(async () => {
@@ -250,121 +245,6 @@ describe("SQS", () => {
 				receiveCount: 3,
 				lastAttempt: true
 			}));
-		});
-	});
-
-	describe("deleteStaleMessages", () => {
-
-		// Mock the SQSMessageContext object
-		const context = {
-			log: {
-				warn: jest.fn(),
-				error: jest.fn()
-			}
-		} as unknown as SQSMessageContext<BaseMessagePayload>;
-
-		beforeEach(() => {
-			queue = createSqsQueue(1);
-			queue.start();
-			when(booleanFlag).calledWith(
-				BooleanFlags.REMOVE_STALE_MESSAGES,
-				jiraHost
-			).mockResolvedValue(true);
-		});
-
-		// Test case for when feature flag is turned off
-		it("should return false when feature flag is false", async () => {
-			when(booleanFlag).calledWith(
-				BooleanFlags.REMOVE_STALE_MESSAGES,
-				jiraHost
-			).mockResolvedValue(false);
-			const message = {
-				Body: JSON.stringify({
-					webhookReceived: Date.now() - 2 * 24 * 60 * 60 * 1000 // Two days ago
-				}),
-				MessageId: "12345"
-			};
-
-			const result = await queue.deleteStaleMessages(message, context, jiraHost);
-			expect(result).toBe(false);
-		});
-
-		// Test case for when the message is not from the targeted queue
-		it("should return false when message is not from targeted queue", async () => {
-			const message = {
-				Body: JSON.stringify({}),
-				MessageId: "12345"
-			};
-			const result = await queue.deleteStaleMessages(message, context, jiraHost);
-			expect(result).toBe(false);
-		});
-
-		// Test case for when the message does not have a body
-		it("should return false when message has no body", async () => {
-			const message = {
-				MessageId: "12345"
-			};
-			const result = await queue.deleteStaleMessages(message, context, jiraHost);
-			expect(result).toBe(false);
-		});
-
-		// Test case for when the message is from the targeted queue and is stale
-		it("should delete stale message and return true", async () => {
-			const message = {
-				Body: JSON.stringify({
-					webhookReceived: Date.now() - 2 * 24 * 60 * 60 * 1000 // Two days ago
-				}),
-				MessageId: "12345"
-			};
-			const deleteMessage = jest.fn();
-			const mockThis = {
-				queueName: "deployment",
-				deleteMessage
-			};
-			const result = await queue.deleteStaleMessages.call(mockThis, message, context, jiraHost);
-			expect(result).toBe(true);
-			expect(deleteMessage).toHaveBeenCalledWith(context);
-			// eslint-disable-next-line @typescript-eslint/unbound-method
-			expect(context.log.warn).toHaveBeenCalledWith(
-				{ deletedMessageId: "12345" },
-				"Deleted stale message from deployment queue"
-			);
-		});
-
-		// Test case for when the message is from the targeted queue and is not stale
-		it("should return false when message is not stale", async () => {
-			const message = {
-				Body: JSON.stringify({
-					webhookReceived: Date.now() - 12 * 60 * 60 * 1000 // 12 hours ago
-				}),
-				MessageId: "12345"
-			};
-			const result = await queue.deleteStaleMessages(message, context, jiraHost);
-			expect(result).toBe(false);
-		});
-
-		// Test case for when deleting the message fails
-		it("should return false and log an error when deleting the message fails", async () => {
-			const message = {
-				Body: JSON.stringify({
-					webhookReceived: Date.now() - 2 * 24 * 60 * 60 * 1000 // Two days ago
-				}),
-				MessageId: "12345"
-			};
-			const deleteMessage = jest.fn().mockRejectedValue(new Error("Failed to delete message"));
-			const mockThis = {
-				queueName: "deployment",
-				deleteMessage
-			};
-			const result = await queue.deleteStaleMessages.call(mockThis, message, context, jiraHost);
-			expect(result).toBe(false);
-			expect(deleteMessage).toHaveBeenCalledWith(context);
-			// eslint-disable-next-line @typescript-eslint/unbound-method
-			expect(context.log.error).toHaveBeenCalledWith(
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				{ error: expect.any(Error), deletedMessageId: "12345" },
-				"Failed to delete stale message from deployment queue"
-			);
 		});
 	});
 });
