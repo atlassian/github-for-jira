@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { errorWrapper } from "../../helper";
 import { extractSubscriptionDeferredInstallPayload } from "services/subscription-deferred-install-service";
-import { InsufficientPermissionError, InvalidArgumentError } from "config/errors";
+import { InsufficientPermissionError, InvalidArgumentError, RestApiError } from "config/errors";
 import { OrgOwnershipResponse } from "rest-interfaces";
 import { verifyAdminPermsAndFinishInstallation } from "services/subscription-installation-service";
 import { Installation } from "models/installation";
@@ -33,11 +33,16 @@ export const DeferredCheckOwnershipAndConnectRoute = errorWrapper("CheckOwnershi
 		true,
 		req.log
 	);
-	if (isAdminResponse.errorCode === "NOT_ADMIN") {
-		req.log.warn("User is not an admin of the org");
-		throw new InsufficientPermissionError(isAdminResponse.error || "Not admin of org");
-	} else {
-		res.sendStatus(200);
+
+	if (isAdminResponse.error) {
+		if (isAdminResponse.errorCode === "NOT_ADMIN") {
+			req.log.warn("User is not an admin of the org");
+			throw new InsufficientPermissionError(isAdminResponse.error || "Not admin of org");
+		} else {
+			throw new RestApiError(500, "UNKNOWN", isAdminResponse.error);
+		}
 	}
+
+	res.sendStatus(200);
 });
 
