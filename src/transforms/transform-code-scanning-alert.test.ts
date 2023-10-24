@@ -320,12 +320,12 @@ describe("code_scanning_alert transform", () => {
 				jiraHost
 			);
 			expect(result?.vulnerabilities[0].identifiers).toMatchInlineSnapshot(`
-			Array [
-			  Object {
+			[
+			  {
 			    "displayName": "CWE-79",
 			    "url": "https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=79",
 			  },
-			  Object {
+			  {
 			    "displayName": "CWE-116",
 			    "url": "https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=116",
 			  },
