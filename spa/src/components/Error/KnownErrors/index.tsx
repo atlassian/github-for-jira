@@ -138,6 +138,9 @@ export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl, onPopupBlocked, defer
 										</a>
 									</div>
 									<TextArea
+										onCopy={() => {
+											analyticsClient.sendUIEvent({ actionSubject: "copiedDeferredInstallationUrl", action: "clicked"}, { type: "cloud" });
+										}}
 										css={textAreaStyle}
 										id="deffered-installation-msg"
 										name="deffered-installation-msg"
