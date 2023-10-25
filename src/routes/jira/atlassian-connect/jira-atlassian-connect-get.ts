@@ -218,7 +218,8 @@ const	modules = {
 			url: "/spa?from={ac.from}",
 			location: "none",
 			conditions: adminCondition
-		}, {
+		},
+		{
 			url: "/jira/subscription/{ac.subscriptionId}/repos?pageNumber={ac.pageNumber}&repoName={ac.repoName}&syncStatus={ac.syncStatus}",
 			name: {
 				value: "Sync status"

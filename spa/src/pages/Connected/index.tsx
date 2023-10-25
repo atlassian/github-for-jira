@@ -5,7 +5,7 @@ import { Wrapper } from "../../common/Wrapper";
 import { token, useThemeObserver } from "@atlaskit/tokens";
 import Heading from "@atlaskit/heading";
 import Button from "@atlaskit/button";
-import analyticsClient, { useEffectScreenEvent } from "../../analytics";
+import analyticsClient from "../../analytics";
 import { useNavigate } from "react-router-dom";
 import { enableBackfillStatusPage } from "./../../feature-flags";
 
@@ -54,8 +54,12 @@ const subtleBtnStyle = css`
 `;
 const Connected = () => {
 	const location = useLocation();
-	const { orgLogin } = location.state;
-	useEffectScreenEvent("SuccessfulConnectedScreen");
+	const { orgLogin, requestId } = location.state;
+	if (requestId) {
+		analyticsClient.sendScreenEvent({ name: "DeferredInstallationSuccessScreen" }, { type: "cloud" }, requestId);
+	} else {
+		analyticsClient.sendScreenEvent({ name: "SuccessfulConnectedScreen" }, { type: "cloud" });
+	}
 
 	const navigate = useNavigate();
 	const { colorMode } = useThemeObserver();
@@ -77,7 +81,9 @@ const Connected = () => {
 		analyticsClient.sendUIEvent({
 			actionSubject: "learnAboutIssueLinking",
 			action: "clicked",
-		});
+		}, {
+			from : requestId ? "DeferredInstallationSuccessScreen": "SuccessfulConnectedScreen"
+		}, requestId);
 		window.open(
 			"https://support.atlassian.com/jira-software-cloud/docs/reference-issues-in-your-development-work/",
 			"_blank"
@@ -85,7 +91,7 @@ const Connected = () => {
 	};
 
 	return (
-		<Wrapper>
+		<Wrapper hideClosedBtn={true}>
 			<div css={connectedContainerStyle}>
 				<img
 					css={headerImgStyle}
@@ -112,13 +118,15 @@ const Connected = () => {
 							add issue keys to branches, pull request titles, and commit
 							messages.
 						</div>
-						<Button
-							css={[buttonStyle, subtleBtnStyle]}
-							appearance="subtle"
-							onClick={() => navigate("/spa/steps")}
-						>
-							Add another organization
-						</Button>
+						{
+							!requestId && <Button
+								css={[buttonStyle, subtleBtnStyle]}
+								appearance="subtle"
+								onClick={() => navigate("/spa/steps")}
+							>
+								Add another organization
+							</Button>
+						}
 						<Button
 							css={buttonStyle}
 							appearance="primary"
@@ -128,13 +136,15 @@ const Connected = () => {
 						</Button>
 					</div>
 				</div>
-				<Button
-					css={[buttonStyle, subtleBtnStyle]}
-					appearance="subtle"
-					onClick={navigateToBackfillPage}
-				>
-					Exit set up
-				</Button>
+				{
+					!requestId && <Button
+						css={[buttonStyle, subtleBtnStyle]}
+						appearance="subtle"
+						onClick={navigateToBackfillPage}
+					>
+						Exit set up
+					</Button>
+				}
 			</div>
 		</Wrapper>
 	);

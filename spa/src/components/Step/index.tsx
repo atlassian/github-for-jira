@@ -21,6 +21,7 @@ const stepTitleStyle = css`
 	font-size: ${token("space.200")};
 	color: token("color.text");
 	margin: 0 0 ${token("space.100")};
+	line-height: ${token("space.300")}
 `;
 
 const Step = ({
