@@ -17,10 +17,8 @@ jest.mock("react-router-dom", () => ({
 	...jest.requireActual("react-router-dom"),
 	useNavigate: () => navigate,
 	useLocation: jest.fn().mockReturnValue({
-		state: {
-		  orgLogin: 'AtlassianOrg',
-		},
-	  }),
+		state: { orgLogin: "AtlassianOrg" },
+	}),
 }));
 jest.mock("./../../feature-flags", () => ({
 	enableBackfillStatusPage: false

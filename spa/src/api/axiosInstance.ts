@@ -3,6 +3,7 @@ import { getJiraJWT } from "../utils";
 
 const THIRTY_SECONDS_IN_MS = 30_000;
 
+const axiosRestWithNoJwt = axios.create({ timeout: THIRTY_SECONDS_IN_MS });
 const axiosRest = axios.create({
 	timeout: THIRTY_SECONDS_IN_MS
 });
@@ -47,9 +48,19 @@ axiosRestWithGitHubToken.interceptors.request.use(async (config) => {
 	return config;
 });
 
+const axiosRestWithNoJwtButWithGitHubToken = axios.create({
+	timeout: THIRTY_SECONDS_IN_MS
+});
+axiosRestWithNoJwtButWithGitHubToken.interceptors.request.use(async (config) => {
+	config.headers["github-auth"] = gitHubToken;
+	return config;
+});
+
 export {
 	axiosGitHub,
 	axiosRest,
+	axiosRestWithNoJwt,
+	axiosRestWithNoJwtButWithGitHubToken,
 	axiosRestWithGitHubToken,
 	clearGitHubToken,
 	setGitHubToken,
