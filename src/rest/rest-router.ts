@@ -10,6 +10,7 @@ import { RestErrorHandler } from "./middleware/error";
 import { JiraAdminEnforceMiddleware } from "./middleware/jira-admin/jira-admin-check";
 import { AnalyticsProxyHandler } from "./routes/analytics-proxy";
 import { SubscriptionsRouter } from "./routes/subscriptions";
+import { DeferredRouter } from "./routes/deferred";
 
 export const RestRouter = Router({ mergeParams: true });
 
@@ -30,14 +31,16 @@ subRouter.get("/github-callback", OAuthCallbackHandler);
 subRouter.get("/github-installed", OrgsInstalledHandler);
 subRouter.get("/github-requested", OrgsInstallRequestedHandler);
 
+subRouter.use("/oauth", OAuthRouter);
+
+subRouter.use("/deferred", DeferredRouter);
+
 // TODO: what about Jira admin validation (a.k.a. authorization, we
 //  have done authentication only)?
 subRouter.use(JwtHandler);
 subRouter.use(JiraAdminEnforceMiddleware);
 
 subRouter.post("/analytics-proxy", AnalyticsProxyHandler);
-
-subRouter.use("/oauth", OAuthRouter);
 
 subRouter.use("/installation", GitHubAppsRoute);
 

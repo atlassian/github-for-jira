@@ -6,6 +6,7 @@ export interface SubscriptionDeferredInstallPayload {
 	installationIdPk: number,
 	gitHubServerAppIdPk?: number,
 	gitHubInstallationId: number,
+	jiraHost?: string,
 	orgName: string
 }
 
