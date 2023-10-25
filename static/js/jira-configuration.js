@@ -16,15 +16,7 @@ function openChildWindow(url) {
 
 $(".add-organization-link").click(function(event) {
 	event.preventDefault();
-	if(document.body.dataset["useNewSpaExperience"] === "true") {
-		AP.navigator.go( "addonmodule", { moduleKey: "spa-index-page" });
-		return;
-	}
-	const queryParameter = $(this).data("gh-cloud") ? "?resetSession=true" : "?ghRedirect=to&resetSession=true";
-	AP.context.getToken(function(token) {
-		const child = openChildWindow("/session/github/configuration" + queryParameter);
-		child.window.jwt = token;
-	});
+	AP.navigator.go( "addonmodule", { moduleKey: "spa-index-page" });
 });
 
 // TODO: passing JWT in query param is a security risk, we must either populate a session (if not already) or use cookies
@@ -51,18 +43,7 @@ $(".add-enterprise-link").click(function(event) {
 
 $(".select-github-product-link").click(function(event) {
 	event.preventDefault();
-
-	if(document.body.dataset["useNewSpaExperience"] === "true") {
-		AP.navigator.go( "addonmodule", { moduleKey: "spa-index-page" });
-		return;
-	}
-
-	AP.navigator.go(
-		'addonmodule',
-		{
-			moduleKey: "github-select-product-page"
-		}
-	);
+	AP.navigator.go( "addonmodule", { moduleKey: "spa-index-page" });
 });
 
 $(".configure-connection-link").click(function(event) {
