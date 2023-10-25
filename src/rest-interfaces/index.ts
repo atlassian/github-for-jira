@@ -40,6 +40,8 @@ export type OrganizationsResponse = {
 	orgs: Array<GitHubInstallationType>;
 }
 
+export type CheckAdminOrgSource = "ErrorInOrgList" | "DeferredInstallationModal";
+
 export type GitHubInstallationType = {
 	account: GitHubInstallationAccountType;
 	app_id: number;
