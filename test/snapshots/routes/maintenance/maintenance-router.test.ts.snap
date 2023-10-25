@@ -181,10 +181,19 @@ exports[`Maintenance Frontend Atlassian Connect should return Atlassian Connect 
         "value": "GitHub Actions",
       },
     },
-    "jiraDevelopmentTool": {
-      "actions": {
-        "createBranch": {
+    "jiraDevelopmentTool": Object {
+      "actions": Object {
+        "associateRepository": Object {
+          "templateUrl": "https://test-github-app-instance.com/jira/workspaces/repositories/associate",
+        },
+        "createBranch": Object {
           "templateUrl": "https://test-github-app-instance.com/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&jwt={jwt}&addonkey=com.github.integration.test-atlassian-instance",
+        },
+        "searchConnectedWorkspaces": Object {
+          "templateUrl": "https://test-github-app-instance.com/jira/workspaces/search",
+        },
+        "searchRepositories": Object {
+          "templateUrl": "https://test-github-app-instance.com/jira/workspaces/repositories/search",
         },
       },
       "application": {
