@@ -148,7 +148,7 @@ const DeferredInstallation = () => {
 	const getOrgOwnerUrl = async () => {
 		// TODO: Need to get this URL for Enterprise users too, this is only for Cloud users
 		popup(`https://github.com/orgs/${orgName}/people?query=role%3Aowner`);
-		analyticsClient.sendUIEvent({ actionSubject: "checkOrgAdmin", action: "clicked"}, { type: "cloud", source: "DeferredInstallationFailedScreen" }, requestId);
+		analyticsClient.sendUIEvent({ actionSubject: "checkOrgAdmin", action: "clicked"}, { type: "cloud", from: "DeferredInstallationFailedScreen" }, requestId);
 	};
 	// TODO: orgname is not appearing for all the cases, need to check
 	return (

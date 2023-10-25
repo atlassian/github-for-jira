@@ -70,11 +70,11 @@ export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl, onPopupBlocked, defer
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [deferredInstallationUrl, setDeferredInstallationUrl] = useState<string | null>(null);
 
-	const getOrgOwnerUrl = async (source: CheckAdminOrgSource) => {
+	const getOrgOwnerUrl = async (from: CheckAdminOrgSource) => {
 		// TODO: Need to get this URL for Enterprise users too, this is only for Cloud users
 		const win = popup(adminOrgsUrl);
 		if (win === null) onPopupBlocked();
-		analyticsClient.sendUIEvent({ actionSubject: "checkOrgAdmin", action: "clicked"}, { type: "cloud", source });
+		analyticsClient.sendUIEvent({ actionSubject: "checkOrgAdmin", action: "clicked"}, { type: "cloud", from });
 	};
 
 	const getDeferredInstallationUrl = async () => {
