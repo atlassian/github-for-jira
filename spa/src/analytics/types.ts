@@ -5,8 +5,10 @@ type UIEventActionSubject =
 	| "connectOrganisation" | "installToNewOrganisation"
 	| "checkBackfillStatus"
 	| "dropExperienceViaBackButton"
-	| "checkOrgAdmin"
-	| "learnAboutIssueLinking" | "learnAboutDevelopmentWork";
+	| "learnAboutIssueLinking" | "learnAboutDevelopmentWork"
+	| "checkOrgAdmin" | "generateDeferredInstallationLink"
+	| "closedDeferredInstallationModal" | "copiedDeferredInstallationUrl"
+	| "signInAndConnectThroughDeferredInstallationStartScreen";
 
 export type UIEventProps = {
 	actionSubject: UIEventActionSubject,
@@ -17,7 +19,11 @@ export type ScreenNames =
 	"StartConnectionEntryScreen"
   | "AuthorisationScreen"
 	| "OrganisationConnectionScreen"
-	| "SuccessfulConnectedScreen";
+	| "SuccessfulConnectedScreen"
+	| "DeferredInstallationModal"
+	| "DeferredInstallationStartScreen"
+	| "DeferredInstallationFailedScreen"
+	| "DeferredInstallationSuccessScreen";
 
 type TrackEventActionSubject =
 	"finishOAuthFlow"

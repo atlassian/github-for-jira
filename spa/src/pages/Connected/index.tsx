@@ -5,7 +5,7 @@ import { Wrapper } from "../../common/Wrapper";
 import { token, useThemeObserver } from "@atlaskit/tokens";
 import Heading from "@atlaskit/heading";
 import Button from "@atlaskit/button";
-import analyticsClient, { useEffectScreenEvent } from "../../analytics";
+import analyticsClient from "../../analytics";
 import { useNavigate } from "react-router-dom";
 import { enableBackfillStatusPage } from "./../../feature-flags";
 
@@ -55,7 +55,11 @@ const subtleBtnStyle = css`
 const Connected = () => {
 	const location = useLocation();
 	const { orgLogin, connectedByDeferral } = location.state;
-	useEffectScreenEvent("SuccessfulConnectedScreen");
+	if (connectedByDeferral) {
+		analyticsClient.sendScreenEvent({ name: "DeferredInstallationSuccessScreen" }, { type: "cloud" });
+	} else {
+		analyticsClient.sendScreenEvent({ name: "SuccessfulConnectedScreen" }, { type: "cloud" });
+	}
 
 	const navigate = useNavigate();
 	const { colorMode } = useThemeObserver();
@@ -77,6 +81,8 @@ const Connected = () => {
 		analyticsClient.sendUIEvent({
 			actionSubject: "learnAboutIssueLinking",
 			action: "clicked",
+		}, {
+			source : connectedByDeferral ? "DeferredInstallationSuccessScreen": "SuccessfulConnectedScreen"
 		});
 		window.open(
 			"https://support.atlassian.com/jira-software-cloud/docs/reference-issues-in-your-development-work/",

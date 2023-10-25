@@ -4,7 +4,7 @@ import { css } from "@emotion/react";
 import { token } from "@atlaskit/tokens";
 import analyticsClient from "../../../analytics";
 import { popup } from "../../../utils";
-import { DeferredInstallationUrlParams } from "rest-interfaces";
+import { CheckAdminOrgSource, DeferredInstallationUrlParams } from "rest-interfaces";
 import { HostUrlType } from "../../../utils/modifyError";
 import Api from "../../../api";
 import Modal, {
@@ -70,15 +70,16 @@ export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl, onPopupBlocked, defer
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [deferredInstallationUrl, setDeferredInstallationUrl] = useState<string | null>(null);
 
-	const getOrgOwnerUrl = async () => {
+	const getOrgOwnerUrl = async (source: CheckAdminOrgSource) => {
 		// TODO: Need to get this URL for Enterprise users too, this is only for Cloud users
 		const win = popup(adminOrgsUrl);
 		if (win === null) onPopupBlocked();
-		analyticsClient.sendUIEvent({ actionSubject: "checkOrgAdmin", action: "clicked"}, { type: "cloud" });
+		analyticsClient.sendUIEvent({ actionSubject: "checkOrgAdmin", action: "clicked"}, { type: "cloud", source });
 	};
 
 	const getDeferredInstallationUrl = async () => {
 		if (!isOpen) {
+			analyticsClient.sendScreenEvent({ name: "DeferredInstallationModal" }, { type: "cloud" });
 			try {
 				setIsOpen(true);
 				setIsLoading(true);
@@ -87,7 +88,7 @@ export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl, onPopupBlocked, defer
 					gitHubOrgName: deferredInstallationOrgDetails?.gitHubOrgName
 				});
 				setDeferredInstallationUrl(response.data.deferredInstallUrl);
-				// TODO: Create events in amplitude
+				analyticsClient.sendUIEvent({ actionSubject: "generateDeferredInstallationLink", action: "clicked"}, { type: "cloud" });
 			} catch(e) {
 				// TODO: handle this error in UI/Modal ?
 				console.error("Could not fetch the deferred installation url: ", e);
@@ -100,13 +101,14 @@ export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl, onPopupBlocked, defer
 	const closeModal = () => {
 		setIsOpen(false);
 		setDeferredInstallationUrl(null);
+		analyticsClient.sendUIEvent({ actionSubject: "closedDeferredInstallationModal", action: "clicked"}, { type: "cloud" });
 	};
 	return (
 		<div css={paragraphStyle}>
 			You’re not an owner for this organization. To connect:
 			<ol css={olStyle}>
 				<li>
-					<a css={linkStyle} onClick={getOrgOwnerUrl}>
+					<a css={linkStyle} onClick={() => getOrgOwnerUrl("ErrorInOrgList")}>
 						Find an organization owner.
 					</a>
 				</li>
@@ -131,7 +133,7 @@ export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl, onPopupBlocked, defer
 										Copy the message and URL below, and send it to an
 										organization owner to approve.
 										<br />
-										<a css={linkStyle} onClick={getOrgOwnerUrl}>
+										<a css={linkStyle} onClick={() => getOrgOwnerUrl("DeferredInstallationModal")}>
 											Find an organization owner
 										</a>
 									</div>

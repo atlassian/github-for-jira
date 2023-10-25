@@ -51,7 +51,6 @@ const DeferredInstallation = () => {
 	const [searchParams] = useSearchParams();
 	const requestId = searchParams.get("requestId") || "";
 	const navigate = useNavigate();
-	const username = OAuthManager.getUserDetails().username || "";
 
 	const [isPopupBlocked, setPopupBlocked] = useState<boolean>(false);
 	const onPopupBlocked = () => setPopupBlocked(true);
@@ -79,6 +78,7 @@ const DeferredInstallation = () => {
 			} else {
 				setJiraHost(extractedPayload.jiraHost as string);
 				setOrgName(extractedPayload.orgName);
+				analyticsClient.sendScreenEvent({ name: "DeferredInstallationStartScreen" }, { type: "cloud" });
 			}
 		};
 		extractFromRequestId();
@@ -102,7 +102,7 @@ const DeferredInstallation = () => {
 		};
 	}, []);
 
-	// Set the token/username after authentication
+	// Start the deferral connection if authenticated
 	useEffect(() => {
 		const connectDeferredOrgOrg = async () => {
 			if (requestId) {
@@ -110,9 +110,9 @@ const DeferredInstallation = () => {
 				const status: boolean | AxiosError = await DeferralManager.connectOrgByDeferral(requestId);
 				if (status instanceof AxiosError) {
 					setForbidden(true);
+					analyticsClient.sendScreenEvent({ name: "DeferredInstallationFailedScreen" }, { type: "cloud" });
 				}
 				else if (status) {
-					console.log("Successfully connected now navigate");
 					setForbidden(false);
 					navigate("/spa/connected",{ state: { orgLogin: orgName, connectedByDeferral: true } });
 				} else {
@@ -130,15 +130,15 @@ const DeferredInstallation = () => {
 	const authenticate = async () => {
 		setIsLoading(true);
 		try {
+			analyticsClient.sendUIEvent({ actionSubject: "signInAndConnectThroughDeferredInstallationStartScreen", action: "clicked"}, { type: "cloud" });
 			await OAuthManager.authenticateInGitHub({
 				onWinClosed: () => {
 					setIsLoading(false);
-					console.log("Successfully authenticated", username);
 				}, onPopupBlocked
 			});
 		} catch (e) {
 			// TODO: print alert error
-			console.log("check error", e);
+			console.error("check error", e);
 		} finally {
 			setIsLoading(false);
 		}
@@ -147,7 +147,7 @@ const DeferredInstallation = () => {
 	const getOrgOwnerUrl = async () => {
 		// TODO: Need to get this URL for Enterprise users too, this is only for Cloud users
 		popup(`https://github.com/orgs/${orgName}/people?query=role%3Aowner`);
-		analyticsClient.sendUIEvent({ actionSubject: "checkOrgAdmin", action: "clicked"}, { type: "cloud" });
+		analyticsClient.sendUIEvent({ actionSubject: "checkOrgAdmin", action: "clicked"}, { type: "cloud", source: "DeferredInstallationFailedScreen" });
 	};
 	// TODO: orgname is not appearing for all the cases, need to check
 	return (
