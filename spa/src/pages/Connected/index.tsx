@@ -54,9 +54,9 @@ const subtleBtnStyle = css`
 `;
 const Connected = () => {
 	const location = useLocation();
-	const { orgLogin, connectedByDeferral } = location.state;
-	if (connectedByDeferral) {
-		analyticsClient.sendScreenEvent({ name: "DeferredInstallationSuccessScreen" }, { type: "cloud" });
+	const { orgLogin, requestId } = location.state;
+	if (requestId) {
+		analyticsClient.sendScreenEvent({ name: "DeferredInstallationSuccessScreen" }, { type: "cloud" }, requestId);
 	} else {
 		analyticsClient.sendScreenEvent({ name: "SuccessfulConnectedScreen" }, { type: "cloud" });
 	}
@@ -82,7 +82,7 @@ const Connected = () => {
 			actionSubject: "learnAboutIssueLinking",
 			action: "clicked",
 		}, {
-			source : connectedByDeferral ? "DeferredInstallationSuccessScreen": "SuccessfulConnectedScreen"
+			source : requestId ? "DeferredInstallationSuccessScreen": "SuccessfulConnectedScreen"
 		});
 		window.open(
 			"https://support.atlassian.com/jira-software-cloud/docs/reference-issues-in-your-development-work/",
@@ -119,7 +119,7 @@ const Connected = () => {
 							messages.
 						</div>
 						{
-							!connectedByDeferral && <Button
+							!requestId && <Button
 								css={[buttonStyle, subtleBtnStyle]}
 								appearance="subtle"
 								onClick={() => navigate("/spa/steps")}
@@ -137,7 +137,7 @@ const Connected = () => {
 					</div>
 				</div>
 				{
-					!connectedByDeferral && <Button
+					!requestId && <Button
 						css={[buttonStyle, subtleBtnStyle]}
 						appearance="subtle"
 						onClick={navigateToBackfillPage}
