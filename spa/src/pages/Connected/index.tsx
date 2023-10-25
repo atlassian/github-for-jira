@@ -82,8 +82,8 @@ const Connected = () => {
 			actionSubject: "learnAboutIssueLinking",
 			action: "clicked",
 		}, {
-			source : requestId ? "DeferredInstallationSuccessScreen": "SuccessfulConnectedScreen"
-		});
+			from : requestId ? "DeferredInstallationSuccessScreen": "SuccessfulConnectedScreen"
+		}, requestId);
 		window.open(
 			"https://support.atlassian.com/jira-software-cloud/docs/reference-issues-in-your-development-work/",
 			"_blank"
