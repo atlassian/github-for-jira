@@ -27,24 +27,32 @@ async function checkValidity(): Promise<boolean | AxiosError> {
 
 		return ret;
 
-	} catch (e) {
+	} catch (e: unknown) {
 		reportError(new Error("Fail checkValidity", { cause: e }), { path: "checkValidity" });
 		return e as AxiosError;
 	}
 }
 
-async function authenticateInGitHub(onWinClosed: () => void): Promise<void> {
+async function authenticateInGitHub({
+	onWinClosed,
+	onPopupBlocked
+}: {
+	onWinClosed: () => void,
+	onPopupBlocked: () => void
+}): Promise<void> {
 	const res = await Api.auth.generateOAuthUrl();
 	if (res.data.redirectUrl && res.data.state) {
 		oauthState = res.data.state;
 		const win = popup(res.data.redirectUrl);
-		if (win) {
+		if (win === null) {
+			onPopupBlocked();
+		} else {
 			const winCloseCheckHandler = setInterval(() => {
 				if (win.closed) {
 					clearInterval(winCloseCheckHandler);
 					try {
 						onWinClosed();
-					} catch (e) {
+					} catch (e: unknown) {
 						reportError(new Error("Fail authenticateInGitHub", { cause: e }), {
 							path: "authenticateInGitHub",
 							reason: "error in onWinClosed"
@@ -100,7 +108,7 @@ async function finishOAuthFlow(code: string, state: string): Promise<boolean | A
 			reportError({ message: "fail to acquire accessToken (empty)" }, { path: "finishOAuthFlow", });
 			return false;
 		}
-	} catch (e) {
+	} catch (e: unknown) {
 		reportError(new Error("Fail exchangeToken", { cause: e }), { path: "finishOAuthFlow" });
 		return e as AxiosError;
 	}

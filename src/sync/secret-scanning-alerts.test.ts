@@ -79,6 +79,44 @@ describe("sync/secret-scanning-alerts", () => {
 			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			await verifyMessageSent(data);
 		});
+
+		it("should handle secret scanning disabled error", async () => {
+			when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
+			githubNock
+				.get("/repos/integrations/test-repo-name/secret-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
+				.reply(404, { message: "Secret scanning is disabled on this repository" });
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			// No Jira Nock
+
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
+			await verifyMessageSent(data);
+		});
+
+		it("should handle 404 error", async () => {
+			when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
+			githubNock
+				.get("/repos/integrations/test-repo-name/secret-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
+				.reply(404);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			// No Jira Nock
+
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
+			await verifyMessageSent(data);
+		});
+		it("should handle 451 error", async () => {
+			when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
+			githubNock
+				.get("/repos/integrations/test-repo-name/secret-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
+				.reply(451, { message: "Not Found" });
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			// No Jira Nock
+
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
+			await verifyMessageSent(data);
+		});
 	});
 
 	describe("server", () => {
@@ -172,7 +210,7 @@ const expectedResponseCloudServer = (subscription: Subscription) => ({
 			"updateSequenceNumber": 12345678,
 			"containerId": "1",
 			"displayName": "GitHub Personal Access Token",
-			"description": "Secret scanning alert",
+			"description": "**Vulnerability:** Fix GitHub Personal Access Token\n\n**State:** Open\n\n**Secret type:** github_personal_access_token\n\nVisit the vulnerability’s [secret scanning alert page](https://github.com/test-owner/sample-repo/security/secret-scanning/12) in GitHub to learn more about the potential active secret and remediation steps.",
 			"url": "https://github.com/test-owner/sample-repo/security/secret-scanning/12",
 			"type": "sast",
 			"introducedDate": "2023-08-04T04:33:44Z",
@@ -205,7 +243,7 @@ const expectedResponseGHEServer = (subscription: Subscription) => ({
 			"updateSequenceNumber": 12345678,
 			"containerId": "6769746875626d79646f6d61696e636f6d-1",
 			"displayName": "GitHub Personal Access Token",
-			"description": "Secret scanning alert",
+			"description": "**Vulnerability:** Fix GitHub Personal Access Token\n\n**State:** Open\n\n**Secret type:** github_personal_access_token\n\nVisit the vulnerability’s [secret scanning alert page](https://github.com/test-owner/sample-repo/security/secret-scanning/12) in GitHub to learn more about the potential active secret and remediation steps.",
 			"url": "https://github.com/test-owner/sample-repo/security/secret-scanning/12",
 			"type": "sast",
 			"introducedDate": "2023-08-04T04:33:44Z",

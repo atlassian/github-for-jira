@@ -25,7 +25,7 @@ expect.extend({
 		}
 		return {
 			pass: false,
-			message: () => `Expected promise to resolve, however it rejected with error: \n${error.stack}\n`
+			message: () => `Expected promise to resolve, however it rejected with error: \n${error.stack ?? "Missing Stack"}\n`
 		};
 	},
 	toReject: async (promise: Promise<unknown>) => {
@@ -42,7 +42,7 @@ expect.extend({
 				.map(result => result.value)
 			);
 			return { pass: true, message: () => `\n\nExpected mock calls to not resolve.\n\n` };
-		} catch (e) {
+		} catch (e: unknown) {
 			return {
 				pass: false,
 				message: () => `\n\nExpected mock calls to resolve.\n\n`

@@ -9,10 +9,16 @@ import { JiraCloudIDRouter } from "./routes/jira";
 import { RestErrorHandler } from "./middleware/error";
 import { JiraAdminEnforceMiddleware } from "./middleware/jira-admin/jira-admin-check";
 import { AnalyticsProxyHandler } from "./routes/analytics-proxy";
+import { SubscriptionsRouter } from "./routes/subscriptions";
 
 export const RestRouter = Router({ mergeParams: true });
 
 const subRouter = Router({ mergeParams: true });
+
+/**
+ * Separate route which returns the list of both cloud and server subscriptions
+ */
+RestRouter.use("/subscriptions", JwtHandler, JiraAdminEnforceMiddleware, SubscriptionsRouter);
 
 /**
  * For cloud flow, the path will be `/rest/app/cloud/XXX`,

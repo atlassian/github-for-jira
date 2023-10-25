@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { waitUntil } from "test/utils/wait-until";
@@ -109,35 +108,38 @@ describe("Branch Webhook", () => {
 
 			mockSystemTime(12345678);
 
-			await expect(app.receive(branchBasic as any)).toResolve();
+			await expect(app.receive(branchBasic)).toResolve();
 
-			await waitUntil(async () => {
+			await waitUntil(() => {
 				expect(githubNock).toBeDone();
 				expect(jiraNock).toBeDone();
+				return Promise.resolve();
 			});
 		});
 
 		it("should not update Jira issue if there are no issue Keys in the branch name", async () => {
 			const getLastCommit = jest.fn();
 
-			await expect(app.receive(branchNoIssues as any)).toResolve();
+			await expect(app.receive(branchNoIssues)).toResolve();
 			expect(getLastCommit).not.toBeCalled();
 
-			await waitUntil(async () => {
+			await waitUntil(() => {
 				expect(githubNock).toBeDone();
 				expect(jiraNock).toBeDone();
+				return Promise.resolve();
 			});
 		});
 
 		it("should exit early if ref_type is not a branch", async () => {
 			const parseSmartCommit = jest.fn();
 
-			await expect(app.receive(branchInvalidRef as any)).toResolve();
+			await expect(app.receive(branchInvalidRef)).toResolve();
 			expect(parseSmartCommit).not.toBeCalled();
 
-			await waitUntil(async () => {
+			await waitUntil(() => {
 				expect(githubNock).toBeDone();
 				expect(jiraNock).toBeDone();
+				return Promise.resolve();
 			});
 		});
 	});
@@ -153,11 +155,12 @@ describe("Branch Webhook", () => {
 
 			mockSystemTime(12345678);
 
-			await expect(app.receive(branchDelete as any)).toResolve();
+			await expect(app.receive(branchDelete)).toResolve();
 
-			await waitUntil(async () => {
+			await waitUntil(() => {
 				expect(githubNock).toBeDone();
 				expect(jiraNock).toBeDone();
+				return Promise.resolve();
 			});
 		});
 	});

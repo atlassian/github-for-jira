@@ -9,7 +9,7 @@ module.exports = {
 	 * @param testPath Path of the test file being tested
 	 * @param snapshotExtension The extension for snapshots (.snap usually)
 	 */
-	resolveSnapshotPath:(testPath, snapshotExtension) =>
+	resolveSnapshotPath:(testPath: string, snapshotExtension: string) =>
 		path.join(snapshotDirPath, testPath.replace(srcPath, "") + snapshotExtension),
 
 	/**

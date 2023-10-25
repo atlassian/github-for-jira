@@ -81,7 +81,7 @@ describe("Jira axios instance", () => {
 		let error;
 		try {
 			await getAxiosInstance(jiraHost, "secret", getLogger("test")).post("/foo/bar", requestPayload);
-		} catch (e) {
+		} catch (e: unknown) {
 			error = e;
 		}
 
@@ -96,7 +96,7 @@ describe("Jira axios instance", () => {
 		let error;
 		try {
 			await getAxiosInstance(jiraHost, "secret", getLogger("test")).post("/foo/bar", requestPayload);
-		} catch (e) {
+		} catch (e: unknown) {
 			error = e;
 		}
 
@@ -112,7 +112,7 @@ describe("Jira axios instance", () => {
 		let error;
 		try {
 			await getAxiosInstance(jiraHost, "secret", getLogger("test")).post("/foo/bar", requestPayload);
-		} catch (e) {
+		} catch (e: unknown) {
 			error = e;
 		}
 

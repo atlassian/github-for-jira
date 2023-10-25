@@ -4,7 +4,7 @@ import { RestApiError } from "config/errors";
 import * as GH from "~/src/github/client/github-client-errors";
 
 /*eslint-disable @typescript-eslint/no-explicit-any */
-export const RestErrorHandler = (err: any, req: Request, res: Response<ApiError>, _next: NextFunction) => {
+export const RestErrorHandler = (err: Error, req: Request, res: Response<ApiError>, _next: NextFunction) => {
 
 	logErrorOrWarning(err, req);
 
@@ -31,9 +31,9 @@ export const RestErrorHandler = (err: any, req: Request, res: Response<ApiError>
 
 };
 
-const logErrorOrWarning = (err: any, req: Request) => {
+const logErrorOrWarning = (err: Error, req: Request) => {
 
-	const httpStatus = parseInt(err.status) || parseInt(err.httpStatus) || 500;
+	const httpStatus = parseInt(err["status"] as string ?? "") || parseInt(err["httpStatus"] as string ?? "") || 500;
 	const extraInfo = {
 		httpStatus,
 		method: req.method,

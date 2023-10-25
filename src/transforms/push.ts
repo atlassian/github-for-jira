@@ -4,7 +4,7 @@ import { getJiraClient } from "../jira/client/jira-client";
 import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { JiraCommit, JiraCommitFile, JiraCommitFileChangeTypeEnum } from "interfaces/jira";
-import { isBlocked } from "config/feature-flags";
+import { isBlocked, shouldSendAll } from "config/feature-flags";
 import { sqsQueues } from "../sqs/queues";
 import { GitHubAppConfig, PushQueueMessagePayload } from "~/src/sqs/sqs.types";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
@@ -32,7 +32,7 @@ const mapFile = (
 		unchanged: JiraCommitFileChangeTypeEnum.UNKNOWN
 	};
 
-	const fallbackUrl = `https://github.com/${repoOwner}/${repoName}/blob/${commitHash}/${githubFile.filename}`;
+	const fallbackUrl = `https://github.com/${repoOwner ?? "undefined"}/${repoName}/blob/${commitHash}/${githubFile.filename}`;
 
 	if (isEmpty(githubFile.filename)) {
 		return undefined;
@@ -47,7 +47,7 @@ const mapFile = (
 	};
 };
 
-export const createJobData = (payload: GitHubPushData, jiraHost: string, gitHubAppConfig?: GitHubAppConfig): PushQueueMessagePayload => {
+export const createJobData = async (payload: GitHubPushData, jiraHost: string, logger: Logger, gitHubAppConfig?: GitHubAppConfig): Promise<PushQueueMessagePayload> => {
 	// Store only necessary repository data in the queue
 	const { id, name, full_name, html_url, owner } = payload.repository;
 
@@ -60,9 +60,10 @@ export const createJobData = (payload: GitHubPushData, jiraHost: string, gitHubA
 	};
 
 	const shas: { id: string, issueKeys: string[] }[] = [];
+	const alwaysSend = await shouldSendAll("commits", jiraHost, logger);
 	for (const commit of payload.commits) {
 		const issueKeys = jiraIssueKeyParser(commit.message);
-		if (!isEmpty(issueKeys)) {
+		if (!isEmpty(issueKeys) || alwaysSend) {
 			// Only store the sha and issue keys. All other data will be requested from GitHub as part of the job
 			// Creates an array of shas for the job processor to work on
 			shas.push({ id: commit.id, issueKeys });
@@ -80,8 +81,8 @@ export const createJobData = (payload: GitHubPushData, jiraHost: string, gitHubA
 	};
 };
 
-export const enqueuePush = async (payload: GitHubPushData, jiraHost: string, gitHubAppConfig?: GitHubAppConfig) =>
-	await sqsQueues.push.sendMessage(createJobData(payload, jiraHost, gitHubAppConfig));
+export const enqueuePush = async (payload: GitHubPushData, jiraHost: string, logger: Logger, gitHubAppConfig?: GitHubAppConfig) =>
+	await sqsQueues.push.sendMessage(await createJobData(payload, jiraHost, logger, gitHubAppConfig), 0, logger);
 
 export const processPush = async (github: GitHubInstallationClient, payload: PushQueueMessagePayload, rootLogger: Logger) => {
 	const {
@@ -137,57 +138,60 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		}
 
 		const recentShas = shas.slice(0, MAX_COMMIT_HISTORY);
-		const commits: JiraCommit[] = await Promise.all(
-			recentShas.map(async (sha): Promise<JiraCommit> => {
-				log.info("Calling GitHub to fetch commit info " + sha.id);
-				try {
-					const {
-						data: {
-							files,
-							author,
-							parents,
-							sha: commitSha,
-							html_url,
-							commit: {
-								author: githubCommitAuthor,
-								message
-							}
-						}
-					} = await github.getCommit(owner.login, repo, sha.id);
+		const commitPromises: Promise<JiraCommit | null>[] = recentShas.map(async (sha): Promise<JiraCommit | null> => {
+			log.info("Calling GitHub to fetch commit info " + sha.id);
+			try {
+				const commitResponse = await github.getCommit(owner.login, repo, sha.id);
+				const {
+					files,
+					author: author = {},
+					parents,
+					sha: commitSha,
+					html_url
+				} = commitResponse.data;
 
-					// Jira only accepts a max of 10 files for each commit, so don't send all of them
-					const filesToSend = files.slice(0, 10) as GithubCommitFile[];
-
-					// merge commits will have 2 or more parents, depending how many are in the sequence
-					const isMergeCommit = parents?.length > 1;
-
-					log.info("GitHub call succeeded");
-					return {
-						hash: commitSha,
-						message: limitCommitMessage(message),
-						author: getJiraAuthor(author, githubCommitAuthor),
-						authorTimestamp: githubCommitAuthor.date,
-						displayId: commitSha.substring(0, 6),
-						fileCount: files.length, // Send the total count for all files
-						files: compact(filesToSend.map((file) => mapFile(file, repo, sha.id, owner.name))),
-						id: commitSha,
-						issueKeys: sha.issueKeys,
-						url: html_url,
-						updateSequenceId: Date.now(),
-						flags: isMergeCommit ? ["MERGE_COMMIT"] : undefined
-					};
-				} catch (err) {
-					log.warn({ err }, "Failed to fetch data from GitHub");
-					throw err;
+				if (!commitSha) {
+					return null;
 				}
-			})
-		);
+
+				const githubCommitAuthor = commitResponse.data.commit?.author;
+				const message = commitResponse.data.commit?.message;
+
+				// Jira only accepts a max of 10 files for each commit, so don't send all of them
+				const filesToSend = Array.isArray(files) ? files.slice(0, 10) as GithubCommitFile[] : [];
+
+				// merge commits will have 2 or more parents, depending on how many are in the sequence
+				const isMergeCommit = parents?.length > 1;
+
+				log.info("GitHub call succeeded");
+				return {
+					hash: commitSha,
+					message: limitCommitMessage(message),
+					author: getJiraAuthor(author, githubCommitAuthor),
+					authorTimestamp: githubCommitAuthor?.date,
+					displayId: commitSha.substring(0, 6),
+					fileCount: files.length, // Send the total count for all files
+					files: compact(filesToSend.map((file) => mapFile(file, repo, sha.id, owner.name))),
+					id: commitSha,
+					issueKeys: sha.issueKeys,
+					url: html_url,
+					updateSequenceId: Date.now(),
+					flags: isMergeCommit ? ["MERGE_COMMIT"] : undefined
+				};
+			} catch (err: unknown) {
+				log.warn({ err }, "Failed to fetch data from GitHub");
+				throw err;
+			}
+		});
+
+		const commitResults: (JiraCommit | null)[] = await Promise.all(commitPromises);
+
+		const commits: JiraCommit[] = commitResults.filter(commit => commit !== null) as JiraCommit[];
 
 		// Jira accepts up to 400 commits per request
 		// break the array up into chunks of 400
 		const chunks: JiraCommit[][] = [];
-
-		while (commits.length) {
+		while (commits?.length) {
 			chunks.push(commits.splice(0, 400));
 		}
 
@@ -208,13 +212,14 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 					jiraResponse?.status,
 					gitHubAppId
 				);
-			} catch (err) {
+			} catch (err: unknown) {
 				log.warn({ err }, "Failed to send data to Jira");
 				throw err;
 			}
 		}
 		log.info("Push has succeeded");
-	} catch (err) {
+	} catch (err: unknown) {
 		log.warn({ err }, "Push has failed");
+		throw err;
 	}
 };

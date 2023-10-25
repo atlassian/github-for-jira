@@ -43,7 +43,7 @@ export const GithubBranchesGet = async (req: Request, res: Response): Promise<vo
 			})),
 			defaultBranch: sanitizeHtml(repository.data.default_branch)
 		});
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.error({ err }, "Error while fetching branches");
 		res.sendStatus(500);
 	}

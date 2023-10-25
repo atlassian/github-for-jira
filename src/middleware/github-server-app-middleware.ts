@@ -3,9 +3,10 @@ import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
 import { envVars } from "config/env";
 import { GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
+import { BaseLocals } from "../rest/routes";
 
-export const GithubServerAppMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const { jiraHost } = res.locals;
+export const GithubServerAppMiddleware = async (req: Request, res: Response<any, BaseLocals>, next: NextFunction): Promise<void> => {
+	const jiraHost = res.locals.jiraHost;
 	const { uuid } = req.params;
 
 	req.addLogFields({ uuid, jiraHost });

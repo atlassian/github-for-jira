@@ -6,7 +6,7 @@ import { getNodeEnv } from "utils/is-node-env";
 import { EnvironmentEnum, MicrosEnvTypeEnum } from "interfaces/common";
 import { envCheck } from "utils/env-utils";
 
-const nodeEnv: EnvironmentEnum = EnvironmentEnum[getNodeEnv()];
+const nodeEnv: EnvironmentEnum = getNodeEnv();
 
 // Load environment files
 [
@@ -15,7 +15,7 @@ const nodeEnv: EnvironmentEnum = EnvironmentEnum[getNodeEnv()];
 	`.env.${nodeEnv}`,
 	".env"
 ].map((env) => expand(config({
-	path: path.resolve(__dirname, "../..", env)
+	path: path.resolve(process.cwd(), env)
 })));
 
 type Transforms<T, K extends keyof T = keyof T> = {
@@ -23,9 +23,12 @@ type Transforms<T, K extends keyof T = keyof T> = {
 };
 
 const transforms: Transforms<EnvVars> = {
-	MICROS_ENV: (value?: string) => EnvironmentEnum[value || EnvironmentEnum.development],
+	MICROS_ENV: (value?: string) =>  EnvironmentEnum[value || ""] as EnvironmentEnum || EnvironmentEnum.development,
 	MICROS_GROUP: (value?: string) => value || "",
 	NODE_ENV: () => nodeEnv,
+	S3_DUMPS_BUCKET_NAME: (value?: string) => value ?? "",
+	S3_DUMPS_BUCKET_PATH: (value?: string) => value ?? "",
+	S3_DUMPS_BUCKET_REGION: (value?: string) => value ?? "",
 	PROXY: () => {
 		const proxyHost = process.env.EXTERNAL_ONLY_PROXY_HOST;
 		const proxyPort = process.env.EXTERNAL_ONLY_PROXY_PORT;
@@ -156,4 +159,8 @@ export interface EnvVars {
 	MICROS_PLATFORM_STATSD_PORT: string;
 
 	JIRA_TEST_SITES: string;
+
+	S3_DUMPS_BUCKET_NAME: string;
+	S3_DUMPS_BUCKET_PATH: string;
+	S3_DUMPS_BUCKET_REGION: string;
 }

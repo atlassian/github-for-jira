@@ -14,7 +14,7 @@ interface Workspace {
 }
 
 export const DEFAULT_AVATAR =
-	"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png;";
+	"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png";
 
 const omitRepoNameFromUrl = (repoUrl: string, repoName: string): string => {
 	if (repoUrl.endsWith(repoName)) {
@@ -42,7 +42,7 @@ const transformSubscriptions = async (
 						url: omitRepoNameFromUrl(repoUrl, repoName),
 						avatarUrl: avatarUrl || DEFAULT_AVATAR
 					};
-				} catch (error) {
+				} catch (error: unknown) {
 					logger.error(e);
 					return undefined;
 				}

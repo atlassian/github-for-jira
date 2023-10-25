@@ -33,7 +33,7 @@ export const deploymentWebhookHandler = async (context: WebhookContext, jiraClie
 		webhookReceived: Date.now(),
 		webhookId: context.id,
 		gitHubAppConfig: context.gitHubAppConfig
-	});
+	}, 0, context.log);
 };
 
 export const processDeployment = async (
@@ -127,7 +127,7 @@ const tryCacheSuccessfulDeploymentInfo = async (
 		}, logger);
 		statsd.increment(metricDeploymentCache.created, tags, info);
 		logger.info("Saved deployment information to dynamodb");
-	} catch (e) {
+	} catch (e: unknown) {
 		statsd.increment(metricDeploymentCache.failed, { failType: "persist", ...tags }, info);
 		logger.error({ err: e }, "Error saving deployment information to dynamodb");
 	}

@@ -39,7 +39,7 @@ const estimateNumberOfSubtasks = async (subscription: Subscription, logger: Logg
 
 		logger.info({ nSubTasks, rateLimitData }, `Using subtasks: ${nSubTasks}`);
 		return nSubTasks;
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.warn({ err }, "Cannot determine rate limit, return only main task");
 		return 0;
 	}
@@ -96,10 +96,8 @@ const fetchPendingRepoSyncStates = (subscription: Subscription, tasks: TaskType[
 	// that might be changed may result in a erroneous flicking between being the main task and a subtask, thus
 	// slowing down the sync (when it is main, exponential retry is used; when it becomes subtask, other main task resets
 	// retry counter)
-	RepoSyncState.findAllFromSubscription(subscription, {
-		order: [["id", "DESC"]],
-		where: getLookupPendingConditionForTasks(tasks),
-		limit
+	RepoSyncState.findAllFromSubscription(subscription, limit, 0, [["id", "DESC"]], {
+		where: getLookupPendingConditionForTasks(tasks)
 	});
 
 /**

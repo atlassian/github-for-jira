@@ -1,4 +1,4 @@
-import nock, { removeInterceptor, cleanAll } from "nock";
+import nock, { cleanAll, removeInterceptor } from "nock";
 import { createJobData } from "../transforms/push";
 import { getLogger } from "config/logger";
 import { waitUntil } from "test/utils/wait-until";
@@ -91,10 +91,10 @@ const createJiraPayloadNoUsername = (transofmedRepoId: string) => {
 describe("Push Webhook", () => {
 
 	describe("cloud",  () => {
-
-		const createMessageProcessingContext = (payload: any): SQSMessageContext<PushQueueMessagePayload> => ({
-			payload: createJobData(updateInstallationId(payload), jiraHost),
-			log: getLogger("test"),
+		const logger = getLogger("test");
+		const createMessageProcessingContext = async (payload: GitHubPushData): Promise<SQSMessageContext<PushQueueMessagePayload>> => ({
+			payload: await createJobData(updateInstallationId(payload), jiraHost, logger),
+			log: logger,
 			message: {} as Message,
 			receiveCount: 1,
 			lastAttempt: false
@@ -118,8 +118,20 @@ describe("Push Webhook", () => {
 					.reply(200, commitNoUsername);
 
 				jiraNock.post("/rest/devinfo/0.10/bulk", createJiraPayloadNoUsername("test-repo-id")).reply(200);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+				await expect(pushQueueMessageHandler(await createMessageProcessingContext(pushNoUsername.payload as any))).toResolve();
+			});
 
-				await expect(pushQueueMessageHandler(createMessageProcessingContext(pushNoUsername.payload))).toResolve();
+			it("should throw an error when GitHub request fails", async () => {
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+				githubNock
+					.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
+					.reply(403, {});
+
+				await expect(async () => {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+					await pushQueueMessageHandler(await createMessageProcessingContext(pushNoUsername.payload as any));
+				}).rejects.toThrow("Error executing Axios Request: Request failed with status code 403");
 			});
 
 			it("should only send 10 files if push contains more than 10 files changed", async () => {
@@ -231,7 +243,8 @@ describe("Push Webhook", () => {
 					}
 				}).reply(200);
 
-				await expect(pushQueueMessageHandler(createMessageProcessingContext(pushMultiple.payload))).toResolve();
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+				await expect(pushQueueMessageHandler(await createMessageProcessingContext(pushMultiple.payload as any))).toResolve();
 			});
 
 			it("should only files with valid file paths (not empty or undefined)", async () => {
@@ -287,7 +300,8 @@ describe("Push Webhook", () => {
 					}
 				}).reply(200);
 
-				await expect(pushQueueMessageHandler(createMessageProcessingContext(pushMultiple.payload))).toResolve();
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+				await expect(pushQueueMessageHandler(await createMessageProcessingContext(pushMultiple.payload as any))).toResolve();
 			});
 
 			it("should truncate long file paths to 1024", async () => {
@@ -343,14 +357,15 @@ describe("Push Webhook", () => {
 					}
 				}).reply(200);
 
-				await expect(pushQueueMessageHandler(createMessageProcessingContext(pushMultiple.payload))).toResolve();
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+				await expect(pushQueueMessageHandler(await createMessageProcessingContext(pushMultiple.payload as any))).toResolve();
 			});
 
 			it("should not run a command without a Jira issue", async () => {
 				const interceptor = jiraNock.post(/.*/);
 				const scope = interceptor.reply(200);
 
-				await expect(app.receive(pushNoIssues as any)).toResolve();
+				await expect(app.receive(pushNoIssues)).toResolve();
 				expect(scope).not.toBeDone();
 				removeInterceptor(interceptor);
 			});
@@ -360,6 +375,7 @@ describe("Push Webhook", () => {
 				jiraNock.post(/.*/).reply(200);
 				githubNock.get(/.*/).reply(200);
 
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 				await expect(app.receive(pushNoIssuekeyCommits as any)).toResolve();
 				// Since no issues keys are found, there should be no calls to github's or jira's API
 				expect(nock).not.toBeDone();
@@ -427,7 +443,8 @@ describe("Push Webhook", () => {
 					properties: { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID }
 				}).reply(200);
 
-				await expect(pushQueueMessageHandler(createMessageProcessingContext(pushNoUsername.payload))).toResolve();
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+				await expect(pushQueueMessageHandler(await createMessageProcessingContext(pushNoUsername.payload as any))).toResolve();
 			});
 
 			it("should not add the MERGE_COMMIT flag when a commit is not a merge commit", async () => {
@@ -490,7 +507,8 @@ describe("Push Webhook", () => {
 					properties: { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID }
 				}).reply(200);
 
-				await expect(pushQueueMessageHandler(createMessageProcessingContext(pushNoUsername.payload))).toResolve();
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+				await expect(pushQueueMessageHandler(await createMessageProcessingContext(pushNoUsername.payload as any))).toResolve();
 			});
 		});
 
@@ -499,7 +517,7 @@ describe("Push Webhook", () => {
 				await sqsQueues.push.purgeQueue();
 			});
 
-			beforeEach(async () => {
+			beforeEach(() => {
 				mockSystemTime(12345678);
 				sqsQueues.push.start();
 			});
@@ -570,11 +588,12 @@ describe("Push Webhook", () => {
 				}).reply(200);
 
 				pushNoUsername.payload.installation.id = DatabaseStateCreator.GITHUB_INSTALLATION_ID;
-				await expect(app.receive(pushNoUsername as any)).toResolve();
+				await expect(app.receive(pushNoUsername)).toResolve();
 
-				await waitUntil(async () => {
+				await waitUntil(() => {
 					expect(githubNock).toBeDone();
 					expect(jiraNock).toBeDone();
+					return Promise.resolve();
 				});
 			});
 		});
@@ -584,8 +603,8 @@ describe("Push Webhook", () => {
 
 		let gitHubServerApp: GitHubServerApp;
 
-		const createMessageProcessingContext = (payload): SQSMessageContext<PushQueueMessagePayload> => ({
-			payload: createJobData(updateInstallationId(payload), jiraHost, {
+		const createMessageProcessingContext = async (payload: GitHubPushData): Promise<SQSMessageContext<PushQueueMessagePayload>> => ({
+			payload: await createJobData(updateInstallationId(payload), jiraHost, getLogger("test"), {
 				gitHubAppId: gitHubServerApp.id,
 				appId: gitHubServerApp.appId,
 				clientId: gitHubServerApp.gitHubClientId,
@@ -620,7 +639,8 @@ describe("Push Webhook", () => {
 
 				jiraNock.post("/rest/devinfo/0.10/bulk", createJiraPayloadNoUsername("6769746875626d79646f6d61696e636f6d-test-repo-id")).reply(200);
 
-				await expect(pushQueueMessageHandler(createMessageProcessingContext(pushNoUsername.payload))).toResolve();
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+				await expect(pushQueueMessageHandler(await createMessageProcessingContext(pushNoUsername.payload as any))).toResolve();
 			});
 
 		});

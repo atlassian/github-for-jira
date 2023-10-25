@@ -27,7 +27,11 @@ export const GENERIC_MESSAGE_WITH_LINK = <>
 export const modifyError = (
   error: AxiosError<ApiError> | SimpleError | ErrorWithErrorCode,
   context: { orgLogin?: string; },
-  callbacks: { onClearGitHubToken: (e: MouseEvent<HTMLAnchorElement>) => void; onRelogin: () => void }
+	callbacks: {
+		onClearGitHubToken: (e: MouseEvent<HTMLAnchorElement>) => void;
+		onRelogin: () => void;
+		onPopupBlocked: () => void;
+	}
 ): ErrorObjType => {
 	const errorObj = { type: "error" as ErrorType };
 	const warningObj = { type: "warning" as ErrorType };
@@ -55,7 +59,7 @@ export const modifyError = (
 			...warningObj,
 			errorCode,
 			message: <>
-				<ErrorForSSO accessUrl={accessUrl} resetCallback={callbacks.onRelogin} orgName={context.orgLogin} />
+				<ErrorForSSO accessUrl={accessUrl} resetCallback={callbacks.onRelogin} orgName={context.orgLogin} onPopupBlocked={callbacks.onPopupBlocked} />
 			</>
 		};
 	} else if (errorCode === "INSUFFICIENT_PERMISSION") {

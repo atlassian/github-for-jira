@@ -64,14 +64,14 @@ export const installationWebhookHandler = async (
 		const webhookReceived = context.webhookReceived;
 		webhookReceived && emitWebhookProcessedMetrics(
 			new Date(webhookReceived).getTime(),
-			`installation-${action}`,
+			`installation-${action ?? "undefined"}`,
 			jiraClient.baseURL,
 			logger,
 			jiraResponse?.status,
 			gitHubAppId
 		);
 
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.warn({ err }, "Failed to submit security workspace to Jira or trigger backfill");
 		const webhookReceived = context.webhookReceived;
 		webhookReceived && emitWebhookProcessedMetrics(
@@ -93,7 +93,7 @@ const hasSecurityPermissionsAndEvents = (permissions: InstallationEvent["install
 const setSecurityPermissionAccepted = async (subscription: Subscription, logger: Logger) => {
 	try {
 		await subscription.update({ isSecurityPermissionsAccepted: true });
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.warn({ err }, "Failed to set security permissions accepted field in Subscriptions");
 	}
 };

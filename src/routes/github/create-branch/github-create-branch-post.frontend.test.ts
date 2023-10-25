@@ -79,7 +79,7 @@ describe("github-create-branch-post.frontend", () => {
 			]);
 		});
 
-		const expandSelector = async (text) => {
+		const expandSelector = async (text: string) => {
 			const elementWithTextLocator = await page.locator(`span.select2-chosen:has-text("${text}")`);
 			const element = await elementWithTextLocator.elementHandle();
 
@@ -162,6 +162,8 @@ describe("github-create-branch-post.frontend", () => {
 
 				await page.click("#createBranchBtn");
 				await page.waitForSelector("text=Github branch created");
+
+				expect(gheApiNock).toBeDone();
 			});
 		});
 	});

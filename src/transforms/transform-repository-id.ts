@@ -31,7 +31,7 @@ const calculatePrefix = (url: string) => {
  */
 export const transformRepositoryId = (repositoryId: number, gitHubBaseUrl?: string): TransformedRepositoryId => {
 	if (!gitHubBaseUrl || calculatePrefix(gitHubBaseUrl) === calculatePrefix(GITHUB_CLOUD_BASEURL)) {
-		return ("" + repositoryId) as TransformedRepositoryId;
+		return (repositoryId?.toString() || "undefined") as TransformedRepositoryId;
 	}
 
 	return `${calculatePrefix(gitHubBaseUrl)}-${repositoryId}` as TransformedRepositoryId;

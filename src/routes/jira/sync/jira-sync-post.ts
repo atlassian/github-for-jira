@@ -49,7 +49,7 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 		});
 
 		res.sendStatus(202);
-	} catch (error) {
+	} catch (error: unknown) {
 
 		await sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
 			action: AnalyticsTrackEventsEnum.ManualRestartBackfillTrackEventName,

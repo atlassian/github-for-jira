@@ -11,7 +11,7 @@ interface RepoUrlAndRepoId {
 	id: number
 }
 
-export const DEFAULT_AVATAR = "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png;";
+export const DEFAULT_AVATAR = "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png";
 
 export const splitServerId = (input: string): [string, string] => {
 	const parts: string[] = input.split("-");

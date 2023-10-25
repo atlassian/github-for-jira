@@ -13,6 +13,8 @@ exports[`app getFrontendApp please review routes and update snapshot when adding
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,serveStatic
 :* ^/?(?=/|$)^/spa/?(?=/|$)^/static/?(?=/|$)
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,serveStatic
+:GET ^/?(?=/|$)^/rest/?(?=/|$)^/subscriptions/?(?=/|$)^/?$
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,SubscriptionsGet
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/github-callback/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,OAuthCallbackHandler
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/github-installed/?$
@@ -57,6 +59,12 @@ exports[`app getFrontendApp please review routes and update snapshot when adding
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,ApiRecryptPost
 :POST ^/?(?=/|$)^/api/?(?=/|$)^/ping/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,ApiPingPost
+:POST ^/?(?=/|$)^/api/?(?=/|$)^/fill-mem-and-generate-coredump/?$
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,FillMemAndGenerateCoreDump
+:POST ^/?(?=/|$)^/api/?(?=/|$)^/abort/?$
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,AbortPost
+:POST ^/?(?=/|$)^/api/?(?=/|$)^/drop-all-pr-cursor/?$
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,DropAllPrCursor
 :DELETE ^/?(?=/|$)^/api/?(?=/|$)^/deleteInstallation/(?:([^/]+?))/(?:([^/]+?))/github-app-id/(?:([^/]+?))/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,middleware,middleware,returnOnValidationError,ApiInstallationDeleteForPollinator
 :DELETE ^/?(?=/|$)^/api/?(?=/|$)^/deleteInstallation/(?:([^/]+?))/(?:([^/]+?))/?$
@@ -75,6 +83,10 @@ exports[`app getFrontendApp please review routes and update snapshot when adding
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,RecoverCommitsFromDatePost
 :POST ^/?(?=/|$)^/api/?(?=/|$)^/reset-failed-pending-deployment-cursor/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,ResetFailedAndPendingDeploymentCursorPost
+:POST ^/?(?=/|$)^/api/?(?=/|$)^/replay-rejected-entities-from-data-depot/?$
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,ApiReplyFailedEntitiesFromDataDepotPost
+:POST ^/?(?=/|$)^/api/?(?=/|$)^/resync-failed-tasks/?$
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,ApiResyncFailedTasksPost
 :POST ^/?(?=/|$)^/api/?(?=/|$)^/jira/?(?=/|$)^/(?:([^/]+?))/verify/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,middleware,returnOnValidationError,ApiJiraVerifyPost
 :POST ^/?(?=/|$)^/api/?(?=/|$)^/jira/?(?=/|$)^/(?:([^/]+?))/uninstall/?$

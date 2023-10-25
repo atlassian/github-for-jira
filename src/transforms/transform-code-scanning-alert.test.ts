@@ -18,6 +18,8 @@ const buildContext = (
 	payload,
 	gitHubAppConfig?: GitHubAppConfig
 ): WebhookContext => {
+	const logger = { info: jest.fn(), warn: jest.fn() } as unknown as Logger;
+	logger.child = jest.fn(() => logger);
 	return new WebhookContext({
 		id: "hi",
 		name: "hi",
@@ -30,8 +32,9 @@ const buildContext = (
 			gitHubApiUrl: "https://api.github.com",
 			uuid: undefined
 		},
-		log: { info: jest.fn() } as unknown as Logger
+		log: logger
 	});
+
 };
 
 describe("code_scanning_alert transform", () => {
@@ -179,41 +182,41 @@ describe("code_scanning_alert transform", () => {
 				gitHubInstallationId,
 				jiraHost
 			);
-			expect(result?.vulnerabilities[0]).toMatchInlineSnapshot(`
-			Object {
-			  "additionalInfo": Object {
-			    "content": "CodeQL",
-			  },
-			  "containerId": "119484675",
-			  "description": "Hard-coding credentials in source code may enable an attacker to gain unauthorized access.",
-			  "displayName": "js/hardcoded-credentials",
-			  "id": "c-119484675-2",
-			  "identifiers": Array [
-			    Object {
-			      "displayName": "CWE-259",
-			      "url": "https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=259",
-			    },
-			    Object {
-			      "displayName": "CWE-321",
-			      "url": "https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=321",
-			    },
-			    Object {
-			      "displayName": "CWE-798",
-			      "url": "https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=798",
-			    },
-			  ],
-			  "introducedDate": "2023-08-01T00:25:22Z",
-			  "lastUpdated": "2023-08-01T00:25:22Z",
-			  "schemaVersion": "1.0",
-			  "severity": Object {
-			    "level": "critical",
-			  },
-			  "status": "open",
-			  "type": "sast",
-			  "updateSequenceNumber": 12345678,
-			  "url": "https://github.com/auzwang/sequelize-playground/security/code-scanning/2",
-			}
-		`);
+			expect(result?.vulnerabilities[0]).toMatchObject(
+				{
+					"additionalInfo": {
+						"content": "CodeQL"
+					},
+					"containerId": "119484675",
+					"displayName": "Hard-coded credentials",
+					"description": "**Vulnerability:** Hard-coded credentials\n\n**Severity:** Critical\n\nGitHub uses  [Common Vulnerability Scoring System (CVSS)](https://www.atlassian.com/trust/security/security-severity-levels) data to calculate security severity.\n\n**Status:** Open\n\n**Weaknesses:** [CWE-259](https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=259), [CWE-321](https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=321), [CWE-798](https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=798)\n\nVisit the vulnerability’s [code scanning alert page](https://github.com/auzwang/sequelize-playground/security/code-scanning/2) in GitHub for impact, a recommendation, and a relevant example.",
+					"id": "c-119484675-2",
+					"identifiers": [
+						{
+							"displayName": "CWE-259",
+							"url": "https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=259"
+						},
+						{
+							"displayName": "CWE-321",
+							"url": "https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=321"
+						},
+						{
+							"displayName": "CWE-798",
+							"url": "https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=798"
+						}
+					],
+					"introducedDate": "2023-08-01T00:25:22Z",
+					"lastUpdated": "2023-08-01T00:25:22Z",
+					"schemaVersion": "1.0",
+					"severity": {
+						"level": "critical"
+					},
+					"status": "open",
+					"type": "sast",
+					"updateSequenceNumber": 12345678,
+					"url": "https://github.com/auzwang/sequelize-playground/security/code-scanning/2"
+				}
+			);
 		});
 
 		it.each([

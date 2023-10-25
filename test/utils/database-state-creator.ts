@@ -120,7 +120,7 @@ export class DatabaseStateCreator {
 			uuid: v4(),
 			appId: 12321,
 			gitHubBaseUrl: gheUrl,
-			gitHubClientId: "client-id" + Math.random(),
+			gitHubClientId: "client-id" + Math.random().toString(),
 			gitHubClientSecret: "client-secret",
 			webhookSecret: "webhook-secret",
 			privateKey: fs.readFileSync(path.resolve(__dirname, "../../test/setup/test-key.pem"), { encoding: "utf8" }),

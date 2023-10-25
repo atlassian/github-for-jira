@@ -125,7 +125,7 @@ describe("RepoSyncState", () => {
 
 	describe("findAllFromSubscription", () => {
 		it("Should return no repos", async () => {
-			let result = await RepoSyncState.findAllFromSubscription(sub);
+			let result = await RepoSyncState.findAllFromSubscription(sub, 100, 0, [["id", "DESC"]]);
 			expect(result.length).toEqual(0);
 			await RepoSyncState.create({
 				...repo,
@@ -135,7 +135,7 @@ describe("RepoSyncState", () => {
 				...repo,
 				subscriptionId: otherSub.id
 			});
-			result = await RepoSyncState.findAllFromSubscription(sub);
+			result = await RepoSyncState.findAllFromSubscription(sub, 100, 0, [["id", "DESC"]]);
 			expect(result.length).toEqual(0);
 		});
 
@@ -145,9 +145,30 @@ describe("RepoSyncState", () => {
 				...repo,
 				subscriptionId: otherSub.id
 			});
-			const result = await RepoSyncState.findAllFromSubscription(sub);
+			const result = await RepoSyncState.findAllFromSubscription(sub, 100, 0, [["id", "DESC"]]);
 			expect(result.length).toEqual(1);
 			expect(result[0]).toMatchObject(repo);
+		});
+
+		it("Should do pagination properly and consistently", async () => {
+			await RepoSyncState.create(repo);
+			await RepoSyncState.create({
+				...repo,
+				repoFullName: "anotherOne"
+			});
+			const page1 = await RepoSyncState.findAllFromSubscription(sub, 1, 0, [["id", "DESC"]]);
+			const page2 = await RepoSyncState.findAllFromSubscription(sub, 1, 1, [["id", "DESC"]]);
+			const page3 = await RepoSyncState.findAllFromSubscription(sub, 1, 2, [["id", "DESC"]]);
+			expect(page1.length).toEqual(1);
+			expect(page1[0]).toMatchObject({
+				...repo,
+				repoFullName: "anotherOne"
+			});
+
+			expect(page2.length).toEqual(1);
+			expect(page2[0]).toMatchObject(repo);
+
+			expect(page3.length).toEqual(0);
 		});
 	});
 
@@ -211,10 +232,10 @@ describe("RepoSyncState", () => {
 				...repo,
 				subscriptionId: otherSub.id
 			});
-			let repos = await RepoSyncState.findAllFromSubscription(sub);
+			let repos = await RepoSyncState.findAllFromSubscription(sub, 100, 0, [["id", "DESC"]]);
 			expect(repos.length).toEqual(2);
 			await RepoSyncState.deleteFromSubscription(sub);
-			repos = await RepoSyncState.findAllFromSubscription(sub);
+			repos = await RepoSyncState.findAllFromSubscription(sub, 100, 0, [["id", "DESC"]]);
 			expect(repos.length).toEqual(0);
 			repos = await RepoSyncState.findAll();
 			expect(repos.length).toEqual(1);
@@ -243,7 +264,7 @@ describe("RepoSyncState", () => {
 				pullCursor: "12"
 			});
 			await RepoSyncState.resetSyncFromSubscription(sub);
-			const result = await RepoSyncState.findAllFromSubscription(sub);
+			const result = await RepoSyncState.findAllFromSubscription(sub, 100, 0, [["id", "DESC"]]);
 			expect(result.length).toEqual(1);
 			expect(result[0].branchStatus).toEqual(null);
 			expect(result[0].branchCursor).toEqual(null);

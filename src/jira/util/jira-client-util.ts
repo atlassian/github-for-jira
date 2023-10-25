@@ -2,10 +2,11 @@ import { envVars }  from "config/env";
 import { getLogger } from "config/logger";
 import { JiraIssue } from "interfaces/jira";
 import { jiraIssueInSquareBracketsRegex } from "utils/jira-utils";
+import { JiraClient } from "~/src/jira/client/jira-client";
 
 const logger = getLogger("jira.util");
 
-export const getJiraUtil = (jiraClient) => {
+export const getJiraUtil = (jiraClient: JiraClient) => {
 	const containsReferenceLink = (line: string) => {
 		// reference text links should have 2 parts only
 		if (line.split(" ").length === 2) {
@@ -83,7 +84,7 @@ export const getJiraUtil = (jiraClient) => {
 			if (linkifiedBody === text) return undefined;
 
 			return linkifiedBody;
-		} catch (err) {
+		} catch (err: unknown) {
 			logger.warn({ err, issueText: text }, "Error getting all JIRA issues");
 			return undefined;
 		}

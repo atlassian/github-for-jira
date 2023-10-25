@@ -53,7 +53,10 @@ export enum AnalyticsTrackEventsEnum {
 	ManualRestartBackfillTrackEventName = "manualRestartBackfill",
 	RemoveGitHubServerTrackEventName = "removeGitHubServer",
 	CommitsPushedTrackEventName = "commitsPushed",
-	BackfullSyncOperationEventName = "backfillSync"
+	BackfullSyncOperationEventName = "backfillSync",
+	GitHubSecurityConfiguredEventName = "gitHubSecurityConfigured",
+	GitHubSecurityVulnerabilitiesSubmittedEventName = "gitHubSecurityVulnerabilitiesSubmitted",
+
 }
 
 export enum AnalyticsTrackSource {

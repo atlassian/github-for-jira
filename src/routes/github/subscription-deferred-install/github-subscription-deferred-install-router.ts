@@ -24,7 +24,7 @@ const validatePayloadAndPopulateJiraHost = async (req: Request, res: Response, n
 	let parsedPayload: SubscriptionDeferredInstallPayload | undefined;
 	try {
 		parsedPayload = await extractSubscriptionDeferredInstallPayload(req.params["requestId"]);
-	} catch (err) {
+	} catch (err: unknown) {
 		req.log.warn({ err }, "Cannot deserialize");
 		res.status(400).json({ error: INVALID_PAYLOAD_ERR });
 		return;

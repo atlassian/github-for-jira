@@ -21,7 +21,8 @@ export const verifyJiraInstallation = (installation: Installation, log: Logger) 
 				Sentry.captureMessage(message);
 				return false;
 			}
-		} catch (err) {
+		} catch (e: unknown) {
+			const err = e as { response?: { status?: number } };
 			if (err.response?.status === 401) {
 				log.warn(err, "Jira does not recognize installation. Deleting it");
 				await installation.destroy();

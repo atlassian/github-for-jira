@@ -106,6 +106,14 @@ export class GitHubInstallationClient extends GitHubClient {
 		});
 	}
 
+	public async getCodeScanningAlert(owner: string, repo: string, alertNumber: number): Promise<AxiosResponse<CodeScanningAlertResponseItem>> {
+		return await this.get<CodeScanningAlertResponseItem>(`/repos/{owner}/{repo}/code-scanning/alerts/{alertNumber}`, {}, {
+			owner,
+			repo,
+			alertNumber
+		});
+	}
+
 	/**
 	 * Lists pull requests for the given repository.
 	 */
@@ -230,8 +238,8 @@ export class GitHubInstallationClient extends GitHubClient {
 				cursor
 			}, { graphQuery: "GetRepositoriesQuery" });
 			return response.data.data;
-		} catch (err) {
-			err.isRetryable = true;
+		} catch (err: unknown) {
+			(err as any).isRetryable = true;
 			throw err;
 		}
 	};
@@ -262,7 +270,7 @@ export class GitHubInstallationClient extends GitHubClient {
 				...response,
 				hasNextPage
 			};
-		} catch (err) {
+		} catch (err: unknown) {
 			try {
 				if (await booleanFlag(BooleanFlags.LOG_CURLV_OUTPUT, this.jiraHost)) {
 					this.logger.warn("Found error listing repos, run curl commands to get more details");
@@ -346,7 +354,7 @@ export class GitHubInstallationClient extends GitHubClient {
 				{ environment, per_page },
 				{ owner, repo }
 			);
-		} catch (e) {
+		} catch (e: unknown) {
 			try {
 				if (await booleanFlag(BooleanFlags.LOG_CURLV_OUTPUT, this.jiraHost)) {
 					this.logger.warn("Found error listing deployments, run curl commands to get more details");
@@ -398,6 +406,14 @@ export class GitHubInstallationClient extends GitHubClient {
 		return await this.get<DependabotAlertResponseItem[]>(`/repos/{owner}/{repo}/dependabot/alerts`, dependabotAlertRequestParams, {
 			owner,
 			repo
+		});
+	}
+
+	public async getDependabotAlert(owner: string, repo: string, alertNumber: number): Promise<AxiosResponse<DependabotAlertResponseItem>> {
+		return await this.get<DependabotAlertResponseItem>(`/repos/{owner}/{repo}/dependabot/alerts/{alertNumber}`, {}, {
+			owner,
+			repo,
+			alertNumber
 		});
 	}
 
@@ -514,8 +530,9 @@ export class GitHubInstallationClient extends GitHubClient {
 			});
 
 			return response.data.content;
-		} catch (err) {
-			if (err.status == 404) {
+		} catch (e: unknown) {
+			const err = e as { status?: number };
+			if (err?.status == 404) {
 				this.logger.debug({ err, owner, repo, path }, "could not find file in repo");
 				return undefined;
 			}

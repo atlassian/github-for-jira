@@ -24,7 +24,7 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 		return;
 	}
 
-	const result = await verifyAdminPermsAndFinishInstallation(githubToken, installation, gitHubAppId, gitHubInstallationId, false, req.log);
+	const result = await verifyAdminPermsAndFinishInstallation(githubToken, installation, gitHubAppId, gitHubInstallationId, req.log);
 	if (result.error) {
 		res.status(401)
 			.json({

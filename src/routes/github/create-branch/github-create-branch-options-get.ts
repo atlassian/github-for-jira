@@ -16,7 +16,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
 
-	const jiraHost = res.locals.jiraHost;
+	const jiraHost: string = res.locals.jiraHost;
 
 	const logger = getLogger("github-create-branch-get-options", {
 		fields: {
@@ -43,7 +43,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 		return;
 	}
 
-	const url = new URL(`${req.protocol}://${req.get("host")}${req.originalUrl}`);
+	const url = new URL(`${req.protocol}://${req.get("host") ?? ""}${req.originalUrl}`);
 	// Only has cloud instance
 	if (servers.hasCloudServer && servers.gheServerInfos.length == 0) {
 		logger.info("redirecting to cloud.");

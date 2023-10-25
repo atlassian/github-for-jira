@@ -17,6 +17,7 @@ export const listenForClusterCommand = (command: ClusterCommand, callback: () =>
 	// Listen to the `message` event, which is how node master process communicates with workers
 	// If message data is he same as the command we are meant to listen for, trigger callback function
 	process.on("message", msg => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		logger.info({ msg, command }, `Received message from master process on worker "${cluster.worker.id}"`);
 		if (msg === command) {
 			callback();

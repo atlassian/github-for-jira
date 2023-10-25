@@ -4,6 +4,7 @@ import { Subscription } from "models/subscription";
 import { getRepoConfig, updateRepoConfig } from "services/user-config-service";
 import { createInstallationClient } from "utils/get-github-client-config";
 import { getLogger } from "config/logger";
+import { GitHubInstallationClient } from "../github/client/github-installation-client";
 
 const logger = getLogger("test");
 
@@ -35,7 +36,7 @@ describe("User Config Service", () => {
 		"      - \"test-id-3\"\n" +
 		"      - \"test-id-4\"";
 
-	let gitHubClient;
+	let gitHubClient: GitHubInstallationClient;
 
 	beforeEach(async () => {
 		subscription = await Subscription.create({

@@ -5,18 +5,19 @@ import {
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { JiraClient } from "../jira/client/jira-client";
 
-export const codeScanningAlertWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
+export const codeScanningAlertWebhookHandler = async (context: WebhookContext, jiraClient: JiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 	await Promise.all([handleRemoteLinks(context, jiraClient, gitHubInstallationId), handleSecurityVulnerability(context, jiraClient, gitHubInstallationId)]);
 };
 
-export const handleRemoteLinks = async (context: WebhookContext, jiraClient, gitHubInstallationId: number): Promise<void> => {
+export const handleRemoteLinks = async (context: WebhookContext, jiraClient: JiraClient, gitHubInstallationId: number): Promise<void> => {
 	context.log = context.log.child({
 		gitHubInstallationId,
 		jiraHost: jiraClient.baseURL
 	});
 
-	const jiraPayload = await transformCodeScanningAlert(context, gitHubInstallationId, jiraClient.baseUrl);
+	const jiraPayload = await transformCodeScanningAlert(context, gitHubInstallationId, jiraClient.baseURL);
 
 	if (!jiraPayload) {
 		context.log.info({ noop: "no_jira_payload_code_scanning_alert" }, "Halting further execution for code scanning alert since remote link payload is empty");
@@ -37,7 +38,7 @@ export const handleRemoteLinks = async (context: WebhookContext, jiraClient, git
 	);
 };
 
-export const handleSecurityVulnerability = async (context: WebhookContext, jiraClient, gitHubInstallationId: number): Promise<void> => {
+export const handleSecurityVulnerability = async (context: WebhookContext, jiraClient: JiraClient, gitHubInstallationId: number): Promise<void> => {
 	context.log = context.log.child({
 		gitHubInstallationId,
 		jiraHost: jiraClient.baseURL

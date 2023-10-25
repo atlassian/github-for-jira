@@ -51,7 +51,7 @@ describe("DeploymentWebhookHandler", () => {
 					gitHubBaseUrl: GITHUB_CLOUD_BASEURL,
 					gitHubApiUrl: GITHUB_CLOUD_API_BASEURL
 				}
-			}));
+			}), 0, expect.anything());
 		});
 	});
 	describe("GitHub Enterprise Server", () => {
@@ -66,7 +66,7 @@ describe("DeploymentWebhookHandler", () => {
 					gitHubBaseUrl: gheUrl,
 					gitHubApiUrl: gheUrl
 				}
-			}));
+			}), 0, expect.anything());
 		});
 	});
 	describe("Processing webhook", () => {

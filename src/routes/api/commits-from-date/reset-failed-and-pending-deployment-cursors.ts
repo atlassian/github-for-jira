@@ -55,11 +55,12 @@ export const ResetFailedAndPendingDeploymentCursorPost = async (req: Request, re
 			count++;
 			lastId = repo.id;
 		}
-		info(`${count} repo sync states updated, last RepoSyncState id is ${lastId})`);
+		info(`${count} repo sync states updated, last RepoSyncState id is ${lastId ? lastId.toString() : "undefined"})`);
 
 		res.end();
 
-	} catch (e) {
+	} catch (err: unknown) {
+		const e = err as { statusCode?: number };
 		log.error({ err: e }, "Error happen when reseting deployment cursor");
 		res.end(`Error happen when reseting deployment cursor: ${safeJsonStringify(e)}`);
 	}

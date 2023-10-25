@@ -11,7 +11,7 @@ describe("rest oauth router", () => {
 		secret = testSharedSecret,
 		iss = "jira-client-key",
 		exp = Date.now() / 1000 + 10000,
-		qsh = "context-qsh" } = {}): any => {
+		qsh = "context-qsh" } = {}): string => {
 		return encodeSymmetric({
 			qsh,
 			iss,
@@ -35,7 +35,9 @@ describe("rest oauth router", () => {
 					.set("authorization", `${getToken()}`);
 				expect(resp.status).toBe(200);
 				expect(resp.body).toEqual({
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					redirectUrl: expect.stringContaining("github-callback"),
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					state: expect.stringMatching(".+")
 				});
 			});
@@ -45,7 +47,8 @@ describe("rest oauth router", () => {
 		describe("cloud", () => {
 			it("should exchange for github access token", async () => {
 
-				const state = (await supertest(app).get("/rest/app/cloud/oauth/redirectUrl").set("authorization", `${getToken()}`)).body.state;
+				const body = (await supertest(app).get("/rest/app/cloud/oauth/redirectUrl").set("authorization", `${getToken()}`)).body as { state: string};
+				const state = body.state;
 				expect(state).toEqual(expect.stringMatching(".+"));
 
 				const code = "abcd";

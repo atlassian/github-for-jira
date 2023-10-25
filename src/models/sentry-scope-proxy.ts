@@ -18,7 +18,7 @@ export class SentryScopeProxy {
 		this.extra = {};
 	}
 
-	static processEvent(event: any, hint: any) {
+	static processEvent(this: void, event: any, hint: any) {
 		if (hint.originalException.sentryScope) {
 			hint.originalException.sentryScope.addTo(event);
 		}

@@ -34,6 +34,10 @@ describe("ApiInstallationDelete", ()=>{
 					installationId: GHES_GITHUB_INSTALLATION_ID.toString(),
 					gitHubAppId: GHES_GITHUB_APP_ID.toString()
 				},
+				query: {
+					limit: 100,
+					offset: 0
+				},
 				body: {
 					jiraHost
 				}
@@ -53,6 +57,9 @@ describe("ApiInstallationDelete", ()=>{
 			log: getLogger("test"),
 			params: {
 				...opts.params
+			},
+			query: {
+				...opts.query
 			},
 			body: {
 				...opts.body

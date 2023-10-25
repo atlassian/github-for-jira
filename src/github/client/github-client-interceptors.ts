@@ -43,7 +43,7 @@ export const setRequestTimeout = async (config: AxiosRequestConfig): Promise<Axi
 //TODO Move to util/axios/common-github-webhook-middleware.ts and use with Jira Client
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sendResponseMetrics = (metricName: string, gitHubProduct: string, jiraHost: string | undefined, response?: any, status?: string | number, extraTags?: Record<string, string | undefined>) => {
-	status = `${status || response?.status}`;
+	status = `${status?.toString() || response?.status as string}`;
 	const requestDurationMs = Number(
 		Date.now() - (response?.config?.requestStartTime || 0)
 	);

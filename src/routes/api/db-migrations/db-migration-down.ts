@@ -33,7 +33,8 @@ export const DBMigrationDown = async (req: Request, res: Response): Promise<void
 			${stderr}
 		`);
 
-	} catch (e){
+	} catch (err: unknown){
+		const e = err as { statusCode?: number };
 		logger.error("Error doing db migration down", e);
 		res.status(e.statusCode || 500);
 		res.send(safeJsonStringify(e));
@@ -53,7 +54,7 @@ const validateScriptAgainstDB = async (targetScript: string) => {
 	if (lastScript.length < 1) {
 		throw {
 			statusCode: 500,
-			message: `There're no scripts in db to migration down, stop proceeding. \n ${lastScript}`
+			message: `There're no scripts in db to migration down, stop proceeding. \n}`
 		};
 	}
 

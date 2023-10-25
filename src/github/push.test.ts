@@ -31,7 +31,7 @@ describe("PushWebhookHandler", ()=>{
 	describe("GitHub Cloud", ()=>{
 		it("should be called with cloud GitHubAppConfig", async ()=>{
 			await pushWebhookHandler(getWebhookContext({ cloud: true }), jiraClient, util, GHES_GITHUB_INSTALLATION_ID, subscription);
-			expect(enqueuePush).toBeCalledWith(expect.anything(), expect.anything(), {
+			expect(enqueuePush).toBeCalledWith(expect.anything(), expect.anything(), expect.anything(), {
 				uuid: undefined,
 				gitHubAppId: undefined,
 				appId: parseInt(envVars.APP_ID),
@@ -44,7 +44,7 @@ describe("PushWebhookHandler", ()=>{
 	describe("GitHub Enterprise Server", ()=>{
 		it("should be called with GHES GitHubAppConfig", async ()=>{
 			await pushWebhookHandler(getWebhookContext({ cloud: false }), jiraClient, util, GHES_GITHUB_INSTALLATION_ID, subscription);
-			expect(enqueuePush).toBeCalledWith(expect.anything(), expect.anything(), {
+			expect(enqueuePush).toBeCalledWith(expect.anything(), expect.anything(), expect.anything(), {
 				uuid: GHES_GITHUB_UUID,
 				gitHubAppId: GHES_GITHUB_APP_ID,
 				appId: GHES_GITHUB_APP_APP_ID,

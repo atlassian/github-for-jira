@@ -16,7 +16,7 @@ export const listenToMicrosLifecycle = (active: Callback, inactive: Callback): v
 
 	// Create SQS consumer if not already created - which means we won't be consuming events
 	// unless a listener is actually added to prevent missing events at startup
-	if ((active || inactive) && !client) {
+	if (!client) {
 		// Throw an error if missing the Environment Variable needed for SQS
 		if (!envVars.SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL) {
 			const msg = "Missing 'SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL' environment variable for Micros Lifecycle Events.";
@@ -27,6 +27,7 @@ export const listenToMicrosLifecycle = (active: Callback, inactive: Callback): v
 		client = Consumer.create({
 			queueUrl: envVars.SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL,
 			region: envVars.SNS_NOTIFICATION_LIFECYCLE_QUEUE_REGION,
+			// eslint-disable-next-line @typescript-eslint/require-await
 			handleMessage: async (data: SQSMessage) => {
 				logger.debug(data, "Received Micros event");
 				if (!data.Body) { // Just making sure SQS message has data
@@ -34,14 +35,18 @@ export const listenToMicrosLifecycle = (active: Callback, inactive: Callback): v
 					return;
 				}
 				try {
-					const lifecycleData: LifecycleData = JSON.parse(data.Body);
+					const lifecycleData: LifecycleData = JSON.parse(data.Body) as LifecycleData;
+					if (lifecycleData.Type === undefined || lifecycleData.Subject === undefined || lifecycleData.Message === undefined) {
+						logger.error({ data }, "Lifecycle event missing required data, skipping.");
+						return;
+					}
 
 					// Only continue if it's a micros lifecycle events as there are
 					// other internal events on this queue
 					if (lifecycleData.Subject === "Micros Lifecycle Notification") {
 						logger.info(data, "Received Micros lifecycle event");
 						// Need to parse THIS message as well because reasons instead of having it all as flat data
-						const notification: LifecycleMessageData = JSON.parse(lifecycleData.Message);
+						const notification: LifecycleMessageData = JSON.parse(lifecycleData.Message) as LifecycleMessageData;
 						// Get the event name (`active` or `inactive`) from the events, removing the prefix
 						const event = notification.LifecycleTransition?.toLowerCase().replace("micros:", "");
 						// Check to make sure `LifecycleTransition` was actually set
@@ -50,7 +55,7 @@ export const listenToMicrosLifecycle = (active: Callback, inactive: Callback): v
 							eventEmitter.emit(event, notification);
 						}
 					}
-				} catch (err) {
+				} catch (err: unknown) {
 					logger.error(err, "Could not parsed JSON data from Micros Lifecycle SQS queue.");
 				}
 			}
@@ -72,7 +77,7 @@ interface LifecycleData {
 }
 
 interface LifecycleMessageData {
-	EC2InstanceId: string;
-	LifecycleTransition: "micros:ACTIVE" | "micros:INACTIVE";
+	EC2InstanceId?: string;
+	LifecycleTransition?: "micros:ACTIVE" | "micros:INACTIVE";
 	TrafficPercentage?: number; // if doing weighted load balancing, can be any number between 0 and 100.
 }

@@ -27,15 +27,14 @@ const getLastCommit = async (github: GitHubInstallationClient, webhookPayload: C
 	};
 };
 
-export const transformBranch = async (gitHubInstallationClient: GitHubInstallationClient, webhookPayload: CreateEvent, logger: Logger = getLogger("transform-branch")): Promise<JiraBranchBulkSubmitData | undefined> => {
+export const transformBranch = async (gitHubInstallationClient: GitHubInstallationClient, webhookPayload: CreateEvent, alwaysSend: boolean, logger: Logger = getLogger("transform-branch")): Promise<JiraBranchBulkSubmitData | undefined> => {
 	if (webhookPayload.ref_type !== "branch") {
 		return;
 	}
 
 	const { ref, repository } = webhookPayload;
 	const issueKeys = jiraIssueKeyParser(ref);
-
-	if (isEmpty(issueKeys)) {
+	if (isEmpty(issueKeys) && !alwaysSend) {
 		return;
 	}
 
@@ -55,7 +54,7 @@ export const transformBranch = async (gitHubInstallationClient: GitHubInstallati
 				}
 			]
 		};
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.warn(err, "Could not get latest commit from branch as the branch is not available yet on the API. Retrying later.");
 		throw err;
 	}

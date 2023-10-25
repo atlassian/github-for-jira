@@ -131,7 +131,7 @@ beforeAll(async () => {
 });
 
 beforeEach(() => {
-	const instance = envVars.APP_KEY.split(".").pop();
+	const instance = envVars.APP_KEY.split(".").pop()!;
 	global.jiraHost = process.env.ATLASSIAN_URL || `https://${instance}.atlassian.net`;
 	global.jiraStaginHost = process.env.ATLASSIAN_URL?.replace(".atlassian.net", ".jira-dev.com") || `https://${instance}.jira-dev.com`;
 	global.jiraNock = nock(global.jiraHost);
@@ -202,7 +202,7 @@ export const purgeItemsInTable = async (tableName: string) => {
 
 		await Promise.all(deleteRequests);
 
-	} catch (e) {
+	} catch (e: unknown) {
 		//do nothing as this method is for local test only
 	}
 

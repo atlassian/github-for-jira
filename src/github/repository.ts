@@ -15,7 +15,7 @@ export const repositoryWebhookHandler = async (context: WebhookContext, jiraClie
 
 const updateRepoCount = async (subscription: Subscription) => {
 	// Update the repos by taking the new post-delete count of repos for the given subscription
-	const totalNumberOfRepos = (await RepoSyncState.findAllFromSubscription(subscription)).length;
+	const totalNumberOfRepos = await RepoSyncState.countSubscriptionRepos(subscription);
 	await subscription.update({ totalNumberOfRepos });
 };
 
@@ -37,7 +37,7 @@ export const createRepositoryWebhookHandler = async (context: WebhookContext, gi
 		await updateRepoCount(subscription);
 		await findOrStartSync(subscription, context.log, "partial", subscription.backfillSince,undefined, { source: "create-repo-webhook" });
 		webhookProcessComplete(context, 200, subscription.jiraHost);
-	} catch (err) {
+	} catch (err: unknown) {
 		context.log.error({ err }, "Error processing create repository webhook");
 		webhookProcessComplete(context, 500, subscription.jiraHost);
 	}
@@ -55,7 +55,7 @@ export const deleteRepositoryWebhookHandler = async (context: WebhookContext, ji
 		return;
 	}
 
-	context.log.info(`Deleting dev info for repo ${context.payload.repository?.id}`);
+	context.log.info(`Deleting dev info for repo ${context.payload.repository?.id as number}`);
 
 	const { id: repositoryId } = context.payload.repository;
 
@@ -68,7 +68,7 @@ export const deleteRepositoryWebhookHandler = async (context: WebhookContext, ji
 		await	updateRepoCount(subscription);
 
 		webhookProcessComplete(context, jiraResponse?.status, subscription.jiraHost);
-	} catch (err) {
+	} catch (err: unknown) {
 		context.log.error({ err }, "Error processing delete repository webhook");
 		webhookProcessComplete(context, 500, subscription.jiraHost);
 	}

@@ -58,8 +58,8 @@ export const JiraWorkspacesGet = async (req: Request, res: Response): Promise<vo
 	}
 
 	const orgName = sanitizeHtml(req.query?.searchQuery as string);
-	const page = Number(sanitizeHtml(req.query?.page)) || DEFAULT_PAGE_NUMBER;
-	const limit = Number(sanitizeHtml(req.query?.limit)) || DEFAULT_LIMIT;
+	const page = Number(sanitizeHtml(req.query?.page as string ?? "undefined")) || DEFAULT_PAGE_NUMBER;
+	const limit = Number(sanitizeHtml(req.query?.limit as string ?? "undefined")) || DEFAULT_LIMIT;
 
 	const matchedOrgs = await findMatchingOrgs(subscriptions, orgName);
 

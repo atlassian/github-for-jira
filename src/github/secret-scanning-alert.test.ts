@@ -154,7 +154,7 @@ describe("SecretScanningAlertWebhookHandler", () => {
 					updateSequenceNumber: Date.now(),
 					containerId: "456",
 					displayName: "GitHub Personal Access Token",
-					description: "Secret scanning alert",
+					description: "**Vulnerability:** Fix GitHub Personal Access Token\n\n**State:** Open\n\n**Secret type:** github_personal_access_token\n\nVisit the vulnerability’s [secret scanning alert page](https://github.com/user/repo/security/advisories/123) in GitHub to learn more about the potential active secret and remediation steps.",
 					url: SAMPLE_SECURITY_URL,
 					type: "sast",
 					introducedDate: SAMPLE_SECURITY_CREATED_DATE,

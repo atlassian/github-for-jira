@@ -1,7 +1,9 @@
+/** @jsxImportSource @emotion/react */
 import { useEffect, useState } from "react";
 import Button, { LoadingButton } from "@atlaskit/button";
 import AddIcon from "@atlaskit/icon/glyph/editor/add";
 import styled from "@emotion/styled";
+import { css } from "@emotion/react";
 import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
 import Step from "../../components/Step";
@@ -20,11 +22,8 @@ import { GitHubInstallationType } from "../../../../src/rest-interfaces";
 import OrganizationsList from "../ConfigSteps/OrgsContainer";
 import SkeletonForLoading from "../ConfigSteps/SkeletonForLoading";
 import OauthManager from "../../services/oauth-manager";
+import { ErrorForPopupBlocked } from "../../components/Error/KnownErrors";
 
-type GitHubOptionType = {
-	selectedOption: number;
-	optionKey: number;
-};
 type HostUrlType = {
 	jiraHost: string;
 };
@@ -33,25 +32,25 @@ type ErrorMessageCounterType = {
 	count: number;
 }
 
-const ConfigContainer = styled.div`
+const configContainerStyle = css`
   margin: 0 auto;
   width: 100%;
   min-height: 364px;
 `;
-const GitHubOptionContainer = styled.div`
+const gitHubOptionContainerStyle = css`
 	display: flex;
 	margin-bottom: ${token("space.200")};
 `;
-const TooltipContainer = styled.div`
+const tooltipContainerStyle = css`
 	margin-bottom: ${token("space.400")};
 	a {
 		cursor: pointer;
 	}
 `;
-const GitHubOption = styled.div<GitHubOptionType>`
-	background: ${props => props.optionKey === props.selectedOption ? token("color.background.selected") : token("color.background.accent.gray.subtlest")};
-	font-weight: ${props => props.optionKey === props.selectedOption ? 600 : 400};
-	color: ${props => props.optionKey === props.selectedOption ? token("color.text.selected") : token("color.text")};
+const gitHubOptionStyle = css`
+	background: ${token("color.background.accent.gray.subtlest")};
+	font-weight: 400;
+	color: ${token("color.text")};
 	padding: ${token("space.100")} ${token("space.200")};
 	margin-right: ${token("space.100")};
 	border-radius: 100px;
@@ -67,6 +66,13 @@ const GitHubOption = styled.div<GitHubOptionType>`
 		margin-right: ${token("space.100")};
 	}
 `;
+
+const gitHubSelectedOptionStyle = css`
+	background: ${token("color.background.selected")};
+	font-weight: 600;
+	color: ${token("color.text.selected")};
+`;
+
 const InlineDialog = styled(TooltipPrimitive)`
 	background: white;
 	border-radius: ${token("space.050")};
@@ -77,7 +83,7 @@ const InlineDialog = styled(TooltipPrimitive)`
 	position: absolute;
 	top: -22px;
 `;
-const AddOrganizationContainer = styled.div`
+const addOrganizationContainerStyle = css`
 	display: flex;
 	align-items: center;
 	justify-content: start;
@@ -96,7 +102,7 @@ const AddOrganizationContainer = styled.div`
 		}
 	}
 `;
-const Paragraph = styled.div`
+const paragraphStyle = css`
 	color: ${token("color.text.subtle")};
 	margin-bottom: ${token("space.100")};
 `;
@@ -109,6 +115,10 @@ const errorMessageCounter: ErrorMessageCounterType = {
 const ERROR_THRESHOLD = 3;
 
 const ConfigSteps = () => {
+
+	const [isPopupBlocked, setPopupBlocked] = useState<boolean>(false);
+	const onPopupBlocked = () => setPopupBlocked(true);
+
 	const navigate = useNavigate();
 	const { username } = OAuthManager.getUserDetails();
 	/**
@@ -162,7 +172,7 @@ const ConfigSteps = () => {
 		const response = await AppManager.fetchOrgs();
 		setLoaderForOrgFetching(false);
 		if (response instanceof AxiosError) {
-			showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
+			showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin, onPopupBlocked }));
 			return { success: false, orgs: [] };
 		} else {
 			setOrganizations(response.orgs);
@@ -176,16 +186,21 @@ const ConfigSteps = () => {
 				setLoaderForLogin(true);
 				try {
 					analyticsClient.sendUIEvent({ actionSubject: "startOAuthAuthorisation", action: "clicked"}, { type: "cloud" });
-					await OAuthManager.authenticateInGitHub(() => {
-						setLoaderForLogin(false);
+					await OAuthManager.authenticateInGitHub({
+						onWinClosed: () => {
+							setLoaderForLogin(false);
+						}, onPopupBlocked
 					});
-				} catch (e) {
-					setLoaderForLogin(false);
-					showError(modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
-					reportError(new Error("Fail authenticateInGitHub", { cause: e }), {
+				} catch (e: unknown) {
+					const errorObj = modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin, onPopupBlocked });
+					showError(errorObj);
+					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail"}, { errorCode: errorObj.errorCode, step: "initiate-oauth"});
+					reportError(new Error("Fail initiate authorize", { cause: e }), {
 						path: "authorize",
 						selectedOption
 					});
+				} finally {
+					setLoaderForLogin(false);
 				}
 				break;
 			}
@@ -205,34 +220,47 @@ const ConfigSteps = () => {
 
 	const reLogin = async () => {
 		// Clearing the errors
-		showError(undefined);
+		clearAlerts();
 		OauthManager.clear();
 		// This resets the token validity check in the parent component and resets the UI
 		setIsLoggedIn(false);
 		// Restart the whole auth flow
-		await OauthManager.authenticateInGitHub(() => {});
+		await OauthManager.authenticateInGitHub({
+			onWinClosed: () => {},
+			onPopupBlocked
+		}).catch(e => {
+			const errorObj = modifyError(e, { }, { onClearGitHubToken: () => {}, onRelogin: () => {}, onPopupBlocked });
+			analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail"}, { errorCode: errorObj.errorCode, step: "initiate-oauth"});
+			reportError(new Error("Reset oauth flow on relogin", { cause: e }), { path: "reLogin" });
+		});
+	};
+
+	const clearAlerts = () =>{
+		showError(undefined);
+		setPopupBlocked(false);
 	};
 
 	const clearLogin = () => {
+		setOrganizations([]);
 		setIsLoggedIn(false);
 		setLoaderForLogin(false);
 		setLoggedInUser("");
-		showError(undefined);
+		clearAlerts();
 	};
 
-	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual", orgLogin?: string) => {
+	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual", orgLogin: string) => {
 		try {
 			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" }, { mode });
 			const connected: boolean | AxiosError = await AppManager.connectOrg(gitHubInstallationId);
 			if (connected instanceof AxiosError) {
-				const errorObj = modifyError(connected, { orgLogin }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
+				const errorObj = modifyError(connected, { orgLogin }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin, onPopupBlocked });
 				showError(errorObj);
 				analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail" }, { mode, errorCode: errorObj.errorCode });
 			} else {
 				analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: (connected === true ? "success" : "fail") }, { mode });
-				navigate("/spa/connected");
+				navigate("/spa/connected",{ state: { orgLogin } });
 			}
-		} catch (e) {
+		} catch (e: unknown) {
 			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail"}, { mode });
 			reportError(new Error("Fail doCreateConnection", { cause: e }), {
 				path: "doCreateConnection",
@@ -247,19 +275,31 @@ const ConfigSteps = () => {
 			analyticsClient.sendUIEvent({ actionSubject: "installToNewOrganisation", action: "clicked"}, { mode });
 			await AppManager.installNewApp({
 				onFinish: async (gitHubInstallationId: number | undefined) => {
-					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: gitHubInstallationId ? "success" : "fail"}, { mode });
-					getOrganizations();
-					if(gitHubInstallationId) {
-						await doCreateConnection(gitHubInstallationId, "auto");
+					analyticsClient.sendTrackEvent(
+						{
+							actionSubject: "installNewOrgInGithubResponse",
+							action: gitHubInstallationId ? "success" : "fail",
+						},
+						{ mode }
+					);
+					const orgsResults = await getOrganizations();
+					let orgLogin;
+					if (orgsResults?.success) {
+						const newOrg = orgsResults?.orgs?.find((org) => org?.id === gitHubInstallationId);
+						orgLogin = newOrg?.account?.login;
+					}
+					if (gitHubInstallationId && orgLogin) {
+						await doCreateConnection(gitHubInstallationId, "auto", orgLogin);
 					}
 				},
 				onRequested: async (_setupAction: string) => {
 					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "requested"}, { mode });
 					navigate("/spa/installationRequested");
-				}
+				},
+				onPopupBlocked
 			});
-		} catch (e) {
-			const errorObj = modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
+		} catch (e: unknown) {
+			const errorObj = modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin, onPopupBlocked });
 			showError(errorObj);
 			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail"}, { mode, errorCode: errorObj.errorCode });
 			reportError(new Error("Fail installNewOrg", { cause: e }), {
@@ -275,9 +315,10 @@ const ConfigSteps = () => {
 			if (event.origin !== originalUrl) return;
 			if (event.data?.type === "oauth-callback" && event.data?.code) {
 				const response: boolean | AxiosError = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
+				clearAlerts();
 				setLoaderForLogin(false);
 				if (response instanceof AxiosError) {
-					showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
+					showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin, onPopupBlocked }));
 					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail" });
 					return;
 				} else {
@@ -297,7 +338,7 @@ const ConfigSteps = () => {
 		const recheckValidity = async () => {
 			const status: boolean | AxiosError = await OAuthManager.checkValidity();
 			if (status instanceof AxiosError) {
-				showError(modifyError(status, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
+				showError(modifyError(status, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin, onPopupBlocked }));
 				return;
 			}
 			setLoggedInUser(OAuthManager.getUserDetails().username);
@@ -323,24 +364,32 @@ const ConfigSteps = () => {
 			{
 				error && <ErrorUI type={error.type} message={error.message} />
 			}
-			<ConfigContainer>
+			{isPopupBlocked && (
+				<ErrorUI
+					type={"error"}
+					message={<ErrorForPopupBlocked onDismiss={() => setPopupBlocked(false)}/>}
+				/>
+			)}
+
+			<div css={configContainerStyle}>
 				{
 					isLoggedIn ? <>
 						{
 							loaderForOrgFetching ? <SkeletonForLoading /> : <>
 									<Step title="Select a GitHub organization">
 												<>
-													<Paragraph>
+													<div css={paragraphStyle}>
 														This organization's repositories will be available to all projects<br />
 														in <b>{hostUrl?.jiraHost}</b>.
-													</Paragraph>
+													</div>
 													<OrganizationsList
 														organizations={organizations}
 														loaderForOrgClicked={loaderForOrgClicked}
 														setLoaderForOrgClicked={setLoaderForOrgClicked}
 														resetCallback={setIsLoggedIn}
+														onPopupBlocked={onPopupBlocked}
 														connectingOrg={(org) => doCreateConnection(org.id, "manual", org.account?.login)} />
-													<AddOrganizationContainer>
+													<div css={addOrganizationContainerStyle}>
 														<Button
 															iconBefore={<AddIcon label="add new org" size="medium"/>}
 															isDisabled={loaderForOrgClicked}
@@ -350,22 +399,22 @@ const ConfigSteps = () => {
 														<div onClick={() => !loaderForOrgClicked && installNewOrg("manual")}>
 															{ organizations.length === 0 ? "Select an organization in GitHub" : "Select another organization" }
 														</div>
-													</AddOrganizationContainer>
+													</div>
 												</>
 											</Step>
 									<LoggedinInfo
 										username={loggedInUser || ""}
 										logout={clearLogin}
+										onPopupBlocked={onPopupBlocked}
 									/>
 								</>
 						}
 					</>
 					: <Step title="Select your GitHub product">
 						<>
-							<GitHubOptionContainer>
-									<GitHubOption
-										optionKey={1}
-										selectedOption={selectedOption}
+							<div css={gitHubOptionContainerStyle}>
+									<div
+										css={selectedOption === 1 ? [gitHubOptionStyle, gitHubSelectedOptionStyle]: [gitHubOptionStyle]}
 										onClick={() => {
 											setSelectedOption(1);
 											analyticsClient.sendUIEvent({ actionSubject: "authorizeTypeGitHubCloud", action: "clicked" });
@@ -373,10 +422,9 @@ const ConfigSteps = () => {
 									>
 										<img src="/public/assets/cloud.svg" alt=""/>
 										<span>GitHub Cloud</span>
-									</GitHubOption>
-									<GitHubOption
-										optionKey={2}
-										selectedOption={selectedOption}
+									</div>
+									<div
+										css={selectedOption === 2 ? [gitHubOptionStyle, gitHubSelectedOptionStyle]: [gitHubOptionStyle]}
 										onClick={() => {
 											setSelectedOption(2);
 											analyticsClient.sendUIEvent({ actionSubject: "authorizeTypeGitHubEnt", action: "clicked" });
@@ -384,9 +432,9 @@ const ConfigSteps = () => {
 									>
 										<img src="/public/assets/server.svg" alt=""/>
 										<span>GitHub Enterprise Server</span>
-									</GitHubOption>
-								</GitHubOptionContainer>
-								<TooltipContainer>
+									</div>
+								</div>
+								<div css={tooltipContainerStyle}>
 									<Tooltip
 										component={InlineDialog}
 										position="right-end"
@@ -394,7 +442,7 @@ const ConfigSteps = () => {
 									>
 										{(props) => <a {...props}>How do I check my GitHub product?</a>}
 									</Tooltip>
-								</TooltipContainer>
+								</div>
 								{
 									loaderForLogin ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
 										<Button
@@ -408,7 +456,7 @@ const ConfigSteps = () => {
 							</>
 					</Step>
 				}
-			</ConfigContainer>
+			</div>
 		</Wrapper>
 	);
 };
@@ -423,7 +471,7 @@ const setAnalyticsEventsForFetchedOrgs  = (orgs: Array<GitHubInstallationType>) 
 			requiresSsoLoginCount,
 			isIPBlockedCount,
 		});
-	} catch (e) {
+	} catch (e: unknown) {
 		reportError(new Error("Fail setAnalyticsEventsForFetchedOrgs", { cause: e }), {
 			path: "setAnalyticsEventsForFetchedOrgs"
 		});

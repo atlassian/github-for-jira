@@ -33,7 +33,7 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 		res.send({
 			repositories
 		});
-	} catch (err) {
+	} catch (err: unknown) {
 		log.error({ err }, "Error fetching repositories");
 		res.status(200).send({
 			repositories: []
@@ -62,7 +62,7 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 				createInstallationClient(subscription.gitHubInstallationId, jiraHost, metrics, logger, subscription.gitHubAppId)
 			]);
 
-			const searchQueryInstallationString = `${repoName} org:${orgName} in:full_name`;
+			const searchQueryInstallationString = `${repoName} org:${orgName} in:full_name fork:true`;
 
 			const installationSearch = await gitHubInstallationClient.searchRepositories(searchQueryInstallationString, "updated")
 				.then(responseInstallationSearch => {
@@ -84,7 +84,7 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 			const subscriptionOwners = await RepoSyncState.findAllRepoOwners(subscription);
 			return installationSearch.filter(repo => subscriptionOwners.has(repo.owner.login));
 
-		} catch (err) {
+		} catch (err: unknown) {
 			logger.error({ err }, "Create branch - Failed to search repos for installation");
 			return [];
 		}

@@ -16,7 +16,7 @@ import { Subscription } from "models/subscription";
 import minimatch from "minimatch";
 import { getRepoConfig } from "services/user-config-service";
 import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
-import { BooleanFlags, booleanFlag } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, shouldSendAll } from "config/feature-flags";
 import { findLastSuccessDeploymentFromCache } from "services/deployment-cache-service";
 import { statsd } from "config/statsd";
 import { metricDeploymentCache } from "config/metric-names";
@@ -45,7 +45,7 @@ const getLastSuccessfulDeployCommitSha = async (
 				return deployment.sha;
 			}
 		}
-	} catch (e) {
+	} catch (e: unknown) {
 		logger?.debug(`Failed to get deployment statuses.`);
 	}
 
@@ -117,7 +117,7 @@ const getLastSuccessDeploymentShaFromCache = async (
 			return lastSuccessful.commitSha;
 		}
 
-	} catch (e) {
+	} catch (e: unknown) {
 		statsd.increment(metricDeploymentCache.failed, { failType: "lookup", ...tags }, info);
 		logger.error({ err: e }, "Error look up deployment information from dynamodb");
 		throw e;
@@ -286,7 +286,7 @@ const mapJiraIssueIdsCommitsAndServicesToAssociationArray = (
 		totalAssociationCount += issues.length;
 	}
 
-	if (config?.deployments?.services?.ids) {
+	if (config?.deployments?.services?.ids?.length) {
 		const maximumServicesToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - totalAssociationCount;
 		const services = config.deployments.services.ids
 			.slice(0, maximumServicesToSubmit);
@@ -374,7 +374,10 @@ export const transformDeployment = async (
 		config
 	);
 
-	if (!associations?.length) {
+	const alwaysSend = type === "webhook" ?
+		await shouldSendAll("deployments", jiraHost, logger) :
+		await shouldSendAll("deployments-backfill", jiraHost, logger);
+	if (!associations?.length && !alwaysSend) {
 		return undefined;
 	}
 

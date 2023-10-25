@@ -354,7 +354,7 @@ describe("sync/installation", () => {
 			const sendMessageMock = jest.fn();
 			await markCurrentTaskAsFailedAndContinue({
 				...MESSAGE_PAYLOAD,
-				installationId: MESSAGE_PAYLOAD.installationId + 1
+				installationId: (MESSAGE_PAYLOAD.installationId as number) + 1
 			}, TASK, false, sendMessageMock, getLogger("test"), mockError);
 
 			const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
@@ -420,7 +420,7 @@ describe("sync/installation", () => {
 				try {
 					// Both tasks will fail because no nock was not setup
 					await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD_BRANCHES_ONLY, sentry, TEST_LOGGER);
-				} catch (err) {
+				} catch (err: unknown) {
 					capturedError = err;
 				}
 				expect(capturedError).toBeInstanceOf(TaskError);

@@ -28,7 +28,7 @@ export const ApiPingPost = async (req: Request, res: Response): Promise<void> =>
 			proxy: data.useProxy === true ? envVars.PROXY : undefined
 		});
 		logCurlOutputInChunks(output, req.log);
-	} catch (e) {
+	} catch (e: unknown) {
 		req.log.warn("Fail initiate ping url using curl", { err: e, url: data.url });
 	}
 
@@ -37,7 +37,7 @@ export const ApiPingPost = async (req: Request, res: Response): Promise<void> =>
 			const gitHubClient = await createAnonymousClientByGitHubAppId(data.gitHubAppId, data.jiraHost, { trigger: "api-ping-post" }, req.log);
 			try {
 				await gitHubClient.checkGitHubToken("invalid-token");
-			} catch (e) {
+			} catch (e: unknown) {
 				if (e instanceof GithubClientError) {
 					req.log.warn("Anonymous client failed at GitHubClientError", { err: e, url: data.url, gitHubAppId: data.gitHubAppId, jiraHost: data.jiraHost });
 				} else {
@@ -45,7 +45,7 @@ export const ApiPingPost = async (req: Request, res: Response): Promise<void> =>
 				}
 			}
 		}
-	} catch (e) {
+	} catch (e: unknown) {
 		req.log.warn("Cannot ping url using github anonymous client", { err: e, url: data.url, gitHubAppId: data.gitHubAppId, jiraHost: data.jiraHost });
 	}
 
@@ -57,7 +57,7 @@ export const ApiPingPost = async (req: Request, res: Response): Promise<void> =>
 			statusCode: pingResponse.status,
 			statusText: pingResponse.statusText
 		});
-	} catch (err) {
+	} catch (err: unknown) {
 		res.json({
 			url: data.url,
 			method: "GET",

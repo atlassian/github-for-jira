@@ -154,7 +154,7 @@ describe("GitHub Client", () => {
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
-		} catch (e) {
+		} catch (e: unknown) {
 			error = e;
 		}
 
@@ -181,7 +181,7 @@ describe("GitHub Client", () => {
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
-		} catch (e) {
+		} catch (e: unknown) {
 			error = e;
 		}
 
@@ -204,7 +204,7 @@ describe("GitHub Client", () => {
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
-		} catch (e) {
+		} catch (e: unknown) {
 			error = e;
 		}
 
@@ -229,7 +229,7 @@ describe("GitHub Client", () => {
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
-		} catch (e) {
+		} catch (e: unknown) {
 			error = e;
 		}
 
@@ -255,7 +255,7 @@ describe("GitHub Client", () => {
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
-		} catch (e) {
+		} catch (e: unknown) {
 			error = e;
 		}
 
@@ -283,7 +283,7 @@ describe("GitHub Client", () => {
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
-		} catch (e) {
+		} catch (e: unknown) {
 			error = e;
 		}
 

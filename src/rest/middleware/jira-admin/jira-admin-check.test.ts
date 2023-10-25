@@ -34,10 +34,11 @@ describe("Jira Admin Check", () => {
 	});
 
 	const mockPermission = (permissions: string[]) => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		when(JiraClient.getNewClient).calledWith(expect.anything(), expect.anything())
-			.mockImplementation((reqInst: Installation) => {
+			.mockImplementation((reqInst: Installation): Promise<JiraClient> => {
 				if (reqInst.id === installation.id) {
-					return {
+					return Promise.resolve({
 						checkAdminPermissions: jest.fn((userAccountId) => {
 							if (userAccountId === USER_ACC_ID) {
 								return { data: { globalPermissions: permissions } };
@@ -45,9 +46,9 @@ describe("Jira Admin Check", () => {
 								return { data: { globalPermissions: ["ADMINISTER", "OTHER_ROLE"] } };
 							}
 						})
-					} as any;
+					}) as unknown as Promise<JiraClient>;
 				} else {
-					throw new Error("Wrong installation " + reqInst);
+					throw new Error(`Wrong installation ${reqInst.toString()}`);
 				}
 			});
 
@@ -62,6 +63,7 @@ describe("Jira Admin Check", () => {
 		expect(res.status).toEqual(401);
 		expect(JSON.parse(res.text)).toEqual(expect.objectContaining({
 			errorCode: "INSUFFICIENT_PERMISSION",
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			message: expect.stringContaining("Forbidden")
 		}));
 
@@ -75,7 +77,9 @@ describe("Jira Admin Check", () => {
 
 		expect(res.status).toEqual(200);
 		expect(JSON.parse(res.text)).toEqual({
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			redirectUrl: expect.stringContaining("oauth/authorize"),
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			state: expect.anything()
 		});
 
@@ -93,7 +97,7 @@ describe("Jira Admin Check", () => {
 		iss = "jira-client-key",
 		sub = USER_ACC_ID,
 		exp = Date.now() / 1000 + 10000,
-		qsh = "context-qsh" } = {}): any => {
+		qsh = "context-qsh" } = {}) => {
 		return encodeSymmetric({
 			qsh,
 			iss,

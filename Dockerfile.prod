@@ -3,6 +3,10 @@ FROM node:14.21-alpine3.16 as build
 # adding python for node-gyp
 RUN apk add g++ make python3
 
+# For coredumps
+RUN apk add gdb
+RUN apk add bash
+
 # adding to solve vuln
 RUN apk add --update --upgrade busybox
 RUN apk add --update --upgrade libretls
@@ -21,6 +25,9 @@ RUN yarn list
 # Building TypeScript files
 RUN yarn run build:release
 
+# https://stackoverflow.com/questions/57108751/docker-build-failed-when-copying-in-multi-step-build
+RUN chown root:root -R /app
+
 FROM node:14.21-alpine3.16
 
 # adding to solve vuln
@@ -30,6 +37,10 @@ RUN apk add --update --upgrade zlib
 
 # For debugging curl command
 RUN apk add curl
+
+# For coredumps
+RUN apk add gdb
+RUN apk add bash
 
 USER node
 COPY --chown=node:node --from=build /app /app

@@ -47,14 +47,14 @@ export const issueCommentWebhookHandler = async (
 			context.log.debug("Halting further execution for issueComment since linkifiedBody is empty");
 			return;
 		}
-	} catch (err) {
+	} catch (err: unknown) {
 		context.log.warn(
 			{ err, linkifiedBody, body: comment.body },
 			"Error while trying to find Jira keys in comment body"
 		);
 	}
 
-	context.log.info(`Updating comment in GitHub with ID ${comment.id}`);
+	context.log.info(`Updating comment in GitHub with ID ${comment.id as number}`);
 	const updatedIssueComment: GitHubIssueCommentData = {
 		body: linkifiedBody,
 		owner,
@@ -66,7 +66,7 @@ export const issueCommentWebhookHandler = async (
 	try {
 		const githubResponse: GitHubIssue = await gitHubInstallationClient.updateIssueComment(updatedIssueComment);
 		status = githubResponse.status;
-	} catch (err) {
+	} catch (err: unknown) {
 		context.log.warn({ err }, "Cannot modify issue comment");
 	}
 	const { webhookReceived, name, log } = context;
@@ -83,7 +83,10 @@ export const issueCommentWebhookHandler = async (
 
 const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext, gitHubInstallationClient: GitHubInstallationClient) => {
 	const { comment, repository, issue } = context.payload;
-	const { body: gitHubMessage, id: gitHubId, html_url: gitHubCommentUrl } = comment;
+	const { id: gitHubId } = comment;
+	const gitHubLogin: string = comment.user?.login ?? "undefined";
+	const gitHubMessage: string = comment.body ?? "undefined";
+	const gitHubCommentUrl: string = comment.html_url ?? "undefined";
 	const pullRequest = await gitHubInstallationClient.getPullRequest(repository.owner.login, repository.name, issue.number);
 	// Note: we are only considering the branch name here. Should we also check for pr titles?
 	const issueKey = jiraIssueKeyParser(pullRequest.data.head.ref)[0] || "";
@@ -98,10 +101,66 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 		context.log.info("Halting further execution for syncIssueCommentsToJira as JiraClient is empty for this installation");
 		return;
 	}
+
+	const formattedComment = {
+		"content": [
+			{
+				"type": "paragraph",
+				"content": [
+					{
+						"type": "text",
+						"text": `${gitHubLogin}`,
+						"marks": [
+							{
+								"type": "strong"
+							}
+						]
+					},
+					{
+						"type": "text",
+						"text": " left a comment "
+					},
+					{
+						"type": "text",
+						"text": "on GitHub",
+						"marks": [
+							{
+								"type": "link",
+								"attrs": {
+									"href": `${gitHubCommentUrl}`
+								}
+							}
+						]
+					},
+					{
+						"type": "text",
+						"text": ":"
+					}
+				]
+			},
+			{
+				"type": "blockquote",
+				"content": [
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": `${gitHubMessage}`
+							}
+						]
+					}
+				]
+			}
+		],
+		"type": "doc",
+		"version": 1
+	};
+
 	switch (context.action) {
 		case "created": {
 			await jiraClient.issues.comments.addForIssue(issueKey, {
-				body: gitHubMessage + " - " + gitHubCommentUrl,
+				body: formattedComment,
 				properties: [
 					{
 						key: "gitHubId",
@@ -115,7 +174,7 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 		}
 		case "edited": {
 			await jiraClient.issues.comments.updateForIssue(issueKey, await getCommentId(jiraClient, issueKey, gitHubId), {
-				body: gitHubMessage + " - " + gitHubCommentUrl
+				body: formattedComment
 			});
 			break;
 		}

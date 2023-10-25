@@ -8,7 +8,7 @@ const isProd = instance === "production";
 
 // TODO: implement named routes (https://www.npmjs.com/package/named-routes) to facilitate rerouting between files
 export const postInstallUrl = "/jira";
-export const APP_NAME = `GitHub for Jira${isProd ? "" : ` (${instance})`}`;
+export const APP_NAME = `GitHub for Jira${isProd ? "" : ` (${instance ?? ""})`}`;
 export const LOGO_URL = "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png";
 
 const adminCondition = [
@@ -215,7 +215,7 @@ const	modules = {
 			name: {
 				value: "GitHub for Jira SPA Index Page"
 			},
-			url: "/spa",
+			url: "/spa?from={ac.from}",
 			location: "none",
 			conditions: adminCondition
 		}, {

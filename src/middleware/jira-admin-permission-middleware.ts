@@ -3,7 +3,7 @@ import { Installation } from "models/installation";
 import { JiraClient } from "models/jira-client";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
-export const fetchAndSaveUserJiraAdminStatus = async (req: Request, claims: Record<any, any>, installation: Installation): Promise<void> => {
+export const fetchAndSaveUserJiraAdminStatus = async (req: Request, claims: { sub?: string;}, installation: Installation): Promise<void> => {
 	const ADMIN_PERMISSION = "ADMINISTER";
 	// We only need to fetch this from Jira if it doesn't exist in the session
 	if (req.session.isJiraAdmin !== undefined) {
@@ -19,9 +19,10 @@ export const fetchAndSaveUserJiraAdminStatus = async (req: Request, claims: Reco
 		const jiraClient = await JiraClient.getNewClient(installation, req.log);
 		const permissions = await jiraClient.checkAdminPermissions(userAccountId);
 
-		req.session.isJiraAdmin = permissions.data.globalPermissions.includes(ADMIN_PERMISSION);
+		const data = permissions.data as { globalPermissions?: string[] };
+		req.session.isJiraAdmin = data.globalPermissions?.includes(ADMIN_PERMISSION);
 		req.log.info({ isAdmin :req.session.isJiraAdmin }, "Admin permissions set");
-	} catch (err) {
+	} catch (err: unknown) {
 		req.log.error({ err }, "Failed to fetch Jira Admin rights");
 	}
 };

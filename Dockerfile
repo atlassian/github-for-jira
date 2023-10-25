@@ -3,6 +3,10 @@ FROM node:14.21-alpine3.16 as build
 # adding python for node-gyp
 RUN apk add g++ make python3
 
+# For coredumps
+RUN apk add gdb
+RUN apk add bash
+
 # adding to solve vuln
 RUN apk add --update --upgrade busybox libretls openssl zlib curl
 

@@ -43,10 +43,12 @@ Your new GitHub app will need the following repository permissions & events:
 + Actions: Read-only
 + Code scanning alerts: Read-only
 + Contents: Read & Write
++ Dependabot alerts: Read-only
 + Deployments: Read-only
 + Issues: Read & write
 + Metadata: Read-only
 + Pull requests: Read & write
++ Secret scanning alerts: Read-only
 
 **Organization Permissions**:
 + Members: Read-Only
@@ -56,6 +58,7 @@ Your new GitHub app will need the following repository permissions & events:
 + Commit comment
 + Create
 + Delete
++ Dependabot alert
 + Deployment status
 + Issue comment
 + Issues
@@ -63,6 +66,7 @@ Your new GitHub app will need the following repository permissions & events:
 + Pull request review
 + Push
 + Repository
++ Secret scanning alert
 + Workflow run
 
 ### Setting up your environment file

@@ -5,7 +5,8 @@ import { when } from "jest-when";
 import { ApiInstallationGet } from "./api-installation-get";
 import { ApiInstallationSyncstateGet } from "./api-installation-syncstate-get";
 
-jest.mock("config/feature-flags");
+const featureFlags = jest.mock("config/feature-flags") as any;
+featureFlags.booleanFlag = () => { return Promise.resolve(false); };
 jest.mock("./api-installation-get");
 jest.mock("./api-installation-syncstate-get");
 

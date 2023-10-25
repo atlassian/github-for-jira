@@ -8,6 +8,7 @@ import { queryAtlassianConnectPublicKey } from "./query-atlassian-connect-public
 import { includes, isEmpty } from "lodash";
 import { createHash } from "crypto";
 import url, { UrlWithParsedQuery } from "url";
+import { errorStringFromUnknown } from "~/src/util/error-string-from-unknown";
 
 const JWT_PARAM = "jwt";
 const AUTH_HEADER = "authorization"; // the header name appears as lower-case
@@ -115,22 +116,22 @@ export const validateQsh = (tokenType: TokenType, qsh: string, request: JWTReque
 
 export const validateJwtClaims = (verifiedClaims: { exp: number, qsh: string | undefined }, tokenType: TokenType, request: JWTRequest): void => {
 	if (!verifiedClaims.qsh) {
-		throw "JWT validation Failed, no qsh";
+		throw new Error("JWT validation Failed, no qsh");
 	}
 
 	// 3 second leeway in case of time drift
 	if (verifiedClaims.exp && (Date.now() / 1000 - 3) >= verifiedClaims.exp) {
-		throw "JWT validation failed, token is expired";
+		throw new Error("JWT validation failed, token is expired");
 	}
 
 	if (!validateQsh(tokenType, verifiedClaims.qsh, request)) {
-		throw "JWT Verification Failed, wrong qsh";
+		throw new Error("JWT Verification Failed, wrong qsh");
 	}
 };
 
 const validateSymmetricJwt = (secret: string, request: JWTRequest, tokenType: TokenType, token?: string): void => {
 	if (!token) {
-		throw "Could not find authentication data on request";
+		throw new Error("Could not find authentication data on request");
 	}
 
 	const algorithm = getAlgorithm(token);
@@ -139,20 +140,20 @@ const validateSymmetricJwt = (secret: string, request: JWTRequest, tokenType: To
 	let unverifiedClaims: any;
 	try {
 		unverifiedClaims = decodeSymmetric(token, "", algorithm, true); // decode without verification;
-	} catch (e) {
-		throw `Invalid JWT: ${e.message}`;
+	} catch (e: unknown) {
+		throw new Error(`Invalid JWT: ${errorStringFromUnknown(e)}`);
 	}
 
 	if (!unverifiedClaims.iss) {
-		throw "JWT claim did not contain the issuer (iss) claim";
+		throw new Error("JWT claim did not contain the issuer (iss) claim");
 	}
 
 	/* eslint-disable @typescript-eslint/no-explicit-any*/
 	let verifiedClaims: any; //due to decodeSymmetric return any
 	try {
 		verifiedClaims = decodeSymmetric(token, secret, algorithm, false);
-	} catch (error) {
-		throw `Unable to decode JWT token: ${error}`;
+	} catch (e: unknown) {
+		throw new Error(`Unable to decode JWT token: ${errorStringFromUnknown(e)}`);
 	}
 
 	validateJwtClaims(verifiedClaims, tokenType, request);
@@ -173,7 +174,7 @@ export const verifySymmetricJwtTokenMiddleware = (secret: string, tokenType: Tok
 		validateSymmetricJwt(secret, getJWTRequest(req), tokenType, token);
 		req.log.info("JWT Token Verified Successfully!");
 		next();
-	} catch (error) {
+	} catch (error: unknown) {
 		req.log.error(error, "Error happened when validating JWT token");
 		sendError(res, 401, "Unauthorized");
 		return;
@@ -189,7 +190,7 @@ const isStagingTenant = (req: Request): boolean => {
 			const host = new URL(hostBaseUrl).hostname;
 			return /\.jira-dev\.com$/.test(host);
 		}
-	} catch (err) {
+	} catch (err: unknown) {
 		req.log.error(err, "Error determining Jira instance environment");
 	}
 	return false;
@@ -201,7 +202,7 @@ export const validateAsymmetricJwtTokenMiddleware = async (req: Request, res: Re
 		await validateAsymmetricJwtToken(getJWTRequest(req), token, isStagingTenant(req));
 		req.log.info("JWT Token Verified Successfully!");
 		next();
-	} catch (err) {
+	} catch (err: unknown) {
 		req.log.info(err, "Could not validate JWT token");
 		res.status(401).json({
 			message: "Unauthorized"
@@ -212,7 +213,7 @@ export const validateAsymmetricJwtTokenMiddleware = async (req: Request, res: Re
 export const validateAsymmetricJwtToken = async (request: JWTRequest, token?: string, isStaginTenant = false) => {
 
 	if (!token) {
-		throw "JWT Verification Failed, no token present";
+		throw new Error("JWT Verification Failed, no token present");
 	}
 
 	const publicKey = await queryAtlassianConnectPublicKey(getKeyId(token), isStaginTenant);
@@ -220,13 +221,13 @@ export const validateAsymmetricJwtToken = async (request: JWTRequest, token?: st
 
 	const issuer = unverifiedClaims.iss;
 	if (!issuer) {
-		throw "JWT claim did not contain the issuer (iss) claim";
+		throw new Error("JWT claim did not contain the issuer (iss) claim");
 	}
 
 	if (isEmpty(unverifiedClaims.aud) ||
 		!unverifiedClaims.aud[0] ||
 		!includes(ALLOWED_BASE_URLS, unverifiedClaims.aud[0].replace(/\/$/, ""))) {
-		throw "JWT claim did not contain the correct audience (aud) claim";
+		throw new Error("JWT claim did not contain the correct audience (aud) claim");
 	}
 
 	const verifiedClaims = decodeAsymmetricToken(token, publicKey, false);
@@ -269,7 +270,7 @@ export const createCanonicalRequest = (req: JWTRequest, checkBodyForParams?: boo
 	CANONICAL_QUERY_SEPARATOR +
 	canonicalizeQueryString(req, checkBodyForParams);
 
-const canonicalizeMethod = (req) => req.method.toUpperCase();
+const canonicalizeMethod = (req: JWTRequest) => req.method.toUpperCase();
 
 const canonicalizeUri = (req: JWTRequest) => {
 	let path = req.pathname;

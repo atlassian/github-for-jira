@@ -1,46 +1,51 @@
+/** @jsxImportSource @emotion/react */
 import { useNavigate } from "react-router-dom";
 import Button from "@atlaskit/button";
 import ArrowRightIcon from "@atlaskit/icon/glyph/arrow-right";
 import UserAvatarCircleIcon from "@atlaskit/icon/glyph/user-avatar-circle";
 import UnlockFilledIcon from "@atlaskit/icon/glyph/unlock-filled";
 import styled from "@emotion/styled";
+import { css } from "@emotion/react";
 import { token } from "@atlaskit/tokens";
 import Tooltip, { TooltipPrimitive } from "@atlaskit/tooltip";
 import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
 import analyticsClient, { useEffectScreenEvent } from "../../analytics";
 import { reportError } from "../../utils";
+import { enableBackfillStatusPage } from "./../../feature-flags";
 
-const BeforeText = styled.div`
+const beforeTextStyle = css`
 	color: ${token("color.text.subtle")};
 	margin: 0 0 ${token("space.300")};
 	text-align: center;
 `;
-const ListContainer = styled.div`
+const listContainerStyle = css`
 	background: ${token("color.background.input.hovered")};
 	max-width: 368px;
 	padding: ${token("space.250")};
 	border-radius: ${token("space.050")};
 	margin: 0 auto;
 `;
-const ListItem = styled.div`
+const listItemStyle = css`
 	display: flex;
-	margin-bottom: ${token("space.075")};
 `;
-const Logo = styled.div`
+const logoStyle = css`
 	margin: ${token("space.025")} ${token("space.075")} 0 0;
 `;
-const ButtonContainer = styled.div`
+const buttonContainerStyle = css`
 	text-align: center;
 	margin: ${token("space.300")} 0 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
 `;
-const InlineDialogLink = styled.a`
+const inlineDialogLinkStyle = css`
 	cursor: pointer;
 `;
-const InlineDialogDiv = styled.div`
+const inlineDialogDivStyle = css`
 	padding: ${token("space.200")} 0 0 ${token("space.150")};
 `;
-const InlineDialogImgContainer = styled.div`
+const inlineDialogImgContainerStyle = css`
 	height: 180px;
 	text-align: center;
 	padding: ${token("space.200")} 0;
@@ -59,14 +64,14 @@ const GITHUB_CLOUD_ORG_SETTINGS_URL = "https://github.com/settings/organizations
 
 const InlineDialogContent = () => (
 	<>
-		<InlineDialogDiv>To check your GitHub permissions:</InlineDialogDiv>
+		<div css={inlineDialogDivStyle}>To check your GitHub permissions:</div>
 		<ol>
 			<li>Go to <a href={GITHUB_CLOUD_ORG_SETTINGS_URL} target="_blank">manage organizations</a></li>
 			<li>Your permission level will be next to your organization name.</li>
 		</ol>
-		<InlineDialogImgContainer>
+		<div css={inlineDialogImgContainerStyle}>
 			<img src="/public/assets/github-skeleton.svg" alt=""/>
-		</InlineDialogImgContainer>
+		</div>
 	</>
 );
 
@@ -74,7 +79,7 @@ const getAnalyticsSourceFrom = (): string => {
 	try {
 		const url = new URL(window.location.href);
 		return url.searchParams.get("from") || "";
-	} catch (e) {
+	} catch (e: unknown) {
 		reportError(new Error("Fail getAnalyticsSourceFrom", { cause: e }), { path: "getAnalyticsSourceFrom" });
 		return "";
 	}
@@ -90,18 +95,18 @@ const StartConnection = () => {
 	return (
 		<Wrapper>
 			<SyncHeader/>
-			<BeforeText>Before you start, you should have:</BeforeText>
-			<ListContainer>
-				<ListItem>
-					<Logo>
+			<div css={beforeTextStyle}>Before you start, you should have:</div>
+			<div css={listContainerStyle}>
+				<div css={listItemStyle}>
+					<div css={logoStyle}>
 						<UserAvatarCircleIcon label="github-account" size="small"/>
-					</Logo>
+					</div>
 					<span>A GitHub account</span>
-				</ListItem>
-				<ListItem>
-					<Logo>
+				</div>
+				<div css={listItemStyle}>
+					<div css={logoStyle}>
 						<UnlockFilledIcon label="owner-permission" size="small"/>
-					</Logo>
+					</div>
 					<div>
 						<span>Owner permission for a GitHub organization</span><br/>
 						<Tooltip
@@ -109,12 +114,12 @@ const StartConnection = () => {
 							position="right-end"
 							content={InlineDialogContent}
 						>
-							{(props) => <InlineDialogLink {...props}>Learn how to check Github permissions</InlineDialogLink>}
+							{(props) => <a css={inlineDialogLinkStyle} {...props}>Learn how to check Github permissions</a>}
 						</Tooltip>
 					</div>
-				</ListItem>
-			</ListContainer>
-			<ButtonContainer>
+				</div>
+			</div>
+			<div css={buttonContainerStyle}>
 				<Button
 					iconAfter={<ArrowRightIcon label="continue" size="medium"/>}
 					appearance="primary"
@@ -126,7 +131,18 @@ const StartConnection = () => {
 				>
 					Continue
 				</Button>
-			</ButtonContainer>
+				{
+					enableBackfillStatusPage &&
+						<Button
+							appearance="subtle"
+							onClick={() => {
+								navigate("/spa/connections");
+							}}
+						>
+							Go to backfill page
+						</Button>
+				}
+			</div>
 		</Wrapper>
 	);
 };

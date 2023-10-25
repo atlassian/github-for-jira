@@ -3,6 +3,8 @@ import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jir
 import { isEmpty, union } from "lodash";
 import { generateCreatePullRequestUrl } from "../../transforms/util/pull-request-link-generator";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
+import { Repository } from "models/subscription";
+import { Branch } from "~/src/github/client/github-client.types";
 
 // TODO: better typing in file
 /**
@@ -14,7 +16,7 @@ import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repos
  *  - Title of the last associated Pull Request
  *  - Message from the last commit in that branch
  */
-const mapBranch = (branch, repository) => {
+const mapBranch = (branch: Branch, repository: Repository, alwaysSend: boolean) => {
 	const branchKeys = jiraIssueKeyParser(branch.name);
 	const pullRequestKeys = jiraIssueKeyParser(
 		branch.associatedPullRequests.nodes.length ? branch.associatedPullRequests.nodes[0].title : ""
@@ -23,7 +25,7 @@ const mapBranch = (branch, repository) => {
 	const allKeys = union(branchKeys, pullRequestKeys, commitKeys)
 		.filter((key) => !!key);
 
-	if (!allKeys.length) {
+	if (!allKeys.length && !alwaysSend) {
 		// If we get here, no issue keys were found anywhere they might be found
 		return undefined;
 	}
@@ -55,10 +57,10 @@ const mapBranch = (branch, repository) => {
  * of commits we got from the GraphQL response and maps the data
  * to the structure needed for the DevInfo API
  */
-const mapCommit = (commit) => {
+const mapCommit = (commit, alwaysSend: boolean) => {
 	const issueKeys = jiraIssueKeyParser(commit.message);
 
-	if (isEmpty(issueKeys)) {
+	if (isEmpty(issueKeys) && !alwaysSend) {
 		return undefined;
 	}
 
@@ -83,16 +85,16 @@ const mapCommit = (commit) => {
  * @param payload
  * @param gitHubBaseUrl - can be undefined for Cloud
  */
-export const transformBranches = (payload: { branches: any, repository: any }, gitHubBaseUrl: string | undefined) => {
+export const transformBranches = (payload: { branches: any, repository: Repository }, gitHubBaseUrl: string | undefined, alwaysSendBranches: boolean, alwaysSendCommits: boolean) => {
 	// TODO: use reduce instead of map/filter
 	const branches = payload.branches
-		.map((branch) => mapBranch(branch, payload.repository))
+		.map((branch) => mapBranch(branch, payload.repository, alwaysSendBranches))
 		.filter((branch) => !!branch);
 
 	// TODO: use reduce instead of map/filter
 	const commits = payload.branches.flatMap((branch) =>
 		branch.target.history.nodes
-			.map((commit) => mapCommit(commit))
+			.map((commit) => mapCommit(commit, alwaysSendCommits))
 			.filter((branch) => !!branch)
 	);
 

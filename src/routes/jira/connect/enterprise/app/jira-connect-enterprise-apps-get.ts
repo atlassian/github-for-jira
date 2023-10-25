@@ -3,6 +3,7 @@ import { GitHubServerApp } from "models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { resolveIntoConnectConfig } from "utils/ghe-connect-config-temp-storage";
+import { errorStringFromUnknown } from "~/src/util/error-string-from-unknown";
 
 export const JiraConnectEnterpriseAppsGet = async (
 	req: Request,
@@ -51,8 +52,8 @@ export const JiraConnectEnterpriseAppsGet = async (
 		}
 
 		req.log.debug("Jira Connect Enterprise App page rendered successfully.");
-	} catch (error) {
-		return next(new Error(`Failed to render Jira Connect Enterprise App page: ${error}`));
+	} catch (error: unknown) {
+		return next(new Error(`Failed to render Jira Connect Enterprise App page: ${errorStringFromUnknown(error)}`));
 	}
 };
 

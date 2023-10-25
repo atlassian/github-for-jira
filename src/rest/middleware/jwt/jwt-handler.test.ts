@@ -93,8 +93,9 @@ describe("jwt handler", () => {
 		const res = await sendRequestWithToken(token);
 
 		expect(res.status).toEqual(200);
-		expect(JSON.parse(res.text).jiraHost).toEqual(jiraHost);
-		expect(JSON.parse(res.text).accountId).toEqual("myAccount");
+		const json = JSON.parse(res.text) as { jiraHost: string, accountId: string };
+		expect(json.jiraHost).toEqual(jiraHost);
+		expect(json.accountId).toEqual("myAccount");
 
 	});
 
@@ -110,6 +111,7 @@ describe("jwt handler", () => {
 			res.send(JSON.stringify(res.locals));
 		});
 		app.use((err, _req, res, _next) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 			res.status(err.httpStatus || err.status).send(err.message);
 		});
 		return app;
@@ -120,7 +122,7 @@ describe("jwt handler", () => {
 		iss = "jira-client-key",
 		exp = Date.now() / 1000 + 10000,
 		qsh = "context-qsh",
-		sub = "myAccount" } = {}): any => {
+		sub = "myAccount" } = {}) => {
 		return encodeSymmetric({
 			qsh,
 			iss,

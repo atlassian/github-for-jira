@@ -86,7 +86,7 @@ describe("github-configuration-post", () => {
 				.reply(200);
 
 			when(verifyAdminPermsAndFinishInstallation).calledWith(
-				"myToken", installation, undefined, subscription.gitHubInstallationId + 1, expect.anything(), expect.anything()
+				"myToken", installation, undefined, subscription.gitHubInstallationId + 1, expect.anything()
 			).mockResolvedValue({ error: "not admin" });
 
 			const result = await supertest(app)
@@ -110,7 +110,7 @@ describe("github-configuration-post", () => {
 				.reply(200);
 
 			when(verifyAdminPermsAndFinishInstallation).calledWith(
-				"myToken", installation, undefined, subscription.gitHubInstallationId + 1, expect.anything(), expect.anything()
+				"myToken", installation, undefined, subscription.gitHubInstallationId + 1, expect.anything()
 			).mockResolvedValue({ });
 
 			const result = await supertest(app)
@@ -190,7 +190,7 @@ describe("github-configuration-post", () => {
 				.reply(200);
 
 			when(verifyAdminPermsAndFinishInstallation).calledWith(
-				"myToken", installation, gitHubServerApp.id, subscription.gitHubInstallationId + 1, expect.anything(), expect.anything()
+				"myToken", installation, gitHubServerApp.id, subscription.gitHubInstallationId + 1, expect.anything()
 			).mockResolvedValue({ error: "not admin" });
 
 			const result = await supertest(app)
@@ -215,7 +215,7 @@ describe("github-configuration-post", () => {
 				.reply(200);
 
 			when(verifyAdminPermsAndFinishInstallation).calledWith(
-				"myToken", installation, gitHubServerApp.id, subscription.gitHubInstallationId + 1, expect.anything(), expect.anything()
+				"myToken", installation, gitHubServerApp.id, subscription.gitHubInstallationId + 1, expect.anything()
 			).mockResolvedValue({  });
 
 			const result = await supertest(app)

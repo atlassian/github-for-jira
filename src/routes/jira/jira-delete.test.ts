@@ -94,11 +94,11 @@ describe("DELETE /jira/configuration", () => {
 			.reply(200, "OK");
 
 		jiraNock
-			.delete("/rest/security/1.0/linkedWorkspaces/bulk?workspaceIds="+subscription.id)
+			.delete("/rest/security/1.0/linkedWorkspaces/bulk?workspaceIds="+(subscription.id ? (subscription.id as number)?.toString() : "undefined"))
 			.reply(202);
 
 		jiraNock
-			.delete("/rest/security/1.0/bulkByProperties?workspaceId="+subscription.id)
+			.delete("/rest/security/1.0/bulkByProperties?workspaceId="+(subscription.id ? (subscription.id as number)?.toString() : "undefined"))
 			.reply(202);
 
 		jiraNock

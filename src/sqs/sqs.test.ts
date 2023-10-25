@@ -1,26 +1,31 @@
-/* eslint-disable jest/no-done-callback,@typescript-eslint/no-explicit-any */
 import { SqsQueue } from "./sqs";
 import { v4 as uuidv4 } from "uuid";
 import { waitUntil } from "test/utils/wait-until";
 import { statsd }  from "config/statsd";
 import { sqsQueueMetrics } from "config/metric-names";
-import { Request as AwsRequest } from "aws-sdk";
+import { AWSError, Request as AwsRequest, Service, Response } from "aws-sdk";
 import { BaseMessagePayload, SQSMessageContext } from "~/src/sqs/sqs.types";
 import { preemptiveRateLimitCheck } from "utils/preemptive-rate-limit";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { SendMessageResult } from "aws-sdk/clients/sqs";
 
 jest.mock("config/feature-flags");
 jest.mock("utils/preemptive-rate-limit");
 
 const delay = (time: number) => new Promise(resolve => setTimeout(resolve, time));
 
+const mockSendMessagePromise = () => (Promise.resolve({
+	MessageId: "123",
+	$response: undefined as unknown as Response<SendMessageResult, AWSError>
+}));
+
 describe("SQS", () => {
 	let mockRequestHandler: jest.Mock;
 	let mockErrorHandler: jest.Mock;
 	let testMaxQueueAttempts = 3;
 	let queue: SqsQueue<BaseMessagePayload>;
-	let payload;
+	let payload: BaseMessagePayload;
 
 	let TEST_QUEUE_URL:string;
 	let TEST_QUEUE_REGION:string;
@@ -34,7 +39,11 @@ describe("SQS", () => {
 		mockRequestHandler = jest.fn();
 		mockErrorHandler = jest.fn();
 		testMaxQueueAttempts = 3;
-		payload = { msg: uuidv4() };
+		payload = {
+			installationId: 123,
+			jiraHost: jiraHost,
+			webhookId: uuidv4()
+		};
 		createSqsQueue = (timeout: number, maxAttempts: number = testMaxQueueAttempts) =>
 			new SqsQueue({
 				queueName: TEST_QUEUE_NAME,
@@ -47,11 +56,12 @@ describe("SQS", () => {
 			mockRequestHandler,
 			mockErrorHandler);
 		when(jest.mocked(preemptiveRateLimitCheck))
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			.calledWith(expect.anything(), expect.anything()) .mockResolvedValue({ isExceedThreshold: false });
 
 		when(booleanFlag).calledWith(
 			BooleanFlags.REMOVE_STALE_MESSAGES,
-			expect.anything()
+			jiraHost
 		).mockResolvedValue(true);
 	});
 
@@ -60,7 +70,6 @@ describe("SQS", () => {
 			await queue.stop();
 			await queue.purgeQueue();
 		}
-		queue = undefined as any;
 	});
 
 	describe("Normal execution tests", () => {
@@ -76,7 +85,7 @@ describe("SQS", () => {
 
 		it("Message gets received", async () => {
 			await queue.sendMessage(payload);
-			await waitUntil(async () => expect(mockRequestHandler).toBeCalledTimes(1));
+			await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toBeCalledTimes(1)));
 			expect(mockRequestHandler).toBeCalledWith(expect.objectContaining({ payload }));
 		});
 
@@ -84,21 +93,21 @@ describe("SQS", () => {
 			await queue.stop();
 			queue.start();
 			await queue.sendMessage(payload);
-			await waitUntil(async () => expect(mockRequestHandler).toBeCalledTimes(1));
+			await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toBeCalledTimes(1)));
 			expect(mockRequestHandler).toBeCalledWith(expect.objectContaining({ payload }));
 		});
 
 		it("Message received with delay", async () => {
 			const startTime = Date.now();
 			await queue.sendMessage(payload, 1);
-			await waitUntil(async () => expect(mockRequestHandler).toHaveBeenCalledTimes(1));
+			await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toHaveBeenCalledTimes(1)));
 			expect(Date.now() - startTime).toBeGreaterThanOrEqual(1000);
 		});
 
 		it("Message send with the maximum delay if bigger delay specified", async () => {
-
 			const sendMessageSpy = jest.spyOn(queue.sqs, "sendMessage");
-			const request: AwsRequest<any, any> = { promise: () => Promise.resolve({ MessageId: "123" }) } as any;
+			const request = new AwsRequest<SendMessageResult, AWSError>(new Service(), "sendMessage");
+			request.promise = mockSendMessagePromise;
 			sendMessageSpy.mockReturnValue(request);
 			await queue.sendMessage(payload, 123423453);
 
@@ -106,9 +115,9 @@ describe("SQS", () => {
 		});
 
 		it("Message send with the specified delay", async () => {
-
 			const sendMessageSpy = jest.spyOn(queue.sqs, "sendMessage");
-			const request: AwsRequest<any, any> = { promise: () => Promise.resolve({ MessageId: "123" }) } as any;
+			const request = new AwsRequest<SendMessageResult, AWSError>(new Service(), "sendMessage");
+			request.promise = mockSendMessagePromise;
 			sendMessageSpy.mockReturnValue(request);
 			await queue.sendMessage(payload, 64);
 
@@ -119,7 +128,7 @@ describe("SQS", () => {
 			await queue.sendMessage(payload);
 			const time = Date.now();
 			await delay(1000);
-			await waitUntil(async () => expect(mockRequestHandler).toHaveBeenCalledTimes(1));
+			await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toHaveBeenCalledTimes(1)));
 			expect(mockRequestHandler).toBeCalledWith(expect.objectContaining({ payload }));
 			expect(Date.now() - time).toBeGreaterThanOrEqual(1000); // wait 1 second to make sure everything's processed
 		});
@@ -133,7 +142,7 @@ describe("SQS", () => {
 				queue.sendMessage(payload),
 				queue.sendMessage(payload)
 			]);
-			await waitUntil(async () => expect(mockRequestHandler).toHaveBeenCalledTimes(2));
+			await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toHaveBeenCalledTimes(2)));
 			await expect(mockRequestHandler).toHaveResolved();
 			expect(Date.now() - time).toBeGreaterThanOrEqual(2000);
 		});
@@ -144,7 +153,7 @@ describe("SQS", () => {
 				mockErrorHandler.mockReturnValue({ retryable: true, retryDelaySec: timeout, isFailure: true });
 				const time = Date.now();
 				await queue.sendMessage(payload);
-				await waitUntil(async () => expect(mockRequestHandler).toHaveBeenCalledTimes(2));
+				await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toHaveBeenCalledTimes(2)));
 				await expect(mockRequestHandler).toHaveResolvedTimes(1);
 				expect(Date.now() - time).toBeGreaterThanOrEqual(timeout * 1000);
 			});
@@ -155,11 +164,12 @@ describe("SQS", () => {
 			mockRequestHandler.mockRejectedValue("Something bad happened");
 			mockErrorHandler.mockReturnValue({ retryable: false, isFailure: true });
 			await queue.sendMessage(payload);
-			await waitUntil(async () => {
+			await waitUntil(() => {
 				expect(mockErrorHandler).toHaveBeenCalledTimes(1);
 				expect(queueDeletionSpy).toBeCalledTimes(1);
+				return Promise.resolve();
 			});
-			expect(statsdIncrementSpy).toBeCalledWith(sqsQueueMetrics.failed, expect.anything(), { jiraHost: undefined });
+			expect(statsdIncrementSpy).toBeCalledWith(sqsQueueMetrics.failed, expect.anything(), { jiraHost: jiraHost });
 		});
 
 		it("Message deleted from the queue when error is not a failure and failure metric not sent", async () => {
@@ -167,7 +177,7 @@ describe("SQS", () => {
 			mockRequestHandler.mockRejectedValue("Something bad happened");
 			mockErrorHandler.mockReturnValue({ isFailure: false });
 			await queue.sendMessage(payload);
-			await waitUntil(async () => expect(queueDeletionSpy).toBeCalledTimes(1));
+			await waitUntil(() => Promise.resolve(expect(queueDeletionSpy).toBeCalledTimes(1)));
 			expect(statsdIncrementSpy).not.toBeCalledWith(sqsQueueMetrics.failed, expect.anything());
 		});
 	});
@@ -181,28 +191,30 @@ describe("SQS", () => {
 		});
 		it("Message gets executed when limit not exceeded", async () => {
 			when(jest.mocked(preemptiveRateLimitCheck))
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 				.calledWith(expect.anything(), expect.anything()).mockResolvedValue({ isExceedThreshold: false });
 			await queue.sendMessage(payload);
 			const time = Date.now();
 			await delay(2000);
-			await waitUntil(async () => expect(mockRequestHandler).toHaveBeenCalled());
+			await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toHaveBeenCalled()));
 			expect(mockRequestHandler).toBeCalledWith(expect.objectContaining({ payload }));
 			expect(Date.now() - time).toBeGreaterThanOrEqual(1000); // wait 1 second to make sure everything's processed
 		});
 		it("Message NOT executed when limit exceeded", async () => {
 			when(jest.mocked(preemptiveRateLimitCheck))
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 				.calledWith(expect.anything(), expect.anything()).mockResolvedValue({ isExceedThreshold: true, resetTimeInSeconds: 123 });
 			const queueSendSpy = jest.spyOn(queue.sqs, "sendMessage");
 			const queueDeletionSpy = jest.spyOn(queue.sqs, "deleteMessage");
 			await queue.sendMessage(payload);
 			const time = Date.now();
 			await delay(2000);
-			await waitUntil(async () => expect(mockRequestHandler).toHaveBeenCalledTimes(0));
-			await waitUntil(async () => expect(queueDeletionSpy).toBeCalledTimes(1));
-			await waitUntil(async () => expect(queueSendSpy).toBeCalledWith(expect.objectContaining({
+			await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toHaveBeenCalledTimes(0)));
+			await waitUntil(() => Promise.resolve(expect(queueDeletionSpy).toBeCalledTimes(1)));
+			await waitUntil(() => Promise.resolve(expect(queueSendSpy).toBeCalledWith(expect.objectContaining({
 				DelaySeconds: 123,
 				MessageBody: JSON.stringify({ ...payload, rateLimited: true })
-			})));
+			}))));
 			expect(Date.now() - time).toBeGreaterThanOrEqual(1000); // wait 1 second to make sure everything's processed
 		});
 	});
@@ -233,7 +245,7 @@ describe("SQS", () => {
 				});
 
 			await queue.sendMessage(payload);
-			await waitUntil(async () => expect(mockRequestHandler).toHaveBeenCalledTimes(3));
+			await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toHaveBeenCalledTimes(3)));
 			expect(mockRequestHandler).lastCalledWith(expect.objectContaining({
 				receiveCount: 3,
 				lastAttempt: true
@@ -256,7 +268,7 @@ describe("SQS", () => {
 			queue.start();
 			when(booleanFlag).calledWith(
 				BooleanFlags.REMOVE_STALE_MESSAGES,
-				expect.anything()
+				jiraHost
 			).mockResolvedValue(true);
 		});
 
@@ -264,7 +276,7 @@ describe("SQS", () => {
 		it("should return false when feature flag is false", async () => {
 			when(booleanFlag).calledWith(
 				BooleanFlags.REMOVE_STALE_MESSAGES,
-				expect.anything()
+				jiraHost
 			).mockResolvedValue(false);
 			const message = {
 				Body: JSON.stringify({
@@ -312,6 +324,7 @@ describe("SQS", () => {
 			const result = await queue.deleteStaleMessages.call(mockThis, message, context, jiraHost);
 			expect(result).toBe(true);
 			expect(deleteMessage).toHaveBeenCalledWith(context);
+			// eslint-disable-next-line @typescript-eslint/unbound-method
 			expect(context.log.warn).toHaveBeenCalledWith(
 				{ deletedMessageId: "12345" },
 				"Deleted stale message from deployment queue"
@@ -346,7 +359,9 @@ describe("SQS", () => {
 			const result = await queue.deleteStaleMessages.call(mockThis, message, context, jiraHost);
 			expect(result).toBe(false);
 			expect(deleteMessage).toHaveBeenCalledWith(context);
+			// eslint-disable-next-line @typescript-eslint/unbound-method
 			expect(context.log.error).toHaveBeenCalledWith(
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				{ error: expect.any(Error), deletedMessageId: "12345" },
 				"Failed to delete stale message from deployment queue"
 			);

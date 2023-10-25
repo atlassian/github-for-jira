@@ -17,8 +17,8 @@ describe("github-client-interceptors", () => {
 		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
 		try {
 			await client.getPage(1000);
-		} catch (err) {
-			error = err;
+		} catch (err: unknown) {
+			error = err as Error;
 		}
 		expect(error!).toBeInstanceOf(GithubClientInvalidPermissionsError);
 	});
@@ -33,8 +33,8 @@ describe("github-client-interceptors", () => {
 		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
 		try {
 			await client.getPage(1000);
-		} catch (err) {
-			error = err;
+		} catch (err: unknown) {
+			error = err as Error;
 		}
 		expect(error!).toBeInstanceOf(GithubClientNotFoundError);
 	});
@@ -48,8 +48,8 @@ describe("github-client-interceptors", () => {
 		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
 		try {
 			await client.getPage(1000);
-		} catch (err) {
-			error = err;
+		} catch (err: unknown) {
+			error = err as Error;
 		}
 		expect(error!).toBeInstanceOf(GithubClientBlockedIpError);
 	});
@@ -61,8 +61,8 @@ describe("github-client-interceptors", () => {
 		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
 		try {
 			await client.getPage(1000);
-		} catch (err) {
-			error = err;
+		} catch (err: unknown) {
+			error = err as Error;
 		}
 		expect(error!).toBeInstanceOf(GithubClientSSOLoginError);
 	});

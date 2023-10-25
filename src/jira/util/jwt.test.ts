@@ -49,7 +49,7 @@ describe("jwt", () => {
 			query,
 			method: "GET",
 			pathname: "/jira/configuration",
-			url: `/jira/configuration?${new URLSearchParams(query)}`
+			url: `/jira/configuration?${new URLSearchParams(query).toString()}`
 		};
 	};
 
@@ -91,7 +91,7 @@ describe("jwt", () => {
 			session: {
 				jiraHost: "https://test.atlassian.net"
 			},
-			url: `/jira/configuration?${new URLSearchParams(testQueryParams)}`,
+			url: `/jira/configuration?${new URLSearchParams(testQueryParams).toString()}`,
 			log: getLogger("jwt.test")
 		} as any;
 
@@ -170,7 +170,7 @@ describe("jwt", () => {
 				return {
 					...baseRequest,
 					query,
-					url: `/jira/configuration?${new URLSearchParams(query)}`
+					url: `/jira/configuration?${new URLSearchParams(query).toString()}`
 				};
 			};
 

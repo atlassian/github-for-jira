@@ -43,7 +43,7 @@ export const updateRepoConfig = async (
 			}
 
 			await updateRepoConfigsFromGitHub([repoSyncState], gitHubInstallationClient, logger);
-		} catch (err) {
+		} catch (err: unknown) {
 			logger.error({
 				err,
 				gitHubInstallationId: gitHubInstallationClient.githubInstallationId,
@@ -113,7 +113,7 @@ const convertYamlToUserConfig = (input: string | undefined, logger: Logger): Con
 		return {};
 	}
 
-	const config: Config = YAML.parse(input);
+	const config: Config = YAML.parse(input) as Config;
 	logger.info("User config file yaml content parsed successfully");
 
 	const configDeployments = config?.deployments;
@@ -169,7 +169,7 @@ const updateRepoConfigFromGitHub = async (repoSyncState: RepoSyncState, gitHubIn
 export const updateRepoConfigsFromGitHub = async (repoSyncStates: RepoSyncState[], gitHubInstallationClient: GitHubInstallationClient, logger: Logger): Promise<void> => {
 	await Promise.all(repoSyncStates.map(async (repoSyncState) => {
 		await updateRepoConfigFromGitHub(repoSyncState, gitHubInstallationClient, logger)
-			.catch(err => logger.error({
+			.catch((err: unknown) => logger.error({
 				err,
 				gitHubInstallationId: gitHubInstallationClient.githubInstallationId,
 				repositoryId: repoSyncState.repoId

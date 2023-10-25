@@ -35,7 +35,7 @@ export const issueWebhookHandler = async (context: WebhookContext<IssuesOpenedEv
 			context.log.info("Halting further execution for issue since linkifiedBody is empty");
 			return;
 		}
-	} catch (err) {
+	} catch (err: unknown) {
 		context.log.warn(
 			{ err, linkifiedBody, body: issue.body },
 			"Error while trying to find jira keys in issue body"

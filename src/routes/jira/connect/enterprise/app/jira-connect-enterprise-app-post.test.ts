@@ -51,7 +51,7 @@ describe("jira-connect-enterprise-app-post", () => {
 			TEST_GHE_APP_PARTIAL = {
 				appId: 12321,
 				gitHubBaseUrl: gheUrl,
-				gitHubClientId: "client-id" + Math.random(),
+				gitHubClientId: "client-id" + Math.random().toString(),
 				gitHubClientSecret: "client-secret",
 				webhookSecret: "webhook-secret",
 				privateKey: fs.readFileSync(path.resolve(__dirname, "../../../../../../test/setup/test-key.pem"), { encoding: "utf8" }),
@@ -122,9 +122,9 @@ describe("jira-connect-enterprise-app-post", () => {
 				gitHubClientId: expect.stringMatching(/client-id.*/i),
 
 				secrets: null,
-				privateKey: "encrypted:" + TEST_GHE_APP_PARTIAL.privateKey,
-				gitHubClientSecret: "encrypted:" + TEST_GHE_APP_PARTIAL.gitHubClientSecret,
-				webhookSecret: "encrypted:" + TEST_GHE_APP_PARTIAL.webhookSecret,
+				privateKey: "encrypted:" + (TEST_GHE_APP_PARTIAL.privateKey as string),
+				gitHubClientSecret: "encrypted:" + (TEST_GHE_APP_PARTIAL.gitHubClientSecret as string),
+				webhookSecret: "encrypted:" + (TEST_GHE_APP_PARTIAL.webhookSecret as string),
 
 				apiKeyHeaderName: null,
 				encryptedApiKeyValue: null,

@@ -53,6 +53,7 @@ const mapPullRequests = (
 export const transformWorkflow = async (
 	githubClient: GitHubInstallationClient,
 	payload: GitHubWorkflowPayload,
+	alwaysSend: boolean,
 	logger: Logger
 ): Promise<JiraBuildBulkSubmitData | undefined> => {
 	const {
@@ -82,8 +83,8 @@ export const transformWorkflow = async (
 		logger
 	) : "";
 
-	const issueKeys = jiraIssueKeyParser(`${head_branch}\n${payload.workflow_run.head_commit?.message}\n${commitMessages}`);
-	if (!issueKeys.length) {
+	const issueKeys = jiraIssueKeyParser(`${head_branch}\n${payload.workflow_run.head_commit?.message ?? ""}\n${commitMessages}`);
+	if (!issueKeys.length && !alwaysSend) {
 		return undefined;
 	}
 

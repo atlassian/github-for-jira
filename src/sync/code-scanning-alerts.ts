@@ -12,6 +12,8 @@ import {
 	transformRuleTagsToIdentifiers,
 	transformGitHubStateToJiraStatus
 } from "~/src/transforms/util/github-security-alerts";
+import { getCodeScanningVulnDescription } from "../transforms/transform-code-scanning-alert";
+import { truncate } from "lodash";
 
 export const getCodeScanningAlertTask = async (
 	parentLogger: Logger,
@@ -29,12 +31,52 @@ export const getCodeScanningAlertTask = async (
 	const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 	const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
 
-	const { data: codeScanningAlerts  } = await gitHubClient.getCodeScanningAlerts(repository.owner.login, repository.name, {
-		per_page: smartCursor.perPage,
-		page: smartCursor.pageNo,
-		sort: "created",
-		direction: SortDirection.DES
-	});
+	let codeScanningAlerts: CodeScanningAlertResponseItem[];
+	try {
+
+		const response = await gitHubClient.getCodeScanningAlerts(repository.owner.login, repository.name, {
+			per_page: smartCursor.perPage,
+			page: smartCursor.pageNo,
+			sort: "created",
+			direction: SortDirection.DES
+		});
+		codeScanningAlerts = response.data;
+	} catch (e: unknown) {
+		const err = e as { cause?: { response?: { status?: number, statusText?: string, data?: { message?: string } } } };
+		if (err.cause?.response?.status == 403 && err.cause?.response?.data?.message?.includes("Advanced Security must be enabled for this repository to use code scanning")) {
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Advanced Security disabled, so marking code scanning backfill task complete");
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
+		} else if (err.cause?.response?.status == 403 && err.cause?.response?.data?.message?.includes("Code scanning is not enabled for this repository")) {
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Code scanning is not configured, so marking backfill task complete");
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
+		} else if (err.cause?.response?.status == 404 && err.cause?.response?.data?.message?.includes("no analysis found")) {
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Code scanning is not configured, so marking backfill task complete");
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
+		} else if (err.cause?.response?.status == 404) {
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Repo not found, so marking backfill task complete");
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
+		} else if (err.cause?.response?.status == 451) {
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Code scanning not available due to legal reasons, so marking backfill task complete");
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
+		}
+		logger.error({ err, reason: err.cause?.response?.data }, "Code Scanning backfill failed");
+		throw err;
+	}
 
 	if (!codeScanningAlerts?.length) {
 		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
@@ -55,7 +97,7 @@ export const getCodeScanningAlertTask = async (
 	const nextPageCursorStr = smartCursor.copyWithPageNo(smartCursor.pageNo + 1).serialise();
 	const edgesWithCursor = [{ codeScanningAlerts: codeScanningAlerts, cursor: nextPageCursorStr }];
 
-	const jiraPayload = await transformCodeScanningAlert(codeScanningAlerts, repository, jiraHost, logger,  messagePayload.gitHubAppConfig?.gitHubAppId);
+	const jiraPayload = await transformCodeScanningAlert(codeScanningAlerts, repository, jiraHost, logger, messagePayload.gitHubAppConfig?.gitHubAppId);
 	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload?.vulnerabilities?.length }, "Backfill task complete");
 	return {
 		edges: edgesWithCursor,
@@ -75,7 +117,7 @@ const areAllBuildsEarlierThanFromDate = (alerts: CodeScanningAlertResponseItem[]
 };
 
 
-const transformCodeScanningAlert = async (
+export const transformCodeScanningAlert = async (
 	alerts: CodeScanningAlertResponseItem[],
 	repository: Repository,
 	jiraHost: string,
@@ -85,8 +127,8 @@ const transformCodeScanningAlert = async (
 
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
 
-	const handleUnmappedState = (state) => logger.info(`Received unmapped state from code_scanning_alert sync: ${state}`);
-	const handleUnmappedSeverity = (severity) => logger.info(`Received unmapped severity from code_scanning_alert sync: ${severity}`);
+	const handleUnmappedState = (state: string) => logger.info(`Received unmapped state from code_scanning_alert sync: ${state}`);
+	const handleUnmappedSeverity = (severity: string | null) => logger.info(`Received unmapped severity from code_scanning_alert sync: ${severity ?? "Missing Severity"}`);
 
 	const vulnerabilities = alerts.map((alert) => {
 		const identifiers = transformRuleTagsToIdentifiers(alert.rule.tags);
@@ -96,8 +138,9 @@ const transformCodeScanningAlert = async (
 			id: `c-${transformRepositoryId(repository.id, gitHubClientConfig.baseUrl)}-${alert.number}`,
 			updateSequenceNumber: Date.now(),
 			containerId: transformRepositoryId(repository.id, gitHubClientConfig.baseUrl),
-			displayName: alert.rule.name,
-			description: alert.rule.full_description || alert.rule.description,
+			// display name cannot exceed 255 characters
+			displayName: truncate(alert.rule.description || alert.rule.name || `Code scanning alert #${alert.number}`, { length: 254 }),
+			description: getCodeScanningVulnDescription(alert, identifiers, logger),
 			url: alert.html_url,
 			type: "sast",
 			introducedDate: alert.created_at,
@@ -108,7 +151,7 @@ const transformCodeScanningAlert = async (
 			...(identifiers ? { identifiers } : null),
 			status: transformGitHubStateToJiraStatus(alert.state, handleUnmappedState),
 			additionalInfo: {
-				content: alert.tool.name
+				content: truncate(alert.tool.name, { length: 254 })
 			}
 		};
 	});

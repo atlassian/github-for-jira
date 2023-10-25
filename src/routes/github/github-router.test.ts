@@ -181,7 +181,7 @@ describe("GitHub router", () => {
 					.get("/github/configuration")
 					.set(
 						"Cookie",
-						`session=${cookies.session}; session.sig=${cookies["session.sig"]}`
+						`session=${cookies.session as string}; session.sig=${cookies["session.sig"] as string}`
 					)
 					.expect(302);
 

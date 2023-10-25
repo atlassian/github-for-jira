@@ -1,5 +1,10 @@
 import { JiraDeploymentBulkSubmitData, JiraDeployment } from "interfaces/jira";
-import { getDeploymentDebugInfo } from "./jira-client-deployment-helper";
+import { getDeploymentDebugInfo, extractDeploymentDataForLoggingPurpose } from "./jira-client-deployment-helper";
+import { getLogger } from "config/logger";
+
+jest.mock("utils/encryption", () => ({
+	createHashWithSharedSecret: (input:string) => `hashed-${input}`
+}));
 
 describe("getDeploymentDebugInfo", () => {
 	describe.each([
@@ -76,4 +81,63 @@ describe("getDeploymentDebugInfo", () => {
 			});
 		});
 	});
+});
+
+
+describe("extractDeploymentDataForLoggingPurpose", () => {
+	const mockLogger = getLogger("mock-logger");
+
+	it("should extract and hash deployment data for logging", () => {
+		const data = {
+			deployments: [
+				{
+					updateSequenceNumber: 1,
+					state: "state1",
+					url: "url1",
+					associations: [
+						{
+							associationType: "issueKeys",
+							values: ["key1", "key2"]
+						},
+						{
+							associationType: "otherType",
+							values: ["value1", "value2"]
+						}
+					]
+				},
+				{
+					updateSequenceNumber: 2,
+					state: "state2",
+					url: "url2",
+					associations: [
+						{
+							associationType: "issueIdOrKeys",
+							values: ["key3", "key4"]
+						}
+					]
+				}
+			]
+		} as JiraDeploymentBulkSubmitData;
+
+		const result = extractDeploymentDataForLoggingPurpose(data, mockLogger);
+
+		expect(result).toEqual({
+			deployments: [
+				{
+					updateSequenceNumber: 1,
+					state: "hashed-state1",
+					url: "hashed-url1",
+					issueKeys: ["hashed-key1", "hashed-key2"]
+				},
+				{
+					updateSequenceNumber: 2,
+					state: "hashed-state2",
+					url: "hashed-url2",
+					issueKeys: ["hashed-key3", "hashed-key4"]
+				}
+			]
+		});
+
+	});
+
 });

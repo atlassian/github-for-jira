@@ -169,7 +169,7 @@ describe("Workspaces Post", () => {
 				{
 					id: String(createdDbEntries.sub1.id),
 					name: createdDbEntries.repo1.repoOwner,
-					url: "https://github.com/"+ createdDbEntries.repo1.repoOwner,
+					url: "https://github.com/" + (createdDbEntries.repo1.repoOwner as string),
 					avatarUrl: createdDbEntries.sub1.avatarUrl
 				}
 			]
@@ -220,7 +220,7 @@ describe("Workspaces Post", () => {
 				{
 					id: String(createdDbEntries.sub1.id),
 					name: createdDbEntries.repo1.repoOwner,
-					url: "https://github.com/"+ createdDbEntries.repo1.repoOwner,
+					url: "https://github.com/" + (createdDbEntries.repo1.repoOwner as string),
 					avatarUrl: createdDbEntries.sub1.avatarUrl
 				}
 			]
@@ -250,7 +250,7 @@ describe("Workspaces Post", () => {
 				{
 					id: String(createdDbEntries.sub3.id),
 					name: createdDbEntries.repo3.repoOwner,
-					url: "https://github.com/"+ createdDbEntries.repo3.repoOwner,
+					url: "https://github.com/" + (createdDbEntries.repo3.repoOwner as string),
 					avatarUrl: DEFAULT_AVATAR
 				}
 			]
@@ -279,19 +279,19 @@ describe("Workspaces Post", () => {
 				{
 					id: String(createdDbEntries.sub1.id),
 					name: createdDbEntries.repo1.repoOwner,
-					url: "https://github.com/"+ createdDbEntries.repo1.repoOwner,
+					url: "https://github.com/" + (createdDbEntries.repo1.repoOwner as string),
 					avatarUrl: createdDbEntries.sub1.avatarUrl
 				},
 				{
 					id: String(createdDbEntries.sub2.id),
 					name: createdDbEntries.repo2.repoOwner,
-					url: "https://github.internal.atlassian.com/"+ createdDbEntries.repo2.repoOwner,
+					url: "https://github.internal.atlassian.com/" + (createdDbEntries.repo2.repoOwner as string),
 					avatarUrl: createdDbEntries.sub2.avatarUrl
 				},
 				{
 					id: String(createdDbEntries.sub3.id),
 					name: createdDbEntries.repo3.repoOwner,
-					url: "https://github.com/"+ createdDbEntries.repo3.repoOwner,
+					url: "https://github.com/" + (createdDbEntries.repo3.repoOwner as string),
 					avatarUrl: DEFAULT_AVATAR
 				}
 			]

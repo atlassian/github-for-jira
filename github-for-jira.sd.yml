@@ -158,6 +158,17 @@ resources:
         # Name of the RDS resource from above
         resource: rds
 
+  - type: s3
+    name: "dumps" # for heapdumps, temp resource, will be deleted after the investigation is over
+    attributes:
+      dataType:
+        - UGC/Label                # name of GitHub org / Jira site
+        - PII/IndirectConfidential # name of GitHub org
+        - UGC/Configuration        # data about the installation of the GitHub app into Jira sites
+        - Security/Secret          # shared Connect secret
+        - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
+        - UGC/Primary              # GitHub entities (non-persistent) like commits, pull requests, etc.
+
   - name: deployment-history-cache
     type: dynamo-db
     attributes: &table-attributes
@@ -253,7 +264,7 @@ config:
     # WEBHOOK_SECRET: the webhook secret configured in the GitHub app
     PGBOUNCER_POOL_MODE: "session"
     PGBOUNCER_DEFAULT_POOL_SIZE: "15" # Max scale up:
-      #   (15 web servers + 15 workers) * 15 pool size  = 450 connections (See postgres-db connections limit)
+      #   (30 web servers + 15 workers) * 10 pool size  = 675 connections (See postgres-db connections limit)
       # Normal business:
     #   (5 web servers + 3 workers) * 15 pool size = 120 connections
     PGBOUNCER_SERVER_IDLE_TIMEOUT: "60"
@@ -558,8 +569,8 @@ environmentOverrides:
         CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE: "D92A2D7364AC3057D2A90BA9512D8CA0"
     scaling:
       instance: c5.2xlarge
-      min: 5
-      max: 15 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
+      min: 15
+      max: 30 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
       metrics: *CpuMemAlbScalingRules
     workers:
       - name: Worker
@@ -775,7 +786,7 @@ environmentOverrides:
       - type: lambda
         name: auto-deployment-github-app
         attributes:
-          runtime: nodejs14.x
+          runtime: nodejs18.x
           prefetchMicrosEnvVars: true
           artifact: "_sox/github-for-jira/auto-deployment-github-app-${BITBUCKET_BUILD_NUMBER}.zip"
           handler: auto-deployment.handler

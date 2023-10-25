@@ -24,6 +24,12 @@ import { ApiResetSubscriptionFailedTasks } from "./api-reset-subscription-failed
 import { RecoverCommitsFromDatePost } from "./commits-from-date/recover-commits-from-dates";
 import { ResetFailedAndPendingDeploymentCursorPost } from "./commits-from-date/reset-failed-and-pending-deployment-cursors";
 import { ApiRecryptPost } from "./api-recrypt-post";
+import { GenerateOnceCoredumpGenerator } from "services/generate-once-coredump-generator";
+import { GenerateOncePerNodeHeadumpGenerator } from "services/generate-once-per-node-headump-generator";
+import { ApiReplyFailedEntitiesFromDataDepotPost } from "./api-replay-failed-entities-from-data-depot";
+import { RepoSyncState } from "models/reposyncstate";
+import { ApiResyncFailedTasksPost } from "./api-resync-failed-tasks";
+
 export const ApiRouter = Router();
 
 // TODO: remove this duplication because of the horrible way to do logs through requests
@@ -98,6 +104,73 @@ ApiRouter.post("/recrypt", ApiRecryptPost);
 
 ApiRouter.post("/ping", ApiPingPost);
 
+/**
+ * Workable parameters for ddev (250Mb heap):
+ *
+ * to occupy ~25% of mem and generate coredump:
+ * 	- ?arraySize=20000&nIter=400&pctThreshold=75
+ *
+ * to generate coredump straight away, without occupying any extra mem:
+ * 	- ?arraySize=1 &nIter=1&pcThreshold=100
+ *
+ * to generate heapdump:
+ * 	- ?arraySize=20000&nIter=400&pctThreshold=75&heap=true
+ *
+ * If you are generating heapdumps, you'll need to ssh to the instance and delete the lock file, because
+ * in production only one heapdump is allowed per node due to extremely high CPU/mem usage!
+ *
+ */
+const FillMemAndGenerateCoreDump = (req: Request, res: Response) => {
+	const nIter = parseInt(req.query?.nIter?.toString() || "0");
+	const arraySize = parseInt(req.query?.arraySize?.toString() || "10");
+	const pctThreshold = parseInt(req.query?.pctThreshold?.toString() || "50");
+	const heap = !!req.query?.heap;
+	req.log.info({
+		nIter, arraySize, pctThreshold, heap
+	}, "FillMemAndGenerateCoreDump triggered");
+
+	const generator: GenerateOncePerNodeHeadumpGenerator | GenerateOnceCoredumpGenerator =
+		heap ? new GenerateOncePerNodeHeadumpGenerator({
+			logger: req.log,
+			lowHeapAvailPct: pctThreshold
+		}) : new GenerateOnceCoredumpGenerator({
+			logger: req.log,
+			lowHeapAvailPct: pctThreshold
+		});
+
+	let dumpGenerated = false;
+	const allocate = (iter: number) => {
+		if (generator.maybeGenerateDump()) {
+			dumpGenerated = true;
+			return [];
+		}
+		const arr = new Array(arraySize).fill(`${Math.random()} This is a test string. ${Math.random()}`);
+
+		if (iter + 1 < nIter) {
+			const anotherOne = allocate(iter + 1);
+			return arr.concat(anotherOne);
+		}
+		return arr;
+	};
+	res.json({ allocated: allocate(0).length, dumpGenerated: dumpGenerated });
+};
+
+ApiRouter.post("/fill-mem-and-generate-coredump", FillMemAndGenerateCoreDump);
+
+const AbortPost = (_req: Request, res: Response) => {
+	res.json({ message: "should never happen" });
+	process.abort();
+};
+
+ApiRouter.post("/abort", AbortPost);
+
+const DropAllPrCursor = async (_req: Request, res: Response) => {
+	await RepoSyncState.update({ pullCursor: null }, { where: { } });
+	res.json({ ok: true });
+};
+
+ApiRouter.post("/drop-all-pr-cursor", DropAllPrCursor);
+
 // TODO: remove once move to DELETE /:installationId/:jiraHost
 ApiRouter.delete(
 	"/deleteInstallation/:installationId/:jiraHost/github-app-id/:gitHubAppId",
@@ -130,7 +203,7 @@ const cryptorDebugEndpoint = async (_req: Request, resp: Response) => {
 	try {
 		let data = "";
 		for (let i = 0; i < 10; i++) {
-			data = data + "-" + Math.floor((Math.random() * 10));
+			data = `${data}-${Math.floor((Math.random() * 10))}`;
 		}
 
 		const encrypted = await EncryptionClient.encrypt(EncryptionSecretKeyEnum.GITHUB_SERVER_APP, data);
@@ -149,6 +222,8 @@ ApiRouter.post("/re-encrypt-ghes-app", ReEncryptGitHubServerAppKeysPost);
 ApiRouter.use("/data-cleanup", DataCleanupRouter);
 ApiRouter.post("/recover-commits-from-date", RecoverCommitsFromDatePost);
 ApiRouter.post("/reset-failed-pending-deployment-cursor", ResetFailedAndPendingDeploymentCursorPost);
+ApiRouter.post("/replay-rejected-entities-from-data-depot", ApiReplyFailedEntitiesFromDataDepotPost);
+ApiRouter.post("/resync-failed-tasks",ApiResyncFailedTasksPost);
 
 ApiRouter.use("/jira", ApiJiraRouter);
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);

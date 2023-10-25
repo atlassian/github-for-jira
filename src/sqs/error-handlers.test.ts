@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { statsd }  from "config/statsd";
 import { jiraAndGitHubErrorsHandler, webhookMetricWrapper } from "./error-handlers";
 import { getLogger } from "config/logger";
@@ -20,6 +19,7 @@ describe("error-handlers", () => {
 
 	afterEach(() => {
 		// Unlock Time
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 		statsdIncrementSpy.mockRestore();
 		jest.useRealTimers();
 	});
@@ -99,7 +99,7 @@ describe("error-handlers", () => {
 			expect(result.isFailure).toBe(true);
 		});
 
-		it("Retryable with proper delay on Rate Limiting", async () => {
+		it("Retryable with proper delay on Rate Limiting - receiveCount 1", async () => {
 			const headers: AxiosResponseHeaders = { "x-ratelimit-reset": `${Math.floor(new Date("2020-01-01").getTime() / 1000) + 100}` };
 			const mockedResponse = { status: 403, headers: headers } as AxiosResponse;
 
@@ -112,8 +112,43 @@ describe("error-handlers", () => {
 			);
 
 			expect(result.retryable).toBe(true);
-			//Make sure delay is equal to recommended delay + 10 seconds
-			expect(result.retryDelaySec).toBe(110);
+			//Make sure delay is equal to recommended delay + 50 seconds
+			expect(result.retryDelaySec).toBe(150);
+			expect(result.isFailure).toBe(true);
+		});
+
+		it("Retryable with proper delay on Rate Limiting - receiveCount 3", async () => {
+			const headers: AxiosResponseHeaders = { "x-ratelimit-reset": `${Math.floor(new Date("2020-01-01").getTime() / 1000) + 100}` };
+			const mockedResponse = { status: 403, headers: headers } as AxiosResponse;
+
+			const result = await jiraAndGitHubErrorsHandler(
+				new GithubClientRateLimitingError({
+					response: mockedResponse
+				} as AxiosError),
+
+				createContext(3, false)
+			);
+
+			expect(result.retryable).toBe(true);
+			//Make sure delay is equal to recommended delay + 50 seconds
+			expect(result.retryDelaySec).toBe(7330);
+			expect(result.isFailure).toBe(true);
+		});
+
+		it("Retryable with proper delay on Rate Limiting - receiveCount 5", async () => {
+			const headers: AxiosResponseHeaders = { "x-ratelimit-reset": `${Math.floor(new Date("2020-01-01").getTime() / 1000) + 100}` };
+			const mockedResponse = { status: 403, headers: headers } as AxiosResponse;
+
+			const result = await jiraAndGitHubErrorsHandler(
+				new GithubClientRateLimitingError({
+					response: mockedResponse
+				} as AxiosError),
+
+				createContext(5, false)
+			);
+
+			expect(result.retryable).toBe(true);
+			expect(result.retryDelaySec).toBe(14510);
 			expect(result.isFailure).toBe(true);
 		});
 
@@ -142,7 +177,7 @@ describe("error-handlers", () => {
 		it("Doesn't sent metric for a non-error case when not retryable", async () => {
 
 			const mockedResponse: ErrorHandlingResult = { retryable: false, isFailure: false };
-			const handlerUnderTest = webhookMetricWrapper(async () => mockedResponse, "test");
+			const handlerUnderTest = webhookMetricWrapper(() => Promise.resolve(mockedResponse), "test");
 
 			const result = await handlerUnderTest(new Error(), createContext(1, false));
 			expect(result).toBe(mockedResponse);
@@ -152,7 +187,7 @@ describe("error-handlers", () => {
 		it("Doesn't sent metric for a non-error case when lastAttempt", async () => {
 
 			const mockedResponse: ErrorHandlingResult = { retryable: true, isFailure: false };
-			const handlerUnderTest = webhookMetricWrapper(async () => mockedResponse, "test");
+			const handlerUnderTest = webhookMetricWrapper(() => Promise.resolve(mockedResponse), "test");
 
 			const result = await handlerUnderTest(new Error(), createContext(3, true));
 			expect(result).toBe(mockedResponse);
@@ -162,7 +197,7 @@ describe("error-handlers", () => {
 		it("Doesn't sent metric for an error when retryable but not last attempt", async () => {
 
 			const mockedResponse: ErrorHandlingResult = { retryable: true, isFailure: true };
-			const handlerUnderTest = webhookMetricWrapper(async () => mockedResponse, "test");
+			const handlerUnderTest = webhookMetricWrapper(() => Promise.resolve(mockedResponse), "test");
 
 			const result = await handlerUnderTest(new Error(), createContext(2, false));
 			expect(result).toBe(mockedResponse);
@@ -172,7 +207,7 @@ describe("error-handlers", () => {
 		it("Sends metric for an error case when not retryable", async () => {
 
 			const mockedResponse: ErrorHandlingResult = { retryable: false, isFailure: true };
-			const handlerUnderTest = webhookMetricWrapper(async () => mockedResponse, "test");
+			const handlerUnderTest = webhookMetricWrapper(() => Promise.resolve(mockedResponse), "test");
 
 			const result = await handlerUnderTest(new Error(), createContext(1, false));
 			expect(result).toBe(mockedResponse);
@@ -182,7 +217,7 @@ describe("error-handlers", () => {
 		it("Sends metric for a non-error case when lastAttempt", async () => {
 
 			const mockedResponse: ErrorHandlingResult = { retryable: true, isFailure: true };
-			const handlerUnderTest = webhookMetricWrapper(async () => mockedResponse, "test");
+			const handlerUnderTest = webhookMetricWrapper(() => Promise.resolve(mockedResponse), "test");
 
 			const result = await handlerUnderTest(new Error(), createContext(3, true));
 			expect(result).toBe(mockedResponse);

@@ -32,9 +32,9 @@ export const RepoSyncStateCleanUpOrphanDataPost = async (req: Request, res: Resp
 		const parsedResult = result && safeParseResult(result, commitToDB);
 		log.info({ result: parsedResult }, `Orphan RepoSyncStates data ${ commitToDB === true ? "deleted" : "found" }`);
 		res.status(200).end("Done. Result: " + parsedResult);
-	} catch (e) {
+	} catch (e: unknown) {
 		log.error(e, `Error ${ commitToDB === true ? "deleting" : "finding" } orphan RepoSyncStates data`);
-		res.status(500).end(safeJsonStringify(e));
+		res.status(500).end(safeJsonStringify(e as object));
 	}
 };
 
@@ -61,7 +61,7 @@ const safeParseResult = (result: object, commitToDB: boolean) => {
 						}
 					]
 				*/
-			return `${result[1].rowCount} rows deleted`;
+			return `${(result[1].rowCount as number)} rows deleted`;
 		} else {
 			/*
 			 * something like   result: [
@@ -102,7 +102,7 @@ const safeParseResult = (result: object, commitToDB: boolean) => {
 					}
 				]
 			 */
-			return result[0].map((r: object) => safeJsonStringify(r)).join("\n");
+			return result[0].map((r: object) => safeJsonStringify(r)).join("\n") as string;
 		}
 	} catch (_) {
 		return result;

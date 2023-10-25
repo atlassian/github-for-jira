@@ -10,7 +10,7 @@ describe("Testing the route for fetching the Cloud Id", () => {
 		secret = testSharedSecret,
 		iss = "jira-client-key",
 		exp = Date.now() / 1000 + 10000,
-		qsh = "context-qsh" } = {}): any => {
+		qsh = "context-qsh" } = {}): string => {
 		return encodeSymmetric({
 			qsh,
 			iss,
@@ -35,8 +35,9 @@ describe("Testing the route for fetching the Cloud Id", () => {
 			.get("/rest/app/cloud/jira/cloudid")
 			.set("authorization", `${getToken()}`);
 
+		const body = resp.body as { cloudId: string };
 		expect(resp.status).toBe(200);
-		expect(resp.body).toHaveProperty("cloudId");
-		expect(resp.body.cloudId).toBe("1234567890");
+		expect(body).toHaveProperty("cloudId");
+		expect(body.cloudId).toBe("1234567890");
 	});
 });

@@ -1,5 +1,6 @@
 import { Redis } from "ioredis";
 import { v4 as uuidv4 } from "uuid";
+import { getLogger } from "config/logger";
 
 /**
  *
@@ -189,8 +190,10 @@ export class Deduplicator {
 		}
 
 		await this.inProgressStorage.setInProgressFlag(jobKey, jobRunnerId);
-		const intervalIdx = setInterval(async () => {
-			await this.inProgressStorage.setInProgressFlag(jobKey, jobRunnerId);
+		const intervalIdx = setInterval(() => {
+			this.inProgressStorage.setInProgressFlag(jobKey, jobRunnerId).catch(err => {
+				getLogger("error").error({ err }, "Failed to update the flag");
+			});
 		}, this.jobRunnerFlagUpdateTimeoutMsecs);
 
 		try {

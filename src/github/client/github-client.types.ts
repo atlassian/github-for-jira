@@ -101,10 +101,17 @@ export type DependabotAlertResponseItem = {
 		summary: string,
 		description: string,
 		identifiers: { type: string, value: string }[],
-		references: { url: string }[]
+		references: { url: string }[],
+		severity: string,
+		cvss: {
+			score?: number
+		}
 	},
 	security_vulnerability: {
-		severity: string
+		severity: string,
+		first_patched_version: {
+			identifier: number
+		}
 	},
 	dependency: {
 		scope: string,
@@ -143,6 +150,28 @@ export type CodeScanningAlertResponseItem = {
 	tool: CodeScanningAlertResponseItemTool;
 	most_recent_instance: CodeScanningAlertResponseItemMostRecentInstance;
 };
+
+export interface Branch {
+	associatedPullRequests: {
+		nodes: {
+			title: string;
+		}[];
+	};
+	name: string;
+	target: {
+		author: {
+			avatarUrl: string;
+			email: string;
+			name: string;
+		};
+		authoredDate: string;
+		changedFiles: number;
+		oid: string;
+		message: string;
+		url: string;
+		history: any;
+	};
+}
 
 type CodeScanningAlertResponseItemRule = {
 	name: string;

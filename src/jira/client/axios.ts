@@ -183,12 +183,13 @@ const instrumentFailedRequest = (baseURL: string, logger: Logger) => {
 				logger.info("Try fetching status for 503 and 405 failure request");
 				const statusResponse = await axios.get("/status", { baseURL });
 				logger.info({ statusApiStatus: statusResponse.status }, "Status fetched successfully");
-			} catch (e) {
-				logger.info({ statusApiStatus: e.response.status }, "Status fetched with error");
-				if (e.response.status === 503) {
+			} catch (err: unknown) {
+				const e = err as { response?: { status?: number } };
+				logger.info({ statusApiStatus: e?.response?.status }, "Status fetched with error");
+				if (e?.response?.status === 503) {
 					logger.info("503 from Jira: Jira instance has been deactivated, is suspended or does not exist. Returning 404 to our application.");
 					error.response.status = 404;
-				} else if (e.response.status === 302) {
+				} else if (e?.response?.status === 302) {
 					logger.info("405 from Jira: Jira instance has been renamed. Returning 404 to our application.");
 					error.response.status = 404;
 				}
@@ -219,7 +220,7 @@ export const getAxiosInstance = (
 	});
 
 	// *** IMPORTANT: Interceptors are executed in reverse order. ***
-	// the last one specified is the first to executed.
+	// the last one specified is the first to be executed.
 
 	instance.interceptors.request.use(logRequest(logger));
 	instance.interceptors.request.use(setRequestStartTime);

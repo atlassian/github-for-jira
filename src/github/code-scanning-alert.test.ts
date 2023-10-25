@@ -10,6 +10,8 @@ import { mocked } from "jest-mock";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import Logger from "bunyan";
 import { booleanFlag } from "config/feature-flags";
+import { JiraClient } from "../jira/client/jira-client";
+
 jest.mock("config/feature-flags");
 jest.mock("utils/webhook-utils");
 jest.mock("../transforms/transform-code-scanning-alert");
@@ -44,6 +46,57 @@ const getWebhookContext = <T>(): WebhookContext<T> => {
 	};
 };
 
+const createMockJiraClient = () : JiraClient => {
+	return {
+		baseURL: JIRA_BASE_URL,
+		remoteLink: {
+			submit: jest.fn()
+		},
+		security: {
+			submitVulnerabilities: jest.fn()
+		},
+		issues: {
+			get: jest.fn(),
+			getAll: jest.fn(),
+			parse: jest.fn(),
+			comments: {
+				list: jest.fn(),
+				addForIssue: jest.fn(),
+				updateForIssue: jest.fn(),
+				deleteForIssue: jest.fn()
+			},
+			transitions: {
+				getForIssue: jest.fn(),
+				updateForIssue: jest.fn()
+			},
+			worklogs: {
+				addForIssue: jest.fn()
+			}
+		},
+		devinfo: {
+			branch: {
+				delete: jest.fn()
+			},
+			installation: {
+				delete: jest.fn()
+			},
+			pullRequest: {
+				delete: jest.fn()
+			},
+			repository: {
+				delete: jest.fn(),
+				update: jest.fn()
+			}
+		},
+		workflow: {
+			submit: jest.fn()
+		},
+		deployment: {
+			submit: jest.fn()
+		}
+	};
+};
+
 describe("Code Scanning Alert Webhook Handler", () => {
 	beforeEach(() => {
 		jest.resetAllMocks();
@@ -52,11 +105,11 @@ describe("Code Scanning Alert Webhook Handler", () => {
 
 	const mockJiraRemoteLinkSubmit = jest.fn();
 	const mockJiraSecuritySubmit = jest.fn();
-	const jiraClient = {
-		baseURL: JIRA_BASE_URL,
-		remoteLink: { submit: mockJiraRemoteLinkSubmit },
-		security: { submitVulnerabilities: mockJiraSecuritySubmit }
-	};
+	const jiraClient = createMockJiraClient();
+
+	jiraClient.baseURL = JIRA_BASE_URL;
+	jiraClient.remoteLink.submit = mockJiraRemoteLinkSubmit;
+	jiraClient.security.submitVulnerabilities = mockJiraSecuritySubmit;
 
 	it("transform and submit remote link to jira", async () => {
 		const jiraPayload = { remoteLinks: [] };

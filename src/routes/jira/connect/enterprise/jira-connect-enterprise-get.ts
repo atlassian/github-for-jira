@@ -4,6 +4,7 @@ import { chain, groupBy } from "lodash";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { getAllKnownHeaders } from "utils/http-headers";
+import { errorStringFromUnknown } from "~/src/util/error-string-from-unknown";
 
 export const JiraConnectEnterpriseGet = async (
 	req: Request,
@@ -40,8 +41,8 @@ export const JiraConnectEnterpriseGet = async (
 		}
 
 		req.log.debug("Jira Connect Enterprise GET page rendered successfully.");
-	} catch (error) {
-		return next(new Error(`Failed to render Jira Connect Enterprise GET page: ${error}`));
+	} catch (error: unknown) {
+		return next(new Error(`Failed to render Jira Connect Enterprise GET page: ${errorStringFromUnknown(error)}`));
 	}
 };
 

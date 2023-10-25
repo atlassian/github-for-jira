@@ -3,7 +3,7 @@ export const extractClientKey = (text: string): string | undefined  => {
 	try {
 		const json = xml2json(text, { object: true });
 		return json?.consumer?.key;
-	} catch (e) {
+	} catch (e: unknown) {
 		return undefined;
 	}
 };

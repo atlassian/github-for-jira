@@ -9,7 +9,7 @@ describe("rest oauth router", () => {
 		secret = testSharedSecret,
 		iss = "jira-client-key",
 		exp = Date.now() / 1000 + 10000,
-		qsh = "context-qsh" } = {}): any => {
+		qsh = "context-qsh" } = {}): string => {
 		return encodeSymmetric({
 			qsh,
 			iss,

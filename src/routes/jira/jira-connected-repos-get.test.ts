@@ -105,7 +105,7 @@ describe("jira-connected-repos-get", () => {
 					delete newRepoSyncState["commitStatus"];
 					delete newRepoSyncState["branchStatus"];
 					newRepoSyncState["repoId"] = repoSyncState.repoId + newRepoStateNo;
-					newRepoSyncState["repoName"] = repoSyncState.repoName + newRepoStateNo;
+					newRepoSyncState["repoName"] = repoSyncState.repoName + newRepoStateNo.toString();
 					newRepoSyncState["repoFullName"] = repoSyncState.repoFullName + String(newRepoStateNo).padStart(3, "0");
 					if (newRepoStateNo % 3 == 1) {
 						newRepoSyncState["commitStatus"] = "complete";

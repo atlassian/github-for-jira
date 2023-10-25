@@ -61,7 +61,8 @@ export const RecoverClientKeyPost = async (req: Request, res: Response): Promise
 						log.info({ id: installation.id, subId: sub.id }, `Saved plainClientKey successfully for subscription`);
 					}
 					successCount++;
-				} catch (e) {
+				} catch (err: unknown) {
+					const e = err as { msg?: string };
 					errors.push({ id: installation.id, err: e });
 				}
 			})();
@@ -94,7 +95,7 @@ const getAndVerifyplainClientKey = async ({ id, jiraHost, clientKey: hashedClien
 		//https://hello.atlassian.net/wiki/spaces/EDGE/pages/315794033/Whitelist+Proxy+-+Usage
 		//use whitelist proxy so that we can hit xxx.jira-dev.com
 		//Unless we don't care about those records in db?
-		const proxy = `http://${process.env.WHITELIST_PROXY_HOST}:${process.env.WHITELIST_PROXY_PORT}`;
+		const proxy = `http://${process.env.WHITELIST_PROXY_HOST ?? "undefined"}:${process.env.WHITELIST_PROXY_PORT ?? "undefined"}`;
 		const result = await axios.create({
 			baseURL: jiraHost,
 			httpAgent: new HttpProxyAgent(proxy),
@@ -102,7 +103,8 @@ const getAndVerifyplainClientKey = async ({ id, jiraHost, clientKey: hashedClien
 			proxy: false
 		}).get("/plugins/servlet/oauth/consumer-info");
 		text = result.data;
-	} catch (e) {
+	} catch (err: unknown) {
+		const e = err as { message?: string };
 		throw { msg: e.message, jiraHost, id };
 	}
 

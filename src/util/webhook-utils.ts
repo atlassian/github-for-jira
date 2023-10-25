@@ -66,7 +66,7 @@ export const emitWebhookProcessedMetrics = (
 			);
 			return undefined;
 		}
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.error(
 			{ err },
 			"Failed to send webhook processing time metrics."
