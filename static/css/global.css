@@ -263,6 +263,12 @@ a:focus {
   margin-top: 1em;
 }
 
+.modal__spinner {
+  display: flex;
+  justify-content: center;
+  vertical-align: middle;
+}
+
 .modal__footer__actionBtn {
   --aui-btn-bg: #FFAB00;
   --aui-btn-text: #172B4D;
