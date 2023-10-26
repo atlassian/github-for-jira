@@ -228,16 +228,16 @@ const deleteAppsInGitHub = (GHEServerUrl, appName) => {
 		const apps = $(`.jiraConfiguration__enterpriseServer__header__container[data-server-baseurl='${GHEServerUrl}'] + .jiraConfiguration__enterpriseConnections > details`);
 		if ($(apps).length > 0) {
 			$(".modal__header__title").empty().append("Server disconnected");
-			content += "You can now delete these unused apps from your GitHub server. Select the app, then in GitHub select <b>Delete GitHub app</b>.<br/>";
+			content += "<p style='margin-bottom: 12px;'>You can now delete these unused apps from your GitHub server. Select the app, then in GitHub select <b>Delete GitHub app</b>.</p>";
 			$(apps).map((index, app) => {
 				const serverAppName = $(app).find(".jiraConfiguration__optionHeader").text();
-				content += `<span>&#8226;</span><a target="_blank" href="${GHEServerUrl}/settings/apps/${serverAppName}/advanced">${serverAppName}</a> <br/>`;
+				content += `<span style="margin-right: 12px">&#8226;</span><a target="_blank" href="${GHEServerUrl}/settings/apps/${serverAppName}/advanced">${serverAppName}</a><br/>`;
 			});
 		}
 	} else {
 		$(".modal__header__title").empty().append("App disconnected");
-		content += "You can now delete this app from your GitHub server. Select the <b>Delete GitHub app</b>.<br/>";
-		content += `<span>&#8226;</span><a target="_blank" href="${GHEServerUrl}/settings/apps/${appName}/advanced">${appName}</a>`;
+		content += "<p style='margin-bottom: 12px;'>You can now delete this app from your GitHub server. Select the <b>Delete GitHub app</b>.</p>";
+		content += `<span style="margin-right: 12px">&#8226;</span><a target="_blank" href="${GHEServerUrl}/settings/apps/${appName}/advanced">${appName}</a>`;
 	}
 
 	$(".modal__information").empty().append(content);
