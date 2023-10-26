@@ -27,7 +27,7 @@
     <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
   </head>
 
-  <body class="aui-page-hybrid" data-use-new-spa-experience="{{useNewSPAExperience}}" >
+  <body class="aui-page-hybrid">
     <div class="jiraConfiguration">
       <header class="jiraConfiguration__header">
         <h1 class="jiraConfiguration__header__title">GitHub configuration</h1>
@@ -238,7 +238,7 @@
                             <span class="jiraConfiguration__table__cell__settings__headerItem">Application</span>
                           </h6>
                           <aui-section class="jiraConfiguration__table__cell__settings__dropdownItems">
-                             <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
+                             <input type="hidden" id="_csrf" name="_csrf" value="{{../../csrfToken}}">
                              <div class="jiraConfiguration__table__cell__gitHubAppItem">
                                <button
                                    class="jiraConfiguration__editGitHubApp"
@@ -268,12 +268,12 @@
                                 hideAvatar=true
                                 elementIdPrefix="gheServer-"
                                 html_url=html_url
-                                csrfToken=csrfToken
+                                csrfToken=../../csrfToken
                                 gitHubAppId=app.id
                                 successfulConnections=app.successfulConnections
                                 failedConnections=app.failedConnections
                                 gitHubAppId=app.id
-                                enableRepoConnectedPage=enableRepoConnectedPage
+                                enableRepoConnectedPage=../../enableRepoConnectedPage
                             }}
                           {{else}}
                             <div class="jiraConfiguration__collapsibleBody">

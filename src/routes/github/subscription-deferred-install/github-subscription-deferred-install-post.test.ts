@@ -80,7 +80,7 @@ describe("github-subscription-deferred-install-post", () => {
 				.reply(200);
 
 			when(verifyAdminPermsAndFinishInstallation)
-				.calledWith("myToken", installation, payload.gitHubServerAppIdPk, payload.gitHubInstallationId, expect.anything(), expect.anything())
+				.calledWith("myToken", installation, payload.gitHubServerAppIdPk, payload.gitHubInstallationId, expect.anything())
 				.mockResolvedValue({ });
 
 			const requestId = await registerSubscriptionDeferredInstallPayloadRequest(payload);
@@ -104,7 +104,7 @@ describe("github-subscription-deferred-install-post", () => {
 				.reply(200);
 
 			when(verifyAdminPermsAndFinishInstallation)
-				.calledWith("myToken", installation, payload.gitHubServerAppIdPk, payload.gitHubInstallationId, expect.anything(), expect.anything())
+				.calledWith("myToken", installation, payload.gitHubServerAppIdPk, payload.gitHubInstallationId, expect.anything())
 				.mockResolvedValue({
 					error: "not an admin"
 				});
@@ -165,7 +165,7 @@ describe("github-subscription-deferred-install-post", () => {
 				.reply(200);
 
 			when(verifyAdminPermsAndFinishInstallation)
-				.calledWith("myToken", installation, payload.gitHubServerAppIdPk, payload.gitHubInstallationId, expect.anything(), expect.anything())
+				.calledWith("myToken", installation, payload.gitHubServerAppIdPk, payload.gitHubInstallationId, expect.anything())
 				.mockResolvedValue({ });
 
 			const result = await supertest(app)
@@ -187,7 +187,7 @@ describe("github-subscription-deferred-install-post", () => {
 				.reply(200);
 
 			when(verifyAdminPermsAndFinishInstallation)
-				.calledWith("myToken", installation, payload.gitHubServerAppIdPk, payload.gitHubInstallationId, expect.anything(), expect.anything())
+				.calledWith("myToken", installation, payload.gitHubServerAppIdPk, payload.gitHubInstallationId, expect.anything())
 				.mockResolvedValue({ error: "not admin" });
 
 			const result = await supertest(app)

@@ -12,6 +12,8 @@ import {
 	ErrorForSSO,
 } from "../../../components/Error/KnownErrors";
 import Scrollbars from "../../../common/Scrollbars";
+import { DeferredInstallationUrlParams } from "rest-interfaces";
+import { HostUrlType } from "../../../utils/modifyError";
 
 const MAX_HEIGHT_FOR_ORGS_CONTAINER = 250;
 const PADDING_RIGHT_FOR_ORGS_CONTAINER = 80;
@@ -41,6 +43,8 @@ const OrganizationsList = ({
 	setLoaderForOrgClicked,
 	resetCallback,
 	connectingOrg,
+	hostUrl,
+	onPopupBlocked,
 }: {
 	organizations: Array<GitHubInstallationType>;
 	// Passing down the states and methods from the parent component
@@ -48,11 +52,15 @@ const OrganizationsList = ({
 	setLoaderForOrgClicked: (args: boolean) => void;
 	resetCallback: (args: boolean) => void;
 	connectingOrg: (org: GitHubInstallationType) => void;
+	hostUrl: HostUrlType | undefined
+	onPopupBlocked: () => void;
 }) => {
 	const [clickedOrg, setClickedOrg] = useState<
 		GitHubInstallationType | undefined
 	>(undefined);
 
+	const checkWarnings = (org: GitHubInstallationType) =>
+		!org.requiresSsoLogin && !org.isIPBlocked && org.isAdmin;
 	const canConnect = (org: GitHubInstallationType) =>
 		!org.requiresSsoLogin && !org.isIPBlocked && org.isAdmin;
 
@@ -62,7 +70,10 @@ const OrganizationsList = ({
 		// This resets the token validity check in the parent component and resets the UI
 		resetCallback(false);
 		// Restart the whole auth flow
-		await OauthManager.authenticateInGitHub(() => {});
+		await OauthManager.authenticateInGitHub({
+			onWinClosed: () => {},
+			onPopupBlocked: onPopupBlocked
+		});
 	};
 
 	const errorMessage = (org: GitHubInstallationType) => {
@@ -70,7 +81,11 @@ const OrganizationsList = ({
 			// TODO: Update this to support GHE
 			const accessUrl = `https://github.com/organizations/${org.account.login}/settings/profile`;
 
-			return <ErrorForSSO resetCallback={resetToken} accessUrl={accessUrl} />;
+			return <ErrorForSSO
+				resetCallback={resetToken}
+				accessUrl={accessUrl}
+				onPopupBlocked={onPopupBlocked}
+			/>;
 		}
 
 		if (org.isIPBlocked) {
@@ -80,8 +95,17 @@ const OrganizationsList = ({
 		if (!org.isAdmin) {
 			// TODO: Update this to support GHE
 			const adminOrgsUrl = `https://github.com/orgs/${org.account.login}/people?query=role%3Aowner`;
-
-			return <ErrorForNonAdmins adminOrgsUrl={adminOrgsUrl} />;
+			const deferredInstallationOrgDetails: DeferredInstallationUrlParams = {
+				gitHubInstallationId: org.id,
+				gitHubOrgName: org.account.login
+			};
+			return <ErrorForNonAdmins
+				deferredInstallationOrgDetails={deferredInstallationOrgDetails}
+				adminOrgsUrl={adminOrgsUrl}
+				onPopupBlocked={onPopupBlocked}
+				orgName={org?.account?.login}
+				hostUrl={hostUrl}
+			/>;
 		}
 	};
 	return (
@@ -133,13 +157,15 @@ const OrganizationsList = ({
 											<span css={orgNameStyle}>{org.account.login}</span>
 											<div>{errorMessage(org)}</div>
 										</div>
-										<div css={iconWrapperStyle}>
-											<WarningIcon
-												label="warning"
-												primaryColor={token("color.background.warning.bold")}
-												size="medium"
-											/>
-										</div>
+										{
+											checkWarnings(org) && <div css={iconWrapperStyle}>
+												<WarningIcon
+													label="warning"
+													primaryColor={token("color.background.warning.bold")}
+													size="medium"
+												/>
+											</div>
+										}
 									</>
 								)}
 							</div>

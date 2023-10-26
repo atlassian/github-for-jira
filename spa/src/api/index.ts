@@ -4,6 +4,7 @@ import App from "./apps";
 import Orgs from "./orgs";
 import GitHub from "./github";
 import Subscription from "./subscriptions";
+import Deferral from "./deferral";
 
 const ApiRequest = {
 	token: Token,
@@ -11,6 +12,7 @@ const ApiRequest = {
 	gitHub: GitHub,
 	app: App,
 	orgs: Orgs,
+	deferral: Deferral,
 	subscriptions: Subscription,
 };
 
