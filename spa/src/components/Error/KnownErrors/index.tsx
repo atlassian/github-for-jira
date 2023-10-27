@@ -17,6 +17,7 @@ import Modal, {
 import TextArea from "@atlaskit/textarea";
 import Spinner from "@atlaskit/spinner";
 import Button from "@atlaskit/button";
+import ErrorIcon from "@atlaskit/icon/glyph/error";
 
 const olStyle = css`
 	padding-left: 1.2em;
@@ -34,6 +35,14 @@ const linkStyle = css`
 `;
 const textAreaStyle = css`
 	margin-top: 20px;
+`;
+const expireTextWrapperStyle = css`
+	display: flex;
+	align-items: center;
+	margin-top: ${token("space.100")};
+`;
+const expireText = css`
+	color: ${token("color.text.accent.red")}
 `;
 
 /************************************************************************
@@ -147,6 +156,10 @@ export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl, onPopupBlocked, defer
 										defaultValue={`I want to connect the GitHub organization ${orgName} to the Jira site ${hostUrl?.jiraHost}, and I need your approval as an organization owner.\n\nIf you approve, can you go to this link and complete the connection?\n\n${deferredInstallationUrl}`}
 										readOnly
 									/>
+									<div css={expireTextWrapperStyle}>
+										<ErrorIcon label="error" primaryColor={token("color.text.accent.red")} />
+										<span css={expireText}>The above link will expire after 2 days.</span>
+									</div>
 								</ModalBody>
 								<ModalFooter>
 									<Button appearance="primary" onClick={closeModal} autoFocus>
