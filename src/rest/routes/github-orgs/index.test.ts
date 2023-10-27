@@ -142,7 +142,7 @@ describe("Test cases for GitHub Org Route", () => {
 				.set("github-auth", "github-token")
 				.send({ installationId: 4 });
 
-			expect(resp.status).toBe(401);
+			expect(resp.status).toBe(403);
 			const body = resp.body as { errorCode: string };
 			expect(body).toHaveProperty("errorCode");
 			expect(body.errorCode).toBe("INSUFFICIENT_PERMISSION");
