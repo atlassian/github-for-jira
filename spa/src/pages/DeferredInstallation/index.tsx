@@ -56,7 +56,9 @@ const DeferredInstallation = () => {
 					message={<ErrorForPopupBlocked onDismiss={() => setPopupBlocked(false)}/>}
 				/>
 			)}
-			{error ? <ErrorState error={error} /> : <>
+			{
+				error ? <ErrorState error={error} /> :
+				<>
 					{
 						isLoading ? <SkeletonForLoading /> : <>
 							{
