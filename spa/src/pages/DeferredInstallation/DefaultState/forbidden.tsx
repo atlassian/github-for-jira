@@ -18,7 +18,6 @@ const linkStyle = css`
 	padding-right: 0;
 `;
 
-
 const ForbiddenState = ({ orgName, requestId } : { orgName: string; requestId: string; }) => {
 	const getOrgOwnerUrl = async () => {
 		// TODO: Need to get this URL for Enterprise users too, this is only for Cloud users

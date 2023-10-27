@@ -11,6 +11,7 @@ import OAuthManager from "../../../services/oauth-manager";
 import DeferralManager from "../../../services/deferral-manager";
 import analyticsClient from "../../../analytics";
 import { useNavigate } from "react-router-dom";
+import { StateCallbacksForDefaultDeferredState } from "rest-interfaces";
 
 const boxStyles = xcss({
 	borderBlockWidth: token("space.500"),
@@ -40,7 +41,7 @@ const DefaultState = ({
 	orgName: string;
 	jiraHost: string;
 	requestId: string;
-	callbacks: any;
+	callbacks: StateCallbacksForDefaultDeferredState;
 }) => {
 	const navigate = useNavigate();
 	const { setIsLoading, setForbidden, onPopupBlocked } = callbacks;
@@ -62,6 +63,7 @@ const DefaultState = ({
 		return () => {
 			window.removeEventListener("message", handler);
 		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	// Start the deferral connection if authenticated
