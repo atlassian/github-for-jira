@@ -217,8 +217,7 @@ const deleteAppsInGitHub = (GHEServerUrl, appName) => {
 		}
 	} else {
 		$(".modal__header__title").empty().append("App disconnected");
-		content += "<p style='margin-bottom: 12px;'>You can now delete this app from your GitHub server. Select the app, then in GitHub select <b>Delete GitHub App</b>.</p>";
-		content += `<span style="margin-right: 12px">&#8226;</span><a target="_blank" href="${GHEServerUrl}/settings/apps/${appName}/advanced">${appName}</a>`;
+		content += `<p style='margin-bottom: 12px;'>To delete this app from your GitHub server, <a target=\"_blank\" href=\"${GHEServerUrl}/settings/apps/${appName}/advanced\">go to the app in GitHub</a> and select <b>Delete GitHub App</b>.</p>`;
 	}
 
 	$(".modal__information").empty().append(content);
@@ -292,7 +291,7 @@ if (disconnectServerBtn != null) {
 		event.preventDefault();
 		const serverUrl = $(event.target).data("server-baseurl");
 		const modalTitle = "Are you sure you want to disconnect this server?";
-		const modalInfo = "To recreate this server, you'll need to create new GitHub apps and import data about its organisations and repositories again."
+		const modalInfo = "To reconnect this server, you'll need to create new GitHub apps and import data about its organizations and repositories again."
 		const disconnectType = "server";
 		const data = { modalData: { serverUrl } }
 		handleModalDisplay(modalTitle, modalInfo, disconnectType, data);
@@ -305,8 +304,8 @@ if (disconnectAppBtn != null) {
 		const appName = $(event.target).data("app-name");
 		const uuid = $(event.target).data("app-uuid");
 		const serverUrl = $(event.target).data("app-server-url");
-		const modalTitle = `Are you sure you want to disconnect ${appName}?`;
-		const modalInfo = `To recreate this app, you'll need to create a new GitHub app and import data about its organisations and repositories again.`;
+		const modalTitle = `Are you sure you want to disconnect this app?`;
+		const modalInfo = `To reconnect this app, you'll need to recreate it and import data about its organizations and repositories again.`;
 		const disconnectType = "app";
 		const data = { modalData: { uuid, appName, serverUrl } }
 		handleModalDisplay(modalTitle, modalInfo, disconnectType, data);

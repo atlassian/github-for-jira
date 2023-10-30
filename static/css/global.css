@@ -210,6 +210,7 @@ a:focus {
   position: absolute;
   transform: translateX(-50%);
   z-index: 1000;
+  max-width: 600px;
 }
 
 .jiraConfiguration__syncRetryModalContent,
@@ -278,10 +279,6 @@ a:focus {
   align-items: center;
   display: flex;
   margin-bottom: 1em;
-}
-
-.modal__header__title {
-  margin: 0 0 0 0.5em;
 }
 
 /* Navigation */
