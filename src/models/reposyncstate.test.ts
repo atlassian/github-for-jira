@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Subscription } from "./subscription";
 import { RepoSyncState } from "./reposyncstate";
-import { mocked } from "ts-jest/utils";
+import { mocked } from "jest-mock";
 import { booleanFlag } from "config/feature-flags";
 
 jest.mock("config/feature-flags");
