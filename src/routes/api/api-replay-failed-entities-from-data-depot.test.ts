@@ -8,7 +8,7 @@ import { Installation } from "~/src/models/installation";
 import { createHashWithSharedSecret } from "~/src/util/encryption";
 import { RepoSyncState } from "~/src/models/reposyncstate";
 import {  booleanFlag } from "../../config/feature-flags";
-import { mocked } from "ts-jest/utils";
+import { mocked } from "jest-mock";
 
 
 jest.mock("config/feature-flags");

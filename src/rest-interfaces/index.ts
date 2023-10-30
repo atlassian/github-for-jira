@@ -71,6 +71,12 @@ export type ApiError = {
 	errorCode: ErrorCode;
 }
 
+export type StateCallbacksForDefaultDeferredState = {
+	setIsLoading: (x: boolean) => void;
+	setForbidden: (x: boolean) => void;
+	onPopupBlocked: () => void;
+}
+
 //DO NOT USE ENUM as webpack can't handler anything none "type"
 //ts-load is not a real typescript compile, it only strips off the types, hence cannot process Enum/Class/etc
 export type ErrorCode =

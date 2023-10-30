@@ -17,6 +17,7 @@ import Modal, {
 import TextArea from "@atlaskit/textarea";
 import Spinner from "@atlaskit/spinner";
 import Button from "@atlaskit/button";
+import WarningIcon from "@atlaskit/icon/glyph/warning";
 
 const olStyle = css`
 	padding-left: 1.2em;
@@ -34,6 +35,11 @@ const linkStyle = css`
 `;
 const textAreaStyle = css`
 	margin-top: 20px;
+`;
+const expireTextWrapperStyle = css`
+	display: flex;
+	align-items: center;
+	margin-top: ${token("space.100")};
 `;
 
 /************************************************************************
@@ -136,6 +142,10 @@ export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl, onPopupBlocked, defer
 										<a css={linkStyle} onClick={() => getOrgOwnerUrl("DeferredInstallationModal")}>
 											Find an organization owner
 										</a>
+									</div>
+									<div css={expireTextWrapperStyle}>
+										<WarningIcon label="warning" primaryColor={token("color.background.warning.bold")} />
+										<b>Note that the following link will expire after 2 days.</b>
 									</div>
 									<TextArea
 										onCopy={() => {

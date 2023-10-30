@@ -3,7 +3,7 @@ import { AuthToken, TEN_MINUTES } from "./auth-token";
 import { AppTokenHolder } from "./app-token-holder";
 import { getInstallationId } from "./installation-id";
 import { keyLocator } from "./key-locator";
-import { mocked } from "ts-jest/utils";
+import { mocked } from "jest-mock";
 import { Subscription } from "~/src/models/subscription";
 import { envVars } from "config/env";
 import fs from "fs";

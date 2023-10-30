@@ -3,7 +3,7 @@ import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { GithubCreateBranchPost } from "./github-create-branch-post";
 import { getLogger } from "config/logger";
-import { mocked } from "ts-jest/utils";
+import { mocked } from "jest-mock";
 
 jest.mock("models/subscription");
 
