@@ -45,7 +45,7 @@ const DeferredInstallation = () => {
 			}
 		};
 		extractFromRequestId();
-	}, [ requestId ]);
+	}, []);
 
 	return (
 		<Wrapper hideClosedBtn={true}>

@@ -78,7 +78,7 @@ const DefaultState = ({
 				}
 				else if (status) {
 					setForbidden(false);
-					navigate("/spa/connected",{ state: { orgLogin: orgName, requestId } });
+					navigate("/spa/connected", { state: { orgLogin: orgName, requestId } });
 				} else {
 					setForbidden(true);
 				}
