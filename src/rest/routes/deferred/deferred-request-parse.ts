@@ -15,9 +15,11 @@ export const DeferredRequestParseRoute = errorWrapper("ParseRequestId", async fu
 	}
 
 	const { jiraHost, orgName } = await extractSubscriptionDeferredInstallPayload(requestId);
+	if (!jiraHost) {
+		throw new Error("No jiraHost");
+	}
 
-	const originalJirahost = jiraHost as string;
-	const host = new URL(originalJirahost).hostname.split(".")[0];
+	const host = new URL(jiraHost).hostname.split(".")[0];
 	const maskedHost = maskString(host);
 	const maskedOrgName = maskString(orgName);
 
