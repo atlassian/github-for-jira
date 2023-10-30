@@ -217,7 +217,7 @@ const deleteAppsInGitHub = (GHEServerUrl, appName) => {
 		}
 	} else {
 		$(".modal__header__title").empty().append("App disconnected");
-		content += "<p style='margin-bottom: 12px;'>You can now delete this app from your GitHub server. Select the <b>Delete GitHub app</b>.</p>";
+		content += "<p style='margin-bottom: 12px;'>You can now delete this app from your GitHub server. Select the app, then in GitHub select <b>Delete GitHub App</b>.</p>";
 		content += `<span style="margin-right: 12px">&#8226;</span><a target="_blank" href="${GHEServerUrl}/settings/apps/${appName}/advanced">${appName}</a>`;
 	}
 
