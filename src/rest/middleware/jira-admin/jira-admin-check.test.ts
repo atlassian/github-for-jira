@@ -2,7 +2,6 @@ import { encodeSymmetric } from "atlassian-jwt";
 import { Application } from "express";
 import supertest from "supertest";
 import { Installation } from "models/installation";
-import { when } from "jest-when";
 import { getFrontendApp } from "~/src/app";
 
 jest.mock("config/feature-flags");
