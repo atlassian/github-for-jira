@@ -281,6 +281,10 @@ a:focus {
   margin-bottom: 1em;
 }
 
+.modal__header__title {
+  margin: 0;
+}
+
 /* Navigation */
 .navigation {
   display: flex;
