@@ -247,7 +247,10 @@ const ConfigSteps = () => {
 
 	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual", orgLogin: string) => {
 		try {
-			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" }, { mode });
+			analyticsClient.sendUIEvent(
+				{ actionSubject: "connectOrganisation", action: "clicked" },
+				{ mode, from: "OrgListScreen" }
+			);
 			const connected: boolean | AxiosError = await AppManager.connectOrg(gitHubInstallationId);
 			if (connected instanceof AxiosError) {
 				const errorObj = modifyError(connected, { orgLogin, gitHubInstallationId }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin, onPopupBlocked });
