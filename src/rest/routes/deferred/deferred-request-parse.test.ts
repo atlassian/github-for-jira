@@ -49,7 +49,7 @@ describe("Checking the deferred request parsing route", () => {
 				.get(`/rest/app/cloud/deferred/parse/${VALID_REQUEST_ID}`);
 			expect(resp.status).toEqual(200);
 			expect(resp.body).toMatchObject({
-				"jiraHost": "https://t************n-instance.atlassian.net",
+				"jiraHost": "https://t*********************e.atlassian.net",
 				"orgName": "c************e"
 			});
 		});
