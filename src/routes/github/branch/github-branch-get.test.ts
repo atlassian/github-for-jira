@@ -1,7 +1,7 @@
 
 import { getLogger } from "config/logger";
 import { GithubBranchGet } from "routes/github/branch/github-branch-get";
-import { mocked } from "ts-jest/utils";
+import { mocked } from "jest-mock";
 import { Subscription } from "models/subscription";
 
 jest.mock("models/subscription");
