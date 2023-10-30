@@ -27,13 +27,11 @@ export const getPullRequestTask = async (
 
 	const response = await gitHubInstallationClient.getPullRequestPage(repository.owner.login, repository.name, perPage, cursor);
 
-	const isDraftPrFfOn = await booleanFlag(BooleanFlags.INNO_DRAFT_PR);
-
 	const filteredByCreatedSince = response.repository?.pullRequests?.edges
 		.filter(pull => !createdSince || pull.node.createdAt > createdSince.toISOString());
 	const alwaysSend = await shouldSendAll("prs-backfill", jiraHost, logger);
 	const pullRequests = filteredByCreatedSince
-		?.map((edge) => transformPullRequest(repository, jiraHost, edge.node, alwaysSend, logger, isDraftPrFfOn))
+		?.map((edge) => transformPullRequest(repository, jiraHost, edge.node, alwaysSend, logger))
 		?.filter((pr) => pr !== undefined) || [];
 
 	(logger.fields || {}).prNumberArray = pullRequests.map(pull => createHashWithSharedSecret(String(pull?.id)));

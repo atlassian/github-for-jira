@@ -9,10 +9,6 @@ import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
 import { Errors } from "config/errors";
 import { DEFAULT_LIMIT, Workspace } from "routes/jira/workspaces/jira-workspaces-get";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-
-jest.mock("config/feature-flags");
 
 const createSubscriptions = async (jiraHost: string, numberOfSubs: number): Promise<Subscription[]> => {
 	const subscriptions: Subscription[] = [];
@@ -150,10 +146,6 @@ describe("Workspaces Get", () => {
 	let installation: Installation;
 
 	beforeEach(async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
-		).mockResolvedValue(true);
-
 		installation = await Installation.install({
 			host: jiraHost,
 			sharedSecret: "shared-secret",

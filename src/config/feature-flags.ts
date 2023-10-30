@@ -13,7 +13,6 @@ const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {
 
 export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
-	INNO_DRAFT_PR = "inno-draft-pr",
 	VERBOSE_LOGGING = "verbose-logging",
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
 	JIRA_ADMIN_CHECK = "jira-admin-check",
@@ -26,7 +25,6 @@ export enum BooleanFlags {
 	EARLY_EXIT_ON_VALIDATION_FAILED = "early-exit-on-validation-failed",
 	ENABLE_CONNECTED_REPOS_VIEW="enable-connected-repos-view",
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery-again",
-	ENABLE_GENERIC_CONTAINERS = "enable-generic-containers",
 	ENABLE_GITHUB_SECURITY_IN_JIRA = "enable-github-security-in-jira",
 	DELETE_MESSAGE_ON_BACKFILL_WHEN_OTHERS_WORKING_ON_IT = "delete-message-on-backfill-when-others-working-on-it",
 	ENABLE_5KU_BACKFILL_PAGE = "enable-5ku-experience-backfill-page",

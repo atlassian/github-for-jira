@@ -1,8 +1,6 @@
 import supertest from "supertest";
 import { Express } from "express";
 import { getFrontendApp } from "~/src/app";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { getLogger } from "config/logger";
 import {
 	defineJiraDevelopmentToolModuleActions,
@@ -42,17 +40,13 @@ describe("Atlassian Connect", () => {
 			};
 		});
 
-		it("should return generic container urls, and create branch url, when feature flag is enabled", async () => {
+		it("should return generic container urls, and create branch url", async () => {
 			const req = { log: getLogger("test") } as any;
 			const res = { ...mockResponse, locals: { jiraHost } } ;
-			when(booleanFlag).calledWith(
-				BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
-			).mockResolvedValue(true);
-
 
 			await JiraAtlassianConnectGet(req, res);
 			expect(res.status).toHaveBeenCalledWith(200);
-			const actions =  await defineJiraDevelopmentToolModuleActions(jiraHost);
+			const actions =  defineJiraDevelopmentToolModuleActions();
 			expect(actions).toEqual({
 				"associateRepository": {
 					"templateUrl": "https://test-github-app-instance.com/jira/workspaces/repositories/associate"
@@ -66,24 +60,6 @@ describe("Atlassian Connect", () => {
 				},
 				"searchRepositories": {
 					"templateUrl": "https://test-github-app-instance.com/jira/workspaces/repositories/search"
-				}
-			});
-		});
-
-		it("should only return the create branch url when generic container FF is not enabled", async () => {
-			const req = { log: getLogger("test") } as any;
-			const res = { ...mockResponse, locals: { jiraHost } } ;
-			when(booleanFlag).calledWith(
-				BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
-			).mockResolvedValue(false);
-
-
-			await JiraAtlassianConnectGet(req, res);
-			expect(res.status).toHaveBeenCalledWith(200);
-			const actions =  await defineJiraDevelopmentToolModuleActions(jiraHost);
-			expect(actions).toEqual({
-				"createBranch": {
-					"templateUrl": "https://test-github-app-instance.com/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&jwt={jwt}&addonkey=com.github.integration.test-atlassian-instance"
 				}
 			});
 		});

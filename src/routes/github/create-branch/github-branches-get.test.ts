@@ -2,7 +2,7 @@
 import { getLogger } from "config/logger";
 import { GithubBranchesGet } from "~/src/routes/github/create-branch/github-branches-get";
 import { Subscription } from "models/subscription";
-import { mocked } from "ts-jest/utils";
+import { mocked } from "jest-mock";
 
 jest.mock("models/subscription");
 

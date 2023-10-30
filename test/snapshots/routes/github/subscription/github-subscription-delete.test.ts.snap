@@ -1,16 +1,16 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`delete-github-subscription Should 400 when missing body.installationId 1`] = `
-Array [
-  Object {
+[
+  {
     "err": Any<String>,
   },
 ]
 `;
 
 exports[`delete-github-subscription Should 400 when missing body.jiraHost 1`] = `
-Array [
-  Object {
+[
+  {
     "err": Any<String>,
   },
 ]
