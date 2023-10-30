@@ -1,28 +1,28 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Test getting a jira client Installation exists 1`] = `
-Object {
+{
   "baseURL": "https://test-atlassian-instance.atlassian.net",
-  "deployment": Object {
+  "deployment": {
     "submit": [Function],
   },
-  "devinfo": Object {
-    "branch": Object {
+  "devinfo": {
+    "branch": {
       "delete": [Function],
     },
-    "installation": Object {
+    "installation": {
       "delete": [Function],
     },
-    "pullRequest": Object {
+    "pullRequest": {
       "delete": [Function],
     },
-    "repository": Object {
+    "repository": {
       "delete": [Function],
       "update": [Function],
     },
   },
-  "issues": Object {
-    "comments": Object {
+  "issues": {
+    "comments": {
       "addForIssue": [Function],
       "deleteForIssue": [Function],
       "list": [Function],
@@ -31,21 +31,21 @@ Object {
     "get": [Function],
     "getAll": [Function],
     "parse": [Function],
-    "transitions": Object {
+    "transitions": {
       "getForIssue": [Function],
       "updateForIssue": [Function],
     },
-    "worklogs": Object {
+    "worklogs": {
       "addForIssue": [Function],
     },
   },
-  "remoteLink": Object {
+  "remoteLink": {
     "submit": [Function],
   },
-  "security": Object {
+  "security": {
     "submitVulnerabilities": [Function],
   },
-  "workflow": Object {
+  "workflow": {
     "submit": [Function],
   },
 }

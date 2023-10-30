@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
-import { mocked } from "ts-jest/utils";
+import { mocked } from "jest-mock";
 import { JiraDelete } from "./jira-delete";
 import { getLogger } from "config/logger";
 import { when } from "jest-when";
