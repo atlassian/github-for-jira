@@ -281,8 +281,12 @@ a:focus {
   margin-bottom: 1em;
 }
 
+.modal__header__icon {
+  margin-right: 6px;
+}
+
 .modal__header__title {
-  margin: 0 0 0 0.5em;
+  margin: 0;
 }
 
 /* Navigation */
