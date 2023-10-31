@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { JiraEventsInstallPost } from "./jira-events-install-post";
-import { mocked } from "ts-jest/utils";
+import { mocked } from "jest-mock";
 import { Installation } from "models/installation";
 
 jest.mock("models/installation");

@@ -1,4 +1,4 @@
-import { mocked } from "ts-jest/utils";
+import { mocked } from "jest-mock";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { GithubWebhookMiddleware } from "./github-webhook-middleware";

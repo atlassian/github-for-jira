@@ -1,25 +1,25 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`API Router Authentication based on SLAuth headers Request allowed when Authentication Mechanism is ASAP 1`] = `Object {}`;
+exports[`API Router Authentication based on SLAuth headers Request allowed when Authentication Mechanism is ASAP 1`] = `{}`;
 
-exports[`API Router Authentication based on SLAuth headers Request allowed when Authentication Mechanism is SLAuth Token 1`] = `Object {}`;
+exports[`API Router Authentication based on SLAuth headers Request allowed when Authentication Mechanism is SLAuth Token 1`] = `{}`;
 
-exports[`API Router Endpoints Delete Installation Should work with new delete installation route 1`] = `Object {}`;
+exports[`API Router Endpoints Delete Installation Should work with new delete installation route 1`] = `{}`;
 
-exports[`API Router Endpoints Repo Sync State should return 404 if no installation is found 1`] = `Object {}`;
+exports[`API Router Endpoints Repo Sync State should return 404 if no installation is found 1`] = `{}`;
 
-exports[`API Router Endpoints installation should return 404 if no installation is found 1`] = `Object {}`;
+exports[`API Router Endpoints installation should return 404 if no installation is found 1`] = `{}`;
 
 exports[`API Router Endpoints installation should return a connection when subscription is OK 1`] = `
-Object {
-  "connections": Array [
-    Object {
+{
+  "connections": [
+    {
       "foo": "bar",
       "isGlobalInstall": false,
       "syncState": "PENDING",
     },
   ],
-  "failedConnections": Array [],
+  "failedConnections": [],
   "hasConnections": true,
   "host": "https://test-atlassian-instance.atlassian.net",
   "installationId": "1234",
@@ -28,10 +28,10 @@ Object {
 `;
 
 exports[`API Router Endpoints installation should return a failed connection when subscription is fucked 1`] = `
-Object {
-  "connections": Array [],
-  "failedConnections": Array [
-    Object {
+{
+  "connections": [],
+  "failedConnections": [
+    {
       "deleted": false,
       "error": "Error: Error executing Axios Request: Request failed with status code 500. More details in logs",
       "id": 1234,
@@ -44,10 +44,10 @@ Object {
 }
 `;
 
-exports[`API Router Endpoints sync should reset sync state if asked to 1`] = `"{\\"message\\":\\"Successfully (re)started sync for 1234\\"}"`;
+exports[`API Router Endpoints sync should reset sync state if asked to 1`] = `"{"message":"Successfully (re)started sync for 1234"}"`;
 
 exports[`API Router Endpoints sync should return 404 if no installation is found 1`] = `"Not Found"`;
 
-exports[`API Router Endpoints sync should trigger the sync or start function 1`] = `"{\\"message\\":\\"Successfully (re)started sync for 1234\\"}"`;
+exports[`API Router Endpoints sync should trigger the sync or start function 1`] = `"{"message":"Successfully (re)started sync for 1234"}"`;
 
 exports[`API Router Endpoints verify should return 'Installation already enabled' 1`] = `"Verification successful"`;
