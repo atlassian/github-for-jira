@@ -210,6 +210,7 @@ a:focus {
   position: absolute;
   transform: translateX(-50%);
   z-index: 1000;
+  max-width: 600px;
 }
 
 .jiraConfiguration__syncRetryModalContent,
@@ -263,6 +264,12 @@ a:focus {
   margin-top: 1em;
 }
 
+.modal__spinner {
+  display: flex;
+  justify-content: center;
+  vertical-align: middle;
+}
+
 .modal__footer__actionBtn {
   --aui-btn-bg: #FFAB00;
   --aui-btn-text: #172B4D;
@@ -274,8 +281,12 @@ a:focus {
   margin-bottom: 1em;
 }
 
+.modal__header__icon {
+  margin-right: 6px;
+}
+
 .modal__header__title {
-  margin: 0 0 0 0.5em;
+  margin: 0;
 }
 
 /* Navigation */
