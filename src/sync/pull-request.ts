@@ -5,7 +5,7 @@ import { Repository } from "models/subscription";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import Logger from "bunyan";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
-import { booleanFlag, BooleanFlags, shouldSendAll } from "config/feature-flags";
+import { shouldSendAll } from "config/feature-flags";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
 import { createHashWithSharedSecret } from "utils/encryption";
 
