@@ -79,14 +79,14 @@ services:
       REDISX_CACHE_HOST: redis
       NODE_ENV: ${NODE_ENV:-development} # defaults to development if NODE_ENV not set
 
-#  installation:
-#    depends_on:
-#      - app
-#    volumes:
-#      - ./etc/app-install:/app
-#    build:
-#      context: .
-#      dockerfile: etc/app-install/Dockerfile
-#    env_file:
-#      - .env
+  installation:
+    depends_on:
+      - app
+    volumes:
+      - ./etc/app-install:/app
+    build:
+      context: .
+      dockerfile: etc/app-install/Dockerfile
+    env_file:
+      - .env
 
