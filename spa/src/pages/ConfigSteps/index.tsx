@@ -14,7 +14,7 @@ import { useNavigate } from "react-router-dom";
 import ErrorUI from "../../components/Error";
 import AppManager from "../../services/app-manager";
 import OAuthManager from "../../services/oauth-manager";
-import analyticsClient from "../../analytics";
+import analyticsClient, { useEffectScreenEvent } from "../../analytics";
 import { AxiosError } from "axios";
 import { ErrorObjType, GENERIC_MESSAGE_WITH_LINK, HostUrlType, modifyError } from "../../utils/modifyError";
 import { reportError } from "../../utils";
@@ -112,6 +112,7 @@ const errorMessageCounter: ErrorMessageCounterType = {
 const ERROR_THRESHOLD = 3;
 
 const ConfigSteps = () => {
+	useEffectScreenEvent("AuthorisationScreen");
 
 	const [isPopupBlocked, setPopupBlocked] = useState<boolean>(false);
 	const onPopupBlocked = () => setPopupBlocked(true);
@@ -172,6 +173,7 @@ const ConfigSteps = () => {
 			showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin, onPopupBlocked }));
 			return { success: false, orgs: [] };
 		} else {
+			analyticsClient.sendScreenEvent({ name: "OrganisationConnectionScreen" });
 			setOrganizations(response.orgs);
 			return { success: true, orgs: response.orgs };
 		}
