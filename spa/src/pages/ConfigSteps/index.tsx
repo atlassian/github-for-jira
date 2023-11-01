@@ -173,7 +173,12 @@ const ConfigSteps = () => {
 			showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin, onPopupBlocked }));
 			return { success: false, orgs: [] };
 		} else {
-			analyticsClient.sendScreenEvent({ name: "OrganisationConnectionScreen" });
+			analyticsClient.sendScreenEvent({
+				name: "OrganisationConnectionScreen"
+			}, {
+				numOfOrgs: response.orgs.length,
+				type: "cloud"
+			});
 			setOrganizations(response.orgs);
 			return { success: true, orgs: response.orgs };
 		}
