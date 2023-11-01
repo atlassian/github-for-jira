@@ -70,6 +70,11 @@ const DefaultState = ({
 	useEffect(() => {
 		const connectDeferredOrgOrg = async () => {
 			if (requestId) {
+				analyticsClient.sendUIEvent(
+					{ actionSubject: "connectOrganisation", action: "clicked" },
+					{ mode: "auto", from: "DeferredInstallation" },
+					requestId
+				);
 				setIsLoading(true);
 				const status: boolean | AxiosError = await DeferralManager.connectOrgByDeferral(requestId);
 				if (status instanceof AxiosError) {

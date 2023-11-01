@@ -5,7 +5,7 @@ type UIEventActionSubject =
 	| "connectOrganisation" | "installToNewOrganisation"
 	| "checkBackfillStatus"
 	| "dropExperienceViaBackButton"
-	| "learnAboutIssueLinking" | "learnAboutDevelopmentWork"
+	| "learnAboutIssueLinking"
 	| "checkOrgAdmin" | "generateDeferredInstallationLink"
 	| "closedDeferredInstallationModal" | "copiedDeferredInstallationUrl"
 	| "signInAndConnectThroughDeferredInstallationStartScreen";
