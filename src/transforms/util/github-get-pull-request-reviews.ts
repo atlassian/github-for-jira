@@ -4,7 +4,6 @@ import { Octokit } from "@octokit/rest";
 import Logger from "bunyan";
 import { statsd } from "config/statsd";
 import { metricPrReviewers } from "config/metric-names";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const 	getPullRequestReviews = async (
 	jiraHost: string,
@@ -18,11 +17,6 @@ export const 	getPullRequestReviews = async (
 	const { number: pullRequestNumber, id: pullRequestId } = pullRequest;
 
 	try {
-		if (await booleanFlag(BooleanFlags.SKIP_REQUESTED_REVIEWERS, jiraHost)) {
-			const response = await gitHubInstallationClient.getPullRequestReviews(repositoryOwner, repositoryName, pullRequestNumber);
-			return response.data;
-		}
-
 		const requestedReviewsResponse = await gitHubInstallationClient.getPullRequestRequestedReviews(repositoryOwner, repositoryName, pullRequestNumber);
 		const requestedReviewsData = requestedReviewsResponse.data;
 

@@ -16,7 +16,7 @@ Please note that this project has a [Contributor Code of Conduct](CODE_OF_CONDUC
 
 ## Getting Started
 
-This app is written in [Typescript](https://www.typescriptlang.org/) and runs on [Node.js](https://nodejs.org/) **v14.x**. 
+This app is written in [Typescript](https://www.typescriptlang.org/) and runs on [Node.js](https://nodejs.org/) **v18.x**. 
 
 Please install [Docker](https://www.docker.com/get-started) and [Docker Compose](https://docs.docker.com/compose/install/) to easily run the project locally.
 
