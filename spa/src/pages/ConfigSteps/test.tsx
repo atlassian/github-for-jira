@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { BrowserRouter } from "react-router-dom";
 import ConfigSteps from "./index";
@@ -135,10 +135,10 @@ test("Connect GitHub Screen - Checking the GitHub Cloud flow when not authentica
 		);
 	});
 
-	await act(() => userEvent.click(screen.getByText(GITHUB_CLOUD)));
-	await act(() => userEvent.click(screen.getByText(SELECT_GH_PRODUCT_CTA)));
+	userEvent.click(screen.getByText(GITHUB_CLOUD));
+	userEvent.click(screen.getByText(SELECT_GH_PRODUCT_CTA));
 
-	expect(OAuthManager.authenticateInGitHub).toHaveBeenCalled();
+	await waitFor(() => expect(OAuthManager.authenticateInGitHub).toHaveBeenCalled());
 });
 
 test("Connect GitHub Screen - Checking the GitHub Cloud flow when authenticated with orgs", async () => {
