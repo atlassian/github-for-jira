@@ -3,6 +3,9 @@
 	"transform": {
 		"^.+\\.tsx?$": "ts-jest"
 	},
+	"moduleNameMapper": {
+		"^.+\\.css$": "<rootDir>/css.stub.js"
+	},
 	"setupFilesAfterEnv": [
 		"./setup.ts"
 	]
