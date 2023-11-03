@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { BrowserRouter } from "react-router-dom";
 import ConfigSteps from "./index";
@@ -127,18 +127,16 @@ test("Connect GitHub Screen - Checking the GitHub Cloud flow when not authentica
 	jest.mocked(OAuthManager).checkValidity = UnAuthenticated.checkValidity;
 	jest.mocked(OAuthManager).authenticateInGitHub = UnAuthenticated.authenticateInGitHub;
 
-	await act(async () => {
-		render(
-			<BrowserRouter>
-				<ConfigSteps />
-			</BrowserRouter>
-		);
-	});
+	render(
+		<BrowserRouter>
+			<ConfigSteps />
+		</BrowserRouter>
+	);
 
-	userEvent.click(screen.getByText(GITHUB_CLOUD));
-	userEvent.click(screen.getByText(SELECT_GH_PRODUCT_CTA));
+	await userEvent.click(screen.getByText(GITHUB_CLOUD));
+	await userEvent.click(screen.getByText(SELECT_GH_PRODUCT_CTA));
 
-	await waitFor(() => expect(OAuthManager.authenticateInGitHub).toHaveBeenCalled());
+	expect(OAuthManager.authenticateInGitHub).toHaveBeenCalled();
 });
 
 test("Connect GitHub Screen - Checking the GitHub Cloud flow when authenticated with orgs", async () => {
