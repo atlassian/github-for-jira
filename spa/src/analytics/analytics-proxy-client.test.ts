@@ -1,6 +1,6 @@
 import { analyticsProxyClient } from "./analytics-proxy-client";
 import { waitFor } from "@testing-library/react";
-import * as nock from "nock";
+import nock from "nock";
 import { axiosRest } from "../api/axiosInstance";
 import { ScreenEventProps, TrackEventProps, UIEventProps } from "./types";
 

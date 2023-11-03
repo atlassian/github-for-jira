@@ -23,5 +23,5 @@
 			"rest-interfaces": ["./src/rest-interfaces"]
 		}
 	},
-  "include": ["src"]
+  "includes": [ "./setup.ts", "src" ]
 }
