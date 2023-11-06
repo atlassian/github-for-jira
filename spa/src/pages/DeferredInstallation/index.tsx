@@ -101,7 +101,7 @@ const DeferredInstallation = () => {
 
 			{
 				isLoading ? <SkeletonForLoading /> : <Step
-					title="Connect a GitHub organization to Jira Software"
+					title={"Connect a GitHub organization to Jira Software"}
 				>
 					<>
 						<p css={paragraphStyle}>
