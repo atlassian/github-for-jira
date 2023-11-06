@@ -36,6 +36,7 @@ const infoParaStyle = css`
 const ConnectState = () => {
 	const location = useLocation();
 	const { orgName, jiraHost, requestId } = location.state;
+	analyticsClient.sendScreenEvent({ name: "DeferredInstallationStartScreen"}, { type: "cloud" }, requestId);
 
 	const navigate = useNavigate();
 	const [isLoading, setIsLoading] = useState<boolean>(false);

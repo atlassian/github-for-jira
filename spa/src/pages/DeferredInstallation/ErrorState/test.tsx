@@ -13,6 +13,9 @@ jest.mock("react-router-dom", () => ({
 				"type": "error",
 				"message": "This is the error message",
 				"errorCode": "UNKNOWN"
+			},
+			"requestId": {
+				"requestId": "request-id"
 			}
 		}
 	}),

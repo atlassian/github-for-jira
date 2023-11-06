@@ -29,6 +29,8 @@ const DeferredInstallation = () => {
 	const onPopupBlocked = () => setPopupBlocked(true);
 	const [isLoading, setIsLoading] = useState(false);
 
+	analyticsClient.sendScreenEvent({ name: "DeferredInstallationStartScreen"}, { type: "cloud" }, requestId);
+
 	useEffect(() => {
 		const handler = async (event: MessageEvent) => {
 			if (event.data?.type === "oauth-callback" && event.data?.code) {
@@ -50,7 +52,7 @@ const DeferredInstallation = () => {
 	const authenticate = async () => {
 		setIsLoading(true);
 		try {
-			analyticsClient.sendUIEvent({ actionSubject: "signInAndConnectThroughDeferredInstallationStartScreen", action: "clicked"}, { type: "cloud" }, requestId);
+			analyticsClient.sendUIEvent({ actionSubject: "signInThroughDeferredInstallationStartScreen", action: "clicked"}, { type: "cloud" }, requestId);
 			await OAuthManager.authenticateInGitHub({
 				onWinClosed: () => {},
 				onPopupBlocked
@@ -74,7 +76,8 @@ const DeferredInstallation = () => {
 							{ errorCode: "INVALID_DEFERRAL_REQUEST_ID"},
 							{},
 							{ onClearGitHubToken: () => {}, onRelogin: () => {}, onPopupBlocked }
-						)
+						),
+						requestId
 					}
 				});
 			}

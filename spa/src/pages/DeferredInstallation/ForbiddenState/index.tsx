@@ -4,6 +4,8 @@ import { css } from "@emotion/react";
 import { token } from "@atlaskit/tokens";
 import { Wrapper } from "../../../common/Wrapper";
 import SyncHeader from "../../../components/SyncHeader";
+import { useLocation } from "react-router-dom";
+import analyticsClient from "../../../analytics";
 
 const paragraphStyle = css`
 	color: ${token("color.text.subtle")};
@@ -14,6 +16,10 @@ const noAdminDivStyle = css`
 `;
 
 const ForbiddenState = () => {
+	const location = useLocation();
+	const { requestId } = location.state;
+	analyticsClient.sendScreenEvent({ name: "DeferredInstallationForbiddenScreen"}, { type: "cloud" }, requestId);
+
 	return (
 		<Wrapper hideClosedBtn={true}>
 			<SyncHeader />

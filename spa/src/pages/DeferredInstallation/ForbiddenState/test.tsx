@@ -3,6 +3,17 @@ import { render, screen } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import ForbiddenState from "./index";
 
+jest.mock("react-router-dom", () => ({
+	...(jest.requireActual("react-router-dom")),
+	useLocation: () => ({
+		"state": {
+			"requestId": {
+				"requestId": "request-id"
+			}
+		}
+	}),
+}));
+
 test("Forbidden State screen", async () => {
 	render(
 		<BrowserRouter>

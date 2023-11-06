@@ -4,10 +4,12 @@ import ErrorUI from "../../../components/Error";
 import Step from "../../../components/Step";
 import { Wrapper } from "../../../common/Wrapper";
 import SyncHeader from "../../../components/SyncHeader";
+import analyticsClient from "../../../analytics";
 
 const ErrorState = () => {
 	const location = useLocation();
-	const { error }: { error: ErrorObjType } = location.state;
+	const { error, requestId }: { error: ErrorObjType; requestId: string } = location.state;
+	analyticsClient.sendScreenEvent({ name: "DeferredInstallationErrorScreen"}, { type: "cloud" }, requestId);
 
 	return (<>
 		<Wrapper hideClosedBtn={true}>

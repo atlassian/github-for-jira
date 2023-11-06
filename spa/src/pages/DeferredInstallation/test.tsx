@@ -74,6 +74,9 @@ test("Invalid/Expired Deferred installation screen", async () => {
 					"errorCode": "INVALID_DEFERRAL_REQUEST_ID",
 					"message": "This link is either expired or invalid.",
 					"type": "error"
+				},
+				"requestId": {
+					"requestId": "request-id"
 				}
 			}
 		});
