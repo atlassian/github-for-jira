@@ -1,4 +1,5 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import ConfigSteps from "./index";
 import Connected from "../Connected";
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -7,6 +8,9 @@ import nock from "nock";
 import * as testUtils from "../../utils/test-helper";
 
 describe("Empty state user flow", () => {
+
+	const NEW_GITHUB_ORG_NAME = "my-org-aaa";
+	const NEW_GITHUB_INSTALLATION_ID = 11111;
 
 	beforeEach(() => {
 		testUtils.setupGlobalAP();
@@ -33,10 +37,9 @@ describe("Empty state user flow", () => {
 		await waitFor(() => testUtils.expectUserNotLogin());
 
 		//Start OAuth flow
-		await testUtils.clickButton("Next");
+		await userEvent.click(screen.getByText("Next"));
 		await waitFor(() => testUtils.expectPopupWith("some-redirect-url", "_blank"));
 
-		try {
 		//Finish Oauth flow
 		await testUtils.postMessage({ type: "oauth-callback", code: "some-code", state: "some-state" });
 		//Ensure logged in
@@ -46,38 +49,46 @@ describe("Empty state user flow", () => {
 		await waitFor(() => testUtils.expectPopupWith("some-app-install-url", "_blank"));
 
 		//Now trigger app installed on github
-		await testUtils.postMessage({ type: "install-callback", gitHubInstallationId: 1111 });
+		await testUtils.postMessage({ type: "install-callback", gitHubInstallationId: NEW_GITHUB_INSTALLATION_ID });
 
 		//Should navigate to success screen
-		await waitFor(() => expect(screen.queryByText("Check your backfill status")).toBeInTheDocument());
-		}catch(e) {
-		}
+		await waitFor(() => expect(screen.queryByText(`${NEW_GITHUB_ORG_NAME} is now connected!`)).toBeInTheDocument());
 
 	});
 
 	function nockApiResponse() {
 
-		const scope = nock("http://localhost").persist();
+		const scopePersist = nock("http://localhost").persist();
+		const scope = nock("http://localhost");
 
-		scope.post("/rest/app/cloud/analytics-proxy").reply(200);
+		scopePersist.post("/rest/app/cloud/analytics-proxy").reply(200);
 
 		scope.get("/rest/app/cloud/oauth/redirectUrl").reply(200, {
 			redirectUrl: "some-redirect-url",
 			state: "some-state"
 		});
 
-		scope.post("/rest/app/cloud/analytics-proxy").reply(200);
 		scope.get("/rest/app/cloud/installation/new").reply(200, {
 			appInstallationUrl: "some-app-install-url"
 		});
-		scope.post("/rest/app/cloud/oauth/exchangeToken").reply(200, {
+
+		scope.post("/rest/app/cloud/oauth/exchangeToken", { code: "some-code", state: "some-state" }).reply(200, {
 			accessToken: "some-access-token",
 			refreshToken: "some-refresh-token"
 		});
+
+		scope.get("/rest/app/cloud/org").reply(200, { orgs: [] });
 		scope.get("/rest/app/cloud/org").reply(200, {
-			orgs: []
+			orgs: [{
+				id: NEW_GITHUB_INSTALLATION_ID,
+				account: {
+					login: NEW_GITHUB_ORG_NAME
+				}
+			}]
 		});
-		scope.post("/rest/app/cloud/org").reply(200);
+
+		scope.post("/rest/app/cloud/org", { installationId: NEW_GITHUB_INSTALLATION_ID }).reply(200);
+
 		//github
 		const gitHubScope = nock("https://api.github.com")
 			.persist()

@@ -1,11 +1,4 @@
 import { act, screen, fireEvent } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-
-export async function clickButton(buttonText: string) {
-	await act(async() => {
-		await userEvent.click(screen.getByText(buttonText));
-	});
-}
 
 export function expectUserNotLogin() {
 	expect(screen.queryByText("Select your GitHub product", { exact: false })).toBeInTheDocument();
