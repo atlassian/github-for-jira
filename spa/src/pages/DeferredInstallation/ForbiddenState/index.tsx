@@ -20,7 +20,7 @@ const ForbiddenState = () => {
 			<Step title="Can’t connect this organization because you don’t have owner permissions">
 				<div css={noAdminDivStyle}>
 					<p css={paragraphStyle}>
-						The GitHub account you’ve used doesn’t have owner permissions
+						The GitHub account you’ve used doesn’t have owner permissions{" "}
 						to connect to the GitHub organization.
 					</p>
 					<br/>
