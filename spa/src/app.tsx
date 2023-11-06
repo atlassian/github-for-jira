@@ -10,6 +10,9 @@ import Connected from "./pages/Connected";
 import InstallationRequested from "./pages/InstallationRequested";
 import DeferredInstallation from "./pages/DeferredInstallation";
 import Connections from "./pages/Connections";
+import ForbiddenState from "./pages/DeferredInstallation/ForbiddenState";
+import ConnectState from "./pages/DeferredInstallation/ConnectState";
+import ErrorState from "./pages/DeferredInstallation/ErrorState";
 
 import * as Sentry from "@sentry/react";
 import { initSentry } from "./sentry";
@@ -37,6 +40,12 @@ const App = () => {
 					<Route path="steps" element={<ConfigSteps/>}/>
 					<Route path="connected" element={<Connected />}/>
 					<Route path="installationRequested" element={<InstallationRequested />}/>
+					<Route path="deferred">
+						<Route index element={<DeferredInstallation />} />
+						<Route path="connect" element={<ConnectState />} />
+						<Route path="forbidden" element={<ForbiddenState />} />
+						<Route path="error" element={<ErrorState />} />
+					</Route>
 					<Route path="deferred" element={<DeferredInstallation />}/>
 				</Route>
 			</SentryRoutes>
