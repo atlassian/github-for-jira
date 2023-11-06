@@ -34,6 +34,7 @@ const DeferredInstallation = () => {
 			if (event.data?.type === "oauth-callback" && event.data?.code) {
 				const response: boolean | AxiosError = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
 				if (response instanceof AxiosError) {
+					console.error("Error: ", response);
 					return;
 				}
 				parseRequestId();
@@ -46,13 +47,13 @@ const DeferredInstallation = () => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	// Authenticate if no token/username is set
 	const authenticate = async () => {
 		setIsLoading(true);
 		try {
 			analyticsClient.sendUIEvent({ actionSubject: "signInAndConnectThroughDeferredInstallationStartScreen", action: "clicked"}, { type: "cloud" }, requestId);
 			await OAuthManager.authenticateInGitHub({
-				onWinClosed: () => {}, onPopupBlocked
+				onWinClosed: () => {},
+				onPopupBlocked
 			});
 		} catch (e) {
 			// TODO: print alert error
@@ -100,7 +101,7 @@ const DeferredInstallation = () => {
 
 			{
 				isLoading ? <SkeletonForLoading /> : <Step
-					title={"Connect a GitHub organization to Jira Software"}
+					title="Connect a GitHub organization to Jira Software"
 				>
 					<>
 						<p css={paragraphStyle}>
