@@ -4,10 +4,6 @@ import {
 	fetchAndSaveUserJiraAdminStatus,
 	jiraAdminPermissionsMiddleware
 } from "middleware/jira-admin-permission-middleware";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { when } from "jest-when";
-
-jest.mock("config/feature-flags");
 
 describe("jiraAdminPermissionsMiddleware", () => {
 	let mockRequest;
@@ -24,10 +20,6 @@ describe("jiraAdminPermissionsMiddleware", () => {
 			send: jest.fn()
 		};
 		mockNext = jest.fn();
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.JIRA_ADMIN_CHECK
-		).mockResolvedValue(true);
 	});
 
 	test("should return 403 Forbidden if session is undefined", async () => {
@@ -48,46 +40,6 @@ describe("jiraAdminPermissionsMiddleware", () => {
 	});
 });
 
-// Delete this describe block during flag clean up
-describe("jiraAdminPermissionsMiddleware - feature flag off", () => {
-	let mockRequest;
-	let mockResponse;
-	let mockNext;
-
-	beforeEach(() => {
-		mockRequest = {
-			session: {},
-			log: { info: jest.fn() }
-		};
-		mockResponse = {
-			status: jest.fn().mockReturnThis(),
-			send: jest.fn()
-		};
-		mockNext = jest.fn();
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.JIRA_ADMIN_CHECK
-		).mockResolvedValue(false);
-	});
-
-	test("should return 403 Forbidden if session is undefined", async () => {
-		delete mockRequest.session.isJiraAdmin;
-		await jiraAdminPermissionsMiddleware(mockRequest, mockResponse, mockNext);
-		expect(mockNext).toHaveBeenCalled();
-	});
-
-	test("should return 403 Forbidden if hasAdminPermissions is false", async () => {
-		mockRequest.session.isJiraAdmin = false;
-		await jiraAdminPermissionsMiddleware(mockRequest, mockResponse, mockNext);
-		expect(mockNext).toHaveBeenCalled();
-	});
-
-	test("should call next() if user has Jira admin permissions", async () => {
-		mockRequest.session.isJiraAdmin = true;
-		await jiraAdminPermissionsMiddleware(mockRequest, mockResponse, mockNext);
-		expect(mockNext).toHaveBeenCalled();
-	});
-});
 
 describe("fetchAndSaveUserJiraAdminStatus",  () => {
 	const mockRequest = {
