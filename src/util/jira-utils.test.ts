@@ -6,7 +6,7 @@ import {
 	isGitHubCloudApp,
 	jiraIssueKeyParser
 } from "./jira-utils";
-import { mocked } from "ts-jest/utils";
+import { mocked } from "jest-mock";
 import { GitHubServerApp } from "models/github-server-app";
 
 jest.mock("models/github-server-app");

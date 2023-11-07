@@ -14,6 +14,24 @@ export type UsersGetAuthenticatedResponse = {
 	login: string;
 };
 
+export type DeferredInstallationUrlParams = {
+	gitHubInstallationId: number;
+	gitHubOrgName: string;
+};
+
+export type DeferralParsedRequest = {
+	orgName: string;
+	jiraHost: string;
+};
+
+export type GetDeferredInstallationUrl = {
+	deferredInstallUrl: string;
+};
+
+export type OrgOwnershipResponse = {
+	orgName: string;
+}
+
 export type GetGitHubAppsUrlResponse = {
 	appInstallationUrl: string;
 }
@@ -21,6 +39,8 @@ export type GetGitHubAppsUrlResponse = {
 export type OrganizationsResponse = {
 	orgs: Array<GitHubInstallationType>;
 }
+
+export type CheckAdminOrgSource = "ErrorInOrgList" | "DeferredInstallationModal";
 
 export type GitHubInstallationType = {
 	account: GitHubInstallationAccountType;
@@ -51,6 +71,12 @@ export type ApiError = {
 	errorCode: ErrorCode;
 }
 
+export type StateCallbacksForDefaultDeferredState = {
+	setIsLoading: (x: boolean) => void;
+	setForbidden: (x: boolean) => void;
+	onPopupBlocked: () => void;
+}
+
 //DO NOT USE ENUM as webpack can't handler anything none "type"
 //ts-load is not a real typescript compile, it only strips off the types, hence cannot process Enum/Class/etc
 export type ErrorCode =
@@ -62,6 +88,8 @@ export type ErrorCode =
 	| "IP_BLOCKED"
 	| "SSO_LOGIN"
 	| "RESOURCE_NOT_FOUND"
+	| "INVALID_DEFERRAL_REQUEST_ID"
+	| "JIRAHOST_MISMATCH"
 	| "UNKNOWN";
 
 export type Account = {

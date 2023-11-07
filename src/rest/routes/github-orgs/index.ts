@@ -28,7 +28,7 @@ GitHubOrgsRouter.post("/", errorWrapper("GitHubOrgsConnectJira", async (req: Req
 		throw new InvalidArgumentError("Missing installation ID");
 	}
 
-	const result = await verifyAdminPermsAndFinishInstallation(githubToken, installation, gitHubAppId, gitHubInstallationId, true, req.log);
+	const result = await verifyAdminPermsAndFinishInstallation(githubToken, installation, gitHubAppId, gitHubInstallationId, req.log);
 	if (result.errorCode === "NOT_ADMIN") {
 		throw new InsufficientPermissionError(result.error || "Not admin of org");
 	} else {

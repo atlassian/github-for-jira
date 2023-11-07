@@ -12,7 +12,6 @@ import {
 import { matchRouteWithPattern } from "~/src/util/match-route-with-pattern";
 import { fetchAndSaveUserJiraAdminStatus } from "middleware/jira-admin-permission-middleware";
 import { envVars } from "~/src/config/env";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { errorStringFromUnknown } from "../util/error-string-from-unknown";
 import { BaseLocals } from "../rest/routes";
 
@@ -97,17 +96,11 @@ const getIssuer = (token: string, logger: Logger): string | undefined => {
 	return unverifiedClaims.iss;
 };
 
-export const getTokenType = async (url: string, method: string, jiraHost: string): Promise<TokenType> => {
-	if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost)) {
-		return checkPathValidity(url) && method == "GET"
+export const getTokenType = async (url: string, method: string): Promise<TokenType> =>
+	checkPathValidity(url) && method == "GET"
 		|| await checkGenericContainerActionUrl(`${envVars.APP_URL}${url}`)
 		|| checkSecurityContainerActionUrl(`${envVars.APP_URL}${url}`) ? TokenType.normal
-			: TokenType.context;
-	} else {
-		return checkPathValidity(url) && method == "GET"
-		|| checkSecurityContainerActionUrl(`${envVars.APP_URL}${url}`) ? TokenType.normal : TokenType.context;
-	}
-};
+		: TokenType.context;
 
 const verifySymmetricJwt = async (req: Request, token: string, installation: Installation) => {
 	const algorithm = getAlgorithm(token) as AsymmetricAlgorithm | SymmetricAlgorithm;
@@ -115,7 +108,7 @@ const verifySymmetricJwt = async (req: Request, token: string, installation: Ins
 
 	try {
 		const claims = decodeSymmetric(token, secret, algorithm, false) as { exp?: number, qsh?: string };
-		const tokenType = await getTokenType(req.originalUrl, req.method, installation.jiraHost);
+		const tokenType = await getTokenType(req.originalUrl, req.method);
 
 		verifyJwtClaims(claims, tokenType, req);
 		return claims;
