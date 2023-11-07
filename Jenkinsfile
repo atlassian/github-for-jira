@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
     stages {
@@ -7,16 +8,7 @@ pipeline {
                     def bitbucketUrl = 'https://api.bitbucket.org/2.0/repositories/atlassian/jkat-test-jenkins-integration/pipelines'
                     def branch = 'master' // Specify the branch to build
 
-
-
-
-                     withCredentials([usernamePassword(
-                        credentialsId: 'mock-bb-secret', // Specify your credentials ID
-                        usernameVariable: 'USERNAME', // Variable to store the username
-                        passwordVariable: 'PASSWORD' // Variable to store the password
-                    )]) {
-
-    
+                    withCredentials([string(credentialsId: 'bb-access-token', variable: 'accessToken')]) {
                         def payload = """
                         {
                             "target": {
@@ -26,21 +18,16 @@ pipeline {
                             }
                         }
                         """
-    
-                        def response = httpRequest(
-                            url: bitbucketUrl,
-                            authentication: "Bearer ${PASSWORD}",
-                            contentType: 'APPLICATION_JSON',
-                            httpMode: 'POST',
-                            requestBody: payload
-                        )
-    
-                        if (response.status == 200) {
-                            echo "Bitbucket pipeline build triggered successfully!"
-                        } else {
-                            error "Failed to trigger Bitbucket pipeline build. Error: ${response.status} - ${response.content}"
-                        }
-                     }
+
+                        sh """
+                        curl --request POST \\
+                        --url '${bitbucketUrl}' \\
+                        --header 'Authorization: Bearer ${accessToken}' \\
+                        --header 'Accept: application/json' \\
+                        --header 'Content-Type: application/json' \\
+                        --data '${payload}'
+                        """
+                    }
                 }
             }
         }
