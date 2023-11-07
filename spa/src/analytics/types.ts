@@ -18,6 +18,7 @@ export type UIEventProps = {
 export type ScreenNames =
 	"StartConnectionEntryScreen"
   | "AuthorisationScreen"
+	| "InstallationRequested"
 	| "OrganisationConnectionScreen"
 	| "SuccessfulConnectedScreen"
 	| "DeferredInstallationModal"
