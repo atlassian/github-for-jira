@@ -99,7 +99,7 @@ export const modifyError = (
 		return {
 			...errorObj,
 			errorCode,
-			message: "Unable to parse, this link is either expired or invalid."
+			message: "This link is either expired or invalid."
 		};
 	} else {
 		return { ...errorObj, errorCode, message: GENERIC_MESSAGE };

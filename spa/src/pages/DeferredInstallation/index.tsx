@@ -1,52 +1,25 @@
 /** @jsxImportSource @emotion/react */
-import { useSearchParams, useNavigate } from "react-router-dom";
-import InfoIcon from "@atlaskit/icon/glyph/info";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Wrapper } from "../../common/Wrapper";
-import Step from "../../components/Step";
 import SyncHeader from "../../components/SyncHeader";
-import OAuthManager from "../../services/oauth-manager";
-import { css } from "@emotion/react";
-import { Box, xcss } from "@atlaskit/primitives";
 import SkeletonForLoading from "../ConfigSteps/SkeletonForLoading";
-import { token } from "@atlaskit/tokens";
-import Button from "@atlaskit/button";
 import { useEffect, useState } from "react";
 import { AxiosError } from "axios";
-import { ErrorObjType, modifyError } from "../../utils/modifyError";
 import ErrorUI from "../../components/Error";
 import analyticsClient from "../../analytics";
-import { popup } from "../../utils";
 import { ErrorForPopupBlocked } from "../../components/Error/KnownErrors";
+import Step from "../../components/Step";
+import Button from "@atlaskit/button";
+import { css } from "@emotion/react";
+import { token } from "@atlaskit/tokens";
+import OAuthManager from "../../services/oauth-manager";
 import DeferralManager from "../../services/deferral-manager";
+import { modifyError } from "../../utils/modifyError";
 
-const boxStyles = xcss({
-	borderBlockWidth: token("space.500"),
-	borderStyle: "solid",
-	borderColor: "color.border",
-	borderRadius: "border.radius.050",
-	borderWidth: "border.width",
-	marginTop: token("space.200"),
-	marginBottom: token("space.200"),
-	display: "flex",
-	alignItems: "center",
-});
 const paragraphStyle = css`
 	color: ${token("color.text.subtle")};
-	margin: ${token("space.0")};
+	margin: ${token("space.0")} ${token("space.0")} ${token("space.250")} ;
 `;
-const noAdminDivStyle = css`
-	margin-top: ${token("space.200")};
-`;
-const infoParaStyle = css`
-	padding-left: 16px;
-`;
-const linkStyle = css`
-	cursor: pointer;
-	padding-left: 0;
-	padding-right: 0;
-`;
-
-
 const DeferredInstallation = () => {
 	const [searchParams] = useSearchParams();
 	const requestId = searchParams.get("requestId") || "";
@@ -54,103 +27,71 @@ const DeferredInstallation = () => {
 
 	const [isPopupBlocked, setPopupBlocked] = useState<boolean>(false);
 	const onPopupBlocked = () => setPopupBlocked(true);
-
 	const [isLoading, setIsLoading] = useState(false);
-	const [isLoggedIn, setIsLoggedIn] = useState(false);
-	const [error, setError] = useState<ErrorObjType | undefined>(undefined);
 
-	const [jiraHost, setJiraHost] = useState("");
-	const [orgName, setOrgName] = useState("");
+	analyticsClient.sendScreenEvent({ name: "DeferredInstallationStartScreen"}, { type: "cloud" }, requestId);
 
-	const [forbidden, setForbidden] = useState(false);
-
-	// Extract the info from the requestId
-	useEffect(() => {
-		const extractFromRequestId = async () => {
-			const extractedPayload = await DeferralManager.extractFromRequestId(requestId);
-			if (extractedPayload instanceof AxiosError) {
-				// TODO: Need a new UI for this scenario
-				setError(modifyError(
-					{ errorCode: "INVALID_DEFERRAL_REQUEST_ID"},
-					{},
-					{ onClearGitHubToken: () => {}, onRelogin: () => {}, onPopupBlocked }
-				));
-				setIsLoading(true);
-			} else {
-				setJiraHost(extractedPayload.jiraHost as string);
-				setOrgName(extractedPayload.orgName);
-				analyticsClient.sendScreenEvent({ name: "DeferredInstallationStartScreen" }, { type: "cloud" }, requestId);
-			}
-		};
-		extractFromRequestId();
-	}, [ requestId ]);
-
-	// Finish the OAuth dance if authenticated
 	useEffect(() => {
 		const handler = async (event: MessageEvent) => {
 			if (event.data?.type === "oauth-callback" && event.data?.code) {
 				const response: boolean | AxiosError = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
-				setIsLoading(false);
 				if (response instanceof AxiosError) {
+					console.error("Error: ", response);
 					return;
 				}
-				setIsLoggedIn(true);
+				parseRequestId();
 			}
 		};
 		window.addEventListener("message", handler);
 		return () => {
 			window.removeEventListener("message", handler);
 		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	// Start the deferral connection if authenticated
-	useEffect(() => {
-		const connectDeferredOrgOrg = async () => {
-			if (requestId) {
-				setIsLoading(true);
-				const status: boolean | AxiosError = await DeferralManager.connectOrgByDeferral(requestId);
-				if (status instanceof AxiosError) {
-					setForbidden(true);
-					analyticsClient.sendScreenEvent({ name: "DeferredInstallationFailedScreen" }, { type: "cloud" }, requestId);
-				}
-				else if (status) {
-					setForbidden(false);
-					navigate("/spa/connected",{ state: { orgLogin: orgName, requestId } });
-				} else {
-					setForbidden(true);
-				}
-				setIsLoading(false);
-			}
-		};
-
-		isLoggedIn && connectDeferredOrgOrg();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [ isLoggedIn ]);
-
-	// Authenticate if no token/username is set
 	const authenticate = async () => {
 		setIsLoading(true);
 		try {
-			analyticsClient.sendUIEvent({ actionSubject: "signInAndConnectThroughDeferredInstallationStartScreen", action: "clicked"}, { type: "cloud" }, requestId);
+			analyticsClient.sendUIEvent({ actionSubject: "signInThroughDeferredInstallationStartScreen", action: "clicked"}, { type: "cloud" }, requestId);
 			await OAuthManager.authenticateInGitHub({
-				onWinClosed: () => {
-					setIsLoading(false);
-				}, onPopupBlocked
+				onWinClosed: () => {},
+				onPopupBlocked
 			});
 		} catch (e) {
 			// TODO: print alert error
 			console.error("check error", e);
-		} finally {
-			setIsLoading(false);
 		}
 	};
 
-	const getOrgOwnerUrl = async () => {
-		// TODO: Need to get this URL for Enterprise users too, this is only for Cloud users
-		popup(`https://github.com/orgs/${orgName}/people?query=role%3Aowner`);
-		analyticsClient.sendUIEvent({ actionSubject: "checkOrgAdmin", action: "clicked"}, { type: "cloud", from: "DeferredInstallationFailedScreen" }, requestId);
+	const parseRequestId = async () => {
+		const extractedPayload = await DeferralManager.extractFromRequestId(requestId);
+		setIsLoading(false);
+		if (extractedPayload instanceof AxiosError) {
+			if (extractedPayload.response?.status === 403) {
+				navigate("forbidden", { state: { requestId } });
+			} else {
+				navigate("error", {
+					state: {
+						error: modifyError(
+							{ errorCode: "INVALID_DEFERRAL_REQUEST_ID"},
+							{},
+							{ onClearGitHubToken: () => {}, onRelogin: () => {}, onPopupBlocked }
+						),
+						requestId
+					}
+				});
+			}
+		} else {
+			navigate("connect", {
+				state: {
+					orgName: extractedPayload.orgName,
+					jiraHost: extractedPayload.jiraHost,
+					requestId
+				}
+			});
+		}
 	};
-	// TODO: orgname is not appearing for all the cases, need to check
+
 	return (
 		<Wrapper hideClosedBtn={true}>
 			<SyncHeader />
@@ -160,50 +101,22 @@ const DeferredInstallation = () => {
 					message={<ErrorForPopupBlocked onDismiss={() => setPopupBlocked(false)}/>}
 				/>
 			)}
-			{error && <ErrorUI type={error.type} message={error.message} />}
 
 			{
-				isLoading ? <SkeletonForLoading /> : <>
-					{
-						forbidden ? (
-							<Step title="Can’t connect this organization because you don’t have owner permissions">
-							<div css={noAdminDivStyle}>
-								<p css={paragraphStyle}>
-									The GitHub account you’ve used doesn’t have owner permissions
-									for organization {orgName}.
-								</p>
-								<br/>
-								<p css={paragraphStyle}>
-									Let the person who sent you the request know to{" "}
-									<a css={linkStyle} onClick={getOrgOwnerUrl}>
-										find an owner for that organization.
-									</a>
-								</p>
-							</div>
-						</Step>
-						) : (
-							<Step
-								title={`Connect GitHub organization ${orgName} to Jira Software`}
-							>
-								<>
-									<p css={paragraphStyle}>
-										A Jira administrator has asked for approval to connect the
-										GitHub organization {orgName} to the Jira site {jiraHost}.
-									</p>
-									<Box padding="space.200" xcss={boxStyles}>
-										<InfoIcon label="differed-installation-info" size="small"/>
-										<p css={[paragraphStyle,infoParaStyle]}>
-											This will make all repositories in {orgName} available to all projects in {jiraHost}. Import work from those GitHub repositories into Jira.
-										</p>
-									</Box>
-									<Button appearance="primary" onClick={authenticate}>
-										Sign in & connect
-									</Button>
-								</>
-							</Step>
-						)
-					}
-				</>
+				isLoading ? <SkeletonForLoading /> : <Step
+					title={"Connect a GitHub organization to Jira Software"}
+				>
+					<>
+						<p css={paragraphStyle}>
+							A Jira administrator has asked for approval to connect a GitHub
+							organization to a Jira site.
+						</p>
+
+						<Button appearance="primary" onClick={authenticate}>
+							Sign in
+						</Button>
+					</>
+				</Step>
 			}
 		</Wrapper>
 	);

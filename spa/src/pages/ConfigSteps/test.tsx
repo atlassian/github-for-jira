@@ -127,16 +127,14 @@ test("Connect GitHub Screen - Checking the GitHub Cloud flow when not authentica
 	jest.mocked(OAuthManager).checkValidity = UnAuthenticated.checkValidity;
 	jest.mocked(OAuthManager).authenticateInGitHub = UnAuthenticated.authenticateInGitHub;
 
-	await act(async () => {
-		render(
-			<BrowserRouter>
-				<ConfigSteps />
-			</BrowserRouter>
-		);
-	});
+	render(
+		<BrowserRouter>
+			<ConfigSteps />
+		</BrowserRouter>
+	);
 
-	await act(() => userEvent.click(screen.getByText(GITHUB_CLOUD)));
-	await act(() => userEvent.click(screen.getByText(SELECT_GH_PRODUCT_CTA)));
+	await userEvent.click(screen.getByText(GITHUB_CLOUD));
+	await userEvent.click(screen.getByText(SELECT_GH_PRODUCT_CTA));
 
 	expect(OAuthManager.authenticateInGitHub).toHaveBeenCalled();
 });
