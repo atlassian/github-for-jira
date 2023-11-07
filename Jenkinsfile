@@ -10,7 +10,9 @@ pipeline {
 
 
                     def accessToken = withCredentials([usernamePassword(credentialsId: credentialsId, passwordVariable: 'PASSWORD')]) {
-                        return env.PASSWORD
+                        def token = env.PASSWORD
+                        println "Access Token: ${token}"
+                        return token
                     }
 
 
