@@ -1,4 +1,3 @@
-
 pipeline {
     agent any
     stages {
@@ -6,8 +5,12 @@ pipeline {
             steps {
                 script {
                     def bitbucketUrl = 'https://api.bitbucket.org/2.0/repositories/atlassian/jkat-test-jenkins-integration/pipelines'
-                    def credentialsId = 'mock-bb-secret'
+                    def credentialsId = 'your-credentials-id'
                     def branch = 'master' // Specify the branch to build
+
+                    def accessToken = withCredentials([usernamePassword(credentialsId: credentialsId, passwordVariable: 'BITBUCKET_TOKEN')]) {
+                        return BITBUCKET_TOKEN
+                    }
 
                     def payload = """
                     {
@@ -18,21 +21,19 @@ pipeline {
                         }
                     }
                     """
-                    
-                    withCredentials([string(credentialsId: credentialsId, variable: 'accessToken')]) {
-                        def response = httpRequest(
-                            url: bitbucketUrl,
-                            authentication: "Bearer ${accessToken}",
-                            contentType: 'APPLICATION_JSON',
-                            httpMode: 'POST',
-                            requestBody: payload
-                        )
 
-                        if (response.status == 200) {
-                            echo "Bitbucket pipeline build triggered successfully!"
-                        } else {
-                            error "Failed to trigger Bitbucket pipeline build. Error: ${response.status} - ${response.content}"
-                        }
+                    def response = httpRequest(
+                        url: bitbucketUrl,
+                        authentication: "Bearer ${accessToken}",
+                        contentType: 'APPLICATION_JSON',
+                        httpMode: 'POST',
+                        requestBody: payload
+                    )
+
+                    if (response.status == 200) {
+                        echo "Bitbucket pipeline build triggered successfully!"
+                    } else {
+                        error "Failed to trigger Bitbucket pipeline build. Error: ${response.status} - ${response.content}"
                     }
                 }
             }
