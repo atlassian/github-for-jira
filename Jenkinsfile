@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
     stages {
@@ -22,7 +23,7 @@ pipeline {
                         def response = httpRequest(
                             url: bitbucketUrl,
                             authentication: "${BITBUCKET_USERNAME}:${BITBUCKET_PASSWORD}",
-                            contentType: 'application/json',
+                            contentType: 'application/json', // Updated content type
                             httpMode: 'POST',
                             requestBody: payload
                         )
