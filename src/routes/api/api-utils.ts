@@ -5,7 +5,6 @@ import Logger from "bunyan";
 import { NextFunction, Request, Response } from "express";
 import { validationResult } from "express-validator";
 import { getLogger } from "config/logger";
-import { BooleanFlags, booleanFlag } from "config/feature-flags";
 
 // TODO: add tests
 type SerializedSubscription = Pick<Subscription, "gitHubInstallationId" | "jiraHost" | "createdAt" | "updatedAt" | "syncStatus">;
@@ -47,12 +46,8 @@ export const returnOnValidationError = async (
 	const errors = validationResult(req);
 	if (!errors.isEmpty()) {
 		res.status(422).json({ errors: errors.array() });
-
-		if (await booleanFlag(BooleanFlags.EARLY_EXIT_ON_VALIDATION_FAILED)) {
-			(req.log || getLogger("requestValidator")).warn({ errors: errors.array(), paramUuid: req.params?.uuid }, "Fail on validator request, skip with 422");
-			return;
-		}
-
+		(req.log || getLogger("requestValidator")).warn({ errors: errors.array(), paramUuid: req.params?.uuid }, "Fail on validator request, skip with 422");
+		return;
 	}
 	next();
 };
