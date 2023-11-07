@@ -8,9 +8,12 @@ pipeline {
                     def credentialsId = 'mock-bb-secret'
                     def branch = 'master' // Specify the branch to build
 
-                    def accessToken = withCredentials([usernamePassword(credentialsId: credentialsId, passwordVariable: 'BITBUCKET_TOKEN')]) {
-                        return BITBUCKET_TOKEN
+                    def credentialsId = 'mock-bb-secret' // Update with your credentials ID
+
+                    def accessToken = withCredentials([usernamePassword(credentialsId: credentialsId, passwordVariable: 'PASSWORD')]) {
+                        return env.PASSWORD
                     }
+
 
                     def payload = """
                     {
