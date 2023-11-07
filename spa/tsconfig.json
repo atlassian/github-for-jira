@@ -2,8 +2,9 @@
   "compilerOptions": {
     "target": "ES2020",
     "useDefineForClassFields": true,
+		"esModuleInterop": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable", "ES2022.Error"],
-    "module": "ESNext",
+    "module": "commonjs",
     "skipLibCheck": true,
     "moduleResolution": "node",
     "allowImportingTsExtensions": true,
@@ -22,5 +23,5 @@
 			"rest-interfaces": ["./src/rest-interfaces"]
 		}
 	},
-  "include": ["src"]
+  "includes": [ "./setup.ts", "src" ]
 }

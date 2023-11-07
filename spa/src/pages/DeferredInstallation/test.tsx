@@ -1,4 +1,3 @@
-import "@testing-library/jest-dom";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import DeferredInstallation from "./index";
