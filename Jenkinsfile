@@ -23,7 +23,7 @@ pipeline {
                         def response = httpRequest(
                             url: bitbucketUrl,
                             authentication: "${BITBUCKET_USERNAME}:${BITBUCKET_PASSWORD}",
-                            contentType: 'application/json', // Updated content type
+                            contentType: 'APPLICATION_JSON',
                             httpMode: 'POST',
                             requestBody: payload
                         )
