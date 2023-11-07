@@ -5,7 +5,7 @@ pipeline {
             steps {
                 script {
                     def bitbucketUrl = 'https://api.bitbucket.org/2.0/repositories/atlassian/jkat-test-jenkins-integration/pipelines'
-                    def credentialsId = '5b293e47-ce50-45fe-aa86-d609c5f08b29'
+                    def credentialsId = 'mock-bb-secret'
                     def branch = 'master' // Specify the branch to build
 
 
