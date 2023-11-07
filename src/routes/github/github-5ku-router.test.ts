@@ -24,9 +24,15 @@ describe("Github Setup 5ku redirector", () => {
 				.expect("location", "/rest/app/cloud/github-requested?setup_action=request");
 		});
 
-		it("should continue to next route if no spa exp set", async () => {
-			await supertest(frontendApp).get("/github/setup?setup_action=request")
-				.expect(401); // coz it goes to next route, which expect an jira jwt token in session cookie
+		it("should continue to next route if no spa cloud is set", async () => {
+			await supertest(frontendApp).get("/github/setup?setup_action=request&state=non-spa")
+				.expect(401); // coz it goes to next route, which expect a Jira jwt token
+		});
+
+		it("should redirect to marketplace when there is no state", async () => {
+			const response = await supertest(frontendApp).get("/github/setup?installation_id=12345");
+			expect(response.status).toStrictEqual(302);
+			expect(response.header.location).toEqual("https://marketplace.atlassian.com/apps/1219592/github-for-jira?tab=overview");
 		});
 
 	});

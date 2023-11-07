@@ -1,7 +1,7 @@
 buildNumber: 0.0.0
 name: Github For Jira
 description: Connect app for integrating GitHub into Jira
-organization: Engineering-DevOps
+organization: Infrastructure Services - Open Toolchain
 notifications:
   email: fusion-arc@atlassian.com
 tags:

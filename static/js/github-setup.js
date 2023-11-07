@@ -17,7 +17,7 @@ if (cancelNewJiraSiteBtn) {
 const hasProtocol = (str) =>
 	str.includes("http://") || str.includes("https://") || str.includes("www.");
 
-const githubSetupPost = (data, url = "/github/setup") =>
+const githubSetupPost = (data, url = "/github/setup?state=non-spa") =>
 	// TODO do something here to show user that form is being submitted
 	$.post(url, data)
 		.done(function(body) {
