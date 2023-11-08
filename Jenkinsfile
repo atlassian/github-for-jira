@@ -22,9 +22,6 @@ pipeline {
                                         "type": "custom",
                                         "pattern": "deploy to stage"
                                     }
-                                },
-                                "variables": {
-                                    "COMMIT_SHA": "master"
                                 }
                             }
                         """
