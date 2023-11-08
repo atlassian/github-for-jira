@@ -21,7 +21,7 @@ pipeline {
                                     "selector": {
                                         "type": "custom",
                                         "pattern": "deploy-to-staging"
-                                    }
+                                    },
                                     "variables": [
                                       {
                                         "key": "COMMIT_SHA",
