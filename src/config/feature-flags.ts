@@ -16,7 +16,6 @@ export enum BooleanFlags {
 	VERBOSE_LOGGING = "verbose-logging",
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
 	JIRA_ADMIN_CHECK = "jira-admin-check",
-	REMOVE_STALE_MESSAGES = "remove-stale-messages",
 	LOG_CURLV_OUTPUT = "log-curlv-output",
 	ENABLE_SUBSCRIPTION_DEFERRED_INSTALL = "enable-subscription-deferred-install",
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery-again",

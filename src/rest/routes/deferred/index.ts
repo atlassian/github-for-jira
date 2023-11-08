@@ -8,10 +8,10 @@ import { DeferredRequestParseRoute } from "./deferred-request-parse";
 import DeferredAnalyticsProxy from "~/src/rest/routes/deferred/deferred-analytics-proxy";
 export const DeferredRouter = Router({ mergeParams: true });
 
-DeferredRouter.get("/parse/:requestId", DeferredRequestParseRoute);
-
 DeferredRouter.post("/analytics-proxy/:requestId", DeferredAnalyticsProxy);
 
 DeferredRouter.get("/installation-url", JwtHandler, DeferredInstallationUrlRoute);
 
 DeferredRouter.post("/connect/:requestId", GitHubTokenHandler, DeferredCheckOwnershipAndConnectRoute);
+
+DeferredRouter.get("/parse/:requestId", GitHubTokenHandler, DeferredRequestParseRoute);
