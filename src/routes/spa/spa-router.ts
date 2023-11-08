@@ -26,10 +26,10 @@ SpaRouter.use("/*", async (_, res) => {
 		indexHtmlContent = await fs.readFile(path.join(process.cwd(), "spa/build/index.html"), "utf-8");
 	}
 
-	indexHtmlContent = indexHtmlContent
+	const updatedContentWithFFValues = indexHtmlContent
 		.replace("##SPA_APP_ENV##", envVars.MICROS_ENVTYPE || "")
 		.replace("##SENTRY_SPA_DSN##", envVars.SENTRY_SPA_DSN || "")
 		.replace("\"##FRONTEND_FEATURE_FLAGS##\"", JSON.stringify(featureFlags));
 
-	res.status(200).send(indexHtmlContent);
+	res.status(200).send(updatedContentWithFFValues);
 });
