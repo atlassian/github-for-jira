@@ -1,14 +1,25 @@
 name: "Dummy deployment"
 on:
   workflow_dispatch:
+    inputs:
+			env:
+				description: 'The env the dummy deploy points to'
+				type: choice
+				options:
+				- ddev
+				- stg-west
+				- prod
 jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: build
     environment:
-      name: 'ddev'
+      name: ${{ inputs.env }}
     steps:
     - name: 'Deploy'
-      id: deploy-to-webapp
-      run: echo "Deploy to ddev success"
+      id: deploy-dummy
+      run: |
+				echo "Deploy to $TARGET_ENV success"
+      env:
+				TARGET_ENV: ${{ inputs.env }}
 
