@@ -7,7 +7,6 @@ import { AWSError, Request as AwsRequest, Service, Response } from "aws-sdk";
 import { BaseMessagePayload, SQSMessageContext } from "~/src/sqs/sqs.types";
 import { preemptiveRateLimitCheck } from "utils/preemptive-rate-limit";
 import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { SendMessageResult } from "aws-sdk/clients/sqs";
 
 jest.mock("config/feature-flags");
@@ -58,11 +57,6 @@ describe("SQS", () => {
 		when(jest.mocked(preemptiveRateLimitCheck))
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			.calledWith(expect.anything(), expect.anything()) .mockResolvedValue({ isExceedThreshold: false });
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.REMOVE_STALE_MESSAGES,
-			jiraHost
-		).mockResolvedValue(true);
 	});
 
 	afterEach(async () => {
@@ -266,27 +260,6 @@ describe("SQS", () => {
 		beforeEach(() => {
 			queue = createSqsQueue(1);
 			queue.start();
-			when(booleanFlag).calledWith(
-				BooleanFlags.REMOVE_STALE_MESSAGES,
-				jiraHost
-			).mockResolvedValue(true);
-		});
-
-		// Test case for when feature flag is turned off
-		it("should return false when feature flag is false", async () => {
-			when(booleanFlag).calledWith(
-				BooleanFlags.REMOVE_STALE_MESSAGES,
-				jiraHost
-			).mockResolvedValue(false);
-			const message = {
-				Body: JSON.stringify({
-					webhookReceived: Date.now() - 2 * 24 * 60 * 60 * 1000 // Two days ago
-				}),
-				MessageId: "12345"
-			};
-
-			const result = await queue.deleteStaleMessages(message, context, jiraHost);
-			expect(result).toBe(false);
 		});
 
 		// Test case for when the message is not from the targeted queue
@@ -295,7 +268,7 @@ describe("SQS", () => {
 				Body: JSON.stringify({}),
 				MessageId: "12345"
 			};
-			const result = await queue.deleteStaleMessages(message, context, jiraHost);
+			const result = await queue.deleteStaleMessages(message, context);
 			expect(result).toBe(false);
 		});
 
@@ -304,7 +277,7 @@ describe("SQS", () => {
 			const message = {
 				MessageId: "12345"
 			};
-			const result = await queue.deleteStaleMessages(message, context, jiraHost);
+			const result = await queue.deleteStaleMessages(message, context);
 			expect(result).toBe(false);
 		});
 
@@ -321,7 +294,7 @@ describe("SQS", () => {
 				queueName: "deployment",
 				deleteMessage
 			};
-			const result = await queue.deleteStaleMessages.call(mockThis, message, context, jiraHost);
+			const result = await queue.deleteStaleMessages.call(mockThis, message, context);
 			expect(result).toBe(true);
 			expect(deleteMessage).toHaveBeenCalledWith(context);
 			// eslint-disable-next-line @typescript-eslint/unbound-method
@@ -339,7 +312,7 @@ describe("SQS", () => {
 				}),
 				MessageId: "12345"
 			};
-			const result = await queue.deleteStaleMessages(message, context, jiraHost);
+			const result = await queue.deleteStaleMessages(message, context);
 			expect(result).toBe(false);
 		});
 
@@ -356,7 +329,7 @@ describe("SQS", () => {
 				queueName: "deployment",
 				deleteMessage
 			};
-			const result = await queue.deleteStaleMessages.call(mockThis, message, context, jiraHost);
+			const result = await queue.deleteStaleMessages.call(mockThis, message, context);
 			expect(result).toBe(false);
 			expect(deleteMessage).toHaveBeenCalledWith(context);
 			// eslint-disable-next-line @typescript-eslint/unbound-method
