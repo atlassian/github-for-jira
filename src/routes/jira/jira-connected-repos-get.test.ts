@@ -5,8 +5,6 @@ import { getLogger } from "config/logger";
 import { Subscription } from "models/subscription";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import supertest from "supertest";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { when } from "jest-when";
 import { RepoSyncState } from "models/reposyncstate";
 
 jest.mock("config/feature-flags");
@@ -36,7 +34,6 @@ describe("jira-connected-repos-get", () => {
 		subscription = result.subscription;
 		repoSyncState = result.repoSyncState!;
 
-		when(booleanFlag).calledWith(BooleanFlags.JIRA_ADMIN_CHECK).mockResolvedValue(true);
 	});
 
 	it("should return 403 when not an admin", async () => {
