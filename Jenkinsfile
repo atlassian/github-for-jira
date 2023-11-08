@@ -13,13 +13,20 @@ pipeline {
 
                     withCredentials([string(credentialsId: 'github-for-jira-deployment-pipeline-token', variable: 'accessToken')]) {
                         def payload = """
-                        {
-                            "target": {
-                                "type": "pipeline_ref_target",
-                                "ref_name": "${branch}",
-                                "ref_type": "branch"
+                            {
+                                "target": {
+                                    "type": "pipeline_ref_target",
+                                    "ref_name": "${branch}",
+                                    "ref_type": "branch",
+                                    "selector": {
+                                        "type": "custom",
+                                        "pattern": "deploy to stage"
+                                    }
+                                },
+                                "variables": {
+                                    "COMMIT_SHA": "master"
+                                }
                             }
-                        }
                         """
 
                         sh """
