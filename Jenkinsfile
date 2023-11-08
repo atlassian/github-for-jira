@@ -11,7 +11,7 @@ pipeline {
                     def branch = 'master'
                     def credentialsId = 'github-for-jira-deployment-pipeline-token'
 
-                    withCredentials([string(credentialsId: ${credentialsId}, variable: 'accessToken')]) {
+                    withCredentials([string(credentialsId: 'github-for-jira-deployment-pipeline-token', variable: 'accessToken')]) {
                         def payload = """
                         {
                             "target": {
