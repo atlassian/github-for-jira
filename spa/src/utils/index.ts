@@ -9,11 +9,7 @@ export const getJiraJWT = (): Promise<string> => new Promise(resolve => {
 export function popup (url: string) {
 	const openedPopup = window.open(url, "_blank");
 	if (!openedPopup || openedPopup.closed || typeof openedPopup.closed === "undefined") {
-		localStorage.setItem("isPopupBlocked", "true");
 		return null;
-	}
-	if(localStorage.getItem("isPopupBlocked")){
-		localStorage.removeItem("isPopupBlocked");
 	}
 	return openedPopup;
 }

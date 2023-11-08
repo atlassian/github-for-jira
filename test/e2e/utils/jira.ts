@@ -56,7 +56,7 @@ export const jiraAppInstall = async (page: Page): Promise<Page> => {
 	await page.click("#upm-upload-dialog .aui-button-primary");
 	await page.click(`#upm-plugin-status-dialog .confirm`, { timeout: 60000 });
 	const iframe = await page.frameLocator("#ak-main-content iframe");
-	await (await iframe.locator(".jiraConfiguration")).waitFor();
+	await (await iframe.locator("#root")).waitFor();
 	return page;
 };
 
@@ -107,7 +107,8 @@ export const jiraCreateIssue = async (page: Page, projectId: string = testData.p
 	// const taskInput = page.locator("[data-test-id='platform-inline-card-create.ui.form.summary.styled-text-area']");
 	await taskInput.fill("Task " + Date.now().toString());
 	await taskInput.press("Enter");
-	const url = await page.locator("[data-test-id='platform-board-kit.ui.column.draggable-column.styled-wrapper']:first-child [data-test-id='platform-board-kit.ui.card.card'][draggable]").last().getAttribute("id");
+	await page.waitForTimeout(2000);
+	const url = await page.locator("[data-testid='platform-board-kit.ui.column.draggable-column.styled-wrapper']:first-child [data-testid='platform-board-kit.ui.card.card']").getAttribute("id");
 	return url?.replace("card-", "") || "";
 };
 

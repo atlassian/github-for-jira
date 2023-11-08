@@ -9,6 +9,7 @@ import { css } from "@emotion/react";
 import { token } from "@atlaskit/tokens";
 import Button from "@atlaskit/button";
 import { useNavigate } from "react-router-dom";
+import { useEffectScreenEvent } from "../../analytics";
 
 const paragraphStyle = css`
 	color: ${token("color.text.subtle")};
@@ -18,6 +19,8 @@ const paragraphStyle = css`
 const InstallationRequested = () => {
 	const navigate = useNavigate();
 	const username = OAuthManager.getUserDetails().username || "";
+
+	useEffectScreenEvent("InstallationRequested");
 
 	const navigateBackToSteps = () => navigate("/spa/steps");
 
@@ -42,6 +45,7 @@ const InstallationRequested = () => {
 			<LoggedinInfo
 				username={username}
 				logout={navigateBackToSteps}
+				onPopupBlocked={() => { /* do nothing as ui flow will redirect to entry page anyway */ }}
 			/>
 		</Wrapper>
 	);

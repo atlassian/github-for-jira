@@ -1,7 +1,7 @@
 buildNumber: 0.0.0
 name: Github For Jira
 description: Connect app for integrating GitHub into Jira
-organization: Engineering-DevOps
+organization: Infrastructure Services - Open Toolchain
 notifications:
   email: fusion-arc@atlassian.com
 tags:
@@ -786,7 +786,7 @@ environmentOverrides:
       - type: lambda
         name: auto-deployment-github-app
         attributes:
-          runtime: nodejs14.x
+          runtime: nodejs18.x
           prefetchMicrosEnvVars: true
           artifact: "_sox/github-for-jira/auto-deployment-github-app-${BITBUCKET_BUILD_NUMBER}.zip"
           handler: auto-deployment.handler

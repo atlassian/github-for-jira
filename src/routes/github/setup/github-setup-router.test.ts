@@ -33,9 +33,8 @@ describe("Github Setup", () => {
 		});
 
 		it("should return error when missing 'installation_id' from query", async () => {
-			githubAppTokenNock();
 			await supertest(frontendApp)
-				.get("/github/setup")
+				.get("/github/setup?state=non-spa")
 				.set(
 					"Cookie",
 					generateSignedSessionCookieHeader({
@@ -51,7 +50,7 @@ describe("Github Setup", () => {
 				.get(`/app/installations/${installation_id}`)
 				.reply(404);
 			await supertest(frontendApp)
-				.get("/github/setup")
+				.get("/github/setup?state=non-spa")
 				.set(
 					"Cookie",
 					generateSignedSessionCookieHeader({
@@ -68,7 +67,7 @@ describe("Github Setup", () => {
 				.get(`/app/installations/${installation_id}`)
 				.reply(200, singleInstallation);
 			await supertest(frontendApp)
-				.get("/github/setup")
+				.get("/github/setup?state=non-spa")
 				.set(
 					"Cookie",
 					generateSignedSessionCookieHeader({
@@ -85,7 +84,7 @@ describe("Github Setup", () => {
 				.get(`/app/installations/${installation_id}`)
 				.reply(200, singleInstallation);
 			await supertest(frontendApp)
-				.get("/github/setup")
+				.get("/github/setup?state=non-spa")
 				.query({ installation_id })
 				.set(
 					"Cookie",
