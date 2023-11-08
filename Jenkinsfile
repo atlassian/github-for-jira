@@ -5,6 +5,8 @@ pipeline {
         stage('Trigger Bitbucket Pipeline') {
             steps {
                 script {
+                    echo 'Sending POST request to Bitbucket API'
+
                     def bitbucketUrl = 'https://api.bitbucket.org/2.0/repositories/atlassian/github-for-jira-deployment/pipelines/'
                     def branch = 'master'
                     def credentialsId = 'github-for-jira-deployment-pipeline-token'
