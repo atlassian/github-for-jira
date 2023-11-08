@@ -20,8 +20,14 @@ pipeline {
                                     "ref_type": "branch",
                                     "selector": {
                                         "type": "custom",
-                                        "pattern": "deploy to stage"
+                                        "pattern": "deploy-to-staging"
                                     }
+                                    "variables": [
+                                      {
+                                        "key": "COMMIT_SHA",
+                                        "value": "main"
+                                      }
+                                    ]
                                 }
                             }
                         """
