@@ -12,11 +12,7 @@ import {
 	generateSignedSessionCookieHeader,
 	parseCookiesAndSession
 } from "test/utils/cookies";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { when } from "jest-when";
 import { Installation } from "models/installation";
-
-jest.mock("config/feature-flags");
 
 describe("github-oauth", () => {
 	let installation: Installation;
@@ -175,8 +171,6 @@ describe("github-oauth", () => {
 		});
 
 		it("must work only for Jira admins", async () => {
-			when(booleanFlag).calledWith(BooleanFlags.JIRA_ADMIN_CHECK).mockResolvedValue(true);
-
 			const res = await supertest(getFrontendApp())
 				.get("/github/login?blah=true")
 				.set(

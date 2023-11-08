@@ -2,11 +2,8 @@ import { encodeSymmetric } from "atlassian-jwt";
 import { Application } from "express";
 import supertest from "supertest";
 import { Installation } from "models/installation";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { when } from "jest-when";
 import { getFrontendApp } from "~/src/app";
 
-jest.mock("config/feature-flags");
 jest.mock("models/jira-client");
 
 const testSharedSecret = "test-secret";
@@ -18,8 +15,6 @@ describe("Jira Admin Check", () => {
 	const USER_ACC_ID = "12345";
 
 	beforeEach(async () => {
-
-		when(booleanFlag).calledWith(BooleanFlags.JIRA_ADMIN_CHECK, jiraHost).mockResolvedValue(true);
 
 		app = getFrontendApp();
 

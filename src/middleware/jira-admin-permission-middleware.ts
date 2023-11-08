@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { Installation } from "models/installation";
 import { JiraClient } from "models/jira-client";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const fetchAndSaveUserJiraAdminStatus = async (req: Request, claims: { sub?: string;}, installation: Installation): Promise<void> => {
 	const ADMIN_PERMISSION = "ADMINISTER";
@@ -27,10 +26,7 @@ export const fetchAndSaveUserJiraAdminStatus = async (req: Request, claims: { su
 	}
 };
 
-export const jiraAdminPermissionsMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void | Response>  => {
-	if (!(await booleanFlag(BooleanFlags.JIRA_ADMIN_CHECK))) {
-		return next();
-	}
+export const jiraAdminPermissionsMiddleware = (req: Request, res: Response, next: NextFunction): void | Response  => {
 	const { isJiraAdmin } = req.session;
 
 	if (isJiraAdmin === undefined) {
