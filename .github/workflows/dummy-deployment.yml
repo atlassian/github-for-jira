@@ -2,13 +2,13 @@ name: "Dummy deployment"
 on:
   workflow_dispatch:
     inputs:
-    env:
-      description: 'The env the dummy deploy points to'
-      type: choice
-      options:
-        - ddev
-        - stg-west
-        - prod
+      env:
+        description: 'The env the dummy deploy points to'
+        type: choice
+        options:
+          - ddev
+          - stg-west
+          - prod
 jobs:
   deploy:
     runs-on: ubuntu-latest
