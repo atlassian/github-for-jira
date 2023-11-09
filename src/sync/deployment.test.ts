@@ -10,7 +10,7 @@ import { envVars } from "config/env";
 
 import deploymentNodesFixture from "fixtures/api/graphql/deployment-nodes.json";
 import mixedDeploymentNodes from "fixtures/api/graphql/deployment-nodes-mixed.json";
-import { DeploymentQueryNode, getDeploymentsQuery, getDeploymentsQueryWithStatuses } from "~/src/github/client/github-queries";
+import { DeploymentQueryNode, getDeploymentsQueryWithStatuses } from "~/src/github/client/github-queries";
 import { waitUntil } from "test/utils/wait-until";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { GitHubServerApp } from "models/github-server-app";
@@ -18,8 +18,6 @@ import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getDeploymentTask } from "./deployment";
 import { RepoSyncState } from "models/reposyncstate";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { when } from "jest-when";
 
 jest.mock("config/feature-flags");
 const logger = getLogger("test");
@@ -71,15 +69,9 @@ describe("sync/deployments", () => {
 			nockCleanAll();
 		});
 
-		describe("when ff is on", () => {
-
-			beforeEach(() => {
-				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost).mockResolvedValue(true);
-			});
+		describe("syncing deployments", () => {
 
 			it("should get the url from previous NON-INACTIVE status", async () => {
-
-				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost).mockResolvedValue(true);
 
 				const deploymentCount = 4;
 				const deployments = createDeploymentEntities(deploymentCount);
@@ -108,8 +100,6 @@ describe("sync/deployments", () => {
 			});
 
 			it("should get the correct state from previous NON-INACTIVE status", async () => {
-
-				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost).mockResolvedValue(true);
 
 				const deploymentCount = 4;
 				const deployments = createDeploymentEntities(deploymentCount);
@@ -150,55 +140,6 @@ describe("sync/deployments", () => {
 			});
 		});
 
-		describe("when ff is off", () => {
-
-			beforeEach(() => {
-				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost).mockResolvedValue(false);
-			});
-
-			describe("for empty demployment cursor", () => {
-				// eslint-disable-next-line jest/expect-expect
-				it("should fetch deployments from beginning", async () => {
-
-					const deploymentCount = 4;
-					const deployments = createDeploymentEntities(deploymentCount);
-
-					nockFetchingDeploymentgPagesGraphQL(getDeploymentsQuery, DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
-
-					nockDeploymentCommitGetApi([deployments[3], deployments[2]], REPEAT_ONCE);
-
-					//because ff is off, it won't find cache in history, so need to call the rest listing api lots of times
-					nockDeploymentListingApi(deployments, REPEAT_LOTS_OF_TIME);
-					nockDeploymentStatusApi(deployments, REPEAT_LOTS_OF_TIME);
-
-					const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repositoryData, DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
-
-					expectEdgesAndPayloadMatchToDeploymentCommits(result, [deployments[3], deployments[2]]);
-				});
-			});
-
-			describe("for existing deployment cursor", () => {
-				// eslint-disable-next-line jest/expect-expect
-				it("should fetch deployments from existing cursor", async () => {
-
-					const deploymentCount = 4;
-					const deployments = createDeploymentEntities(deploymentCount);
-
-					nockFetchingDeploymentgPagesGraphQL(getDeploymentsQuery, deployments[2].cursor, [deployments[1], deployments[0]]);
-
-					nockDeploymentCommitGetApi([deployments[1], deployments[0]], REPEAT_ONCE);
-
-					//because ff is off, it won't find cache in history, so need to call the rest listing api lots of times
-					nockDeploymentListingApi(deployments, REPEAT_LOTS_OF_TIME);
-					nockDeploymentStatusApi(deployments, REPEAT_LOTS_OF_TIME);
-
-					const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repositoryData, deployments[2].cursor, PAGE_SIZE__TWO_ITEMS, msgPayload());
-
-					expectEdgesAndPayloadMatchToDeploymentCommits(result, [deployments[1], deployments[0]]);
-				});
-			});
-		});
-
 		//--helper funcs--
 		const msgPayload = () => ({
 			jiraHost,
@@ -229,41 +170,6 @@ describe("sync/deployments", () => {
 		const nockFetchingDeploymentgPagesGraphQL = (query, cursor, deployments) => {
 			githubNock.post("/graphql", { query, variables: { owner: repoSyncState.repoOwner, repo: repoSyncState.repoName, per_page: PAGE_SIZE__TWO_ITEMS, cursor } })
 				.query(true).reply(200, { data: { repository: { deployments: { edges: deployments } } } });
-		};
-
-		const nockDeploymentListingApi = (deployments: DeploymentQueryNode[], repeatTimes: number) => {
-			Array.from({ length: repeatTimes }).forEach(() => {
-				githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments?environment=prod&per_page=10`)
-					.reply(200, deployments.map((item: DeploymentQueryNode, idx: number) => ({
-						id: item.node.databaseId,
-						sha: item.node.commitOid,
-						ref: "random",
-						task: `task for deployment ${idx + 1}`,
-						payload: {},
-						original_environment: item.node.environment,
-						environment: item.node.environment,
-						description: `description for deployment ${idx + 1}`,
-						creator: { login: "test-repo-owner", id: 1, type: "User" },
-						created_at: item.node.createdAt,
-						updated_at: item.node.createdAt,
-						statuses_url: "random",
-						repository_url: "random",
-						transient_environment: false,
-						production_environment: true
-					})));
-			});
-		};
-
-		const nockDeploymentStatusApi = (deployments: DeploymentQueryNode[], repeatTimes: number) => {
-			Array.from({ length: repeatTimes }).forEach(() => {
-				deployments.forEach((item, idx) => {
-					githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments/${item.node.databaseId}/statuses?per_page=100`)
-						.reply(200, [
-							{ id: idx * 1000 + 1, state: "inactive", description: "random", environment: item.node.environment },
-							{ id: idx * 1000 + 2, state: "success", description: "random", environment: item.node.environment }
-						]);
-				});
-			});
 		};
 
 		const nockDeploymentCommitGetApi = (deployments: DeploymentQueryNode[], repeatTimes: number) => {
@@ -315,14 +221,15 @@ describe("sync/deployments", () => {
 
 	describe("cloud", () => {
 
-		const createGitHubNock = (deploymentsResponse?) => {
+		const createGitHubNock = (deploymentsResponse?, cursor?: string) => {
 			githubNock
 				.post("/graphql", {
-					query: getDeploymentsQuery,
+					query: getDeploymentsQueryWithStatuses,
 					variables: {
 						owner: "integrations",
 						repo: "test-repo-name",
-						per_page: 20
+						per_page: 20,
+						cursor
 					}
 				})
 				.query(true)
@@ -361,18 +268,9 @@ describe("sync/deployments", () => {
 
 		it("should sync nothing to jira if all edges are earlier than fromDate", async () => {
 
-			githubUserTokenNock(installationId);
-			githubNock
-				.post("/graphql", {
-					query: getDeploymentsQuery,
-					variables: {
-						owner: "integrations",
-						repo: "test-repo-name",
-						per_page: 20
-					}
-				})
-				.query(true)
-				.reply(200, deploymentNodesFixture);
+			createGitHubNock(deploymentNodesFixture);
+			const lastEdges = deploymentNodesFixture.data.repository.deployments.edges;
+			createGitHubNock({ data: { repository: { deployments: { edges: [] } } } }, lastEdges[lastEdges.length -1].cursor);
 
 			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, { trigger: "test" }, getLogger("test"), undefined);
 			expect(await getDeploymentTask(getLogger("test"),
@@ -407,6 +305,8 @@ describe("sync/deployments", () => {
 			githubUserTokenNock(installationId);
 
 			createGitHubNock(deploymentNodesFixture);
+			const lastEdges = deploymentNodesFixture.data.repository.deployments.edges;
+			createGitHubNock({ data: { repository: { deployments: { edges: [] } } } }, lastEdges[lastEdges.length -1].cursor);
 
 			githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/51e16759cdac67b0d2a94e0674c9603b75a840f6`)
 				.reply(200, {
@@ -482,14 +382,14 @@ describe("sync/deployments", () => {
 				"deploymentSequenceNumber": 500226426,
 				"updateSequenceNumber": 500226426,
 				"displayName": "[TEST-123] test-commit-message",
-				"url": null,
+				"url": "random-success",
 				"description": "deploy",
 				"lastUpdated": "2022-02-03T22:45:04.000Z",
-				"state": "unknown",
+				"state": "successful",
 				"pipeline": {
 					"id": "deploy",
 					"displayName": "deploy",
-					"url": null
+					"url": "random-success"
 				},
 				"environment": {
 					"id": "prod",
@@ -524,6 +424,8 @@ describe("sync/deployments", () => {
 			const data = { installationId, jiraHost };
 
 			createGitHubNock(mixedDeploymentNodes);
+			const lastEdges = deploymentNodesFixture.data.repository.deployments.edges;
+			createGitHubNock({ data: { repository: { deployments: { edges: [] } } } }, lastEdges[lastEdges.length -1].cursor);
 
 			["51e16759cdac67b0d2a94e0674c9603b75a840f6", "7544f2fec0321a32d5effd421682463c2ebd5018"]
 				.forEach((commitId, index) => {
@@ -691,6 +593,8 @@ describe("sync/deployments", () => {
 			const data: BackfillMessagePayload = { installationId, jiraHost };
 
 			createGitHubNock(deploymentNodesFixture);
+			const lastEdges = deploymentNodesFixture.data.repository.deployments.edges;
+			createGitHubNock({ data: { repository: { deployments: { edges: [] } } } }, lastEdges[lastEdges.length -1].cursor);
 
 			githubUserTokenNock(installationId);
 			githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/51e16759cdac67b0d2a94e0674c9603b75a840f6`)
@@ -743,15 +647,16 @@ describe("sync/deployments", () => {
 
 	describe("server", () => {
 
-		const createGitHubServerNock = (deploymentsResponse?) => {
+		const createGitHubServerNock = (deploymentsResponse?, cursor?: string) => {
 			gheUserTokenNock(installationId);
 			gheNock
 				.post("/api/graphql", {
-					query: getDeploymentsQuery,
+					query: getDeploymentsQueryWithStatuses,
 					variables: {
 						owner: "integrations",
 						repo: "test-repo-name",
-						per_page: 20
+						per_page: 20,
+						cursor
 					}
 				})
 				.query(true)
@@ -805,6 +710,8 @@ describe("sync/deployments", () => {
 			gheUserTokenNock(installationId);
 
 			createGitHubServerNock(deploymentNodesFixture);
+			const lastEdges = deploymentNodesFixture.data.repository.deployments.edges;
+			createGitHubServerNock({ data: { repository: { deployments: { edges: [] } } } }, lastEdges[lastEdges.length -1].cursor);
 
 			gheApiNock.get(`/repos/test-repo-owner/test-repo-name/commits/51e16759cdac67b0d2a94e0674c9603b75a840f6`)
 				.reply(200, {
@@ -880,14 +787,14 @@ describe("sync/deployments", () => {
 				"deploymentSequenceNumber": 500226426,
 				"updateSequenceNumber": 500226426,
 				"displayName": "[TEST-123] test-commit-message",
-				"url": null,
+				"url": "random-success",
 				"description": "deploy",
 				"lastUpdated": "2022-02-03T22:45:04.000Z",
-				"state": "unknown",
+				"state": "successful",
 				"pipeline": {
 					"id": "deploy",
 					"displayName": "deploy",
-					"url": null
+					"url": "random-success"
 				},
 				"environment": {
 					"id": "prod",

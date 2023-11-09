@@ -4,7 +4,7 @@ import { getJiraClient, DeploymentsResult } from "../jira/client/jira-client";
 import { sqsQueues } from "../sqs/queues";
 import type { DeploymentStatusEvent } from "@octokit/webhooks-types";
 import Logger from "bunyan";
-import { isBlocked, booleanFlag, BooleanFlags } from "config/feature-flags";
+import { isBlocked } from "config/feature-flags";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { cacheSuccessfulDeploymentInfo } from "services/deployment-cache-service";
@@ -15,15 +15,13 @@ import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 export const deploymentWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number, subscription: Subscription): Promise<void> => {
 	if (context.payload.deployment_status.state === "success") {
-		if (await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, subscription.jiraHost)) {
-			await tryCacheSuccessfulDeploymentInfo(
-				subscription.jiraHost,
-				context.gitHubAppConfig.gitHubBaseUrl,
-				context.gitHubAppConfig.gitHubAppId,
-				context.payload,
-				context.log
-			);
-		}
+		await tryCacheSuccessfulDeploymentInfo(
+			subscription.jiraHost,
+			context.gitHubAppConfig.gitHubBaseUrl,
+			context.gitHubAppConfig.gitHubAppId,
+			context.payload,
+			context.log
+		);
 	}
 
 	await sqsQueues.deployment.sendMessage({
