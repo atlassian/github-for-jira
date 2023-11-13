@@ -20,7 +20,7 @@ describe("verify-installation", () => {
 
 	const mockJiraResponse = (status: number) => {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		jest.mocked(getAxiosInstance).mockReturnValue({
 			"get": () => Promise.resolve<any>({
 				status
@@ -30,14 +30,12 @@ describe("verify-installation", () => {
 
 	const mockJiraResponseException = (error: Error) => {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		jest.mocked(getAxiosInstance).mockReturnValue({
 			"get": () => Promise.reject(error)
 		});
 	};
 
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
 	it("returns true when Jira responds with 200", async () => {
 		mockJiraResponse(200);
 		expect(await verifyJiraInstallation(installation, getLogger("test"))()).toBeTruthy();

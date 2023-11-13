@@ -143,9 +143,7 @@
 			"@typescript-eslint/no-dynamic-delete": "off",
 			"@typescript-eslint/no-base-to-string": "off",
 			"@typescript-eslint/no-unnecessary-condition": "off",
-			"@typescript-eslint/no-explicit-any": "off",
-			"@typescript-eslint/prefer-ts-expect-error": "off",
-			"@typescript-eslint/no-unnecessary-type-arguments": "off"
+			"@typescript-eslint/no-explicit-any": "off"
 		}
 	}
 ]

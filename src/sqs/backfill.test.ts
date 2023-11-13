@@ -13,7 +13,7 @@ jest.mock("~/src/sqs/queues");
 const sentryCaptureExceptionMock = jest.fn();
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
+// @ts-expect-error
 mocked(Sentry.Hub).mockImplementation(() => ({
 	configureScope: jest.fn(),
 	setTag: jest.fn(),
@@ -23,7 +23,7 @@ mocked(Sentry.Hub).mockImplementation(() => ({
 
 const mockSentryGetClient = () => {
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
+	// @ts-expect-error
 	mocked(Sentry.getCurrentHub).mockImplementation(() => ({
 		getClient: jest.fn()
 	}));
