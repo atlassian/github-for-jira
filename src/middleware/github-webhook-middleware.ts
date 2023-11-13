@@ -25,10 +25,10 @@ const withSentry = function(callback: (context: WebhookContext<{ action?: string
 	return async (context: WebhookContext<{ action?: string }>) => {
 		context.sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
 		context.sentry?.configureScope((scope) =>
-			scope.addEventProcessor(AxiosErrorEventDecorator.decorate)
+			scope.addEventProcessor((event, hint) => AxiosErrorEventDecorator.decorate(event, hint))
 		);
 		context.sentry?.configureScope((scope) =>
-			scope.addEventProcessor(SentryScopeProxy.processEvent)
+			scope.addEventProcessor((event, hint) => SentryScopeProxy.processEvent(event, hint))
 		);
 
 		try {
