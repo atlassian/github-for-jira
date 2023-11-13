@@ -12,10 +12,10 @@ export const backfillQueueMessageHandler =
 		async (context: SQSMessageContext<BackfillMessagePayload>) => {
 			const sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
 			sentry.configureScope((scope) =>
-				scope.addEventProcessor(AxiosErrorEventDecorator.decorate)
+				scope.addEventProcessor((event, hint) => AxiosErrorEventDecorator.decorate(event, hint))
 			);
 			sentry.configureScope((scope) =>
-				scope.addEventProcessor(SentryScopeProxy.processEvent)
+				scope.addEventProcessor((event, hint) => SentryScopeProxy.processEvent(event, hint))
 			);
 
 			const { installationId, jiraHost } = context.payload;

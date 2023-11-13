@@ -1,33 +1,39 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,@typescript-eslint/explicit-module-boundary-types */
 import url from "url";
+import { Event, EventHint } from "@sentry/types";
+
 /*
  * Adds request/response metadata to a Sentry event for an Axios error
  * To use, pass AxiosErrorEventDecorator.decorate to scope.addEventProcessor
  *
  * See https://docs.sentry.io/platforms/node/#eventprocessors
  */
+export interface AxiosErrorDecoratorEvent extends Event {
+	extra?: Record<string, any>;
+}
+
 export class AxiosErrorEventDecorator {
-	event: any | undefined;
-	hint: any | undefined;
+	event: any;
+	hint: any;
 
 	constructor(event: unknown, hint: unknown) {
 		this.event = event;
 		this.hint = hint;
 	}
 
-	get error(): any | undefined {
+	get error(): any {
 		return this.hint?.originalException;
 	}
 
-	get response(): any | undefined {
+	get response(): any {
 		return this.error?.response;
 	}
 
-	get request(): any | undefined {
+	get request(): any {
 		return this.response?.request;
 	}
 
-	static decorate(this: void, event: any, hint: any): any {
+	static decorate(event: Event, hint?: EventHint | undefined): AxiosErrorDecoratorEvent {
 		return new AxiosErrorEventDecorator(event, hint).decorate();
 	}
 
@@ -35,7 +41,7 @@ export class AxiosErrorEventDecorator {
 		return this.error && this.response && this.request;
 	}
 
-	decorate(): unknown {
+	decorate(): Event {
 		if (!this.validError()) {
 			return this.event;
 		}

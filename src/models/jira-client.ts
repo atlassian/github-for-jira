@@ -9,7 +9,7 @@ import { envVars } from "config/env";
 export class JiraClient {
 	axios: AxiosInstance;
 
-	static async getNewClient(this: void, installation: Installation, log: Logger) {
+	static async getNewClient(installation: Installation, log: Logger) {
 		const jiraClient = new JiraClient();
 		jiraClient.axios = getAxiosInstance(
 			installation.jiraHost,
