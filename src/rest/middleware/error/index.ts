@@ -10,6 +10,7 @@ export const RestErrorHandler = (err: Error, req: Request, res: Response<ApiErro
 
 	if (err instanceof RestApiError) {
 		res.status(err.httpStatus).json({
+			errorId: req.log?.fields?.id,
 			errorCode: err.errorCode,
 			message: err.message
 		});
@@ -18,6 +19,7 @@ export const RestErrorHandler = (err: Error, req: Request, res: Response<ApiErro
 
 	if (err instanceof GH.GithubClientError) {
 		res.status(err.status || 500).json({
+			errorId: req.log?.fields?.id,
 			errorCode: err.uiErrorCode,
 			message: err.message
 		});
@@ -25,6 +27,7 @@ export const RestErrorHandler = (err: Error, req: Request, res: Response<ApiErro
 	}
 
 	res.status(500).json({
+		errorId: req.log?.fields?.id,
 		message: "Unknown Error",
 		errorCode: "UNKNOWN"
 	});

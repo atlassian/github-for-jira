@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/react";
+import { AxiosError } from "axios";
 
 export const getJiraJWT = (): Promise<string> => new Promise(resolve => {
 	return AP.context.getToken((token: string) => {
@@ -19,12 +20,30 @@ export function reportError(err: unknown, extra: {
 	reason?: string
 } & Record<string, unknown>) {
 	try {
+
+		const cause = (err as any).cause || {};
+		delete (err as any).cause; //so that Sentry doesn't group all axios error together
+
 		Sentry.captureException(err, {
 			extra: {
-				...extra
+				...extra,
+				...(err instanceof AxiosError ? extractKeyErrorInfo(err) : {}),
+				cause: {
+					...(cause instanceof AxiosError ? extractKeyErrorInfo(cause) : cause),
+				}
 			}
 		});
 	} catch (_) {
 		//do nothing
 	}
+}
+
+function extractKeyErrorInfo(e: AxiosError) {
+	return {
+		errMessage: e.message,
+		errCode: e.code,
+		errMethod: e.config?.method,
+		errStatusCode: e.response?.status,
+		errBody: e.response?.data
+	};
 }

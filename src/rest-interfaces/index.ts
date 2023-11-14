@@ -68,6 +68,7 @@ export type ErrorType = "warning" | "error";
 
 export type ApiError = {
 	message: string;
+	errorId: string | undefined;
 	errorCode: ErrorCode;
 }
 
