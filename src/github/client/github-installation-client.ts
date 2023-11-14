@@ -243,7 +243,7 @@ export class GitHubInstallationClient extends GitHubClient {
 		}
 	};
 
-	public getRepository = async (id: number): Promise<AxiosResponse<any>> => {
+	public getRepository = async (id: number): Promise<AxiosResponse> => {
 		return await this.get<Octokit.GitGetRefResponse>(`/repositories/{id}`, {}, {
 			id
 		});

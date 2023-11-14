@@ -245,7 +245,7 @@ describe("pull_request transform REST", () => {
 		const fixture = pullRequestList[0];
 		fixture.title = "[TEST-1] Branch payload with loads of issue keys Test";
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		fixture.user = null;
 
 		const data = await transformPullRequestRest(client, fixture as any, reviewersListNoUser as any, getLogger("test"), jiraHost);
@@ -303,7 +303,7 @@ describe("pull_request transform REST", () => {
 
 		const reviewrsListNoState = _.cloneDeep(reviewersListHasUser);
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		delete reviewrsListNoState[0].state;
 
 		const data = await transformPullRequestRest(client, pulLRequestFixture as any, reviewrsListNoState as any, getLogger("test"), jiraHost);
@@ -419,7 +419,7 @@ describe("pull_request transform REST", () => {
 		const fixture = pullRequestList[0];
 		fixture.title = "[TEST-1] Branch payload with loads of issue keys Test";
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		fixture.user = null;
 
 		githubUserTokenNock(gitHubInstallationId);
@@ -480,7 +480,7 @@ describe("pull_request transform REST", () => {
 		const fixture = cloneDeep(transformPullRequestList[0]);
 		fixture.title = "PR without an issue key";
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		fixture.user = null;
 
 		githubUserTokenNock(gitHubInstallationId);
@@ -543,7 +543,7 @@ describe("pull_request transform REST", () => {
 		const fixture = pullRequestList[0];
 		fixture.title = "[TEST-1] the PR where reviewers can't make up their minds";
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		fixture.user = null;
 
 		githubUserTokenNock(gitHubInstallationId);
@@ -729,15 +729,15 @@ describe("pull_request transform GraphQL", () => {
 		const title = "[TES-123] Branch payload Test";
 		const payload = _.cloneDeep(createPullPayload(title));
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		payload.reviews.nodes[0].author = {};
 
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		delete payload.headRef;
 
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		delete payload.author;
 
 		const { updatedAt } = payload;
