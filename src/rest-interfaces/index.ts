@@ -67,6 +67,7 @@ export type JiraCloudIDResponse = {
 export type ErrorType = "warning" | "error";
 
 export type ApiError = {
+	reqTraceId: string | undefined;
 	message: string;
 	errorCode: ErrorCode;
 }
@@ -163,7 +164,7 @@ export type GitHubEnterpriseApplication = {
 	failedConnections: FailedConnection[];
 	installations: {
 		fulfilled: Installation[];
-		rejected: any[];
+		rejected: unknown[];
 		total: number;
 	};
 };
