@@ -96,7 +96,7 @@ exports[`app getFrontendApp please review routes and update snapshot when adding
 :POST ^/?(?=/|$)^/api/?(?=/|$)^/resync-failed-tasks/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,ApiResyncFailedTasksPost
 :POST ^/?(?=/|$)^/api/?(?=/|$)^/verify/githubapp/(?:([^/]+?))/?(?=/|$)^/verify-get-apps/?$
-  query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,GHESVerifyGetApps
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,GHESVerifyGetApps
 :POST ^/?(?=/|$)^/api/?(?=/|$)^/jira/?(?=/|$)^/(?:([^/]+?))/verify/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,middleware,returnOnValidationError,ApiJiraVerifyPost
 :POST ^/?(?=/|$)^/api/?(?=/|$)^/jira/?(?=/|$)^/(?:([^/]+?))/uninstall/?$
