@@ -38,10 +38,10 @@ export const GHESVerifyGetApps = async (req: Request, res: Response): Promise<vo
 				method: "GET",
 				authorization: `Bearer ${AppTokenHolder.createAppJwt(await app.getDecryptedPrivateKey(installation.jiraHost), String(app.appId)).token}`
 			});
-			res.status(500).json(output);
+			res.status(500).json({ error: e, output });
 			return;
 		} catch (e2) {
-			res.status(500).json({ message: "Error fetching curl", error: e2 });
+			res.status(500).json({ message: "Error fetching curl", originError: e, error2: e2 });
 			return;
 		}
 
