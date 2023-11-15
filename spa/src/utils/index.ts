@@ -21,8 +21,8 @@ export function reportError(err: unknown, extra: {
 } & Record<string, unknown>) {
 	try {
 
-		const cause = (err as any).cause || {};
-		delete (err as any).cause; //so that Sentry doesn't group all axios error together
+		const cause = (err as Record<string, unknown>).cause || {};
+		delete (err as Record<string, unknown>).cause; //so that Sentry doesn't group all axios error together
 
 		Sentry.captureException(err, {
 			extra: {

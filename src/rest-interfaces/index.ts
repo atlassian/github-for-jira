@@ -164,7 +164,7 @@ export type GitHubEnterpriseApplication = {
 	failedConnections: FailedConnection[];
 	installations: {
 		fulfilled: Installation[];
-		rejected: any[];
+		rejected: unknown[];
 		total: number;
 	};
 };

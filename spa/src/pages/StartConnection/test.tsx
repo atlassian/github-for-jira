@@ -15,7 +15,7 @@ jest.mock("../../analytics/analytics-proxy-client", () => {
 		}
 	};
 });
-(global as any).FRONTEND_FEATURE_FLAGS = { ENABLE_5KU_BACKFILL_PAGE: false };
+(global as unknown as { FRONTEND_FEATURE_FLAGS: Record<string, boolean> }).FRONTEND_FEATURE_FLAGS = { ENABLE_5KU_BACKFILL_PAGE: false };
 
 test("Entry Config Screen", async () => {
 	render(
