@@ -31,7 +31,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	if (!servers.hasCloudServer && !servers.gheServerInfos.length) {
 		res.render("no-configuration.hbs", {
 			nonce: res.locals.nonce,
-			configurationUrl: `${jiraHost}/plugins/servlet/ac/${envVars.APP_KEY}/github-select-product-page`
+			configurationUrl: `${jiraHost}/plugins/servlet/ac/${envVars.APP_KEY}/spa-index-page`
 		});
 
 		await sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {
