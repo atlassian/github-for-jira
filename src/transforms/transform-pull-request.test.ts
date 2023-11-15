@@ -8,7 +8,7 @@ import multipleReviewersWithMultipleReviews
 import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 import { getInstallationId } from "~/src/github/client/installation-id";
 import { getLogger } from "config/logger";
-import { booleanFlag, BooleanFlags, shouldSendAll } from "config/feature-flags";
+import { shouldSendAll } from "config/feature-flags";
 import _, { cloneDeep } from "lodash";
 import { createLogger } from "bunyan";
 import { when } from "jest-when";
@@ -21,10 +21,6 @@ describe("pull_request transform REST", () => {
 	beforeEach(() => {
 		mockSystemTime(12345678);
 		client = new GitHubInstallationClient(getInstallationId(gitHubInstallationId), gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.INNO_DRAFT_PR
-		).mockResolvedValue(true);
 	});
 
 	it("should not contain branches on the payload if pull request status is closed.", async () => {
@@ -249,7 +245,7 @@ describe("pull_request transform REST", () => {
 		const fixture = pullRequestList[0];
 		fixture.title = "[TEST-1] Branch payload with loads of issue keys Test";
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		fixture.user = null;
 
 		const data = await transformPullRequestRest(client, fixture as any, reviewersListNoUser as any, getLogger("test"), jiraHost);
@@ -307,7 +303,7 @@ describe("pull_request transform REST", () => {
 
 		const reviewrsListNoState = _.cloneDeep(reviewersListHasUser);
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		delete reviewrsListNoState[0].state;
 
 		const data = await transformPullRequestRest(client, pulLRequestFixture as any, reviewrsListNoState as any, getLogger("test"), jiraHost);
@@ -423,7 +419,7 @@ describe("pull_request transform REST", () => {
 		const fixture = pullRequestList[0];
 		fixture.title = "[TEST-1] Branch payload with loads of issue keys Test";
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		fixture.user = null;
 
 		githubUserTokenNock(gitHubInstallationId);
@@ -484,7 +480,7 @@ describe("pull_request transform REST", () => {
 		const fixture = cloneDeep(transformPullRequestList[0]);
 		fixture.title = "PR without an issue key";
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		fixture.user = null;
 
 		githubUserTokenNock(gitHubInstallationId);
@@ -547,7 +543,7 @@ describe("pull_request transform REST", () => {
 		const fixture = pullRequestList[0];
 		fixture.title = "[TEST-1] the PR where reviewers can't make up their minds";
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		fixture.user = null;
 
 		githubUserTokenNock(gitHubInstallationId);
@@ -733,22 +729,20 @@ describe("pull_request transform GraphQL", () => {
 		const title = "[TES-123] Branch payload Test";
 		const payload = _.cloneDeep(createPullPayload(title));
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		payload.reviews.nodes[0].author = {};
 
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		delete payload.headRef;
 
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		delete payload.author;
 
 		const { updatedAt } = payload;
 
-		const isDraftPrFFOn = true;
-
-		const data = transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger, isDraftPrFFOn);
+		const data = transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger);
 
 		expect(data).toMatchObject({
 			author: {
@@ -788,9 +782,7 @@ describe("pull_request transform GraphQL", () => {
 
 		const { updatedAt } = payload;
 
-		const isDraftPrFFOn = true;
-
-		const data = transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger, isDraftPrFFOn);
+		const data = transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger);
 
 		expect(data).toStrictEqual({
 			author: {
@@ -832,9 +824,7 @@ describe("pull_request transform GraphQL", () => {
 
 		const { updatedAt } = payload;
 
-		const isDraftPrFFOn = true;
-
-		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger, isDraftPrFFOn);
+		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger);
 
 		expect(data).toStrictEqual({
 			author: {
@@ -874,9 +864,7 @@ describe("pull_request transform GraphQL", () => {
 		const payload = { ...createPullPayload(title), author: {} };
 		payload.reviews = createReview("APPROVED", "cool-email@emails.com");
 
-		const isDraftPrFFOn = true;
-
-		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger, isDraftPrFFOn);
+		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger);
 		const { updatedAt } = payload;
 
 		expect(data).toMatchObject({
@@ -915,9 +903,7 @@ describe("pull_request transform GraphQL", () => {
 		const payload = { ...createPullPayload(title), author: {} };
 		payload.reviews = createMultipleReviews();
 
-		const isDraftPrFFOn = true;
-
-		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger, isDraftPrFFOn);
+		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger);
 
 		expect({ firstReviewStatus: data?.reviewers[0] }).toEqual(expect.objectContaining({
 			firstReviewStatus: expect.objectContaining({

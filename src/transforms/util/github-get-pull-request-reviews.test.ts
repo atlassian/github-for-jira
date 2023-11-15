@@ -4,8 +4,6 @@ import { getLogger } from "config/logger";
 import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 import { getInstallationId } from "~/src/github/client/installation-id";
 import pullRequest from "fixtures/api/pull-request.json";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { when } from "jest-when";
 
 jest.mock("config/feature-flags");
 
@@ -41,7 +39,7 @@ describe("getPullRequestReviews", () => {
 			.reply(200, [{ stuff: "things" }]);
 		const client = new GitHubInstallationClient(getInstallationId(GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, { trigger: "test" }, logger);
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		expect(await getPullRequestReviews(jiraHost, client, MOCK_REPOSITORY, MOCK_PR, logger)).toEqual([{ stuff: "things" }]);
 	});
 
@@ -58,7 +56,7 @@ describe("getPullRequestReviews", () => {
 			.reply(404);
 		const client = new GitHubInstallationClient(getInstallationId(GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, { trigger: "test" }, logger);
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		expect(await getPullRequestReviews(jiraHost, client, MOCK_REPOSITORY, MOCK_PR, logger)).toEqual([]);
 	});
 
@@ -69,7 +67,7 @@ describe("getPullRequestReviews", () => {
 			.reply(500);
 		const client = new GitHubInstallationClient(getInstallationId(GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, { trigger: "test" }, logger);
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		expect(await getPullRequestReviews(jiraHost, client, MOCK_REPOSITORY, MOCK_PR, logger)).toEqual([]);
 	});
 
@@ -92,7 +90,7 @@ describe("getPullRequestReviews", () => {
 			}]);
 		const client = new GitHubInstallationClient(getInstallationId(GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, { trigger: "test" }, logger);
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		const result = await getPullRequestReviews(jiraHost, client, MOCK_REPOSITORY, MOCK_PR, logger);
 
 		expect(result[0].user.login).toStrictEqual("requestedReviewer");
@@ -100,28 +98,4 @@ describe("getPullRequestReviews", () => {
 		expect(result[1].user.login).toStrictEqual(pullRequest.user.login);
 		expect(result[1].state).toStrictEqual("APPROVED");
 	});
-
-	it("should not fetch requested reviewers when skip FF is ON", async () => {
-		when(booleanFlag).calledWith(BooleanFlags.SKIP_REQUESTED_REVIEWERS, expect.anything()).mockResolvedValue(true);
-
-		githubNock
-			.get(`/repos/batman/gotham-city-bus-pass/pulls/2/requested_reviewers`)
-			.times(0);
-		githubUserTokenNock(GITHUB_INSTALLATION_ID);
-		githubNock
-			.get(`/repos/batman/gotham-city-bus-pass/pulls/2/reviews`)
-			.reply(200, [{
-				state: "APPROVED",
-				user: pullRequest.user
-			}]);
-		const client = new GitHubInstallationClient(getInstallationId(GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, { trigger: "test" }, logger);
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
-		const result = await getPullRequestReviews(jiraHost, client, MOCK_REPOSITORY, MOCK_PR, logger);
-
-		expect(result).toHaveLength(1);
-		expect(result[0].user.login).toStrictEqual(pullRequest.user.login);
-		expect(result[0].state).toStrictEqual("APPROVED");
-	});
-
 });

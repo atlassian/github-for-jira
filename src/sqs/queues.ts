@@ -17,10 +17,14 @@ const logger = getLogger("sqs-queues");
 
 let backfillQueue: SqsQueue<BackfillMessagePayload> | undefined = undefined;
 
-const backfillQueueMessageSender = (message: BackfillMessagePayload, delaySec: number, logger: Logger) =>
+const backfillQueueMessageSender = (message: BackfillMessagePayload, delaySec: number, logger: Logger) => {
 	// Given the single-threaded nature of Node.js, backfillQueue is always initialised
 	// because SqsQueue is not triggering messageHandler from ctor
-	backfillQueue!.sendMessage(message, delaySec, logger);
+	if (backfillQueue === undefined) {
+		throw new Error("backfillQueue is undefined");
+	}
+	return backfillQueue.sendMessage(message, delaySec, logger);
+};
 
 backfillQueue = new SqsQueue<BackfillMessagePayload>(
 	{

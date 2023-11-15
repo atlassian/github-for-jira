@@ -5,8 +5,10 @@ type UIEventActionSubject =
 	| "connectOrganisation" | "installToNewOrganisation"
 	| "checkBackfillStatus"
 	| "dropExperienceViaBackButton"
-	| "checkOrgAdmin"
-	| "learnAboutIssueLinking" | "learnAboutDevelopmentWork";
+	| "learnAboutIssueLinking"
+	| "checkOrgAdmin" | "generateDeferredInstallationLink"
+	| "closedDeferredInstallationModal" | "copiedDeferredInstallationUrl"
+	| "signInThroughDeferredInstallationStartScreen";
 
 export type UIEventProps = {
 	actionSubject: UIEventActionSubject,
@@ -16,8 +18,14 @@ export type UIEventProps = {
 export type ScreenNames =
 	"StartConnectionEntryScreen"
   | "AuthorisationScreen"
+	| "InstallationRequested"
 	| "OrganisationConnectionScreen"
-	| "SuccessfulConnectedScreen";
+	| "SuccessfulConnectedScreen"
+	| "DeferredInstallationModal"
+	| "DeferredInstallationStartScreen"
+	| "DeferredInstallationForbiddenScreen"
+	| "DeferredInstallationErrorScreen"
+	| "DeferredInstallationSuccessScreen";
 
 type TrackEventActionSubject =
 	"finishOAuthFlow"
@@ -35,8 +43,8 @@ export type ScreenEventProps = {
 };
 
 export type AnalyticClient = {
-	sendScreenEvent: (eventProps: ScreenEventProps, attributes?: Record<string, unknown>) => void;
-	sendUIEvent: (eventProps: UIEventProps, attributes?: Record<string, unknown>) => void;
-	sendTrackEvent: (eventProps: TrackEventProps, attributes?: Record<string, unknown>) => void;
+	sendScreenEvent: (eventProps: ScreenEventProps, attributes?: Record<string, unknown>, requestId?: string) => void;
+	sendUIEvent: (eventProps: UIEventProps, attributes?: Record<string, unknown>, requestId?: string) => void;
+	sendTrackEvent: (eventProps: TrackEventProps, attributes?: Record<string, unknown>, requestId?: string) => void;
 };
 

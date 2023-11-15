@@ -14,9 +14,9 @@ import { useNavigate } from "react-router-dom";
 import ErrorUI from "../../components/Error";
 import AppManager from "../../services/app-manager";
 import OAuthManager from "../../services/oauth-manager";
-import analyticsClient from "../../analytics";
+import analyticsClient, { useEffectScreenEvent } from "../../analytics";
 import { AxiosError } from "axios";
-import { ErrorObjType, GENERIC_MESSAGE_WITH_LINK, modifyError } from "../../utils/modifyError";
+import { ErrorObjType, GENERIC_MESSAGE_WITH_LINK, HostUrlType, modifyError } from "../../utils/modifyError";
 import { reportError } from "../../utils";
 import { GitHubInstallationType } from "../../../../src/rest-interfaces";
 import OrganizationsList from "../ConfigSteps/OrgsContainer";
@@ -24,9 +24,6 @@ import SkeletonForLoading from "../ConfigSteps/SkeletonForLoading";
 import OauthManager from "../../services/oauth-manager";
 import { ErrorForPopupBlocked } from "../../components/Error/KnownErrors";
 
-type HostUrlType = {
-	jiraHost: string;
-};
 type ErrorMessageCounterType = {
 	message: string | React.JSX.Element;
 	count: number;
@@ -115,6 +112,7 @@ const errorMessageCounter: ErrorMessageCounterType = {
 const ERROR_THRESHOLD = 3;
 
 const ConfigSteps = () => {
+	useEffectScreenEvent("AuthorisationScreen");
 
 	const [isPopupBlocked, setPopupBlocked] = useState<boolean>(false);
 	const onPopupBlocked = () => setPopupBlocked(true);
@@ -175,6 +173,12 @@ const ConfigSteps = () => {
 			showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin, onPopupBlocked }));
 			return { success: false, orgs: [] };
 		} else {
+			analyticsClient.sendScreenEvent({
+				name: "OrganisationConnectionScreen"
+			}, {
+				numOfOrgs: response.orgs.length,
+				type: "cloud"
+			});
 			setOrganizations(response.orgs);
 			return { success: true, orgs: response.orgs };
 		}
@@ -250,10 +254,13 @@ const ConfigSteps = () => {
 
 	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual", orgLogin: string) => {
 		try {
-			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" }, { mode });
+			analyticsClient.sendUIEvent(
+				{ actionSubject: "connectOrganisation", action: "clicked" },
+				{ mode, from: "OrgListScreen" }
+			);
 			const connected: boolean | AxiosError = await AppManager.connectOrg(gitHubInstallationId);
 			if (connected instanceof AxiosError) {
-				const errorObj = modifyError(connected, { orgLogin }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin, onPopupBlocked });
+				const errorObj = modifyError(connected, { orgLogin, gitHubInstallationId }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin, onPopupBlocked });
 				showError(errorObj);
 				analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail" }, { mode, errorCode: errorObj.errorCode });
 			} else {
@@ -387,6 +394,7 @@ const ConfigSteps = () => {
 														loaderForOrgClicked={loaderForOrgClicked}
 														setLoaderForOrgClicked={setLoaderForOrgClicked}
 														resetCallback={setIsLoggedIn}
+														hostUrl={hostUrl}
 														onPopupBlocked={onPopupBlocked}
 														connectingOrg={(org) => doCreateConnection(org.id, "manual", org.account?.login)} />
 													<div css={addOrganizationContainerStyle}>

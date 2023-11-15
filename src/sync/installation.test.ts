@@ -119,7 +119,7 @@ describe("sync/installation", () => {
 	});
 
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
+	// @ts-expect-error
 	const sentry: Hub = { setUser: jest.fn() } as Hub;
 
 	describe("isRetryableWithSmallerRequest()", () => {
@@ -343,7 +343,7 @@ describe("sync/installation", () => {
 
 		it("should return set of target tasks and filter out invalid values", async () => {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
+			// @ts-expect-error
 			expect(getTargetTasks(["pull", "commit", "cats"])).toEqual(["pull", "commit"]);
 		});
 	});

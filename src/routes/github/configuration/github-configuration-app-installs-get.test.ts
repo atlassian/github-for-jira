@@ -41,7 +41,7 @@ describe("GitHub Branches Get", () => {
 				}));
 
 		expect(result.status).toStrictEqual(302);
-		expect(result.headers.location).toStrictEqual("https://github.com/apps/jira/installations/new");
+		expect(result.headers.location).toStrictEqual("https://github.com/apps/jira/installations/new?state=non-spa");
 	});
 
 	it("Should successfully regenerate URL and redirect to GitHub path for server", async () => {
@@ -66,7 +66,7 @@ describe("GitHub Branches Get", () => {
 				}));
 
 		expect(result.status).toStrictEqual(302);
-		expect(result.headers.location).toStrictEqual("https://github.mydomain.com/github-apps/jira/installations/new");
+		expect(result.headers.location).toStrictEqual("https://github.mydomain.com/github-apps/jira/installations/new?state=non-spa");
 	});
 
 	it("should redirect to oauth dance when no github token", async () => {

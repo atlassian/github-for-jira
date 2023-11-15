@@ -13,7 +13,7 @@ export const emitWebhookProcessedMetrics = (
 	logger: Logger = getLogger("webhook-metrics"),
 	status?: number,
 	gitHubAppId?: number
-): number | undefined | void => {
+): number | undefined => {
 	const currentTime = getCurrentTime();
 
 	try {
@@ -71,6 +71,7 @@ export const emitWebhookProcessedMetrics = (
 			{ err },
 			"Failed to send webhook processing time metrics."
 		);
+		return undefined;
 	}
 };
 

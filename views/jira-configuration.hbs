@@ -27,7 +27,7 @@
     <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
   </head>
 
-  <body class="aui-page-hybrid" data-use-new-spa-experience="{{useNewSPAExperience}}" >
+  <body class="aui-page-hybrid">
     <div class="jiraConfiguration">
       <header class="jiraConfiguration__header">
         <h1 class="jiraConfiguration__header__title">GitHub configuration</h1>
@@ -195,7 +195,6 @@
                     csrfToken=csrfToken
                     successfulConnections=ghCloud.successfulCloudConnections
                     failedConnections=ghCloud.failedCloudConnections
-                    enableRepoConnectedPage=enableRepoConnectedPage
                 }}
               </div>
             </div>
@@ -251,6 +250,7 @@
                                <button
                                    class="jiraConfiguration__deleteGitHubApp disconnect-app-btn"
                                    data-app-uuid="{{app.uuid}}"
+                                   data-app-server-url="{{server.gitHubBaseUrl}}"
                                    data-app-name="{{app.gitHubAppName}}"
                                >
                                  Disconnect
@@ -272,7 +272,6 @@
                                 successfulConnections=app.successfulConnections
                                 failedConnections=app.failedConnections
                                 gitHubAppId=app.id
-                                enableRepoConnectedPage=../../enableRepoConnectedPage
                             }}
                           {{else}}
                             <div class="jiraConfiguration__collapsibleBody">

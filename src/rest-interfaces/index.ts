@@ -14,6 +14,24 @@ export type UsersGetAuthenticatedResponse = {
 	login: string;
 };
 
+export type DeferredInstallationUrlParams = {
+	gitHubInstallationId: number;
+	gitHubOrgName: string;
+};
+
+export type DeferralParsedRequest = {
+	orgName: string;
+	jiraHost: string;
+};
+
+export type GetDeferredInstallationUrl = {
+	deferredInstallUrl: string;
+};
+
+export type OrgOwnershipResponse = {
+	orgName: string;
+}
+
 export type GetGitHubAppsUrlResponse = {
 	appInstallationUrl: string;
 }
@@ -21,6 +39,8 @@ export type GetGitHubAppsUrlResponse = {
 export type OrganizationsResponse = {
 	orgs: Array<GitHubInstallationType>;
 }
+
+export type CheckAdminOrgSource = "ErrorInOrgList" | "DeferredInstallationModal";
 
 export type GitHubInstallationType = {
 	account: GitHubInstallationAccountType;
@@ -47,8 +67,15 @@ export type JiraCloudIDResponse = {
 export type ErrorType = "warning" | "error";
 
 export type ApiError = {
+	reqTraceId: string | undefined;
 	message: string;
 	errorCode: ErrorCode;
+}
+
+export type StateCallbacksForDefaultDeferredState = {
+	setIsLoading: (x: boolean) => void;
+	setForbidden: (x: boolean) => void;
+	onPopupBlocked: () => void;
 }
 
 //DO NOT USE ENUM as webpack can't handler anything none "type"
@@ -62,6 +89,8 @@ export type ErrorCode =
 	| "IP_BLOCKED"
 	| "SSO_LOGIN"
 	| "RESOURCE_NOT_FOUND"
+	| "INVALID_DEFERRAL_REQUEST_ID"
+	| "JIRAHOST_MISMATCH"
 	| "UNKNOWN";
 
 export type Account = {
@@ -135,7 +164,7 @@ export type GitHubEnterpriseApplication = {
 	failedConnections: FailedConnection[];
 	installations: {
 		fulfilled: Installation[];
-		rejected: any[];
+		rejected: unknown[];
 		total: number;
 	};
 };

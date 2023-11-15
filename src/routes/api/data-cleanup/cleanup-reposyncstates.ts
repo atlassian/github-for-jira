@@ -22,7 +22,7 @@ export const RepoSyncStateCleanUpOrphanDataPost = async (req: Request, res: Resp
 	const commitToDB = "true" === req.query.commitToDB;
 	try {
 		const cleanUpFromWhereSql = getCleanupSql(repoSyncStateId);
-		const sql = commitToDB === true ? getCommitInDBSql(cleanUpFromWhereSql) : getDryRunSql(cleanUpFromWhereSql);
+		const sql = commitToDB ? getCommitInDBSql(cleanUpFromWhereSql) : getDryRunSql(cleanUpFromWhereSql);
 		const result = await RepoSyncState.sequelize?.query(sql);
 
 		if (!result) {
@@ -30,10 +30,10 @@ export const RepoSyncStateCleanUpOrphanDataPost = async (req: Request, res: Resp
 		}
 
 		const parsedResult = result && safeParseResult(result, commitToDB);
-		log.info({ result: parsedResult }, `Orphan RepoSyncStates data ${ commitToDB === true ? "deleted" : "found" }`);
+		log.info({ result: parsedResult }, `Orphan RepoSyncStates data ${ commitToDB ? "deleted" : "found" }`);
 		res.status(200).end("Done. Result: " + parsedResult);
 	} catch (e: unknown) {
-		log.error(e, `Error ${ commitToDB === true ? "deleting" : "finding" } orphan RepoSyncStates data`);
+		log.error(e, `Error ${ commitToDB ? "deleting" : "finding" } orphan RepoSyncStates data`);
 		res.status(500).end(safeJsonStringify(e as object));
 	}
 };

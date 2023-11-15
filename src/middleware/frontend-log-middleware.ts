@@ -61,9 +61,9 @@ export const LogMiddleware = async (req: Request<ParamsDictionary, any, { jiraHo
 		}
 	};
 
-	req.addLogFields({
-		id: req.headers["atl-traceid"] || newUUID()
-	});
+	const reqTraceId = req.headers["atl-traceid"] || newUUID();
+	req.addLogFields({ id: reqTraceId });
+	res.locals.reqTraceId = reqTraceId;
 
 	res.once("finish", () => {
 		booleanFlag(BooleanFlags.MAINTENANCE_MODE).then(maintenanceMode => {

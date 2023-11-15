@@ -1,4 +1,4 @@
-import { ApiError, ErrorCode } from "rest-interfaces";
+import { ErrorCode } from "rest-interfaces";
 
 export enum Errors {
 	MISSING_JIRA_HOST = "Jira Host url is missing",
@@ -25,7 +25,7 @@ export class UIDisplayableError extends Error {
 	}
 }
 
-export class RestApiError extends Error implements ApiError {
+export class RestApiError extends Error {
 	httpStatus: number;
 	errorCode: ErrorCode;
 	constructor(httpStatus: number, errorCode: ErrorCode, msg: string) {
@@ -49,7 +49,7 @@ export class InvalidTokenError extends RestApiError {
 
 export class InsufficientPermissionError extends RestApiError {
 	constructor(msg: string) {
-		super(401, "INSUFFICIENT_PERMISSION", msg);
+		super(403, "INSUFFICIENT_PERMISSION", msg);
 	}
 }
 

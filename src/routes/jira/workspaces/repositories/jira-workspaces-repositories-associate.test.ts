@@ -7,8 +7,6 @@ import { RepoSyncState } from "models/reposyncstate";
 import { Installation } from "models/installation";
 import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
 import { Errors } from "config/errors";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 jest.mock("config/feature-flags");
 
@@ -18,10 +16,6 @@ describe("Workspaces Associate Repository", () => {
 	let sub: Subscription;
 
 	beforeEach(async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
-		).mockResolvedValue(true);
-
 		installation = await Installation.install({
 			host: jiraHost,
 			sharedSecret: "shared-secret",

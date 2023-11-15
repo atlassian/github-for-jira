@@ -14,7 +14,7 @@ const splitServerId = (input: string): string => {
 };
 
 const getRepoIdForCloudAndServer = (id: string): { id: number } => {
-	if (/-/.test(id)) {
+	if (id.includes("-")) {
 		const repoId = splitServerId(id);
 		return { id: parseInt(repoId) };
 	} else {
