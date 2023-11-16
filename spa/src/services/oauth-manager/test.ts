@@ -40,13 +40,11 @@ describe("AuthManager", () => {
 
 		it("should prevent CSRF attack by providing invalid state", async () => {
 
-			mockExchangeTokenOnce("code123", "some-state", "token123");
-
 			//just try to exchange token without a previous set state
 			const result = await AuthManager.finishOAuthFlow("code123", "some-state");
 
 			expect(result).toBe(false);
-			expect(Api.token.setGitHubToken).not.toHaveBeenCalled();
+			expect(Api.auth.exchangeToken).not.toHaveBeenCalled();
 
 		});
 
