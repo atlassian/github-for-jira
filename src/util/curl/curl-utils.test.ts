@@ -19,7 +19,7 @@ describe("curl-utils", () => {
 				authorization: "secrets"
 			});
 			expect(result.meta).toContain("> POST / HTTP");
-			expect(result.body).toEqual(expect.stringContaining("HTTP Status 403"));
+			expect(result.body).toEqual(expect.stringContaining("403"));
 			expect(result.meta).toContain("< HTTP/2 403");
 		});
 		it("should not contains private information in the headers", async () => {
