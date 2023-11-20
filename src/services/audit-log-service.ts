@@ -85,5 +85,5 @@ export const findLog = async(
  */
 const getKey = (auditInfo: AuditInfo) => {
 	const { entityAction, entityId, entityType, subscriptionId, issueKey } = auditInfo;
-	return createHashWithoutSharedSecret(`subID_${subscriptionId}_type_${entityType}_id_${entityId}_action_${entityAction}_issueKey_${issueKey}`);
+	return createHashWithoutSharedSecret(`subID_${subscriptionId}_typ_${entityType}_id_${entityId}_act_${entityAction}_issKey_${issueKey}`);
 };
