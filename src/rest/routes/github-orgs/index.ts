@@ -20,7 +20,7 @@ GitHubOrgsRouter.get("/", errorWrapper("GitHubOrgsFetchOrgs", async (req: Reques
 
 GitHubOrgsRouter.post("/", errorWrapper("GitHubOrgsConnectJira", async (req: Request, res: Response<OrganizationsResponse, BaseLocals>) => {
 	const { installation, githubToken, gitHubAppId  } = res.locals;
-	const body = req.body as { installationId: any };
+	const body = req.body as { installationId: unknown };
 	const gitHubInstallationId = Number(body.installationId);
 
 	if (!gitHubInstallationId) {

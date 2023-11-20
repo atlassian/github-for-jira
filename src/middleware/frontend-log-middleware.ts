@@ -46,7 +46,7 @@ declare global {
 	}
 }
 
-export const LogMiddleware = async (req: Request<ParamsDictionary, any, { jiraHost?: string }>, res: Response, next: NextFunction): Promise<void> => {
+export const LogMiddleware = async (req: Request<ParamsDictionary, unknown, { jiraHost?: string }>, res: Response, next: NextFunction): Promise<void> => {
 	req.log = getLogger("frontend-log-middleware", {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		fields: req.log?.fields,
@@ -77,7 +77,7 @@ export const LogMiddleware = async (req: Request<ParamsDictionary, any, { jiraHo
 	next();
 };
 
-const getUnvalidatedJiraHost = (req: Request<ParamsDictionary, any, { jiraHost?: string }>): string | undefined =>
+const getUnvalidatedJiraHost = (req: Request<ParamsDictionary, unknown, { jiraHost?: string }>): string | undefined =>
 	req.session?.jiraHost || extractUnsafeJiraHost(req);
 
 /**
@@ -85,7 +85,7 @@ const getUnvalidatedJiraHost = (req: Request<ParamsDictionary, any, { jiraHost?:
  */
 const checkPathValidity = (url: string) => moduleUrls.some(moduleUrl => matchRouteWithPattern(moduleUrl, url));
 
-const extractUnsafeJiraHost = (req: Request<ParamsDictionary, any, { jiraHost?: string }>): string | undefined => {
+const extractUnsafeJiraHost = (req: Request<ParamsDictionary, unknown, { jiraHost?: string }>): string | undefined => {
 	if (checkPathValidity(req.path) && req.method == "GET") {
 		// Only save xdm_e query when on the GET post install url (iframe url)
 		return req.query.xdm_e as string;

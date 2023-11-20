@@ -358,7 +358,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 		try {
 			context.log.warn({ err }, "Failed message");
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-			const errorHandlingResult = await this.errorHandler(err as any, context);
+			const errorHandlingResult = await this.errorHandler(err as Error, context);
 
 			this.log.info({ errorHandlingResult }, "Error handling result");
 			if (errorHandlingResult.isFailure) {
