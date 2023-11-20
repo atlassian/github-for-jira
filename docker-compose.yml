@@ -31,7 +31,9 @@ services:
     environment:
       - DEFAULT_REGION=us-west-1
       - DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME=deployment-history-cache
+      - DYNAMO_AUDIT_LOG_TABLE_NAME=audit_log
       - DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_REGION=us-west-1
+      - DYNAMO_AUDIT_LOG_TABLE_REGION=us-west-1
       - LAMBDA_REMOTE_DOCKER=false
       - LAMBDA_EXECUTOR=local # runs lambda inside temp directory instead of new docker container
       - SQS_ENDPOINT_STRATEGY=off # sets the SQS queue domain/path to the legacy version

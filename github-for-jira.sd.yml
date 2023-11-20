@@ -180,6 +180,17 @@ resources:
       TTLAttributeName: ExpiredAfter
       dataType:
         - UGC/PrimaryIdentifier    # Sha of a commit that point to user's code
+  - name: audit_log
+    type: dynamo-db
+    attributes: &table-attributes
+      HashKeyName: Id
+      HashKeyType: "S"
+      RangeKeyName: CreatedAt
+      RangeKeyType: "N"
+      ReadWriteCapacityMode: ON_DEMAND
+      TTLAttributeName: ExpiredAfter
+      dataType:
+        - UGC/PrimaryIdentifier    # Sha of a commit that point to user's code
 
 scaling:
   instance: t2.small
@@ -432,6 +443,10 @@ environmentOverrides:
         type: dynamo-db
         attributes:
           <<: *table-attributes
+      - name: audit_log
+        type: dynamo-db
+        attributes:
+          <<: *table-attributes
 
     alarms:
       overrides:
@@ -535,6 +550,10 @@ environmentOverrides:
         type: dynamo-db
         attributes:
           <<: *table-attributes
+      - name: audit_log
+        type: dynamo-db
+        attributes:
+          <<: *table-attributes
 
       - type: globaledge
         name: proxy
@@ -633,6 +652,10 @@ environmentOverrides:
             TransactionLogsDiskUsageAlarm: 4000000000 # approximately 4GB
 
       - name: deployment-history-cache
+        type: dynamo-db
+        attributes:
+          <<: *table-attributes
+      - name: audit_log
         type: dynamo-db
         attributes:
           <<: *table-attributes
