@@ -22,7 +22,7 @@ describe("audit log service", () => {
 			const source = "backfill";
 			const issueKey = "ARC-2605";
 			const env = "prod";
-			const ID = `subID_${subscriptionId}_type_${entityType}_id_${entityId}_action_${entityAction}_issueKey_${issueKey}`;
+			const ID = `subID_${subscriptionId}_typ_${entityType}_id_${entityId}_act_${entityAction}_issKey_${issueKey}`;
 			await auditLog(
 				{
 					source,
