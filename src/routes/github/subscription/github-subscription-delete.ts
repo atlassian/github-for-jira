@@ -40,7 +40,6 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 		// Only show the page if the logged in user is an admin of this installation
 		if (!await isUserAdminOfOrganization(
 			gitHubUserClient,
-			jiraHost,
 			gitHubInstallationClient ,
 			installation.account.login,
 			login,
