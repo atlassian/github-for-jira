@@ -5,6 +5,14 @@ import { dynamodb as ddb } from "config/dynamodb";
 import { createHashWithoutSharedSecret } from "utils/encryption";
 
 const defaultLogger = getLogger("DeploymentDynamoLogger");
+export type AuditInfoPK = {
+	entityType: string;
+	entityAction: string;
+	entityId: string;
+	subscriptionId: number;
+	issueKey: string;
+};
+
 export type AuditInfo = {
 	source: string;
 	entityType: string;
@@ -47,7 +55,7 @@ export type LastSuccessfulDeploymentFromCache = {
 };
 
 export const findLog = async(
-	params: AuditInfo,
+	params: AuditInfoPK,
 	logger: Logger = defaultLogger
 ): Promise<LastSuccessfulDeploymentFromCache | undefined> => {
 	logger.debug("Finding audit log for DD call");
@@ -83,7 +91,7 @@ export const findLog = async(
  * So if multiple jiraHost connect to the same app (like same cloud org but multiple subscription), the data will be shared.
  * Sharing that deployment data is okay, because they base on the github deployment result, not our subscription.
  */
-const getKey = (auditInfo: AuditInfo) => {
+const getKey = (auditInfo: AuditInfoPK) => {
 	const { entityAction, entityId, entityType, subscriptionId, issueKey } = auditInfo;
 	return createHashWithoutSharedSecret(`subID_${subscriptionId}_type_${entityType}_id_${entityId}_action_${entityAction}_issueKey_${issueKey}`);
 };

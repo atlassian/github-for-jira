@@ -7,7 +7,7 @@ import path from "path";
 import { getHashedKey } from "models/sequelize";
 import { v4 } from "uuid";
 
-interface CreatorResult {
+export interface CreatorResult {
 	installation: Installation;
 	subscription: Subscription;
 	repoSyncState: RepoSyncState | undefined;
