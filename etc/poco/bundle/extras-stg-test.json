@@ -1,7 +1,7 @@
 {
 	"tests": [
 		{
-			"name": "Allow Stg Basic Check (Critical) Pollinator Test to call Get Audit Log endpoints",
+			"name": "Allow Stg Basic Check Critical Pollinator Test to call Get Audit Log endpoints",
 			"path": "/api/audit-log/subscription/12345",
 			"method": "GET",
 			"mechanism": "asap",
@@ -11,7 +11,7 @@
 			"allowed": true
 		},
 		{
-			"name": "Allow Stg Basic Check (GHE) (Critical) Pollinator Test to call Get Audit Log endpoints",
+			"name": "Allow Stg Basic Check GHE Critical Pollinator Test to call Get Audit Log endpoints",
 			"path": "/api/audit-log/subscription/12345",
 			"method": "GET",
 			"mechanism": "asap",
@@ -21,7 +21,7 @@
 			"allowed": true
 		},
 		{
-			"name": "Allow Stg Basic Check (Critical) Pollinator Test to call Delete Installation endpoints",
+			"name": "Allow Stg Basic Check Critical Pollinator Test to call Delete Installation endpoints",
 			"path": "/api/deleteInstallation/21266506/https%3A%2F%2Ffusion-arc-pollinator-staging-app.atlassian.net",
 			"method": "DELETE",
 			"mechanism": "asap",
@@ -31,7 +31,7 @@
 			"allowed": true
 		},
 		{
-			"name": "Allow Stg Basic Check (GHE) (Critical) Pollinator Test to call Delete Installation endpoints",
+			"name": "Allow Stg Basic Check GHE Critical Pollinator Test to call Delete Installation endpoints",
 			"path": "/api/deleteInstallation/21266506/https%3A%2F%2Ffusion-arc-pollinator-staging-app.atlassian.net",
 			"method": "DELETE",
 			"mechanism": "asap",
@@ -101,7 +101,7 @@
 			"allowed": false
 		},
 		{
-			"name": "Not allow Stg Basic Check (Critical) Pollinator Test to call other admin endpoints",
+			"name": "Not allow Stg Basic Check Critical Pollinator Test to call other admin endpoints",
 			"path": "/api/jira/13453453/verify",
 			"method": "DELETE",
 			"mechanism": "asap",
@@ -111,7 +111,7 @@
 			"allowed": false
 		},
 		{
-			"name": "Not allow Stg Basic Check (GHE) (Critical) Pollinator Test to call other admin endpoints",
+			"name": "Not allow Stg Basic Check GHE Critical Pollinator Test to call other admin endpoints",
 			"path": "/api/jira/13453453/verify",
 			"method": "DELETE",
 			"mechanism": "asap",
