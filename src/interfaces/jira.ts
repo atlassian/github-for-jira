@@ -158,6 +158,7 @@ export interface JiraDeploymentBulkSubmitData {
 export interface JiraPullRequestBulkSubmitData extends BulkSubmitRepositoryInfo {
 	branches: JiraBranch[];
 	pullRequests: JiraPullRequest[];
+	source?: string;
 }
 
 export interface JiraAssociation {
@@ -247,9 +248,10 @@ export interface JiraVulnerabilityAdditionalInfo {
 // https://atlassian.design/components/lozenge/examples
 export type JiraRemoteLinkStatusAppearance = "default" | "inprogress" | "moved" | "new" | "removed" | "prototype" | "success";
 
-export type JiraOperationType = "NORMAL" | "BACKFILL"
+export type JiraOperationType = "NORMAL" | "BACKFILL";
 
 export interface JiraSubmitOptions {
 	preventTransitions: boolean;
 	operationType: JiraOperationType;
+	entityAction: "BRANCH_CREATE" | "BRANCH_DELETE";
 }

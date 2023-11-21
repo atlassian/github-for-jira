@@ -85,7 +85,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 			}
 		});
 		await webhookRouter(webhookContext);
-		webhookContext.log.info("Webhook was successfully processed");
+		webhookContext.log.info("Webhook was successfully processed ::+::",webhookContext.action);
 		response.sendStatus(204);
 
 	} catch (err: unknown) {

@@ -84,6 +84,6 @@ export const findLog = async(
  * Sharing that deployment data is okay, because they base on the github deployment result, not our subscription.
  */
 const getKey = (auditInfo: AuditInfo) => {
-	const { entityAction, entityId, entityType, subscriptionId, issueKey } = auditInfo;
-	return createHashWithoutSharedSecret(`subID_${subscriptionId}_typ_${entityType}_id_${entityId}_act_${entityAction}_issKey_${issueKey}`);
+	const { entityId, entityType, subscriptionId, issueKey } = auditInfo;
+	return createHashWithoutSharedSecret(`subID_${subscriptionId}_typ_${entityType}_id_${entityId}_issKey_${issueKey}`);
 };

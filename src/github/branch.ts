@@ -15,7 +15,8 @@ import { shouldSendAll } from "config/feature-flags";
 export const createBranchWebhookHandler = async (context: WebhookContext<CreateEvent>, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 
 	const webhookPayload = context.payload;
-
+	// eslint-disable-next-line no-console
+	console.log("webhookPayload bfr sqs queue ::+::",webhookPayload,"+",context?.action,"+", context.name);
 	await sqsQueues.branch.sendMessage({
 		jiraHost: jiraClient.baseURL,
 		installationId: gitHubInstallationId,
@@ -36,6 +37,10 @@ export const processBranch = async (
 	rootLogger: Logger,
 	gitHubAppId: number | undefined
 ) => {
+	// eslint-disable-next-line no-console
+	console.log("INSIDE processBranch :::+++:::",JSON.stringify(webhookPayload),JSON.stringify(webhookReceivedDate));
+	// eslint-disable-next-line no-console
+	console.log("processBranch :::+++:::",JSON.stringify(webhookPayload));
 	const logger = rootLogger.child({
 		webhookId: webhookId,
 		gitHubInstallationId,

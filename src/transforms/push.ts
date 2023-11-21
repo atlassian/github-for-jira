@@ -85,6 +85,8 @@ export const enqueuePush = async (payload: GitHubPushData, jiraHost: string, log
 	await sqsQueues.push.sendMessage(await createJobData(payload, jiraHost, logger, gitHubAppConfig), 0, logger);
 
 export const processPush = async (github: GitHubInstallationClient, payload: PushQueueMessagePayload, rootLogger: Logger) => {
+	// eslint-disable-next-line no-console
+	console.log("INSIDE processPush :::+++:::");
 	const {
 		repository,
 		repository: { owner, name: repo },
@@ -198,7 +200,8 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		for (const chunk of chunks) {
 			const jiraPayload = {
 				... transformRepositoryDevInfoBulk(repository, payload.gitHubAppConfig?.gitHubBaseUrl),
-				commits: chunk
+				commits: chunk,
+				source: "webhook"
 			};
 
 			log.info("Sending data to Jira");
