@@ -1,7 +1,7 @@
 {
 	"allow": [
 		{
-			"description": "Allow stage pollinator checks to call endpoints for testing",
+			"description": "Allow stage pollinator checks to call delete installation endpoints for testing",
 			"paths": [
 				"/api/deleteInstallation/**"
 			],
@@ -22,7 +22,7 @@
 			}
 		},
 		{
-			"description": "Allow stage pollinator checks to call endpoints for testing",
+			"description": "Allow stage pollinator checks to call view audit log endpoints for testing",
 			"paths": [
 				"/api/audit-log/**"
 			],
