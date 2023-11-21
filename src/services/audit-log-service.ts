@@ -67,6 +67,7 @@ export const findLog = async (
 	const result = await ddb
 		.query({
 			TableName: envVars.DYNAMO_AUDIT_LOG_TABLE_NAME,
+			KeyConditionExpression: "Id = :id",
 			ExpressionAttributeValues: {
 				":id": { S: getKey(params) }
 			},
