@@ -180,9 +180,9 @@ resources:
       TTLAttributeName: ExpiredAfter
       dataType:
         - UGC/PrimaryIdentifier    # Sha of a commit that point to user's code
-  - name: audit_log
+  - name: audit-log
     type: dynamo-db
-    attributes: &table-attributes
+    attributes: &audit-log-table-attributes
       HashKeyName: Id
       HashKeyType: "S"
       RangeKeyName: CreatedAt
@@ -443,10 +443,10 @@ environmentOverrides:
         type: dynamo-db
         attributes:
           <<: *table-attributes
-      - name: audit_log
+      - name: audit-log
         type: dynamo-db
         attributes:
-          <<: *table-attributes
+          <<: *audit-log-table-attributes
 
     alarms:
       overrides:
@@ -550,10 +550,10 @@ environmentOverrides:
         type: dynamo-db
         attributes:
           <<: *table-attributes
-      - name: audit_log
+      - name: audit-log
         type: dynamo-db
         attributes:
-          <<: *table-attributes
+          <<: *audit-log-table-attributes
 
       - type: globaledge
         name: proxy
@@ -655,10 +655,10 @@ environmentOverrides:
         type: dynamo-db
         attributes:
           <<: *table-attributes
-      - name: audit_log
+      - name: audit-log
         type: dynamo-db
         attributes:
-          <<: *table-attributes
+          <<: *audit-log-table-attributes
 
       - type: globaledge
         name: proxy

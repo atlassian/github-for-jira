@@ -220,7 +220,7 @@ const requestSerializer = (req) => req && ({
 	remotePort: req.socket?.remotePort
 });
 
-const graphQlErrorsSerializer = (errors: Array<any>) => (
+const graphQlErrorsSerializer = (errors: Array<Error>) => (
 	{
 		errors: errors.map(error => errorSerializer(error))
 	}

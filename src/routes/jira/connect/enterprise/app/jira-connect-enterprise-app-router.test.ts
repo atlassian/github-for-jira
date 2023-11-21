@@ -52,7 +52,7 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 				.expect(200);
 			expect(capturedGHEAppConfig).toEqual(expect.objectContaining({
 				uuid: GHE_APP_UUID,
-				appId: 1
+				appId: "1"
 			}));
 		});
 		it("should throw error for invalid uuid", async () => {

@@ -5,7 +5,7 @@ import { popup, reportError } from "../../utils";
 let username: string | undefined;
 let email: string | undefined;
 
-let oauthState: string | undefined;
+let oauthStates: string[] = [];
 
 async function checkValidity(): Promise<boolean | AxiosError> {
 	if (!Api.token.hasGitHubToken()) return false;
@@ -42,7 +42,7 @@ async function authenticateInGitHub({
 }): Promise<void> {
 	const res = await Api.auth.generateOAuthUrl();
 	if (res.data.redirectUrl && res.data.state) {
-		oauthState = res.data.state;
+		oauthStates.push(res.data.state);
 		const win = popup(res.data.redirectUrl);
 		if (win === null) {
 			onPopupBlocked();
@@ -73,7 +73,6 @@ async function authenticateInGitHub({
 }
 
 async function finishOAuthFlow(code: string, state: string): Promise<boolean | AxiosError> {
-
 	if (!code && !state) {
 		reportError({
 			message: "code or state missing"
@@ -85,18 +84,17 @@ async function finishOAuthFlow(code: string, state: string): Promise<boolean | A
 		return false;
 	}
 
-	const prevState = oauthState;
-	oauthState = undefined;
-
-	if (state !== prevState) {
+	if (!oauthStates.includes(state)) {
 		reportError({
 			message: "state not match"
 		}, {
 			path: "finishOAuthFlow",
-			isPrevStateEmpty: !prevState,
+			oauthStateLength: oauthStates.length,
 			isStateEmpty: !state
 		});
 		return false;
+	} else {
+		oauthStates.splice(oauthStates.indexOf(state), 1);
 	}
 
 	try {
@@ -127,6 +125,10 @@ function clear() {
 	email = undefined;
 }
 
+export function __test_only_clearOAuthStates() {
+	oauthStates = [];
+}
+
 export default {
 	checkValidity,
 	authenticateInGitHub,
@@ -134,4 +136,5 @@ export default {
 	getUserDetails,
 	clear
 };
+
 
