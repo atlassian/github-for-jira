@@ -21,9 +21,9 @@ export const registerHandlebarsHelpers = () => {
 
 	hbs.registerHelper(
 		"ifAllReposSynced",
-		(numberOfSyncedRepos: number, totalNumberOfRepos: number): any =>
+		(numberOfSyncedRepos: number, totalNumberOfRepos: number): string =>
 			numberOfSyncedRepos === totalNumberOfRepos
-				? totalNumberOfRepos
+				? String(totalNumberOfRepos)
 				: `${numberOfSyncedRepos} / ${totalNumberOfRepos}`
 	);
 
