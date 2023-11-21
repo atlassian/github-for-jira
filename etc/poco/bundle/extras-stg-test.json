@@ -1,6 +1,26 @@
 {
 	"tests": [
 		{
+			"name": "Allow Stg Basic Check (Critical) Pollinator Test to call Get Audit Log endpoints",
+			"path": "/api/audit-log/subscription/12345",
+			"method": "GET",
+			"mechanism": "asap",
+			"principals": [
+				"pollinator-check/44d4ce64-f598-4282-8cbb-189eff9b94bf"
+			],
+			"allowed": true
+		},
+		{
+			"name": "Allow Stg Basic Check (GHE) (Critical) Pollinator Test to call Get Audit Log endpoints",
+			"path": "/api/audit-log/subscription/12345",
+			"method": "GET",
+			"mechanism": "asap",
+			"principals": [
+				"pollinator-check/06673b3a-7d8f-4f6e-8b72-0527695e241b"
+			],
+			"allowed": true
+		},
+		{
 			"name": "Allow Stg Basic Check (Critical) Pollinator Test to call Delete Installation endpoints",
 			"path": "/api/deleteInstallation/21266506/https%3A%2F%2Ffusion-arc-pollinator-staging-app.atlassian.net",
 			"method": "DELETE",
@@ -11,7 +31,7 @@
 			"allowed": true
 		},
 		{
-			"name": "Allow Stg Basic Check (GHE) (Critical) Pollinator Test to call other admin endpoints",
+			"name": "Allow Stg Basic Check (GHE) (Critical) Pollinator Test to call Delete Installation endpoints",
 			"path": "/api/deleteInstallation/21266506/https%3A%2F%2Ffusion-arc-pollinator-staging-app.atlassian.net",
 			"method": "DELETE",
 			"mechanism": "asap",
