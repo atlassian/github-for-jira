@@ -21,8 +21,7 @@ describe("audit log service", () => {
 			const entityType = "commit";
 			const source = "backfill";
 			const issueKey = "ARC-2605";
-			const env = "prod";
-			const ID = `subID_${subscriptionId}_typ_${entityType}_id_${entityId}_act_${entityAction}_issKey_${issueKey}`;
+			const ID = `subID_${subscriptionId}_typ_${entityType}_id_${entityId}_issKey_${issueKey}`;
 			await auditLog(
 				{
 					source,
@@ -31,7 +30,6 @@ describe("audit log service", () => {
 					entityId,
 					subscriptionId,
 					issueKey,
-					env,
 					createdAt
 				},
 				logger
@@ -66,7 +64,6 @@ describe("audit log service", () => {
 				entityAction: { "S": entityAction },
 				entityId: { "S": entityId },
 				entityType: { "S": entityType },
-				env: { "S": env },
 				issueKey: { "S": issueKey },
 				subscriptionId: { "N": String(subscriptionId) }
 			});

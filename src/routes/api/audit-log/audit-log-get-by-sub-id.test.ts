@@ -25,12 +25,11 @@ describe("AuditLogApiGetBySubscriptionId", () => {
 		params = {
 			issueKey: "ABC-123",
 			entityType: "commit",
-			entityAction: "push",
 			entityId: "abcd-efgh-ijkl"
 		};
 	});
 
-	describe.each(["issueKey", "entityType", "entityAction", "entityId"])("param validation", (paramKey) => {
+	describe.each(["issueKey", "entityType", "entityId"])("param validation", (paramKey) => {
 		it(`should return 422 on missing param ${paramKey}`, async () => {
 			await makeApiCall(db.subscription.id, omit(params, paramKey))
 				.expect(422);
@@ -49,7 +48,6 @@ describe("AuditLogApiGetBySubscriptionId", () => {
 			subscriptionId: db.subscription.id,
 			issueKey: "ABC-123",
 			entityType: "commit",
-			entityAction: "push",
 			entityId: "abcd-efgh-ijkl"
 		}, expect.anything()).mockResolvedValue({
 			name: "hello"

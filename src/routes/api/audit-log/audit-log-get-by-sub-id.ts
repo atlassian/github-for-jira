@@ -5,7 +5,7 @@ import { findLog, AuditInfoPK } from "services/audit-log-service";
 export const ApiAuditLogGetBySubscriptionId = async (req: Request, res: Response): Promise<void> => {
 
 	const { subscriptionId } = req.params;
-	const { issueKey, entityType, entityAction, entityId } = req.query;
+	const { issueKey, entityType, entityId } = req.query;
 
 	const subscription = await Subscription.findByPk(subscriptionId);
 
@@ -17,7 +17,6 @@ export const ApiAuditLogGetBySubscriptionId = async (req: Request, res: Response
 		subscriptionId: Number(subscriptionId),
 		issueKey: String(issueKey),
 		entityType: String(entityType),
-		entityAction: String(entityAction),
 		entityId: String(entityId)
 	};
 

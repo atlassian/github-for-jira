@@ -8,7 +8,6 @@ export const AuditLogApiRouter = Router({ mergeParams: true });
 AuditLogApiRouter.get("/subscription/:subscriptionId",
 	param("subscriptionId").isInt(),
 	query("entityType").isString(),
-	query("entityAction").isString(),
 	query("entityId").isString(),
 	query("issueKey").isString(),
 	returnOnValidationError,
