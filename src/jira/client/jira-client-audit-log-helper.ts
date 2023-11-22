@@ -1,4 +1,4 @@
-import { AuditInfo, auditLog } from "../../services/audit-log-service";
+import { AuditInfo, saveAuditLog } from "../../services/audit-log-service";
 import { isArray, isObject } from "lodash";
 
 const getRepoData = (repoId,request) =>{
@@ -54,15 +54,15 @@ export const processBatchedBulkUpdateResp = ({
 		let auditInfo: Array<AuditInfo> = [];
 		if (isSuccess && hasAcceptedDevinfoEntities) {
 			Object.keys(acceptedDevinfoEntities).forEach(
-				(acceptedDevinfoEntityID) => {
+				(acceptedDevinfoRepoID) => {
 					const { commits, branches, pullRequests } =
-						acceptedDevinfoEntities[acceptedDevinfoEntityID];
-					const hasBranches = isArray(branches);
-					const hasCommits = isArray(commits);
-					const hasPRs = isArray(pullRequests);
+						acceptedDevinfoEntities[acceptedDevinfoRepoID];
+					const hasBranches = isArray(branches) && branches.length >0;
+					const hasCommits = isArray(commits) && commits.length >0;
+					const hasPRs = isArray(pullRequests) && pullRequests.length >0;
 					let repoData;
 					if (hasBranches || hasCommits || hasPRs) {
-						repoData = getRepoData(acceptedDevinfoEntityID, request);
+						repoData = getRepoData(acceptedDevinfoRepoID, request);
 					}
 					// commits
 					if (hasCommits) {
@@ -116,7 +116,7 @@ export const processAuditLogsForDevInfoBulkUpdate = ({ request, response, option
 		});
 		if (isSuccess) {
 			auditInfo?.map(async (auditInf) => {
-				await auditLog(auditInf, logger);
+				await saveAuditLog(auditInf, logger);
 			});
 		} else {
 			logger.error("the DD api call failed for all github entities!");

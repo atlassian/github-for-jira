@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { Subscription } from "models/subscription";
-import { findLog, AuditInfoPK } from "services/audit-log-service";
+import { getAuditLog, AuditInfoPK } from "services/audit-log-service";
 
 export const ApiAuditLogGetBySubscriptionId = async (req: Request, res: Response): Promise<void> => {
 
@@ -20,7 +20,7 @@ export const ApiAuditLogGetBySubscriptionId = async (req: Request, res: Response
 		entityId: String(entityId)
 	};
 
-	const result = await findLog(auditInfo, req.log);
+	const result = await getAuditLog(auditInfo, req.log);
 
 	res.status(200).json(result);
 
