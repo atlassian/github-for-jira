@@ -1,7 +1,7 @@
 import { processBatchedBulkUpdateResp } from "./jira-client-audit-log-helper";
 import { getLogger } from "config/logger";
 
-describe("processAuditLogs", () => {
+describe("processAuditLogsForDevInfoBulkUpdate", () => {
 	const mockLogger = getLogger("mock-logger");
 	it("should return isSuccess as false when status code is anything other than 202", () => {
 		const request = {
@@ -97,6 +97,75 @@ describe("processAuditLogs", () => {
 
 		expect(result).toEqual({
 			isSuccess: false
+		});
+	});
+	it("should return isSuccess as true when status code is 202 and there are/is acceptedDevinfoEntities but the result has failedDevinfoEntities as well", () => {
+		const request = {
+			preventTransitions: false,
+			operationType: "NORMAL",
+			repositories: [
+				{
+					id: "691330555",
+					name: "KamaksheeSamant/react-cods-hub",
+					url: "https://github.com/KamaksheeSamant/react-cods-hub",
+					updateSequenceId: 1700453687210,
+					commits: [
+						{
+							hash: "e3fe8bf05f50f87c18611298e312217c4895747b",
+							message: "KAM-1 pl",
+							authorTimestamp: "2023-11-20T04:14:44Z",
+							displayId: "e3fe8b",
+							fileCount: 1,
+							id: "e3fe8bf05f50f87c18611298e312217c4895747b",
+							issueKeys: ["KAM-1"],
+							url: "https://github.com/KamaksheeSamant/react-cods-hub/commit/e3fe8bf05f50f87c18611298e312217c4895747b",
+							updateSequenceId: 1700453687210
+						}
+					]
+				}
+			],
+			properties: { installationId: 42545874 }
+		};
+		const response = {
+			status: 202,
+			data: {
+				acceptedDevinfoEntities: {
+					"691330555": {
+						branches: [],
+						commits: ["e3fe8bf05f50f87c18611298e312217c4895747b"],
+						pullRequests: []
+					}
+				},
+				failedDevinfoEntities: {
+					"112233445": {
+						branches: [],
+						commits: ["9829bshjjhsj99sbss8611298e312217c489nsnsi"],
+						pullRequests: []
+					}
+				},
+				unknownIssueKeys: []
+			}
+		};
+		const options = { preventTransitions:false, operationType: "NORMAL", entityAction: "COMMIT_PUSH", subscriptionId: 11669900 };
+
+		const result = processBatchedBulkUpdateResp({
+			request,
+			response,
+			options,
+			logger: mockLogger
+		});
+
+		expect(result).toEqual({
+			isSuccess: true,
+			auditInfo:[{
+				"createdAt": expect.anything(),
+				"entityAction": "COMMIT_PUSH",
+				"entityId": "e3fe8bf05f50f87c18611298e312217c4895747b",
+				"entityType": "commits",
+				"issueKey": "KAM-1",
+				"source": "NORMAL",
+				"subscriptionId": 11669900
+			}]
 		});
 	});
 	it("should extract the commit with 2 issue keys linked - audit info for logging", () => {

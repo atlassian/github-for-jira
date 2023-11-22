@@ -59,7 +59,7 @@ export const processBranch = async (
 	);
 	const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
 	if (!subscription) {
-		logger.info(`Subscription not found to log the info into audit log table`);
+		logger.warn(`Subscription not found to log the info into audit log table`);
 	}
 	if (!jiraClient) {
 		logger.info("Halting further execution for createBranch as JiraClient is empty for this installation");

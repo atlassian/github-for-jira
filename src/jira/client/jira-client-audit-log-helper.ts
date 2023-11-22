@@ -106,7 +106,7 @@ export const processBatchedBulkUpdateResp = ({
 		return { isSuccess: false };
 	}
 };
-export const processAuditLogs = ({ request, response, options, logger }) => {
+export const processAuditLogsForDevInfoBulkUpdate = ({ request, response, options, logger }) => {
 	try {
 		const { isSuccess, auditInfo } = processBatchedBulkUpdateResp({
 			request,

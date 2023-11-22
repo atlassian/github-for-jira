@@ -22,7 +22,7 @@ import { uniq } from "lodash";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { getDeploymentDebugInfo } from "./jira-client-deployment-helper";
-import { processAuditLogs } from "./jira-client-audit-log-helper";
+import { processAuditLogsForDevInfoBulkUpdate } from "./jira-client-audit-log-helper";
 import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
 import { sendAnalytics } from "~/src/util/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "~/src/interfaces/common";
@@ -574,8 +574,12 @@ const batchedBulkUpdate = async (
 		}, "Posting to Jira devinfo bulk update api");
 
 		const response = await instance.post("/rest/devinfo/0.10/bulk", body);
+		const responseData = {
+			status: response.status,
+			data:response.data
+		};
 
-		processAuditLogs({ request:body, response, options, logger });
+		processAuditLogsForDevInfoBulkUpdate({ request:body, response:responseData, options, logger });
 
 		logger.info({
 			responseStatus: response.status,
