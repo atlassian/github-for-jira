@@ -66,7 +66,10 @@ describe("audit log service", () => {
 				issueKey: { S: issueKey },
 				subscriptionId: { N: String(subscriptionId) }
 			});
-			it("should successfully return DD api call audit info from dynamo db", async () => {
+		});
+
+		describe("auditLog", () => {
+			it("should successfully save DD api call audit info to dynamo db", async () => {
 				const createdAt = new Date();
 				const subscriptionId = 241412;
 				const entityId = "25e1008";
