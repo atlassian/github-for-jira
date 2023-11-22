@@ -375,7 +375,8 @@ export const getJiraClient = async (
 						instance,
 						gitHubInstallationId,
 						logger,
-						options
+						options,
+						jiraHost
 					);
 				}
 			}
@@ -547,7 +548,8 @@ const batchedBulkUpdate = async (
 	instance: AxiosInstance,
 	installationId: number | undefined,
 	logger: Logger,
-	options?: JiraSubmitOptions
+	options?: JiraSubmitOptions,
+	jiraHost?: string
 ) => {
 	const dedupedCommits = dedupCommits(data.commits);
 	// Initialize with an empty chunk of commits so we still process the request if there are no commits in the payload
