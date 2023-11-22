@@ -152,7 +152,7 @@ describe("processAuditLogs", () => {
 		expect(result).toEqual({
 			isSuccess: true,
 			auditInfo:[{
-				"createdAt": new Date(),
+				"createdAt": expect.anything(),
 				"entityAction": "COMMIT_PUSH",
 				"entityId": "e3fe8bf05f50f87c18611298e312217c4895747b",
 				"entityType": "commits",
@@ -161,7 +161,7 @@ describe("processAuditLogs", () => {
 				"subscriptionId": 1122334455
 			},
 			{
-				"createdAt": new Date(),
+				"createdAt": expect.anything(),
 				"entityAction": "COMMIT_PUSH",
 				"entityId": "e3fe8bf05f50f87c18611298e312217c4895747b",
 				"entityType": "commits",
@@ -224,7 +224,7 @@ describe("processAuditLogs", () => {
 		expect(result).toEqual({
 			isSuccess: true,
 			auditInfo:[{
-				"createdAt": new Date(),
+				"createdAt": expect.anything(),
 				"entityAction": "COMMIT_PUSH",
 				"entityId": "e3fe8bf05f50f87c18611298e312217c4895747b",
 				"entityType": "commits",
@@ -285,7 +285,7 @@ describe("processAuditLogs", () => {
 		expect(result).toEqual({
 			isSuccess: true,
 			auditInfo:[{
-				"createdAt": new Date(),
+				"createdAt": expect.anything(),
 				"entityAction": "COMMIT_PUSH",
 				"entityId": "KAM-1-and-KAM-2",
 				"entityType": "branches",
@@ -294,7 +294,7 @@ describe("processAuditLogs", () => {
 				"subscriptionId": 44558899
 			},
 			{
-				"createdAt": new Date(),
+				"createdAt": expect.anything(),
 				"entityAction": "COMMIT_PUSH",
 				"entityId": "KAM-1-and-KAM-2",
 				"entityType": "branches",

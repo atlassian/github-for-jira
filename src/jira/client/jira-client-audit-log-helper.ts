@@ -8,15 +8,15 @@ const getRepoData = (repoId,request) =>{
 };
 
 const getAuditInfo = ({
-	githubEntity,
-	repoData,
+	acceptedGithubEntities,
+	repoEntities,
 	githubEntityType,
 	options
 }) => {
 	const auditInfo: Array<AuditInfo> = [];
 	const createdAt = new Date();
-	githubEntity.map((githubEntityId) => {
-		const repoEntities = repoData?.[githubEntityType];
+	acceptedGithubEntities.map((githubEntityId) => {
+		// const repoEntities = repoData?.[githubEntityType];
 		const repoEntity = repoEntities.find(({ id }) => id === githubEntityId);
 		const issueKeys = repoEntity.issueKeys;
 		issueKeys.map((issueKey) => {
@@ -67,9 +67,9 @@ export const processBatchedBulkUpdateResp = ({
 					// commits
 					if (hasCommits) {
 						const commitAuditInfo = getAuditInfo({
-							githubEntity: commits,
+							acceptedGithubEntities: commits,
 							githubEntityType: "commits",
-							repoData,
+							repoEntities:repoData["commits"],
 							options
 						});
 						auditInfo = [...auditInfo, ...commitAuditInfo];
@@ -78,9 +78,9 @@ export const processBatchedBulkUpdateResp = ({
 					// branches
 					if (hasBranches) {
 						const branchAuditInfo = getAuditInfo({
-							githubEntity: branches,
+							acceptedGithubEntities: branches,
 							githubEntityType: "branches",
-							repoData,
+							repoEntities:repoData["branches"],
 							options
 						});
 						auditInfo = [...auditInfo, ...branchAuditInfo];
@@ -89,9 +89,9 @@ export const processBatchedBulkUpdateResp = ({
 					// prs
 					if (hasPRs) {
 						const PRAuditInfo = getAuditInfo({
-							githubEntity: pullRequests,
+							acceptedGithubEntities: pullRequests,
 							githubEntityType: "pullRequests",
-							repoData,
+							repoEntities:repoData["pullRequests"],
 							options
 						});
 						auditInfo = [...auditInfo, ...PRAuditInfo];
