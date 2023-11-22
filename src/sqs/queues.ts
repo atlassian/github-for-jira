@@ -40,9 +40,8 @@ backfillQueue = new SqsQueue<BackfillMessagePayload>(
 );
 
 export const sqsQueues = {
-	// backfills
 	backfill: backfillQueue,
-	// commits push
+
 	push: new SqsQueue<PushQueueMessagePayload>({
 		queueName: "push",
 		queueUrl: envVars.SQS_PUSH_QUEUE_URL,
@@ -63,7 +62,7 @@ export const sqsQueues = {
 	deploymentQueueMessageHandler,
 	webhookMetricWrapper(jiraAndGitHubErrorsHandler, "deployment_status")
 	),
-	//branch
+
 	branch: new SqsQueue<BranchMessagePayload>({
 		queueName: "branch",
 		queueUrl: envVars.SQS_BRANCH_QUEUE_URL,
