@@ -253,5 +253,6 @@ export type JiraOperationType = "NORMAL" | "BACKFILL";
 export interface JiraSubmitOptions {
 	preventTransitions: boolean;
 	operationType: JiraOperationType;
-	entityAction: "BRANCH_CREATE" | "BRANCH_DELETE";
+	entityAction?: "BRANCH_CREATE" | "BRANCH_DELETE" | "COMMIT_PUSH";
+	subscriptionId?: number;
 }

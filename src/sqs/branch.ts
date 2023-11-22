@@ -5,7 +5,6 @@ import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 export const branchQueueMessageHandler: MessageHandler<BranchMessagePayload> = async (context: SQSMessageContext<BranchMessagePayload>) => {
 	// eslint-disable-next-line no-console
-	console.log("INSIDE branchQueueMessageHandler :::+++:::");
 	const messagePayload: BranchMessagePayload = context.payload;
 	if (messagePayload.webhookReceived === undefined || messagePayload.webhookPayload === undefined || messagePayload.webhookId === undefined) {
 		context.log.error({ messagePayload }, "Missing required fields");

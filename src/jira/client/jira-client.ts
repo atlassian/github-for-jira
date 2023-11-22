@@ -6,8 +6,6 @@ import { getJiraId } from "../util/id";
 import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
 import { createHashWithSharedSecret } from "utils/encryption";
-import { AuditInfo } from "../../services/audit-log-service";
-
 import {
 	JiraAssociation,
 	JiraBuildBulkSubmitData,
@@ -24,6 +22,7 @@ import { uniq } from "lodash";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { getDeploymentDebugInfo } from "./jira-client-deployment-helper";
+import { processAuditLogs } from "./jira-client-audit-log-helper";
 import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
 import { sendAnalytics } from "~/src/util/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "~/src/interfaces/common";
@@ -550,8 +549,6 @@ const batchedBulkUpdate = async (
 	logger: Logger,
 	options?: JiraSubmitOptions
 ) => {
-	// eslint-disable-next-line no-console
-	console.log("INSIDE batchedBulkUpdate :::+++:::");
 	const dedupedCommits = dedupCommits(data.commits);
 	// Initialize with an empty chunk of commits so we still process the request if there are no commits in the payload
 	const commitChunks: JiraCommit[][] = [];
@@ -577,16 +574,9 @@ const batchedBulkUpdate = async (
 		}, "Posting to Jira devinfo bulk update api");
 
 		const response = await instance.post("/rest/devinfo/0.10/bulk", body);
-		// TODO: audit the api call sucess
-		const { isSuccess, auditInfo } = getBatchedBulkUpdateSuccess({ request:body, response, options });
-		if (isSuccess){
-			// eslint-disable-next-line no-console
-			console.log("I THE DD CALL HAVE SUCCEEDED",auditInfo);
-		}
-		else {
-			// eslint-disable-next-line no-console
-			console.log("I failed");
-		}
+
+		processAuditLogs({ request:body, response, options, logger });
+
 		logger.info({
 			responseStatus: response.status,
 			unknownIssueKeys: safeParseAndHashUnknownIssueKeysForLoggingPurpose(response.data, logger)
@@ -616,113 +606,6 @@ const safeParseAndHashUnknownIssueKeysForLoggingPurpose = (responseData: any, lo
 		logger.error({ error }, "Error parsing unknownIssueKeys from jira api response");
 		return [];
 	}
-};
-
-const isValidArray = array => array && Array.isArray(array) && array.length > 0;
-const isValidObject = obj => obj && !Array.isArray(obj) && typeof obj === "object" && Object.keys(obj).length > 0;
-
-const getRepoData = (repoId,request) =>{
-	const repositories = request["repositories"] || null;
-	const acceptedDevinfoEntityData = repositories?.find(({ id })=>id===repoId);
-	return acceptedDevinfoEntityData;
-};
-
-const getAuditInfo = ({ githubEntity, repoData, githubEntityType, options }) => {
-	const auditInfo: Array<AuditInfo> = [];
-	const createdAt = new Date();
-	githubEntity.map((githubEntityId) => {
-		const repoEntities = repoData?.[githubEntityType];
-		const repoEntity = repoEntities.find(
-			({ id }) => id === githubEntityId
-		);
-		const issueKeys = repoEntity.issueKeys;
-		issueKeys.map((issueKey) => {
-			const obj: AuditInfo = {
-				createdAt,
-				entityId: githubEntityId,
-				entityType: githubEntityType,
-				issueKey,
-				subscriptionId: 123,
-				env: "plpl",
-				source: options.operationType,
-				entityAction: "okok"
-			};
-			auditInfo.push(obj);
-		});
-	});
-	return auditInfo;
-};
-
-export const getBatchedBulkUpdateSuccess = ({
-	request,
-	response,
-	options
-}): {
-	isSuccess: boolean;
-	auditInfo?: Array<AuditInfo>;
-} => {
-	// eslint-disable-next-line no-console
-	console.log(">>>>>> 1", request, response);
-	const isSuccess = response?.status === 202;
-	const acceptedDevinfoEntities =
-		response?.data && response?.data?.acceptedDevinfoEntities;
-	const hasAcceptedDevinfoEntities = isValidObject(acceptedDevinfoEntities);
-	let auditInfo: Array<AuditInfo> = [];
-	if (isSuccess && hasAcceptedDevinfoEntities) {
-		// eslint-disable-next-line no-console
-		console.log(">>>>>> 2");
-		Object.keys(acceptedDevinfoEntities).forEach((acceptedDevinfoEntityID) => {
-			// eslint-disable-next-line no-console
-			console.log(">>>>>> 3 it --", acceptedDevinfoEntityID);
-			const { commits, branches, pullRequests } =
-				acceptedDevinfoEntities[acceptedDevinfoEntityID];
-			const hasBranches = isValidArray(branches);
-			const hasCommits = isValidArray(commits);
-			const hasPRs = isValidArray(pullRequests);
-			let repoData;
-			if (hasBranches || hasCommits || hasPRs) {
-				repoData = getRepoData(acceptedDevinfoEntityID, request);
-				// eslint-disable-next-line no-console
-				console.log(">>>>>> 4 it --", repoData);
-			}
-			// commits
-			if (hasCommits) {
-				const commitAuditInfo = getAuditInfo({
-					githubEntity: commits,
-					githubEntityType: "commits",
-					repoData,
-					options
-				});
-				auditInfo = [...auditInfo, ...commitAuditInfo];
-			}
-
-			// branches
-			if (hasBranches) {
-				const branchAuditInfo = getAuditInfo({
-					githubEntity: branches,
-					githubEntityType: "branches",
-					repoData,
-					options
-				});
-				auditInfo = [...auditInfo, ...branchAuditInfo];
-			}
-
-			// prs
-			if (hasPRs) {
-				const PRAuditInfo = getAuditInfo({
-					githubEntity: pullRequests,
-					githubEntityType: "pullRequests",
-					repoData,
-					options
-				});
-				auditInfo = [...auditInfo, ...PRAuditInfo];
-			}
-			// eslint-disable-next-line no-console
-			console.log(">>>>>>", auditInfo);
-		});
-		return { isSuccess: true, auditInfo };
-	}
-	return { isSuccess: false };
 };
 
 const findIssueKeyAssociation = (resource: IssueKeyObject): JiraAssociation | undefined =>

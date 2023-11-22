@@ -85,8 +85,6 @@ export const enqueuePush = async (payload: GitHubPushData, jiraHost: string, log
 	await sqsQueues.push.sendMessage(await createJobData(payload, jiraHost, logger, gitHubAppConfig), 0, logger);
 
 export const processPush = async (github: GitHubInstallationClient, payload: PushQueueMessagePayload, rootLogger: Logger) => {
-	// eslint-disable-next-line no-console
-	console.log("INSIDE processPush :::+++:::");
 	const {
 		repository,
 		repository: { owner, name: repo },
@@ -206,7 +204,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 
 			log.info("Sending data to Jira");
 			try {
-				const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
+				const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload,{ preventTransitions:false, operationType: "NORMAL", entityAction: "COMMIT_PUSH", subscriptionId: subscription.id });
 				webhookReceived && emitWebhookProcessedMetrics(
 					webhookReceived,
 					"push",

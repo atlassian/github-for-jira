@@ -4,8 +4,6 @@ import { MessageHandler, PushQueueMessagePayload, SQSMessageContext } from "./sq
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const pushQueueMessageHandler: MessageHandler<PushQueueMessagePayload> = async (context: SQSMessageContext<PushQueueMessagePayload>) => {
-	// eslint-disable-next-line no-console
-	console.log("INSIDE pushQueueMessageHandler :::+++:::");
 	const { payload } = context;
 	if (payload.repository === undefined || payload.repository.full_name === undefined || payload.shas === undefined || payload.webhookId === undefined) {
 		context.log.error({ payload }, "Missing required fields");

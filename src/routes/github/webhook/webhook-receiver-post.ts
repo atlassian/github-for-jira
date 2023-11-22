@@ -85,7 +85,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 			}
 		});
 		await webhookRouter(webhookContext);
-		webhookContext.log.info("Webhook was successfully processed ::+::",webhookContext.action);
+		webhookContext.log.info("Webhook was successfully processed");
 		response.sendStatus(204);
 
 	} catch (err: unknown) {
@@ -96,7 +96,6 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 
 const webhookRouter = async (context: WebhookContext) => {
 	const VALID_PULL_REQUEST_ACTIONS = ["opened", "reopened", "closed", "edited", "converted_to_draft", "ready_for_review"];
-
 	switch (context.name) {
 		case "push":
 			await GithubWebhookMiddleware(pushWebhookHandler)(context);
