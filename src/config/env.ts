@@ -141,6 +141,8 @@ export interface EnvVars {
 	//DyamoDB for deployment status history
 	DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_REGION: string;
 	DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME: string;
+	DYNAMO_AUDIT_LOG_TABLE_NAME: string;
+	DYNAMO_AUDIT_LOG_TABLE_REGION: string;
 
 	// Micros Lifecycle Env Vars
 	SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL?: string;

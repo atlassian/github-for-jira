@@ -97,6 +97,8 @@ exports[`app getFrontendApp please review routes and update snapshot when adding
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,ApiResyncFailedTasksPost
 :POST ^/?(?=/|$)^/api/?(?=/|$)^/verify/githubapp/(?:([^/]+?))/?(?=/|$)^/verify-get-apps/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,GHESVerifyGetApps
+:GET ^/?(?=/|$)^/api/?(?=/|$)^/audit-log/?(?=/|$)^/subscription/(?:([^/]+?))/?$
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,middleware,middleware,middleware,middleware,returnOnValidationError,ApiAuditLogGetBySubscriptionId
 :POST ^/?(?=/|$)^/api/?(?=/|$)^/jira/?(?=/|$)^/(?:([^/]+?))/verify/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,middleware,returnOnValidationError,ApiJiraVerifyPost
 :POST ^/?(?=/|$)^/api/?(?=/|$)^/jira/?(?=/|$)^/(?:([^/]+?))/uninstall/?$
