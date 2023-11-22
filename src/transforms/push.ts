@@ -198,8 +198,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		for (const chunk of chunks) {
 			const jiraPayload = {
 				... transformRepositoryDevInfoBulk(repository, payload.gitHubAppConfig?.gitHubBaseUrl),
-				commits: chunk,
-				source: "webhook"
+				commits: chunk
 			};
 
 			log.info("Sending data to Jira");
