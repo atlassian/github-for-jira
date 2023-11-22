@@ -1,42 +1,42 @@
 {
-	"env": {
-	  "PRIVATE_KEY": {
-		"description": "the private key you downloaded when creating the GitHub App"
-	  },
-	  "APP_ID": {
-		"description": "the ID of the GitHub App"
-	  },
-	  "WEBHOOK_SECRETS": {
-		"description": "the secrets configured for the GitHub App"
-	  },
-	  "LOG_FORMAT": {
-		"description": "https://probot.github.io/docs/logging/#log-formats",
-		"value": "json",
-		"required": false
-	  },
-	  "LOG_LEVEL": {
-		"description": "trace, debug, info, warn, error, fatal",
-		"value": "debug",
-		"required": false
-	  },
-	  "SENTRY_DSN": {
-		"description": "Sentry.io configuration: https://docs.sentry.io/quickstart/#configure-the-dsn"
-	  },
-	  "SENTRY_ENVIRONMENT": {
-		"description": "THe Sentry.io Environment to bucket these errors under."
-	  },
-	  "DISABLE_STATS": {
-		"description": "Disable the probot stats plugin for scalability",
-		"value": "true"
-	  },
-	  "STORAGE_SECRET": {
-		"description": "The secret used to encrypt secrets in the database"
-	  },
-	  "DATABASE_URL": {
-		"description": "The Postgres connection URL for the backing database"
-	  }
-	},
-	"scripts": {
-	  "postdeploy": "sequelize db:migrate"
-	}
+  "env": {
+    "PRIVATE_KEY": {
+      "description": "the private key you downloaded when creating the GitHub App"
+    },
+    "APP_ID": {
+      "description": "the ID of the GitHub App"
+    },
+    "WEBHOOK_SECRETS": {
+      "description": "the secrets configured for the GitHub App"
+    },
+    "LOG_FORMAT": {
+      "description": "https://probot.github.io/docs/logging/#log-formats",
+      "value": "json",
+      "required": false
+    },
+    "LOG_LEVEL": {
+      "description": "trace, debug, info, warn, error, fatal",
+      "value": "debug",
+      "required": false
+    },
+    "SENTRY_DSN": {
+      "description": "Sentry.io configuration: https://docs.sentry.io/quickstart/#configure-the-dsn"
+    },
+    "SENTRY_ENVIRONMENT": {
+      "description": "THe Sentry.io Environment to bucket these errors under."
+    },
+    "DISABLE_STATS": {
+      "description": "Disable the probot stats plugin for scalability",
+      "value": "true"
+    },
+    "STORAGE_SECRET": {
+      "description": "The secret used to encrypt secrets in the database"
+    },
+    "DATABASE_URL": {
+      "description": "The Postgres connection URL for the backing database"
+    }
+  },
+  "scripts": {
+    "postdeploy": "sequelize db:migrate"
   }
+}
