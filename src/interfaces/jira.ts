@@ -1,4 +1,5 @@
 import { TransformedRepositoryId } from "~/src/transforms/transform-repository-id";
+import { AuditLogSourceType } from "../services/audit-log-service";
 
 interface JiraPullRequestCommit {
 	id: string;
@@ -253,6 +254,7 @@ export type JiraOperationType = "NORMAL" | "BACKFILL";
 export interface JiraSubmitOptions {
 	preventTransitions: boolean;
 	operationType: JiraOperationType;
+	auditLogsource: AuditLogSourceType;
 	entityAction?: "BRANCH_CREATE" | "BRANCH_DELETE" | "COMMIT_PUSH";
 	subscriptionId?: number;
 }

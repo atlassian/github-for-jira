@@ -69,7 +69,13 @@ export const processBranch = async (
 	logger.info(`Sending jira update for create branch event`);
 
 
-	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload, { preventTransitions:false, operationType: "NORMAL", entityAction: "BRANCH_CREATE", subscriptionId: subscription?.id });
+	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload, {
+		preventTransitions: false,
+		operationType: "NORMAL",
+		auditLogsource: "WEBHOOK",
+		entityAction: "BRANCH_CREATE",
+		subscriptionId: subscription?.id
+	});
 
 	emitWebhookProcessedMetrics(
 		webhookReceivedDate.getTime(),

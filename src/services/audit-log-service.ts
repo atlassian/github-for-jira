@@ -6,6 +6,8 @@ import { createHashWithoutSharedSecret } from "utils/encryption";
 
 const defaultLogger = getLogger("DeploymentDynamoLogger");
 
+export type AuditLogSourceType = "BACKFILL" | "WEBHOOK";
+
 export type AuditInfoPK = {
 	entityType: string;
 	entityId: string;
