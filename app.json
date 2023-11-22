@@ -1,49 +1,42 @@
-// {
-//   '691330555': {
-//     branches: [],
-//     commits: [ 'e099b2f396fee9e6ca9c2e3ecd7e9f2ab094b3f7' ],
-//     pullRequests: []
-//   }
-// }
 {
-	"preventTransitions": false,
-	"operationType": "NORMAL",
-	"repositories": [
-		{
-			"id": "691330555",
-			"name": "KamaksheeSamant/react-cods-hub",
-			"url": "https://github.com/KamaksheeSamant/react-cods-hub",
-			"updateSequenceId": 1700452691184,
-			"commits": [
-				{
-					"hash": "e099b2f396fee9e6ca9c2e3ecd7e9f2ab094b3f7",
-					"message": "KAM-1 include\n\nok",
-					"author": {
-						"avatar": "https://avatars.githubusercontent.com/u/111976475?v=4",
-						"name": "KamaksheeSamant",
-						"email": "111976475+KamaksheeSamant@users.noreply.github.com",
-						"url": "https://github.com/KamaksheeSamant"
-					},
-					"authorTimestamp": "2023-11-20T03:58:09Z",
-					"displayId": "e099b2",
-					"fileCount": 1,
-					"files": [
-						{
-							"path": "README.md",
-							"changeType": "MODIFIED",
-							"linesAdded": 1,
-							"linesRemoved": 1,
-							"url": "https://github.com/KamaksheeSamant/react-cods-hub/blob/e099b2f396fee9e6ca9c2e3ecd7e9f2ab094b3f7/README.md"
-						}
-					],
-					"id": "e099b2f396fee9e6ca9c2e3ecd7e9f2ab094b3f7",
-					"issueKeys": ["KAM-1"],
-					"url": "https://github.com/KamaksheeSamant/react-cods-hub/commit/e099b2f396fee9e6ca9c2e3ecd7e9f2ab094b3f7",
-					"updateSequenceId": 1700452691184
-				}
-			]
-		}
-	],
-	"properties": { "installationId": 42545874 }
-}
-
+	"env": {
+	  "PRIVATE_KEY": {
+		"description": "the private key you downloaded when creating the GitHub App"
+	  },
+	  "APP_ID": {
+		"description": "the ID of the GitHub App"
+	  },
+	  "WEBHOOK_SECRETS": {
+		"description": "the secrets configured for the GitHub App"
+	  },
+	  "LOG_FORMAT": {
+		"description": "https://probot.github.io/docs/logging/#log-formats",
+		"value": "json",
+		"required": false
+	  },
+	  "LOG_LEVEL": {
+		"description": "trace, debug, info, warn, error, fatal",
+		"value": "debug",
+		"required": false
+	  },
+	  "SENTRY_DSN": {
+		"description": "Sentry.io configuration: https://docs.sentry.io/quickstart/#configure-the-dsn"
+	  },
+	  "SENTRY_ENVIRONMENT": {
+		"description": "THe Sentry.io Environment to bucket these errors under."
+	  },
+	  "DISABLE_STATS": {
+		"description": "Disable the probot stats plugin for scalability",
+		"value": "true"
+	  },
+	  "STORAGE_SECRET": {
+		"description": "The secret used to encrypt secrets in the database"
+	  },
+	  "DATABASE_URL": {
+		"description": "The Postgres connection URL for the backing database"
+	  }
+	},
+	"scripts": {
+	  "postdeploy": "sequelize db:migrate"
+	}
+  }
