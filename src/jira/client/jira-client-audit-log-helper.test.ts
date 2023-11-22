@@ -38,7 +38,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 				unknownIssueKeys: []
 			}
 		};
-		const options = { preventTransitions:false, operationType: "NORMAL", entityAction: "COMMIT_PUSH", subscriptionId: 1122334455 };
+		const options = { preventTransitions:false, operationType: "WEBHOOK", auditLogsource: "WEBHOOK", entityAction: "COMMIT_PUSH", subscriptionId: 1122334455 };
 
 		const result = processBatchedBulkUpdateResp({
 			request,
@@ -86,7 +86,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 				unknownIssueKeys: []
 			}
 		};
-		const options = { preventTransitions:false, operationType: "NORMAL", entityAction: "COMMIT_PUSH", subscriptionId: 1122334455 };
+		const options = { preventTransitions:false, operationType: "WEBHOOK", auditLogsource: "WEBHOOK",entityAction: "COMMIT_PUSH", subscriptionId: 1122334455 };
 
 		const result = processBatchedBulkUpdateResp({
 			request,
@@ -146,7 +146,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 				unknownIssueKeys: []
 			}
 		};
-		const options = { preventTransitions:false, operationType: "NORMAL", entityAction: "COMMIT_PUSH", subscriptionId: 11669900 };
+		const options = { preventTransitions:false, operationType: "WEBHOOK", auditLogsource: "WEBHOOK", entityAction: "COMMIT_PUSH", subscriptionId: 11669900 };
 
 		const result = processBatchedBulkUpdateResp({
 			request,
@@ -163,7 +163,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 				"entityId": "e3fe8bf05f50f87c18611298e312217c4895747b",
 				"entityType": "commits",
 				"issueKey": "KAM-1",
-				"source": "NORMAL",
+				"source": "WEBHOOK",
 				"subscriptionId": 11669900
 			}]
 		});
@@ -209,7 +209,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 				unknownIssueKeys: []
 			}
 		};
-		const options = { preventTransitions:false, operationType: "NORMAL", entityAction: "COMMIT_PUSH", subscriptionId: 1122334455 };
+		const options = { preventTransitions:false, operationType: "WEBHOOK", entityAction: "COMMIT_PUSH", subscriptionId: 1122334455 };
 
 		const result = processBatchedBulkUpdateResp({
 			request,
@@ -226,7 +226,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 				"entityId": "e3fe8bf05f50f87c18611298e312217c4895747b",
 				"entityType": "commits",
 				"issueKey": "KAM-1",
-				"source": "NORMAL",
+				"source": "WEBHOOK",
 				"subscriptionId": 1122334455
 			},
 			{
@@ -235,7 +235,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 				"entityId": "e3fe8bf05f50f87c18611298e312217c4895747b",
 				"entityType": "commits",
 				"issueKey": "KAM-2",
-				"source": "NORMAL",
+				"source": "WEBHOOK",
 				"subscriptionId": 1122334455
 			}]
 		});
@@ -281,7 +281,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 				unknownIssueKeys: []
 			}
 		};
-		const options = { preventTransitions:false, operationType: "NORMAL", entityAction: "COMMIT_PUSH", subscriptionId: 11669900 };
+		const options = { preventTransitions:false, operationType: "WEBHOOK", auditLogsource: "WEBHOOK",  entityAction: "COMMIT_PUSH", subscriptionId: 11669900 };
 
 		const result = processBatchedBulkUpdateResp({
 			request,
@@ -298,7 +298,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 				"entityId": "e3fe8bf05f50f87c18611298e312217c4895747b",
 				"entityType": "commits",
 				"issueKey": "KAM-1",
-				"source": "NORMAL",
+				"source": "WEBHOOK",
 				"subscriptionId": 11669900
 			}]
 		});
@@ -342,7 +342,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 				unknownIssueKeys: []
 			}
 		};
-		const options = { preventTransitions:false, operationType: "NORMAL", entityAction: "COMMIT_PUSH", subscriptionId: 44558899 };
+		const options = { preventTransitions:false, operationType: "WEBHOOK", auditLogsource: "WEBHOOK",  entityAction: "COMMIT_PUSH", subscriptionId: 44558899 };
 
 		const result = processBatchedBulkUpdateResp({
 			request,
@@ -359,7 +359,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 				"entityId": "KAM-1-and-KAM-2",
 				"entityType": "branches",
 				"issueKey": "KAM-1",
-				"source": "NORMAL",
+				"source": "WEBHOOK",
 				"subscriptionId": 44558899
 			},
 			{
@@ -368,7 +368,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 				"entityId": "KAM-1-and-KAM-2",
 				"entityType": "branches",
 				"issueKey": "KAM-2",
-				"source": "NORMAL",
+				"source": "WEBHOOK",
 				"subscriptionId": 44558899
 			}]
 		});

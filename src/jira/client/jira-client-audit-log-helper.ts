@@ -26,7 +26,7 @@ const getAuditInfo = ({
 				entityType: githubEntityType,
 				issueKey,
 				subscriptionId: options?.subscriptionId,
-				source: options?.operationType || "NORMAL",
+				source: options?.auditLogsource || "WEBHOOK",
 				entityAction: options?.entityAction || "null"
 			};
 			if (obj.subscriptionId && obj.entityId) {
