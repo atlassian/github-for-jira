@@ -53,14 +53,14 @@ describe("DB migration up", ()=>{
 					stderr: ""
 				});
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
+			// @ts-expect-error
 			sequelize.query = jest.fn(async () => []);
 			await triggerDBUp(MIGRATION_SCRIPT_LAST).expect(200);
 		});
 		it("should failed migration db up if target script is already in db", async () => {
 			jest.mocked(runDbMigration).mockRejectedValue("Shouldn't call this");
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
+			// @ts-expect-error
 			sequelize.query = jest.fn(async () => [MIGRATION_SCRIPT_LAST]);
 			await triggerDBUp(MIGRATION_SCRIPT_LAST).expect(400);
 			expect(runDbMigration).not.toBeCalled();

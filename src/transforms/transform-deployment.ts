@@ -16,7 +16,7 @@ import { Subscription } from "models/subscription";
 import minimatch from "minimatch";
 import { getRepoConfig } from "services/user-config-service";
 import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
-import { booleanFlag, BooleanFlags, shouldSendAll } from "config/feature-flags";
+import { shouldSendAll } from "config/feature-flags";
 import { findLastSuccessDeploymentFromCache } from "services/deployment-cache-service";
 import { statsd } from "config/statsd";
 import { metricDeploymentCache } from "config/metric-names";
@@ -140,11 +140,11 @@ const getCommitsSinceLastSuccessfulDeploymentFromCache = async (
 
 	let lastSuccessfullyDeployedCommit: string | undefined = undefined;
 
-	if (type === "webhook" && await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, jiraHost)) {
+	if (type === "webhook") {
 		lastSuccessfullyDeployedCommit = await getLastSuccessDeploymentShaFromCache(type, jiraHost, repoId, currentDeployEnv, currentDeployDate, githubInstallationClient, logger);
 	}
 
-	if (type === "backfill" && await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost)) {
+	if (type === "backfill") {
 		lastSuccessfullyDeployedCommit = await getLastSuccessDeploymentShaFromCache(type, jiraHost, repoId, currentDeployEnv, currentDeployDate, githubInstallationClient, logger);
 	}
 

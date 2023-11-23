@@ -9,7 +9,7 @@ jest.mock("models/installation");
 jest.mock("models/github-server-app");
 
 const GIT_HUB_SERVER_APP_ID = 123;
-const GIT_HUB_SERVER_APP_APP_ID = 789;
+const GIT_HUB_SERVER_APP_APP_ID = "789";
 const UUID = "97da6b0e-ec61-11ec-8ea0-0242ac120002";
 const JIRA_INSTALLATION_ID = 1;
 

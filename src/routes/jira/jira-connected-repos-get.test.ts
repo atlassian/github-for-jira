@@ -93,8 +93,6 @@ describe("jira-connected-repos-get", () => {
 				const newRepoSyncStatesData: any[] = [];
 				for (let newRepoStateNo = 1; newRepoStateNo < 50; newRepoStateNo++) {
 					const newRepoSyncState = { ...repoSyncState.dataValues };
-					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-					// @ts-ignore
 					delete newRepoSyncState["id"];
 					delete newRepoSyncState["commitStatus"];
 					delete newRepoSyncState["branchStatus"];

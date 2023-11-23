@@ -8,7 +8,7 @@ type UIEventActionSubject =
 	| "learnAboutIssueLinking"
 	| "checkOrgAdmin" | "generateDeferredInstallationLink"
 	| "closedDeferredInstallationModal" | "copiedDeferredInstallationUrl"
-	| "signInAndConnectThroughDeferredInstallationStartScreen";
+	| "signInThroughDeferredInstallationStartScreen";
 
 export type UIEventProps = {
 	actionSubject: UIEventActionSubject,
@@ -18,11 +18,13 @@ export type UIEventProps = {
 export type ScreenNames =
 	"StartConnectionEntryScreen"
   | "AuthorisationScreen"
+	| "InstallationRequested"
 	| "OrganisationConnectionScreen"
 	| "SuccessfulConnectedScreen"
 	| "DeferredInstallationModal"
 	| "DeferredInstallationStartScreen"
-	| "DeferredInstallationFailedScreen"
+	| "DeferredInstallationForbiddenScreen"
+	| "DeferredInstallationErrorScreen"
 	| "DeferredInstallationSuccessScreen";
 
 type TrackEventActionSubject =

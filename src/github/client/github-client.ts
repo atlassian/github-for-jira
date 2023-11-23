@@ -74,7 +74,7 @@ export class GitHubClient {
 	// For Cloud must always be equal to GITHUB_CLOUD_BASEURL
 	public readonly baseUrl: string;
 
-	protected readonly restApiUrl: string;
+	public readonly restApiUrl: string;
 	protected readonly graphqlUrl: string;
 	protected readonly axios: AxiosInstance;
 	protected readonly metrics: Metrics;

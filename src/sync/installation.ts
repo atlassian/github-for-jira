@@ -465,10 +465,11 @@ export const processInstallation = (sendBackfillMessage: (message: BackfillMessa
 				jiraHost
 			});
 
-			let hasNextMessage = false;
-			let nextMessage: BackfillMessagePayload | undefined = undefined;
-			let nextMessageDelaySecs: number | undefined = undefined;
-			let nextMessageLogger: Logger | undefined = undefined;
+			let nextMessage: {
+				payload: BackfillMessagePayload,
+				delaySecs: number,
+				logger: Logger
+			} | undefined = undefined;
 
 			const result = await deduplicator.executeWithDeduplication(
 				`i-${installationId}-${jiraHost}-ghaid-${gitHubAppId || "cloud"}`,
@@ -476,10 +477,11 @@ export const processInstallation = (sendBackfillMessage: (message: BackfillMessa
 					// We cannot send off the message straight away because otherwise it will be
 					// de-duplicated as we are still processing the current message. Send it
 					// only after deduplicator (tm) releases the flag.
-					hasNextMessage = true;
-					nextMessage = message;
-					nextMessageDelaySecs = delaySecs;
-					nextMessageLogger = logger;
+					nextMessage = {
+						payload: message,
+						delaySecs: delaySecs,
+						logger: logger
+					};
 					return Promise.resolve();
 				})
 			);
@@ -490,10 +492,13 @@ export const processInstallation = (sendBackfillMessage: (message: BackfillMessa
 				case DeduplicatorResult.E_OK:
 					logAdditionalData ? logger.info({ installationId }, "Job was executed by deduplicator")
 						: logger.info("Job was executed by deduplicator");
-					if (hasNextMessage) {
-						logAdditionalData ? nextMessageLogger!.info({ installationId }, "Sending off a new message")
-							: nextMessageLogger!.info("Sending off a new message");
-						await sendBackfillMessage(nextMessage!, nextMessageDelaySecs!, nextMessageLogger!);
+					if (nextMessage) {
+						// The compiler doesn't know that nextMessage is defined here and thinks it is never
+						// because it can't do control flow analysis of the async block of doProcessInstallation.
+						nextMessage = nextMessage as { payload: BackfillMessagePayload, delaySecs: number, logger: Logger };
+						logAdditionalData ? nextMessage.logger.info({ installationId }, "Sending off a new message")
+							: nextMessage.logger.info("Sending off a new message");
+						await sendBackfillMessage(nextMessage.payload, nextMessage.delaySecs, nextMessage.logger);
 					}
 					break;
 				case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {

@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { Installation } from "models/installation";
 import { JiraClient } from "models/jira-client";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const fetchAndSaveUserJiraAdminStatus = async (req: Request, claims: { sub?: string;}, installation: Installation): Promise<void> => {
 	const ADMIN_PERMISSION = "ADMINISTER";
@@ -26,7 +27,11 @@ export const fetchAndSaveUserJiraAdminStatus = async (req: Request, claims: { su
 	}
 };
 
-export const jiraAdminPermissionsMiddleware = (req: Request, res: Response, next: NextFunction): void | Response  => {
+export const jiraAdminPermissionsMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<Response | undefined>  => {
+	if (!(await booleanFlag(BooleanFlags.JIRA_ADMIN_CHECK))) {
+		next();
+		return undefined;
+	}
 	const { isJiraAdmin } = req.session;
 
 	if (isJiraAdmin === undefined) {
@@ -40,4 +45,5 @@ export const jiraAdminPermissionsMiddleware = (req: Request, res: Response, next
 		return res.status(403).send("Forbidden - User does not have Jira administer permissions.");
 	}
 	next();
+	return undefined;
 };

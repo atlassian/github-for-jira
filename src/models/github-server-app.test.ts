@@ -325,7 +325,7 @@ describe("GitHubServerApp", () => {
 
 				it("should only update values changed and leave other values as is", async () => {
 					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-					// @ts-ignore
+					// @ts-expect-error
 					await GitHubServerApp.updateGitHubAppByUUID({ uuid, appId: 1, gitHubBaseUrl, webhookSecret: newWebhookSecret });
 					const myApp = await GitHubServerApp.findForUuid(uuid);
 

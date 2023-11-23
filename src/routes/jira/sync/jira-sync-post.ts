@@ -1,4 +1,4 @@
-import { Subscription } from "models/subscription";
+import { Subscription, SyncStatus } from "models/subscription";
 import * as Sentry from "@sentry/node";
 import { NextFunction, Request, Response } from "express";
 import { findOrStartSync } from "~/src/sync/sync-utils";
@@ -81,7 +81,7 @@ const determineSyncTypeAndTargetTasks = async (syncTypeFromReq: string, subscrip
 		return { syncType: "full", targetTasks: undefined };
 	}
 
-	if (subscription.syncStatus === "FAILED") {
+	if (subscription.syncStatus === SyncStatus.FAILED) {
 		return { syncType: "full", targetTasks: undefined };
 	}
 

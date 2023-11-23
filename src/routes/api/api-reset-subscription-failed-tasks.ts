@@ -5,7 +5,7 @@ import { TaskType } from "../../sync/sync.types";
 
 interface OutputLogRecord {
 	repoSyncStateId: number,
-	targetTask: "pull" | "branch" | "commit" | "build" | "deployment" | "dependabotAlert" | string
+	targetTask:  string // "pull" | "branch" | "commit" | "build" | "deployment" | "dependabotAlert"
 }
 
 export const ApiResetSubscriptionFailedTasks = async (req: Request, res: Response): Promise<void> => {

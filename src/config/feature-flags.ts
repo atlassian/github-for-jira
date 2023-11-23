@@ -15,17 +15,13 @@ export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
 	VERBOSE_LOGGING = "verbose-logging",
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
-	REMOVE_STALE_MESSAGES = "remove-stale-messages",
-	USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK = "use-dynamodb-for-deployment-webhook",
-	USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL = "use-dynamodb-for-deployment-backfill",
+	JIRA_ADMIN_CHECK = "jira-admin-check",
 	LOG_CURLV_OUTPUT = "log-curlv-output",
 	ENABLE_SUBSCRIPTION_DEFERRED_INSTALL = "enable-subscription-deferred-install",
-	EARLY_EXIT_ON_VALIDATION_FAILED = "early-exit-on-validation-failed",
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery-again",
 	ENABLE_GITHUB_SECURITY_IN_JIRA = "enable-github-security-in-jira",
 	DELETE_MESSAGE_ON_BACKFILL_WHEN_OTHERS_WORKING_ON_IT = "delete-message-on-backfill-when-others-working-on-it",
 	ENABLE_5KU_BACKFILL_PAGE = "enable-5ku-experience-backfill-page",
-	USE_INSTALLATION_CLIENT_CHECK_PERMISSION = "use-installation-client-to-check-permission",
 	USE_CUSTOM_ROOT_CA_BUNDLE = "use-custom-root-ca-bundle",
 	GENERATE_CORE_HEAP_DUMPS_ON_LOW_MEM = "generate-core-heap-dumps-on-low-mem"
 }

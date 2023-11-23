@@ -1,3 +1,4 @@
+import { EventHint } from "@sentry/node";
 import { SentryScopeProxy } from "./sentry-scope-proxy";
 
 describe("SentryScopeProxy", () => {
@@ -13,14 +14,14 @@ describe("SentryScopeProxy", () => {
 				}
 			};
 
-			const returnedEvent = SentryScopeProxy.processEvent(event, hint);
+			const returnedEvent = SentryScopeProxy.processEvent(event, hint as unknown as EventHint);
 
 			expect(returnedEvent.extra).toEqual({ foo: { hi: "hello" } });
 		});
 
 		it("does nothing with normal error", () => {
 			const event = { extra: {} };
-			const hint = { originalException: {} };
+			const hint = { originalException: {} } as EventHint;
 
 			const returnedEvent = SentryScopeProxy.processEvent(event, hint);
 

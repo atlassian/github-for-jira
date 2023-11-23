@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { Event, EventHint } from "@sentry/types";
 
 /*
  * Acts like a Sentry scope. See https://docs.sentry.io/enriching-error-data/scopes/?platform=node#configuring-the-scope
@@ -8,6 +9,11 @@
  *
  * Learn more at https://docs.sentry.io/platforms/node/#eventprocessors
  */
+
+export interface SentryScopeProxyEvent extends Event {
+	extra?: Record<string, any>;
+}
+
 export class SentryScopeProxy {
 	event: any;
 	hint: any;
@@ -18,9 +24,9 @@ export class SentryScopeProxy {
 		this.extra = {};
 	}
 
-	static processEvent(this: void, event: any, hint: any) {
-		if (hint.originalException.sentryScope) {
-			hint.originalException.sentryScope.addTo(event);
+	static processEvent(event: Event, hint?: EventHint): SentryScopeProxyEvent {
+		if (hint?.originalException && hint?.originalException["sentryScope"]) {
+			hint?.originalException["sentryScope"].addTo(event);
 		}
 
 		return event;

@@ -279,7 +279,7 @@ describe("github-oauth", () => {
 				};
 
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-ignore
+				// @ts-expect-error
 				await GithubAuthMiddleware(req, res, next);
 				expect(next.mock.calls).toHaveLength(1);
 			});
@@ -317,7 +317,7 @@ describe("github-oauth", () => {
 				};
 
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-ignore
+				// @ts-expect-error
 				await GithubAuthMiddleware(req, res, next);
 				expect(next.mock.calls).toHaveLength(1);
 				expect(req.session.githubToken).toBe("new_access_token");
@@ -383,7 +383,7 @@ describe("github-oauth", () => {
 				};
 
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-ignore
+				// @ts-expect-error
 				await GithubAuthMiddleware(req, res, next);
 				expect(next.mock.calls).toHaveLength(1);
 			});
@@ -419,7 +419,7 @@ describe("github-oauth", () => {
 				};
 
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-ignore
+				// @ts-expect-error
 				await GithubAuthMiddleware(req, res, next);
 				expect(next.mock.calls).toHaveLength(1);
 				expect(req.session.githubToken).toBe("new_access_token");
@@ -470,7 +470,7 @@ describe("github-oauth", () => {
 			const next = jest.fn();
 
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
+			// @ts-expect-error
 			await GithubAuthMiddleware(req, res, next);
 
 			expect(req.session.githubToken).toBeUndefined();

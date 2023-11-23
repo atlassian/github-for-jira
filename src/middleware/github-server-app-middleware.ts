@@ -5,7 +5,7 @@ import { envVars } from "config/env";
 import { GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 import { BaseLocals } from "../rest/routes";
 
-export const GithubServerAppMiddleware = async (req: Request, res: Response<any, BaseLocals>, next: NextFunction): Promise<void> => {
+export const GithubServerAppMiddleware = async (req: Request, res: Response<unknown, BaseLocals>, next: NextFunction): Promise<void> => {
 	const jiraHost = res.locals.jiraHost;
 	const { uuid } = req.params;
 
@@ -40,7 +40,7 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response<any,
 		res.locals.gitHubAppId = gitHubServerApp.id;
 		res.locals.gitHubAppConfig = {
 			gitHubAppId: gitHubServerApp.id,
-			appId: gitHubServerApp.appId,
+			appId: String(gitHubServerApp.appId),
 			uuid: gitHubServerApp.uuid,
 			hostname: gitHubServerApp.gitHubBaseUrl,
 			clientId: gitHubServerApp.gitHubClientId

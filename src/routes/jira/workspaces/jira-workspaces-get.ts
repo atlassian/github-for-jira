@@ -17,7 +17,10 @@ export const DEFAULT_LIMIT = 20; // Number of items per page\
 
 export const getGitHubInstallationId = (subscriptions: Subscription[], subscriptionId: number): number => {
 	const matchingSubscription = subscriptions.find(sub => sub.id === subscriptionId);
-	return matchingSubscription!.gitHubInstallationId;
+	if (matchingSubscription === undefined) {
+		throw new Error("Could not find subscription");
+	}
+	return matchingSubscription.gitHubInstallationId;
 };
 
 const findMatchingOrgs = async (subscriptions: Subscription[], orgName?: string): Promise<Workspace[]> => {

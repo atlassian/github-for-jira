@@ -19,7 +19,7 @@ export const splitServerId = (input: string): [string, string] => {
 };
 
 export const getRepoUrlAndRepoId = (id: string): RepoUrlAndRepoId => {
-	if (/-/.test(id)) {
+	if (id.includes("-")) {
 		const [hashedRepoUrl, repoId] = splitServerId(id);
 		const repoDomain = reverseCalculatePrefix(hashedRepoUrl);
 		return { repoUrl: repoDomain, id: parseInt(repoId) };
@@ -65,15 +65,22 @@ export const JiraSecurityWorkspacesContainersPost = async (req: Request, res: Re
 
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for security POST repositories");
 
-	const { ids: repoIds } = req.body;
+	const repoIdsUnchecked = req.body.ids;
 
-	if (!repoIds) {
+	if (!repoIdsUnchecked || !Array.isArray(repoIdsUnchecked)) {
 		// TODO: Return fetchContainers error handling spec once implemented
 		// https://hello.atlassian.net/wiki/spaces/CDX/pages/2639314030/RFC+Handle+fetchContainers+errors
 		const errMessage = Errors.MISSING_SECURITY_CONTAINER_IDS;
 		req.log.warn(errMessage);
 		res.status(400).send(errMessage);
 		return;
+	}
+
+	let repoIds: string[];
+	if (repoIdsUnchecked.some((id) => typeof id !== "string")) {
+		repoIds = repoIdsUnchecked.map((id, _) => { return id.toString(); });
+	} else {
+		repoIds = repoIdsUnchecked;
 	}
 
 	const repos = await getRepos(repoIds, jiraHost);

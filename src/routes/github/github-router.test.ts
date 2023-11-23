@@ -273,7 +273,7 @@ describe("GitHub router", () => {
 							jiraHost,
 							gitHubAppId: gitHubAppId,
 							gitHubAppConfig: expect.objectContaining({
-								appId: GITHUB_SERVER_APP_ID,
+								appId: String(GITHUB_SERVER_APP_ID),
 								uuid: GITHUB_SERVER_APP_UUID
 							})
 						})

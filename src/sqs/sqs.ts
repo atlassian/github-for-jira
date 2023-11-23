@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import { statsd } from "config/statsd";
 import { sqsQueueMetrics } from "config/metric-names";
 import { ErrorHandler, ErrorHandlingResult, MessageHandler, QueueSettings, SQSContext, SQSMessageContext, BaseMessagePayload, SqsTimeoutError } from "~/src/sqs/sqs.types";
-import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
+import { stringFlag, StringFlags } from "config/feature-flags";
 import { preemptiveRateLimitCheck } from "utils/preemptive-rate-limit";
 
 //Maximum SQS Delay according to SQS docs https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-delay-queues.html
@@ -244,10 +244,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 		}
 	}
 
-	public async deleteStaleMessages(message: Message, context: SQSMessageContext<MessagePayload>, jiraHost?: string): Promise<boolean> {
-		if (!await booleanFlag(BooleanFlags.REMOVE_STALE_MESSAGES, jiraHost)) {
-			return false;
-		}
+	public async deleteStaleMessages(message: Message, context: SQSMessageContext<MessagePayload>): Promise<boolean> {
 		const TARGETED_QUEUES = ["deployment"];
 		if (!message?.Body || !TARGETED_QUEUES.includes(this.queueName)) {
 			return false;
@@ -324,7 +321,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 
 		try {
 			const messageProcessingStartTime = Date.now();
-			if (await this.deleteStaleMessages(message, context, payload?.jiraHost)) return;
+			if (await this.deleteStaleMessages(message, context)) return;
 
 			const rateLimitCheckResult = await preemptiveRateLimitCheck(context, this);
 			if (rateLimitCheckResult.isExceedThreshold) {
@@ -361,7 +358,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 		try {
 			context.log.warn({ err }, "Failed message");
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-			const errorHandlingResult = await this.errorHandler(err as any, context);
+			const errorHandlingResult = await this.errorHandler(err as Error, context);
 
 			this.log.info({ errorHandlingResult }, "Error handling result");
 			if (errorHandlingResult.isFailure) {
