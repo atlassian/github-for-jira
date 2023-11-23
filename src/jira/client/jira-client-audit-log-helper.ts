@@ -1,12 +1,6 @@
 import { AuditInfo, saveAuditLog } from "../../services/audit-log-service";
 import { isArray, isObject } from "lodash";
 
-const getRepoData = (repoId,request) =>{
-	const repositories = request["repositories"] || null;
-	const acceptedDevinfoEntityData = repositories?.find(({ id })=>id===repoId);
-	return acceptedDevinfoEntityData;
-};
-
 const getAuditInfo = ({
 	acceptedGithubEntities,
 	repoEntities,
@@ -50,59 +44,53 @@ export const processBatchedBulkUpdateResp = ({
 		const isSuccess = response?.status === 202;
 		const acceptedDevinfoEntities =
 			response?.data && response?.data?.acceptedDevinfoEntities;
-		const hasAcceptedDevinfoEntities = isObject(acceptedDevinfoEntities) && Object.keys(acceptedDevinfoEntities).length > 0;
+		const hasAcceptedDevinfoEntities =
+			isObject(acceptedDevinfoEntities) &&
+			Object.keys(acceptedDevinfoEntities).length > 0;
 		let auditInfo: Array<AuditInfo> = [];
 		if (isSuccess && hasAcceptedDevinfoEntities) {
-			Object.keys(acceptedDevinfoEntities).forEach(
-				(acceptedDevinfoRepoID) => {
-					const { commits, branches, pullRequests } =
-						acceptedDevinfoEntities[acceptedDevinfoRepoID];
-					const hasBranches = isArray(branches) && branches.length >0;
-					const hasCommits = isArray(commits) && commits.length >0;
-					const hasPRs = isArray(pullRequests) && pullRequests.length >0;
-					let repoData;
-					if (hasBranches || hasCommits || hasPRs) {
-						repoData = getRepoData(acceptedDevinfoRepoID, request);
-					}
-					// commits
-					if (hasCommits) {
-						const commitAuditInfo = getAuditInfo({
-							acceptedGithubEntities: commits,
-							githubEntityType: "commits",
-							repoEntities:repoData["commits"],
-							options
-						});
-						auditInfo = [...auditInfo, ...commitAuditInfo];
-					}
-
-					// branches
-					if (hasBranches) {
-						const branchAuditInfo = getAuditInfo({
-							acceptedGithubEntities: branches,
-							githubEntityType: "branches",
-							repoEntities:repoData["branches"],
-							options
-						});
-						auditInfo = [...auditInfo, ...branchAuditInfo];
-					}
-
-					// prs
-					if (hasPRs) {
-						const PRAuditInfo = getAuditInfo({
-							acceptedGithubEntities: pullRequests,
-							githubEntityType: "pullRequests",
-							repoEntities:repoData["pullRequests"],
-							options
-						});
-						auditInfo = [...auditInfo, ...PRAuditInfo];
-					}
-				}
-			);
+			const repoData = request["repositories"][0];
+			const acceptedDevinfoRepoID = repoData.id;
+			const { commits, branches, pullRequests } =
+				acceptedDevinfoEntities[acceptedDevinfoRepoID];
+			const hasBranches = isArray(branches) && branches.length > 0;
+			const hasCommits = isArray(commits) && commits.length > 0;
+			const hasPRs = isArray(pullRequests) && pullRequests.length > 0;
+			if (hasCommits) {
+				const commitAuditInfo = getAuditInfo({
+					acceptedGithubEntities: commits,
+					githubEntityType: "commits",
+					repoEntities: repoData["commits"],
+					options
+				});
+				auditInfo = [...auditInfo, ...commitAuditInfo];
+			}
+			if (hasBranches) {
+				const branchAuditInfo = getAuditInfo({
+					acceptedGithubEntities: branches,
+					githubEntityType: "branches",
+					repoEntities: repoData["branches"],
+					options
+				});
+				auditInfo = [...auditInfo, ...branchAuditInfo];
+			}
+			if (hasPRs) {
+				const PRAuditInfo = getAuditInfo({
+					acceptedGithubEntities: pullRequests,
+					githubEntityType: "pullRequests",
+					repoEntities: repoData["pullRequests"],
+					options
+				});
+				auditInfo = [...auditInfo, ...PRAuditInfo];
+			}
 			return { isSuccess: true, auditInfo };
 		}
 		return { isSuccess: false };
 	} catch (error) {
-		logger.error({ error }, "Failed to process batched bulk update api response for audit log");
+		logger.error(
+			{ error },
+			"Failed to process batched bulk update api response for audit log"
+		);
 		return { isSuccess: false };
 	}
 };
