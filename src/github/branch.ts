@@ -11,11 +11,12 @@ import { jiraIssueKeyParser } from "utils/jira-utils";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { shouldSendAll } from "config/feature-flags";
+import { Subscription } from "../models/subscription";
+
 
 export const createBranchWebhookHandler = async (context: WebhookContext<CreateEvent>, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 
 	const webhookPayload = context.payload;
-
 	await sqsQueues.branch.sendMessage({
 		jiraHost: jiraClient.baseURL,
 		installationId: gitHubInstallationId,
@@ -56,7 +57,10 @@ export const processBranch = async (
 		gitHubAppId,
 		logger
 	);
-
+	const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
+	if (!subscription) {
+		logger.warn(`Subscription not found to log the info into audit log table`);
+	}
 	if (!jiraClient) {
 		logger.info("Halting further execution for createBranch as JiraClient is empty for this installation");
 		return;
@@ -65,7 +69,13 @@ export const processBranch = async (
 	logger.info(`Sending jira update for create branch event`);
 
 
-	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
+	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload, {
+		preventTransitions: false,
+		operationType: "NORMAL",
+		auditLogsource: "WEBHOOK",
+		entityAction: "BRANCH_CREATE",
+		subscriptionId: subscription?.id
+	});
 
 	emitWebhookProcessedMetrics(
 		webhookReceivedDate.getTime(),

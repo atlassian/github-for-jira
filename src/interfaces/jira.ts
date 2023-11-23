@@ -1,4 +1,5 @@
 import { TransformedRepositoryId } from "~/src/transforms/transform-repository-id";
+import { AuditLogSourceType } from "../services/audit-log-service";
 
 interface JiraPullRequestCommit {
 	id: string;
@@ -158,6 +159,7 @@ export interface JiraDeploymentBulkSubmitData {
 export interface JiraPullRequestBulkSubmitData extends BulkSubmitRepositoryInfo {
 	branches: JiraBranch[];
 	pullRequests: JiraPullRequest[];
+	source?: string;
 }
 
 export interface JiraAssociation {
@@ -247,9 +249,12 @@ export interface JiraVulnerabilityAdditionalInfo {
 // https://atlassian.design/components/lozenge/examples
 export type JiraRemoteLinkStatusAppearance = "default" | "inprogress" | "moved" | "new" | "removed" | "prototype" | "success";
 
-export type JiraOperationType = "NORMAL" | "BACKFILL"
+export type JiraOperationType = "NORMAL" | "BACKFILL";
 
 export interface JiraSubmitOptions {
 	preventTransitions: boolean;
 	operationType: JiraOperationType;
+	auditLogsource: AuditLogSourceType;
+	entityAction?: "BRANCH_CREATE" | "BRANCH_DELETE" | "COMMIT_PUSH";
+	subscriptionId?: number;
 }
