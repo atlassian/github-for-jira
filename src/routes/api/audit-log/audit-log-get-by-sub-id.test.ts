@@ -3,7 +3,7 @@ import { when } from "jest-when";
 import { omit } from "lodash";
 import { getFrontendApp } from "../../../app";
 import { DatabaseStateCreator, CreatorResult } from "test/utils/database-state-creator";
-import { findLog } from "services/audit-log-service";
+import { getAuditLog } from "services/audit-log-service";
 
 jest.mock("services/audit-log-service");
 
@@ -44,7 +44,7 @@ describe("AuditLogApiGetBySubscriptionId", () => {
 
 	it("should return audit log data successfully", async () => {
 
-		when(findLog).calledWith({
+		when(getAuditLog).calledWith({
 			subscriptionId: db.subscription.id,
 			issueKey: "ABC-123",
 			entityType: "commit",

@@ -203,15 +203,25 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 
 			log.info("Sending data to Jira");
 			try {
-				const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
-				webhookReceived && emitWebhookProcessedMetrics(
-					webhookReceived,
-					"push",
-					jiraHost,
-					log,
-					jiraResponse?.status,
-					gitHubAppId
+				const jiraResponse = await jiraClient.devinfo.repository.update(
+					jiraPayload,
+					{
+						preventTransitions: false,
+						operationType: "NORMAL",
+						auditLogsource: "WEBHOOK",
+						entityAction: "COMMIT_PUSH",
+						subscriptionId: subscription.id
+					}
 				);
+				webhookReceived &&
+					emitWebhookProcessedMetrics(
+						webhookReceived,
+						"push",
+						jiraHost,
+						log,
+						jiraResponse?.status,
+						gitHubAppId
+					);
 			} catch (err: unknown) {
 				log.warn({ err }, "Failed to send data to Jira");
 				throw err;

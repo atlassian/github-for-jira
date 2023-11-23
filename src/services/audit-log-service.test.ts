@@ -2,13 +2,13 @@ import { getLogger } from "config/logger";
 import { envVars } from "config/env";
 import { dynamodb as ddb } from "config/dynamodb";
 import { createHashWithoutSharedSecret } from "utils/encryption";
-import { auditLog, findLog } from "./audit-log-service";
+import { saveAuditLog, getAuditLog } from "./audit-log-service";
 
 const logger = getLogger("test");
 const ONE_DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
 
 describe("audit log service", () => {
-	describe("auditLog", () => {
+	describe("saveAuditLog", () => {
 		it("should successfully save DD api call audit info to dynamo db", async () => {
 			const createdAt = new Date();
 			const subscriptionId = 241412;
@@ -18,7 +18,7 @@ describe("audit log service", () => {
 			const source = "backfill";
 			const issueKey = "ARC-2605";
 			const ID = `subID_${subscriptionId}_typ_${entityType}_id_${entityId}_issKey_${issueKey}`;
-			await auditLog(
+			await saveAuditLog(
 				{
 					source,
 					entityType,
@@ -68,7 +68,7 @@ describe("audit log service", () => {
 			});
 		});
 
-		describe("auditLog", () => {
+		describe("saveAuditLog", () => {
 			it("should successfully save DD api call audit info to dynamo db", async () => {
 				const createdAt = new Date();
 				const subscriptionId = 241412;
@@ -77,7 +77,7 @@ describe("audit log service", () => {
 				const entityType = "commit";
 				const source = "backfill";
 				const issueKey = "ARC-2605";
-				await auditLog(
+				await saveAuditLog(
 					{
 						source,
 						entityType,
@@ -89,7 +89,7 @@ describe("audit log service", () => {
 					},
 					logger
 				);
-				const result = await findLog(
+				const result = await getAuditLog(
 					{
 						entityType,
 						entityId,
