@@ -33,7 +33,6 @@ export enum BooleanFlags {
 export enum StringFlags {
 	BLOCKED_INSTALLATIONS = "blocked-installations",
 	LOG_LEVEL = "log-level",
-	HEADERS_TO_ENCRYPT = "headers-to-encrypt",
 	SEND_ALL = "send-all"
 }
 
