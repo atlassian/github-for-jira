@@ -331,4 +331,89 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 			}]
 		});
 	});
+	it("should extract PR - audit info for logging", () => {
+		const reqRepoData = {
+			id: "681937718",
+			name: "kamaOrgOne/repo_react",
+			url: "https://github.com/kamaOrgOne/repo_react",
+			updateSequenceId: 1700740159051,
+			branches: [
+				{
+					createPullRequestUrl:
+						"https://github.com/kamaOrgOne/repo_react/compare/KAM-5-feat?title=KAM-5-feat&quick_pull=1",
+					id: "KAM-5-feat",
+					issueKeys: ["KAM-5"],
+					name: "KAM-5-feat",
+					url: "https://github.com/kamaOrgOne/repo_react/tree/KAM-5-feat",
+					updateSequenceId: 1700740158603
+				}
+			],
+			pullRequests: [
+				{
+					commentCount: 0,
+					destinationBranch: "main",
+					destinationBranchUrl:
+						"https://github.com/kamaOrgOne/repo_react/tree/main",
+					displayId: "#10",
+					id: 10,
+					issueKeys: ["KAM-5"],
+					lastUpdate: "2023-11-23T11:49:13Z",
+					reviewers: [],
+					sourceBranch: "KAM-5-feat",
+					sourceBranchUrl:
+						"https://github.com/kamaOrgOne/repo_react/tree/KAM-5-feat",
+					status: "OPEN",
+					timestamp: "2023-11-23T11:49:13Z",
+					title: "Kam 5 feat",
+					url: "https://github.com/kamaOrgOne/repo_react/pull/10",
+					updateSequenceId: 1700740159052
+				}
+			]
+		};
+		const response = {
+			status: 202,
+			data: {
+				acceptedDevinfoEntities: {
+					"681937718": {
+						branches: ["KAM-5-feat"],
+						commits: [],
+						pullRequests: ["10"]
+					}
+				},
+				failedDevinfoEntities: {},
+				unknownIssueKeys: [],
+				unknownAssociations: []
+			}
+		};
+		const options = { preventTransitions:false, operationType: "WEBHOOK", auditLogsource: "WEBHOOK",  entityAction: "PR_OPENED", subscriptionId: 44558899 };
+
+		const result = processBatchedBulkUpdateResp({
+			reqRepoData,
+			response,
+			options,
+			logger: mockLogger
+		});
+
+		expect(result).toEqual({
+			isSuccess: true,
+			auditInfo:[{
+				"createdAt": expect.anything(),
+				"entityAction": "PR_OPENED",
+				"entityId": "KAM-5-feat",
+				"entityType": "branches",
+				"issueKey": "KAM-5",
+				"source": "WEBHOOK",
+				"subscriptionId": 44558899
+			},
+			{
+				"createdAt": expect.anything(),
+				"entityAction": "PR_OPENED",
+				"entityId": "10",
+				"entityType": "pullRequests",
+				"issueKey": "KAM-5",
+				"source": "WEBHOOK",
+				"subscriptionId": 44558899
+			}]
+		});
+	});
 });

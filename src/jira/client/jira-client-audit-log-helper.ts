@@ -10,9 +10,8 @@ const getAuditInfo = ({
 	const auditInfo: Array<AuditInfo> = [];
 	const createdAt = new Date();
 	acceptedGithubEntities.map((githubEntityId) => {
-		// const repoEntities = repoData?.[githubEntityType];
-		const repoEntity = repoEntities.find(({ id }) => id === githubEntityId);
-		const issueKeys = repoEntity.issueKeys;
+		const repoEntity = repoEntities.find(({ id }) => id.toString() === githubEntityId);
+		const issueKeys = repoEntity?.issueKeys;
 		issueKeys.map((issueKey) => {
 			const obj: AuditInfo = {
 				createdAt,
