@@ -32,7 +32,7 @@ const getAuditInfo = ({
 };
 
 export const processBatchedBulkUpdateResp = ({
-	request,
+	reqRepoData,
 	response,
 	options,
 	logger
@@ -49,7 +49,7 @@ export const processBatchedBulkUpdateResp = ({
 			Object.keys(acceptedDevinfoEntities).length > 0;
 		let auditInfo: Array<AuditInfo> = [];
 		if (isSuccess && hasAcceptedDevinfoEntities) {
-			const repoData = request["repositories"][0];
+			const repoData = reqRepoData;
 			const acceptedDevinfoRepoID = repoData.id;
 			const { commits, branches, pullRequests } =
 				acceptedDevinfoEntities[acceptedDevinfoRepoID];
@@ -94,10 +94,10 @@ export const processBatchedBulkUpdateResp = ({
 		return { isSuccess: false };
 	}
 };
-export const processAuditLogsForDevInfoBulkUpdate = ({ request, response, options, logger }) => {
+export const processAuditLogsForDevInfoBulkUpdate = ({ reqRepoData, response, options, logger }) => {
 	try {
 		const { isSuccess, auditInfo } = processBatchedBulkUpdateResp({
-			request,
+			reqRepoData,
 			response,
 			options,
 			logger
