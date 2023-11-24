@@ -13,7 +13,6 @@ import { GitHubServerApp } from "models/github-server-app";
 import { DatabaseStateCreator, CreatorResult } from "test/utils/database-state-creator";
 
 const lastMockedDevInfoRepoUpdateFn = jest.fn();
-jest.mock("config/feature-flags");
 jest.mock("../jira/client/jira-client", () => ({
 	getJiraClient: async (...args) => {
 		const actual = await jest.requireActual("../jira/client/jira-client").getJiraClient(...args);
