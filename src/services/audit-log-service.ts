@@ -6,6 +6,12 @@ import { createHashWithoutSharedSecret } from "utils/encryption";
 
 const defaultLogger = getLogger("DeploymentDynamoLogger");
 
+export type AuditLogSourceType = "BACKFILL" | "WEBHOOK";
+type AuditEntityTypePR = "PR_OPENED" | "PR_REOPENED" | "PR_CLOSED" | "PR_EDITED" | "PR_READY_FOR_REVIEW" | "PR_CONVERTED_TO_DRAFT" | "PR_REVIEW";
+type AuditEntityTypeCommit = "COMMIT_PUSH";
+type AuditEntityTypeBranch = "BRANCH_CREATE" | "BRANCH_DELETE";
+export type AuditEntityType = AuditEntityTypePR | AuditEntityTypeBranch | AuditEntityTypeCommit;
+
 export type AuditInfoPK = {
 	entityType: string;
 	entityId: string;
@@ -21,7 +27,7 @@ export type AuditInfo = AuditInfoPK & {
 
 const ONE_DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
 
-export const auditLog = async (auditInfo: AuditInfo, logger: Logger) => {
+export const saveAuditLog = async (auditInfo: AuditInfo, logger: Logger) => {
 	logger.debug("Saving auditInfo to db");
 	const {
 		source,
@@ -59,7 +65,7 @@ export const auditLog = async (auditInfo: AuditInfo, logger: Logger) => {
 	}
 };
 
-export const findLog = async (
+export const getAuditLog = async (
 	params: AuditInfoPK,
 	logger: Logger = defaultLogger
 ): Promise<AuditInfo[]> => {

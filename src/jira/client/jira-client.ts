@@ -6,7 +6,6 @@ import { getJiraId } from "../util/id";
 import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
 import { createHashWithSharedSecret } from "utils/encryption";
-
 import {
 	JiraAssociation,
 	JiraBuildBulkSubmitData,
@@ -23,6 +22,7 @@ import { uniq } from "lodash";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { getDeploymentDebugInfo } from "./jira-client-deployment-helper";
+import { processAuditLogsForDevInfoBulkUpdate } from "./jira-client-audit-log-helper";
 import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
 import { sendAnalytics } from "~/src/util/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "~/src/interfaces/common";
@@ -375,7 +375,8 @@ export const getJiraClient = async (
 						instance,
 						gitHubInstallationId,
 						logger,
-						options
+						options,
+						jiraHost
 					);
 				}
 			}
@@ -547,7 +548,8 @@ const batchedBulkUpdate = async (
 	instance: AxiosInstance,
 	installationId: number | undefined,
 	logger: Logger,
-	options?: JiraSubmitOptions
+	options?: JiraSubmitOptions,
+	jiraHost?: string
 ) => {
 	const dedupedCommits = dedupCommits(data.commits);
 	// Initialize with an empty chunk of commits so we still process the request if there are no commits in the payload
@@ -574,6 +576,15 @@ const batchedBulkUpdate = async (
 		}, "Posting to Jira devinfo bulk update api");
 
 		const response = await instance.post("/rest/devinfo/0.10/bulk", body);
+		const responseData = {
+			status: response.status,
+			data:response.data
+		};
+
+		if (await booleanFlag(BooleanFlags.USE_DYNAMODB_TO_PERSIST_AUDIT_LOG, jiraHost)) {
+			processAuditLogsForDevInfoBulkUpdate({ reqRepoData:data, response:responseData, options, logger });
+		}
+
 		logger.info({
 			responseStatus: response.status,
 			unknownIssueKeys: safeParseAndHashUnknownIssueKeysForLoggingPurpose(response.data, logger)

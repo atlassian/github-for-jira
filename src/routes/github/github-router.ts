@@ -18,7 +18,6 @@ import { GithubCreateBranchRouter } from "routes/github/create-branch/github-cre
 import { GithubRepositoryRouter } from "routes/github/repository/github-repository-router";
 import { GithubBranchRouter } from "routes/github/branch/github-branch-router";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
-import { GithubEncryptHeaderPost } from "routes/github/github-encrypt-header-post";
 import { jiraAdminPermissionsMiddleware } from "middleware/jira-admin-permission-middleware";
 import GithubSubscriptionDeferredInstallRouter
 	from "./subscription-deferred-install/github-subscription-deferred-install-router";
@@ -68,8 +67,6 @@ subRouter.use("/branch", csrfMiddleware, GithubBranchRouter);
 subRouter.use(jiraAdminPermissionsMiddleware); // This must stay after jiraSymmetricJwtMiddleware
 
 subRouter.get("/login",  GithubOAuthLoginGet);
-
-subRouter.post("/encrypt/header", GithubEncryptHeaderPost);
 
 // CSRF Protection Middleware for all following routes
 subRouter.use(csrfMiddleware);
