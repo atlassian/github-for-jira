@@ -16,9 +16,6 @@ import { waitUntil } from "test/utils/wait-until";
 import { GitHubServerApp } from "models/github-server-app";
 import { DatabaseStateCreator, CreatorResult } from "test/utils/database-state-creator";
 
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { when } from "jest-when";
-
 const lastMockedDevInfoRepoUpdateFn = jest.fn();
 jest.mock("config/feature-flags");
 jest.mock("../jira/client/jira-client", () => ({
@@ -151,8 +148,6 @@ describe("sync/branches", () => {
 		};
 
 		it("should sync to Jira when branch refs have jira references", async () => {
-
-			when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_TO_PERSIST_AUDIT_LOG, expect.anything()).mockResolvedValue(true);
 
 			const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 			nockBranchRequest(branchNodesFixture);

@@ -10,9 +10,6 @@ import { RepoSyncState } from "models/reposyncstate";
 import { getPullRequestTask } from "./pull-request";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { when } from "jest-when";
-
 const lastMockedDevInfoRepoUpdateFn = jest.fn();
 jest.mock("config/feature-flags");
 jest.mock("../jira/client/jira-client", () => ({
@@ -117,8 +114,6 @@ describe("sync/pull-request", () => {
 			["[TES-15] Evernote Test" , "use-the-force"]
 		])("PR Title: %p, PR Head Ref: %p", (title, head) => {
 			it("should sync to Jira when Pull Request Nodes have jira references", async () => {
-
-				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_TO_PERSIST_AUDIT_LOG, expect.anything()).mockResolvedValue(true);
 
 				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 				githubNock
