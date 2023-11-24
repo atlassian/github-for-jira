@@ -10,13 +10,38 @@ import commitsNoKeys from "fixtures/api/graphql/commit-nodes-no-keys.json";
 import { getCommitsQueryWithChangedFiles } from "~/src/github/client/github-queries";
 import { waitUntil } from "test/utils/wait-until";
 import { GitHubServerApp } from "models/github-server-app";
-import { DatabaseStateCreator } from "test/utils/database-state-creator";
+import { DatabaseStateCreator, CreatorResult } from "test/utils/database-state-creator";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { when } from "jest-when";
+//import { getJiraClient } from "../jira/client/jira-client";
+
+let lastMockedDevInfoRepoUpdateFn = jest.fn();
+jest.mock("config/feature-flags");
+jest.mock("../jira/client/jira-client", () => ({
+	getJiraClient: async (...args) => {
+		const actual = await jest.requireActual("../jira/client/jira-client").getJiraClient(...args);
+		return {
+			...actual,
+			devinfo: {
+				...actual.devinfo,
+				repository: {
+					...actual.devinfo.repository,
+					update: (...repoArgs) => {
+						lastMockedDevInfoRepoUpdateFn(...repoArgs);
+						return actual.devinfo.repository.update(...repoArgs);
+					}
+				}
+			}
+		}
+	}
+}));
 
 describe("sync/commits", () => {
 	const sentry: Hub = { setUser: jest.fn() } as any;
 
 	beforeEach(() => {
 		mockSystemTime(12345678);
+		lastMockedDevInfoRepoUpdateFn && lastMockedDevInfoRepoUpdateFn.mockReset();
 	});
 
 	describe("for cloud", () => {
@@ -60,8 +85,9 @@ describe("sync/commits", () => {
 				.reply(200);
 		};
 
+		let db: CreatorResult;
 		beforeEach(async () => {
-			await new DatabaseStateCreator()
+			db = await new DatabaseStateCreator()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForCommits()
 				.create();
@@ -106,6 +132,43 @@ describe("sync/commits", () => {
 
 			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			await verifyMessageSent(data);
+		});
+
+		it("should save audit log when Commit Nodes have jira references when ff is on", async () => {
+
+			when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_TO_PERSIST_AUDIT_LOG, expect.anything()).mockResolvedValue(true);
+
+			const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
+
+			createGitHubNock(commitNodesFixture);
+			const commits = [
+				{
+					"author": {
+						"name": "test-author-name",
+						"email": "test-author-email@example.com"
+					},
+					"authorTimestamp": "test-authored-date",
+					"displayId": "test-o",
+					"fileCount": 0,
+					"hash": "test-oid",
+					"id": "test-oid",
+					"issueKeys": [
+						"TES-17"
+					],
+					"message": "[TES-17] test-commit-message",
+					"url": "https://github.com/test-login/test-repo/commit/test-sha",
+					"updateSequenceId": 12345678
+				}
+			];
+			createJiraNock(commits);
+
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
+
+			expect(lastMockedDevInfoRepoUpdateFn).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+				auditLogsource: "BACKFILL",
+				entityAction: "COMMIT_BACKFILLED",
+				subscriptionId: db.subscription.id
+			}));
 		});
 
 		it("should send Jira all commits that have Issue Keys", async () => {
