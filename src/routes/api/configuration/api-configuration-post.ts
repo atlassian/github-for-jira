@@ -10,6 +10,7 @@ const MAX_INSTALLATIONS_BATCH = 50;
 export const ApiConfigurationPost = async (req: Request, res: Response): Promise<void> => {
 	const jiraHosts = req.body.jiraHosts as string[];
 	const gitHubAppId = req.body.gitHubAppId as number;
+	const configuredState = req.body.configuredState;
 
 	if (jiraHosts?.length === 0) {
 		res.status(400);
@@ -26,9 +27,12 @@ export const ApiConfigurationPost = async (req: Request, res: Response): Promise
 	const logger = getLogger("api-sync-configured");
 	const tasks = jiraHosts.map(async jiraHost => {
 		// need to confirm that passed in value is configured. Existing on subscription table satisfies this.
-		const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppId);
 		// We could still save isconfiguredstate as false, but null is equivalent so why not save some trees and leave Jira alone
-		return await saveConfiguredAppProperties(jiraHost, logger, subscriptions?.length > 0);
+		if (configuredState !== undefined) {
+			return await saveConfiguredAppProperties(jiraHost, logger, configuredState);
+		} else {
+			return await saveConfiguredAppProperties(jiraHost, logger, (await Subscription.getAllForHost(jiraHost, gitHubAppId)).length > 0);
+		}
 	});
 
 	try {
