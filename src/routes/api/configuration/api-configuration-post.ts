@@ -26,11 +26,11 @@ export const ApiConfigurationPost = async (req: Request, res: Response): Promise
 
 	const logger = getLogger("api-sync-configured");
 	const tasks = jiraHosts.map(async jiraHost => {
-		// need to confirm that passed in value is configured. Existing on subscription table satisfies this.
-		// We could still save isconfiguredstate as false, but null is equivalent so why not save some trees and leave Jira alone
 		if (configuredState !== undefined) {
 			return await saveConfiguredAppProperties(jiraHost, logger, configuredState);
 		} else {
+			// need to confirm that passed in value is configured. Existing on subscription table satisfies this.
+			// We could still save isconfiguredstate as false, but null is equivalent so why not save some trees and leave Jira alone
 			return await saveConfiguredAppProperties(jiraHost, logger, (await Subscription.getAllForHost(jiraHost, gitHubAppId)).length > 0);
 		}
 	});
