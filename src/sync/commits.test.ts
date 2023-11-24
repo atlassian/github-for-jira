@@ -133,7 +133,7 @@ describe("sync/commits", () => {
 
 			expect(lastMockedDevInfoRepoUpdateFn).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
 				auditLogsource: "BACKFILL",
-				entityAction: "COMMIT_BACKFILLED",
+				entityAction: "COMMIT",
 				subscriptionId: db.subscription.id
 			}));
 		});

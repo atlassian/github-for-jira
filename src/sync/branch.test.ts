@@ -164,7 +164,7 @@ describe("sync/branches", () => {
 
 			expect(lastMockedDevInfoRepoUpdateFn).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
 				auditLogsource: "BACKFILL",
-				entityAction: "BRANCH_BACKFILLED",
+				entityAction: "BRANCH",
 				subscriptionId: db.subscription.id
 			}));
 

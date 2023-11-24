@@ -193,7 +193,7 @@ describe("sync/pull-request", () => {
 
 				expect(lastMockedDevInfoRepoUpdateFn).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
 					auditLogsource: "BACKFILL",
-					entityAction: "PULL_BACKFILLED",
+					entityAction: "PULL",
 					subscriptionId: db.subscription.id
 				}));
 

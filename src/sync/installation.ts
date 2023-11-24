@@ -251,7 +251,7 @@ const sendPayloadToJira = async (task: TaskType, jiraClient, subscription: Subsc
 					preventTransitions: true,
 					operationType: "BACKFILL",
 					auditLogsource: "BACKFILL",
-					entityAction: `${task.toUpperCase()}_BACKFILLED`,
+					entityAction: `${task.toUpperCase()}`,
 					subscriptionId: subscription.id
 				});
 		}
