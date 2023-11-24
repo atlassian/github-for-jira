@@ -31,6 +31,8 @@ import { RepoSyncState } from "models/reposyncstate";
 import { ApiResyncFailedTasksPost } from "./api-resync-failed-tasks";
 import { GHESVerificationRouter } from "./ghes-app-verification/ghes-app-verification-router";
 import { AuditLogApiRouter } from "./audit-log/audit-log-api-router";
+import { ApiDummySubscriptionPost } from "routes/api/subscription/api-dummy-subscription-post";
+import { ApiDummySubscriptionDelete } from "routes/api/subscription/api-dummy-subscription-delete";
 
 export const ApiRouter = Router();
 
@@ -231,3 +233,6 @@ ApiRouter.use("/audit-log", AuditLogApiRouter);
 
 ApiRouter.use("/jira", ApiJiraRouter);
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);
+
+ApiRouter.post("/dummy-subscription/:jiraHost", ApiDummySubscriptionPost);
+ApiRouter.delete("/dummy-subscription/:jiraHost", ApiDummySubscriptionDelete);
