@@ -11,7 +11,6 @@ import { getPullRequestTask } from "./pull-request";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 
 const lastMockedDevInfoRepoUpdateFn = jest.fn();
-jest.mock("config/feature-flags");
 jest.mock("../jira/client/jira-client", () => ({
 	getJiraClient: async (...args) => {
 		const actual = await jest.requireActual("../jira/client/jira-client").getJiraClient(...args);

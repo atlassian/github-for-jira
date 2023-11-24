@@ -229,13 +229,19 @@ const sendPayloadToJira = async (task: TaskType, jiraClient, subscription: Subsc
 			case "build":
 				await jiraClient.workflow.submit(jiraPayload, repositoryId, {
 					preventTransitions: true,
-					operationType: "BACKFILL"
+					operationType: "BACKFILL",
+					auditLogsource: "BACKFILL",
+					entityAction: task.toUpperCase(),
+					subscriptionId: subscription.id
 				});
 				break;
 			case "deployment":
 				await jiraClient.deployment.submit(jiraPayload, repositoryId, {
 					preventTransitions: true,
-					operationType: "BACKFILL"
+					operationType: "BACKFILL",
+					auditLogsource: "BACKFILL",
+					entityAction: task.toUpperCase(),
+					subscriptionId: subscription.id
 				});
 				break;
 			case "dependabotAlert":
