@@ -582,7 +582,7 @@ const batchedBulkUpdate = async (
 		};
 
 		if (await booleanFlag(BooleanFlags.USE_DYNAMODB_TO_PERSIST_AUDIT_LOG, jiraHost)) {
-			processAuditLogsForDevInfoBulkUpdate({ request:body, response:responseData, options, logger });
+			processAuditLogsForDevInfoBulkUpdate({ reqRepoData:data, response:responseData, options, logger });
 		}
 
 		logger.info({

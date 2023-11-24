@@ -11,7 +11,7 @@ import { transformRepositoryId } from "~/src/transforms/transform-repository-id"
 import { getPullRequestReviews } from "~/src/transforms/util/github-get-pull-request-reviews";
 import { Subscription } from "models/subscription";
 
-export const 	pullRequestWebhookHandler = async (context: WebhookContext, jiraClient, util, gitHubInstallationId: number, subscription: Subscription): Promise<void> => {
+export const pullRequestWebhookHandler = async (context: WebhookContext, jiraClient, util, gitHubInstallationId: number, subscription: Subscription): Promise<void> => {
 	const {
 		pull_request,
 		repository: {
@@ -76,7 +76,13 @@ export const 	pullRequestWebhookHandler = async (context: WebhookContext, jiraCl
 
 	context.log.info(`Sending pull request update to Jira`);
 
-	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
+	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload, {
+		preventTransitions: false,
+		operationType: "NORMAL",
+		auditLogsource: "WEBHOOK",
+		entityAction: context?.name === "pull_request_review" ? "PR_REVIEW" : `PR_${context?.action?.toUpperCase()}`,
+		subscriptionId: subscription?.id
+	});
 	const { webhookReceived, name, log } = context;
 
 	webhookReceived && emitWebhookProcessedMetrics(

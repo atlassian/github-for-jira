@@ -12,7 +12,7 @@ import deploymentNodesFixture from "fixtures/api/graphql/deployment-nodes.json";
 import mixedDeploymentNodes from "fixtures/api/graphql/deployment-nodes-mixed.json";
 import { DeploymentQueryNode, getDeploymentsQueryWithStatuses } from "~/src/github/client/github-queries";
 import { waitUntil } from "test/utils/wait-until";
-import { DatabaseStateCreator } from "test/utils/database-state-creator";
+import { DatabaseStateCreator, CreatorResult } from "test/utils/database-state-creator";
 import { GitHubServerApp } from "models/github-server-app";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getDeploymentTask } from "./deployment";
@@ -21,6 +21,22 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 
 jest.mock("config/feature-flags");
 const logger = getLogger("test");
+const lastMockedDeploymentSubmitFn = jest.fn();
+jest.mock("../jira/client/jira-client", () => ({
+	getJiraClient: async (...args) => {
+		const actual = await jest.requireActual("../jira/client/jira-client").getJiraClient(...args);
+		return {
+			...actual,
+			deployment: {
+				...actual.deployment,
+				submit: (...repoArgs) => {
+					lastMockedDeploymentSubmitFn(...repoArgs);
+					return actual.deployment.submit(...repoArgs);
+				}
+			}
+		};
+	}
+}));
 
 describe("sync/deployments", () => {
 	const installationId = DatabaseStateCreator.GITHUB_INSTALLATION_ID;
@@ -244,12 +260,13 @@ describe("sync/deployments", () => {
 		};
 
 		let repoSyncState: RepoSyncState;
+		let dbState: CreatorResult;
 
 		beforeEach(async () => {
 
 			mockSystemTime(12345678);
 
-			const dbState = await new DatabaseStateCreator()
+			dbState = await new DatabaseStateCreator()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForDeployments()
 				.create();
@@ -418,6 +435,12 @@ describe("sync/deployments", () => {
 
 			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			await verifyMessageSent(data);
+
+			expect(lastMockedDeploymentSubmitFn).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.objectContaining({
+				auditLogsource: "BACKFILL",
+				entityAction: "DEPLOYMENT",
+				subscriptionId: dbState.subscription.id
+			}));
 		});
 
 		it("should send Jira all deployments that have Issue Keys", async () => {

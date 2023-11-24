@@ -14,7 +14,27 @@ import branchNoIssueKeys from "fixtures/api/graphql/branch-no-issue-keys.json";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { waitUntil } from "test/utils/wait-until";
 import { GitHubServerApp } from "models/github-server-app";
-import { DatabaseStateCreator } from "test/utils/database-state-creator";
+import { DatabaseStateCreator, CreatorResult } from "test/utils/database-state-creator";
+
+const lastMockedDevInfoRepoUpdateFn = jest.fn();
+jest.mock("../jira/client/jira-client", () => ({
+	getJiraClient: async (...args) => {
+		const actual = await jest.requireActual("../jira/client/jira-client").getJiraClient(...args);
+		return {
+			...actual,
+			devinfo: {
+				...actual.devinfo,
+				repository: {
+					...actual.devinfo.repository,
+					update: (...repoArgs) => {
+						lastMockedDevInfoRepoUpdateFn(...repoArgs);
+						return actual.devinfo.repository.update(...repoArgs);
+					}
+				}
+			}
+		};
+	}
+}));
 
 describe("sync/branches", () => {
 
@@ -104,9 +124,10 @@ describe("sync/branches", () => {
 
 		const mockBackfillQueueSendMessage = jest.fn();
 
+		let db: CreatorResult;
 		beforeEach(async () => {
 
-			await new DatabaseStateCreator()
+			db = await new DatabaseStateCreator()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForBranches()
 				.create();
@@ -126,6 +147,7 @@ describe("sync/branches", () => {
 		};
 
 		it("should sync to Jira when branch refs have jira references", async () => {
+
 			const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 			nockBranchRequest(branchNodesFixture);
 
@@ -138,6 +160,13 @@ describe("sync/branches", () => {
 
 			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			await verifyMessageSent(data);
+
+			expect(lastMockedDevInfoRepoUpdateFn).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+				auditLogsource: "BACKFILL",
+				entityAction: "BRANCH",
+				subscriptionId: db.subscription.id
+			}));
+
 		});
 
 		it("should send data if issue keys are only present in commits", async () => {
