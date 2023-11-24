@@ -13,9 +13,8 @@ import { GitHubServerApp } from "models/github-server-app";
 import { DatabaseStateCreator, CreatorResult } from "test/utils/database-state-creator";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { when } from "jest-when";
-//import { getJiraClient } from "../jira/client/jira-client";
 
-let lastMockedDevInfoRepoUpdateFn = jest.fn();
+const lastMockedDevInfoRepoUpdateFn = jest.fn();
 jest.mock("config/feature-flags");
 jest.mock("../jira/client/jira-client", () => ({
 	getJiraClient: async (...args) => {
@@ -32,7 +31,7 @@ jest.mock("../jira/client/jira-client", () => ({
 					}
 				}
 			}
-		}
+		};
 	}
 }));
 
@@ -106,35 +105,6 @@ describe("sync/commits", () => {
 		};
 
 		it("should sync to Jira when Commit Nodes have jira references", async () => {
-			const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
-
-			createGitHubNock(commitNodesFixture);
-			const commits = [
-				{
-					"author": {
-						"name": "test-author-name",
-						"email": "test-author-email@example.com"
-					},
-					"authorTimestamp": "test-authored-date",
-					"displayId": "test-o",
-					"fileCount": 0,
-					"hash": "test-oid",
-					"id": "test-oid",
-					"issueKeys": [
-						"TES-17"
-					],
-					"message": "[TES-17] test-commit-message",
-					"url": "https://github.com/test-login/test-repo/commit/test-sha",
-					"updateSequenceId": 12345678
-				}
-			];
-			createJiraNock(commits);
-
-			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
-			await verifyMessageSent(data);
-		});
-
-		it("should save audit log when Commit Nodes have jira references when ff is on", async () => {
 
 			when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_TO_PERSIST_AUDIT_LOG, expect.anything()).mockResolvedValue(true);
 
@@ -163,6 +133,7 @@ describe("sync/commits", () => {
 			createJiraNock(commits);
 
 			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
+			await verifyMessageSent(data);
 
 			expect(lastMockedDevInfoRepoUpdateFn).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
 				auditLogsource: "BACKFILL",
