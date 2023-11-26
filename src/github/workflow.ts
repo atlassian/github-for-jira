@@ -3,6 +3,7 @@ import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { createInstallationClient } from "utils/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
 import { shouldSendAll } from "config/feature-flags";
+import { Subscription } from "../models/subscription";
 
 export const workflowWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 	const { payload, log: logger } = context;
@@ -30,8 +31,18 @@ export const workflowWebhookHandler = async (context: WebhookContext, jiraClient
 	}
 
 	logger.info({ jiraHost: jiraClient.baseURL }, `Sending workflow event to Jira`);
+	const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
+	if (!subscription) {
+		logger.warn(`Subscription not found to log the info into audit log table`);
+	}
 
-	const jiraResponse = await jiraClient.workflow.submit(jiraPayload, payload.repository.id);
+	const jiraResponse = await jiraClient.workflow.submit(jiraPayload, payload.repository.id, {
+		preventTransitions: true,
+		operationType: "BACKFILL",
+		auditLogsource: "BACKFILL",
+		entityAction: "WORKFLOW_RUN",
+		subscriptionId: subscription?.id
+	});
 	const { webhookReceived, name, log } = context;
 
 	webhookReceived && emitWebhookProcessedMetrics(
