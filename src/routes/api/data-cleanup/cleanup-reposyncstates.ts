@@ -105,6 +105,6 @@ const safeParseResult = (result: object, commitToDB: boolean) => {
 			return result[0].map((r: object) => safeJsonStringify(r)).join("\n") as string;
 		}
 	} catch (_) {
-		return result;
+		return "ERROR Failed to parse result";
 	}
 };

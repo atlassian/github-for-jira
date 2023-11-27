@@ -79,6 +79,7 @@ describe("github-create-branch", () => {
 
 	it.each(["owner", "repo", "sourceBranchName", "newBranchName"])("Should 400 when missing required fields", async (attribute) => {
 		res.status.mockReturnValue(res);
+		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 		delete req.body[attribute];
 		await GithubCreateBranchPost(req , res);
 		expect(res.status).toHaveBeenCalledWith(400);
