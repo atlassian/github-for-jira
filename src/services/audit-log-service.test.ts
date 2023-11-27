@@ -108,5 +108,65 @@ describe("audit log service", () => {
 				}]);
 			});
 		});
+
+		describe("getAuditLog", () => {
+			const saveLog = async (subscriptionId: number, entityId: string) => {
+				const createdAt = new Date();
+				await saveAuditLog({
+					subscriptionId,
+					source: "WEBHOOK",
+					entityType: "commits",
+					entityAction: "push",
+					entityId,
+					issueKey: "ABC-123",
+					createdAt
+				}, getLogger("test"));
+				return { createdAt };
+			};
+
+			it("should successfully fetch saved audit info to dynamo db by order of createdAt desc", async () => {
+
+				const subId1 = 123;
+				const subId2 = 456;
+				const { createdAt: createdAtEarlier } = await saveLog(subId1, "commit-123");
+				await saveLog(subId2, "commit-456");
+				const { createdAt: createdAtLater } = await saveLog(subId1, "commit-123");
+				await saveLog(subId1, "commit-789");
+
+				const result = await getAuditLog({ entityType: "commits", entityId: "commit-123", subscriptionId: subId1, issueKey: "ABC-123" }, logger);
+
+				expect(result).toEqual([
+					expect.objectContaining({
+						entityId: "commit-123",
+						issueKey: "ABC-123",
+						subscriptionId: subId1,
+						createdAt: createdAtLater
+					}),
+					expect.objectContaining({
+						entityId: "commit-123",
+						issueKey: "ABC-123",
+						subscriptionId: subId1,
+						createdAt: createdAtEarlier
+					})
+				]);
+			});
+
+			it("should successfully fetch saved audit info to dynamo db up to 100 items", async () => {
+
+				for (let i=0; i < 100; i++) {
+					await saveLog(1234, "commit-1234");
+				}
+
+				const result = await getAuditLog({ entityType: "commits", entityId: "commit-1234", subscriptionId: 1234, issueKey: "ABC-123" }, logger);
+
+				expect(result.length).toBe(100);
+				result.forEach(r => expect(r).toEqual(expect.objectContaining({
+					entityId: "commit-1234",
+					issueKey: "ABC-123",
+					subscriptionId: 1234
+				})));
+
+			});
+		});
 	});
 });
