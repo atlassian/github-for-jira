@@ -124,7 +124,7 @@ describe("sync/builds", () => {
 
 		expect(lastMockedWorkflowSubmit).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.objectContaining({
 			auditLogsource: "BACKFILL",
-			entityAction: "BUILD",
+			entityAction: "WORKFLOW_RUN",
 			subscriptionId: db.subscription.id
 		}));
 	});

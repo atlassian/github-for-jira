@@ -22,7 +22,7 @@ import { uniq } from "lodash";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { getDeploymentDebugInfo } from "./jira-client-deployment-helper";
-import { processAuditLogsForDevInfoBulkUpdate } from "./jira-client-audit-log-helper";
+import { processAuditLogsForDevInfoBulkUpdate, processAuditLogsForWorkflowSubmit } from "./jira-client-audit-log-helper";
 import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
 import { sendAnalytics } from "~/src/util/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "~/src/interfaces/common";
@@ -406,8 +406,16 @@ export const getJiraClient = async (
 					operationType: options?.operationType || "NORMAL"
 				};
 
-				logger?.info({ gitHubProduct }, "Sending builds payload to jira.");
-				return await instance.post("/rest/builds/0.1/bulk", payload);
+				const response =  await instance.post("/rest/builds/0.1/bulk", payload);
+				const responseData = {
+					status: response.status,
+					data:response.data
+				};
+				const reqBuildData = data?.builds[0];
+				if (await booleanFlag(BooleanFlags.USE_DYNAMODB_TO_PERSIST_AUDIT_LOG, jiraHost)) {
+					processAuditLogsForWorkflowSubmit({ reqBuildData, response:responseData, options, logger });
+				}
+				return response;
 			}
 		},
 		deployment: {
