@@ -139,7 +139,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 			auditInfo:[{
 				"createdAt": expect.anything(),
 				"entityAction": "COMMIT_PUSH",
-				"entityId": "e3fe8bf05f50f87c18611298e312217c4895747b",
+				"entityId": "KamaksheeSamant/react-cods-hub_e3fe8bf05f50f87c18611298e312217c4895747b",
 				"entityType": "commits",
 				"issueKey": "KAM-1",
 				"source": "WEBHOOK",
@@ -195,7 +195,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 			auditInfo:[{
 				"createdAt": expect.anything(),
 				"entityAction": "COMMIT_PUSH",
-				"entityId": "e3fe8bf05f50f87c18611298e312217c4895747b",
+				"entityId": "KamaksheeSamant/react-cods-hub_e3fe8bf05f50f87c18611298e312217c4895747b",
 				"entityType": "commits",
 				"issueKey": "KAM-1",
 				"source": "WEBHOOK",
@@ -204,7 +204,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 			{
 				"createdAt": expect.anything(),
 				"entityAction": "COMMIT_PUSH",
-				"entityId": "e3fe8bf05f50f87c18611298e312217c4895747b",
+				"entityId": "KamaksheeSamant/react-cods-hub_e3fe8bf05f50f87c18611298e312217c4895747b",
 				"entityType": "commits",
 				"issueKey": "KAM-2",
 				"source": "WEBHOOK",
@@ -260,7 +260,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 			auditInfo:[{
 				"createdAt": expect.anything(),
 				"entityAction": "COMMIT_PUSH",
-				"entityId": "e3fe8bf05f50f87c18611298e312217c4895747b",
+				"entityId": "KamaksheeSamant/react-cods-hub_e3fe8bf05f50f87c18611298e312217c4895747b",
 				"entityType": "commits",
 				"issueKey": "KAM-1",
 				"source": "WEBHOOK",
@@ -314,7 +314,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 			auditInfo:[{
 				"createdAt": expect.anything(),
 				"entityAction": "COMMIT_PUSH",
-				"entityId": "KAM-1-and-KAM-2",
+				"entityId": "KamaksheeSamant/react-cods-hub_KAM-1-and-KAM-2",
 				"entityType": "branches",
 				"issueKey": "KAM-1",
 				"source": "WEBHOOK",
@@ -323,7 +323,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 			{
 				"createdAt": expect.anything(),
 				"entityAction": "COMMIT_PUSH",
-				"entityId": "KAM-1-and-KAM-2",
+				"entityId": "KamaksheeSamant/react-cods-hub_KAM-1-and-KAM-2",
 				"entityType": "branches",
 				"issueKey": "KAM-2",
 				"source": "WEBHOOK",
@@ -399,7 +399,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 			auditInfo:[{
 				"createdAt": expect.anything(),
 				"entityAction": "PR_OPENED",
-				"entityId": "KAM-5-feat",
+				"entityId": "kamaOrgOne/repo_react_KAM-5-feat",
 				"entityType": "branches",
 				"issueKey": "KAM-5",
 				"source": "WEBHOOK",
@@ -408,7 +408,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 			{
 				"createdAt": expect.anything(),
 				"entityAction": "PR_OPENED",
-				"entityId": "10",
+				"entityId": "kamaOrgOne/repo_react_10",
 				"entityType": "pullRequests",
 				"issueKey": "KAM-5",
 				"source": "WEBHOOK",
