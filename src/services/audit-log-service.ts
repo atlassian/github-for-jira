@@ -2,7 +2,6 @@ import Logger from "bunyan";
 import { envVars } from "config/env";
 import { getLogger } from "config/logger";
 import { dynamodb as ddb } from "config/dynamodb";
-import { createHashWithoutSharedSecret } from "utils/encryption";
 
 const defaultLogger = getLogger("DeploymentDynamoLogger");
 
@@ -109,7 +108,5 @@ export const getAuditLog = async (
  */
 const getKey = (auditInfo: AuditInfoPK) => {
 	const { entityId, entityType, subscriptionId, issueKey } = auditInfo;
-	return createHashWithoutSharedSecret(
-		`subID_${subscriptionId}_typ_${entityType}_id_${entityId}_issKey_${issueKey}`
-	);
+	return `subID_${subscriptionId}_typ_${entityType}_id_${entityId}_issKey_${issueKey}`;
 };

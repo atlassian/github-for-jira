@@ -45,6 +45,22 @@
 					]
 				}
 			}
+		},
+		{
+			"description": "Allow prod pollinator checks to call post configuration endpoints for testing",
+			"paths": [
+				"/api/configuration"
+			],
+			"methods": [
+				"POST"
+			],
+			"principals": {
+				"asap": {
+					"issuers": [
+						"pollinator-check/3d2bd81e-5a4f-46dd-a0eb-806a6f17c0e6"
+					]
+				}
+			}
 		}
 	]
 }
