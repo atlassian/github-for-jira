@@ -92,7 +92,58 @@ export const processBatchedBulkUpdateResp = ({
 	} catch (error) {
 		logger.error(
 			{ error },
-			"Failed to process batched bulk update api response for audit log"
+			"Failed to process batched repo bulk update api response for audit log"
+		);
+		return { isSuccess: false };
+	}
+};
+
+export const processWorkflowSubmitResp = ({
+	reqBuildData,
+	response,
+	options,
+	logger
+}): {
+	isSuccess: boolean;
+	auditInfo?: Array<AuditInfo>;
+} => {
+	try {
+		const isSuccess = response?.status === 202;
+		const acceptedBuilds =
+			response?.data && response?.data?.acceptedBuilds;
+		const hasAcceptedBuilds =
+			isArray(acceptedBuilds) &&
+			acceptedBuilds.length > 0;
+		const auditInfo: Array<AuditInfo> = [];
+		if (isSuccess && hasAcceptedBuilds) {
+			const reqBuildNo = reqBuildData.buildNumber;
+			const reqBuildPipelineId = reqBuildData.pipelineId;
+			const createdAt = new Date();
+			const acceptedBuildFound = acceptedBuilds.some(acceptedBuild => acceptedBuild?.buildNumber.toString() === reqBuildNo.toString() && acceptedBuild.pipelineId.toString() === reqBuildPipelineId.toString());
+			if (acceptedBuildFound) {
+				const issueKeys = reqBuildData?.issueKeys;
+				issueKeys.map((issueKey) => {
+					const obj: AuditInfo = {
+						createdAt,
+						entityId: `${reqBuildNo}_${reqBuildPipelineId}`,
+						entityType: "builds",
+						issueKey,
+						subscriptionId: options?.subscriptionId,
+						source: options?.auditLogsource || "WEBHOOK",
+						entityAction: options?.entityAction || "null"
+					};
+					if (obj.subscriptionId && obj.entityId) {
+						auditInfo.push(obj);
+					}
+				});
+			}
+			return { isSuccess: true, auditInfo };
+		}
+		return { isSuccess: false };
+	} catch (error) {
+		logger.error(
+			{ error },
+			"Failed to process batched build bulk update api response for audit log"
 		);
 		return { isSuccess: false };
 	}
@@ -110,9 +161,29 @@ export const processAuditLogsForDevInfoBulkUpdate = ({ reqRepoData, response, op
 				await saveAuditLog(auditInf, logger);
 			});
 		} else {
-			logger.error("the DD api call failed for all github entities!");
+			logger.error("the DD devInfo update api call failed for all github entities!");
 		}
 	} catch (error) {
-		logger.error({ error }, "Failed to log DD api call success");
+		logger.error({ error }, "Failed to log DD devInfo update api call success");
+	}
+};
+
+export const processAuditLogsForWorkflowSubmit = ({ reqBuildData, response, options, logger }) => {
+	try {
+		const { isSuccess, auditInfo } = processWorkflowSubmitResp({
+			reqBuildData,
+			response,
+			options,
+			logger
+		});
+		if (isSuccess) {
+			auditInfo?.map(async (auditInf) => {
+				await saveAuditLog(auditInf, logger);
+			});
+		} else {
+			logger.error("the DD build update api call failed!");
+		}
+	} catch (error) {
+		logger.error({ error }, "Failed to log DD build update api call success");
 	}
 };
