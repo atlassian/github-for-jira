@@ -1,7 +1,7 @@
 {
   "allow": [
     {
-      "description": "Allow prod pollinator checks to call endpoints for testing",
+      "description": "Allow prod pollinator checks to call delete installation endpoints for testing",
       "paths": [
         "/api/deleteInstallation/**"
       ],
@@ -18,6 +18,22 @@
 					]
         }
       }
-    }
+    },
+		{
+			"description": "Allow prod pollinator checks to call post configuration endpoints for testing",
+			"paths": [
+				"/api/configuration"
+			],
+			"methods": [
+				"POST"
+			],
+			"principals": {
+				"asap": {
+					"issuers": [
+						"pollinator-check/98a88b09-1541-4c0d-aded-4f1cc467d1fd"
+					]
+				}
+			}
+		}
   ]
 }
