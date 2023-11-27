@@ -1,7 +1,6 @@
 import { getLogger } from "config/logger";
 import { envVars } from "config/env";
 import { dynamodb as ddb } from "config/dynamodb";
-import { createHashWithoutSharedSecret } from "utils/encryption";
 import { saveAuditLog, getAuditLog } from "./audit-log-service";
 
 const logger = getLogger("test");
@@ -34,7 +33,7 @@ describe("audit log service", () => {
 				.getItem({
 					TableName: envVars.DYNAMO_AUDIT_LOG_TABLE_NAME,
 					Key: {
-						Id: { S: createHashWithoutSharedSecret(ID) },
+						Id: { S: ID },
 						CreatedAt: { N: String(createdAt.getTime()) }
 					},
 					AttributesToGet: [
@@ -52,7 +51,7 @@ describe("audit log service", () => {
 				.promise();
 			expect(result.$response.error).toBeNull();
 			expect(result.Item).toEqual({
-				Id: { S: createHashWithoutSharedSecret(ID) },
+				Id: { S: ID },
 				CreatedAt: { N: String(createdAt.getTime()) },
 				ExpiredAfter: {
 					N: String(
