@@ -406,20 +406,15 @@ export const getJiraClient = async (
 					operationType: options?.operationType || "NORMAL"
 				};
 
-				logger?.info({ gitHubProduct }, "Sending builds payload to jira ::+::");
-				logger?.info({ gitHubProduct }, "payload ::+::",JSON.stringify(payload));
-				logger?.info({ gitHubProduct }, "options ::+::",JSON.stringify(options));
 				const response =  await instance.post("/rest/builds/0.1/bulk", payload);
 				const responseData = {
 					status: response.status,
 					data:response.data
 				};
 				const reqBuildData = data?.builds[0];
-				logger?.info({ gitHubProduct }, "result ::+::",JSON.stringify(responseData));
 				if (await booleanFlag(BooleanFlags.USE_DYNAMODB_TO_PERSIST_AUDIT_LOG, jiraHost)) {
 					processAuditLogsForWorkflowSubmit({ reqBuildData, response:responseData, options, logger });
 				}
-				processAuditLogsForWorkflowSubmit({ reqBuildData, response:responseData, options, logger });
 				return response;
 			}
 		},
