@@ -38,8 +38,8 @@ export const workflowWebhookHandler = async (context: WebhookContext, jiraClient
 
 	const jiraResponse = await jiraClient.workflow.submit(jiraPayload, payload.repository.id, {
 		preventTransitions: true,
-		operationType: "BACKFILL",
-		auditLogsource: "BACKFILL",
+		operationType: "NORMAL",
+		auditLogsource: "NORMAL",
 		entityAction: "WORKFLOW_RUN",
 		subscriptionId: subscription?.id
 	});
