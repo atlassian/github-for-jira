@@ -3,6 +3,7 @@ import { isArray, isObject } from "lodash";
 
 const getAuditInfo = ({
 	acceptedGithubEntities,
+	repoFullName,
 	repoEntities,
 	githubEntityType,
 	options
@@ -15,7 +16,7 @@ const getAuditInfo = ({
 		issueKeys.map((issueKey) => {
 			const obj: AuditInfo = {
 				createdAt,
-				entityId: githubEntityId,
+				entityId: `${repoFullName}_${githubEntityId}`,
 				entityType: githubEntityType,
 				issueKey,
 				subscriptionId: options?.subscriptionId,
@@ -59,6 +60,7 @@ export const processBatchedBulkUpdateResp = ({
 				const commitAuditInfo = getAuditInfo({
 					acceptedGithubEntities: commits,
 					githubEntityType: "commits",
+					repoFullName: repoData.name,
 					repoEntities: repoData["commits"],
 					options
 				});
@@ -68,6 +70,7 @@ export const processBatchedBulkUpdateResp = ({
 				const branchAuditInfo = getAuditInfo({
 					acceptedGithubEntities: branches,
 					githubEntityType: "branches",
+					repoFullName: repoData.name,
 					repoEntities: repoData["branches"],
 					options
 				});
@@ -77,6 +80,7 @@ export const processBatchedBulkUpdateResp = ({
 				const PRAuditInfo = getAuditInfo({
 					acceptedGithubEntities: pullRequests,
 					githubEntityType: "pullRequests",
+					repoFullName: repoData.name,
 					repoEntities: repoData["pullRequests"],
 					options
 				});
