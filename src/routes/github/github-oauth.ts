@@ -221,7 +221,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		 */
 		if (!githubToken || gitHubUuid !== gitHubAppConfig.uuid) {
 			req.log.info("github token missing, calling login()");
-			throw "Missing github token";
+			throw new Error("Missing github token");
 		}
 		req.log.debug("found github token in session. validating token with API.");
 
