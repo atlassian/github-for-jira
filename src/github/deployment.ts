@@ -23,8 +23,6 @@ export const deploymentWebhookHandler = async (context: WebhookContext, jiraClie
 			context.log
 		);
 	}
-	// eslint-disable-next-line no-console
-	console.log(">>>",context.action);
 
 	await sqsQueues.deployment.sendMessage({
 		jiraHost: jiraClient.baseURL,
