@@ -74,7 +74,7 @@ export const processBranch = async (
 		operationType: "NORMAL",
 		auditLogsource: "WEBHOOK",
 		entityAction: "BRANCH_CREATE",
-		subscriptionId: subscription?.id
+		subscriptionId: subscription?.id || 0
 	});
 
 	emitWebhookProcessedMetrics(

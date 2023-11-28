@@ -9,6 +9,7 @@ import { createHashWithSharedSecret } from "utils/encryption";
 import {
 	JiraAssociation,
 	JiraBuildBulkSubmitData,
+	JiraBuild,
 	JiraCommit,
 	JiraDeploymentBulkSubmitData,
 	JiraIssue,
@@ -72,7 +73,7 @@ export interface JiraClient {
 		},
 	},
 	workflow: {
-		submit: (data: JiraBuildBulkSubmitData, repositoryId: number, options?: JiraSubmitOptions) => Promise<any>;
+		submit: (data: JiraBuildBulkSubmitData, repositoryId: number, options: JiraSubmitOptions) => Promise<any>;
 	},
 	deployment: {
 		submit: (
@@ -382,7 +383,7 @@ export const getJiraClient = async (
 			}
 		},
 		workflow: {
-			submit: async (data: JiraBuildBulkSubmitData, repositoryId: number, options?: JiraSubmitOptions) => {
+			submit: async (data: JiraBuildBulkSubmitData, repositoryId: number, options: JiraSubmitOptions) => {
 				updateIssueKeysFor(data.builds, uniq);
 				if (!withinIssueKeyLimit(data.builds)) {
 					logger.warn({
@@ -411,9 +412,9 @@ export const getJiraClient = async (
 					status: response.status,
 					data:response.data
 				};
-				const reqBuildData = data?.builds[0];
+				const reqBuildDataArray: JiraBuild[] = data?.builds || [];
 				if (await booleanFlag(BooleanFlags.USE_DYNAMODB_TO_PERSIST_AUDIT_LOG, jiraHost)) {
-					processAuditLogsForWorkflowSubmit({ reqBuildData, response:responseData, options, logger });
+					processAuditLogsForWorkflowSubmit({ reqBuildDataArray, response:responseData, options, logger });
 				}
 				return response;
 			}
