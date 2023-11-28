@@ -1,7 +1,7 @@
-import { processBatchedBulkUpdateResp } from "./jira-client-audit-log-helper";
+import { processBatchedBulkUpdateResp, processWorkflowSubmitResp } from "./jira-client-audit-log-helper";
 import { getLogger } from "config/logger";
 
-describe("processAuditLogsForDevInfoBulkUpdate", () => {
+describe("processBatchedBulkUpdateResp", () => {
 	const mockLogger = getLogger("mock-logger");
 	it("should return isSuccess as false when status code is anything other than 202", () => {
 		const reqRepoData = {
@@ -139,7 +139,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 			auditInfo:[{
 				"createdAt": expect.anything(),
 				"entityAction": "COMMIT_PUSH",
-				"entityId": "e3fe8bf05f50f87c18611298e312217c4895747b",
+				"entityId": "KamaksheeSamant/react-cods-hub_e3fe8bf05f50f87c18611298e312217c4895747b",
 				"entityType": "commits",
 				"issueKey": "KAM-1",
 				"source": "WEBHOOK",
@@ -195,7 +195,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 			auditInfo:[{
 				"createdAt": expect.anything(),
 				"entityAction": "COMMIT_PUSH",
-				"entityId": "e3fe8bf05f50f87c18611298e312217c4895747b",
+				"entityId": "KamaksheeSamant/react-cods-hub_e3fe8bf05f50f87c18611298e312217c4895747b",
 				"entityType": "commits",
 				"issueKey": "KAM-1",
 				"source": "WEBHOOK",
@@ -204,7 +204,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 			{
 				"createdAt": expect.anything(),
 				"entityAction": "COMMIT_PUSH",
-				"entityId": "e3fe8bf05f50f87c18611298e312217c4895747b",
+				"entityId": "KamaksheeSamant/react-cods-hub_e3fe8bf05f50f87c18611298e312217c4895747b",
 				"entityType": "commits",
 				"issueKey": "KAM-2",
 				"source": "WEBHOOK",
@@ -260,7 +260,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 			auditInfo:[{
 				"createdAt": expect.anything(),
 				"entityAction": "COMMIT_PUSH",
-				"entityId": "e3fe8bf05f50f87c18611298e312217c4895747b",
+				"entityId": "KamaksheeSamant/react-cods-hub_e3fe8bf05f50f87c18611298e312217c4895747b",
 				"entityType": "commits",
 				"issueKey": "KAM-1",
 				"source": "WEBHOOK",
@@ -314,7 +314,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 			auditInfo:[{
 				"createdAt": expect.anything(),
 				"entityAction": "COMMIT_PUSH",
-				"entityId": "KAM-1-and-KAM-2",
+				"entityId": "KamaksheeSamant/react-cods-hub_KAM-1-and-KAM-2",
 				"entityType": "branches",
 				"issueKey": "KAM-1",
 				"source": "WEBHOOK",
@@ -323,7 +323,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 			{
 				"createdAt": expect.anything(),
 				"entityAction": "COMMIT_PUSH",
-				"entityId": "KAM-1-and-KAM-2",
+				"entityId": "KamaksheeSamant/react-cods-hub_KAM-1-and-KAM-2",
 				"entityType": "branches",
 				"issueKey": "KAM-2",
 				"source": "WEBHOOK",
@@ -399,7 +399,7 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 			auditInfo:[{
 				"createdAt": expect.anything(),
 				"entityAction": "PR_OPENED",
-				"entityId": "KAM-5-feat",
+				"entityId": "kamaOrgOne/repo_react_KAM-5-feat",
 				"entityType": "branches",
 				"issueKey": "KAM-5",
 				"source": "WEBHOOK",
@@ -408,11 +408,174 @@ describe("processAuditLogsForDevInfoBulkUpdate", () => {
 			{
 				"createdAt": expect.anything(),
 				"entityAction": "PR_OPENED",
-				"entityId": "10",
+				"entityId": "kamaOrgOne/repo_react_10",
 				"entityType": "pullRequests",
 				"issueKey": "KAM-5",
 				"source": "WEBHOOK",
 				"subscriptionId": 44558899
+			}]
+		});
+	});
+});
+
+describe("processWorkflowSubmitResp", () => {
+	const mockLogger = getLogger("mock-logger");
+	it("should return isSuccess as false when status code is anything other than 202", () => {
+		const reqBuildData = {
+			schemaVersion: "1.0",
+			pipelineId: 77164279,
+			buildNumber: 6,
+			updateSequenceNumber: 1700991428371,
+			displayName: "CI",
+			url: "https://github.com/kamaOrgOne/repo_react/actions/runs/6994742701",
+			state: "successful",
+			lastUpdated: "2023-11-26T09:37:07Z",
+			issueKeys: ["KAM-5"]
+		};
+		const response = {
+			status: 400,
+			data: {
+				unknownIssueKeys: [],
+				acceptedBuilds: [],
+				rejectedBuilds: []
+			}
+		};
+		const options = { preventTransitions:false, operationType: "WEBHOOK", auditLogsource: "WEBHOOK", entityAction: "WORKFLOW_RUN", subscriptionId: 1122334455 };
+
+		const result = processWorkflowSubmitResp({
+			reqBuildData,
+			response,
+			options,
+			logger: mockLogger
+		});
+
+		expect(result).toEqual({
+			isSuccess: false
+		});
+	});
+	it("should return isSuccess as false when status code is 202 but there is no acceptedBuilds", () => {
+		const reqBuildData = {
+			schemaVersion: "1.0",
+			pipelineId: 77164279,
+			buildNumber: 6,
+			updateSequenceNumber: 1700991428371,
+			displayName: "CI",
+			url: "https://github.com/kamaOrgOne/repo_react/actions/runs/6994742701",
+			state: "successful",
+			lastUpdated: "2023-11-26T09:37:07Z",
+			issueKeys: ["KAM-5"]
+		};
+		const response = {
+			status: 202,
+			data: {
+				unknownIssueKeys: [],
+				acceptedBuilds: [],
+				rejectedBuilds: []
+			}
+		};
+		const options = { preventTransitions:false, operationType: "WEBHOOK", auditLogsource: "WEBHOOK", entityAction: "WORKFLOW_RUN", subscriptionId: 1122334455 };
+
+		const result = processWorkflowSubmitResp({
+			reqBuildData,
+			response,
+			options,
+			logger: mockLogger
+		});
+
+		expect(result).toEqual({
+			isSuccess: false
+		});
+	});
+	it("should return isSuccess as true when status code is 202 and there are/is acceptedBuilds but the result has rejectedBuilds as well", () => {
+		const reqBuildData = {
+			schemaVersion: "1.0",
+			pipelineId: 77164279,
+			buildNumber: 6,
+			updateSequenceNumber: 1700991428371,
+			displayName: "CI",
+			url: "https://github.com/kamaOrgOne/repo_react/actions/runs/6994742701",
+			state: "successful",
+			lastUpdated: "2023-11-26T09:37:07Z",
+			issueKeys: ["KAM-5"]
+		};
+		const response = {
+			status: 202,
+			data: {
+				unknownIssueKeys: [],
+				acceptedBuilds: [{ pipelineId: "77164279", buildNumber: 6 }],
+				rejectedBuilds: [{ pipelineId: "11223434", buildNumber: 10 }]
+			}
+		};
+		const options = { preventTransitions:false, operationType: "WEBHOOK", auditLogsource: "WEBHOOK", entityAction: "WORKFLOW_RUN", subscriptionId: 1122334455 };
+
+		const result = processWorkflowSubmitResp({
+			reqBuildData,
+			response,
+			options,
+			logger: mockLogger
+		});
+
+		expect(result).toEqual({
+			isSuccess: true,
+			auditInfo:[{
+				"createdAt": expect.anything(),
+				"entityAction": "WORKFLOW_RUN",
+				"entityId": "6_77164279",
+				"entityType": "builds",
+				"issueKey": "KAM-5",
+				"source": "WEBHOOK",
+				"subscriptionId": 1122334455
+			}]
+		});
+	});
+	it("should extract the build with 2 issue keys linked - audit info for logging", () => {
+		const reqBuildData = {
+			schemaVersion: "1.0",
+			pipelineId: 77164279,
+			buildNumber: 6,
+			updateSequenceNumber: 1700991428371,
+			displayName: "CI",
+			url: "https://github.com/kamaOrgOne/repo_react/actions/runs/6994742701",
+			state: "successful",
+			lastUpdated: "2023-11-26T09:37:07Z",
+			issueKeys: ["KAM-5", "KAM-6"]
+		};
+		const response = {
+			status: 202,
+			data: {
+				unknownIssueKeys: [],
+				acceptedBuilds: [{ pipelineId: "77164279", buildNumber: 6 }],
+				rejectedBuilds: []
+			}
+		};
+		const options = { preventTransitions:false, operationType: "WEBHOOK", auditLogsource: "WEBHOOK", entityAction: "WORKFLOW_RUN", subscriptionId: 1122334455 };
+
+		const result = processWorkflowSubmitResp({
+			reqBuildData,
+			response,
+			options,
+			logger: mockLogger
+		});
+
+		expect(result).toEqual({
+			isSuccess: true,
+			auditInfo:[{
+				"createdAt": expect.anything(),
+				"entityAction": "WORKFLOW_RUN",
+				"entityId": "6_77164279",
+				"entityType": "builds",
+				"issueKey": "KAM-5",
+				"source": "WEBHOOK",
+				"subscriptionId": 1122334455
+			},
+			{
+				"createdAt": expect.anything(),
+				"entityAction": "WORKFLOW_RUN",
+				"entityId": "6_77164279",
+				"entityType": "builds",
+				"issueKey": "KAM-6",
+				"source": "WEBHOOK",
+				"subscriptionId": 1122334455
 			}]
 		});
 	});

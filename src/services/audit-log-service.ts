@@ -2,7 +2,6 @@ import Logger from "bunyan";
 import { envVars } from "config/env";
 import { getLogger } from "config/logger";
 import { dynamodb as ddb } from "config/dynamodb";
-import { createHashWithoutSharedSecret } from "utils/encryption";
 
 const defaultLogger = getLogger("DeploymentDynamoLogger");
 
@@ -10,7 +9,8 @@ export type AuditLogSourceType = "BACKFILL" | "WEBHOOK";
 type AuditEntityTypePR = "PR_OPENED" | "PR_REOPENED" | "PR_CLOSED" | "PR_EDITED" | "PR_READY_FOR_REVIEW" | "PR_CONVERTED_TO_DRAFT" | "PR_REVIEW";
 type AuditEntityTypeCommit = "COMMIT_PUSH";
 type AuditEntityTypeBranch = "BRANCH_CREATE" | "BRANCH_DELETE";
-export type AuditEntityType = AuditEntityTypePR | AuditEntityTypeBranch | AuditEntityTypeCommit;
+type AuditEntityTypeBuild = "WORKFLOW_RUN";
+export type AuditEntityType = AuditEntityTypePR | AuditEntityTypeBranch | AuditEntityTypeCommit | AuditEntityTypeBuild;
 
 export type AuditInfoPK = {
 	entityType: string;
@@ -78,7 +78,7 @@ export const getAuditLog = async (
 				":id": { S: getKey(params) }
 			},
 			ScanIndexForward: false,
-			Limit: 1
+			Limit: 100
 		})
 		.promise();
 
@@ -108,7 +108,5 @@ export const getAuditLog = async (
  */
 const getKey = (auditInfo: AuditInfoPK) => {
 	const { entityId, entityType, subscriptionId, issueKey } = auditInfo;
-	return createHashWithoutSharedSecret(
-		`subID_${subscriptionId}_typ_${entityType}_id_${entityId}_issKey_${issueKey}`
-	);
+	return `subID_${subscriptionId}_typ_${entityType}_id_${entityId}_issKey_${issueKey}`;
 };
