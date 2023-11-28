@@ -149,8 +149,6 @@ export const processDeploySubmitResp = ({
 					}
 				}
 			});
-			// eslint-disable-next-line no-console
-			console.log(":::::::::",JSON.stringify(auditInfo));
 			return { isSuccess: true, auditInfo };
 		}
 		return { isSuccess: false };
