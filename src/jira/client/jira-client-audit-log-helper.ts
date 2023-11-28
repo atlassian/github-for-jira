@@ -2,9 +2,13 @@ import { AuditInfo, saveAuditLog } from "../../services/audit-log-service";
 import { isArray, isObject } from "lodash";
 import {
 	JiraBuild,
+	JiraDeployment,
 	JiraSubmitOptions
 } from "interfaces/jira";
+import { findIssueKeyAssociation } from "./jira-client-issue-key-helper";
 import Logger from "bunyan";
+
+type Response = { status: number, data: any };
 
 const getAuditInfo = ({
 	acceptedGithubEntities,
@@ -103,6 +107,62 @@ export const processBatchedBulkUpdateResp = ({
 	}
 };
 
+export const processDeploySubmitResp = ({
+	reqDeploymentDataArray,
+	response,
+	options,
+	logger
+}): {
+	isSuccess: boolean;
+	auditInfo?: Array<AuditInfo>;
+} => {
+	try {
+		const isSuccess = response?.status === 202;
+		const acceptedDeployments =
+			response?.data && response?.data?.acceptedDeployments;
+		const hasAcceptedDeployments =
+			isArray(acceptedDeployments) &&
+			acceptedDeployments.length > 0;
+		const auditInfo: Array<AuditInfo> = [];
+		if (isSuccess && hasAcceptedDeployments) {
+			reqDeploymentDataArray.forEach((reqDeploymentData) => {
+				const reqDeploymentSqNo = reqDeploymentData.deploymentSequenceNumber;
+				const createdAt = new Date();
+				const acceptedDeploymentFound = acceptedDeployments.some(acceptedDeployment => acceptedDeployment?.deploymentSequenceNumber?.toString() === reqDeploymentSqNo?.toString());
+				if (acceptedDeploymentFound) {
+					const issueKeys = findIssueKeyAssociation(reqDeploymentData)?.values;
+					if (issueKeys){
+						issueKeys.map((issueKey) => {
+							const obj: AuditInfo = {
+								createdAt,
+								entityId: reqDeploymentSqNo.toString(),
+								entityType: "deployments",
+								issueKey,
+								subscriptionId: options.subscriptionId,
+								source: options.auditLogsource || "WEBHOOK",
+								entityAction: options.entityAction || "null"
+							};
+							if (obj.subscriptionId && obj.entityId) {
+								auditInfo.push(obj);
+							}
+						});
+					}
+				}
+			});
+			// eslint-disable-next-line no-console
+			console.log(":::::::::",JSON.stringify(auditInfo));
+			return { isSuccess: true, auditInfo };
+		}
+		return { isSuccess: false };
+	} catch (error) {
+		logger.error(
+			{ error },
+			"Failed to process batched deployment update api response for audit log"
+		);
+		return { isSuccess: false };
+	}
+};
+
 export const processWorkflowSubmitResp = ({
 	reqBuildDataArray,
 	response,
@@ -110,7 +170,7 @@ export const processWorkflowSubmitResp = ({
 	logger
 }: {
 	reqBuildDataArray: JiraBuild[],
-	response: { status: number, data: any },
+	response: Response,
 	options: JiraSubmitOptions,
 	logger: Logger
 }): {
@@ -183,7 +243,7 @@ export const processAuditLogsForDevInfoBulkUpdate = ({ reqRepoData, response, op
 export const processAuditLogsForWorkflowSubmit = (
 	{ reqBuildDataArray, response, options, logger }: {
 		reqBuildDataArray: JiraBuild[],
-		response: { status: number, data: any },
+		response: Response,
 		options: JiraSubmitOptions,
 		logger: Logger
 	}
@@ -209,5 +269,37 @@ export const processAuditLogsForWorkflowSubmit = (
 		}
 	} catch (error) {
 		logger.error({ error }, "Failed to log DD build update api call success");
+	}
+};
+
+export const processAuditLogsForDeploymentSubmit = (
+	{ reqDeploymentDataArray, response, options, logger }: {
+		reqDeploymentDataArray: JiraDeployment[],
+		response: Response,
+		options: any,
+		logger: Logger
+	}
+) => {
+	try {
+
+		if (!options) {
+			logger.debug("Skip sending to audit log as options are undefined");
+		}
+
+		const { isSuccess, auditInfo } = processDeploySubmitResp({
+			reqDeploymentDataArray,
+			response,
+			options: options,
+			logger
+		});
+		if (isSuccess) {
+			auditInfo?.map(async (auditInf) => {
+				await saveAuditLog(auditInf, logger);
+			});
+		} else {
+			logger.error("the DD deployment update api call failed!");
+		}
+	} catch (error) {
+		logger.error({ error }, "Failed to log DD deployment update api call success");
 	}
 };

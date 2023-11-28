@@ -35,6 +35,7 @@ export const deploymentWebhookHandler = async (context: WebhookContext, jiraClie
 };
 
 export const processDeployment = async (
+	contextAction: string,
 	newGitHubClient: GitHubInstallationClient,
 	webhookId: string,
 	webhookPayload: DeploymentStatusEvent,
@@ -57,6 +58,17 @@ export const processDeployment = async (
 		deploymentEnvironment: environment,
 		webhookReceived: webhookReceivedDate
 	});
+
+	const subscription = await Subscription.getSingleInstallation(
+		jiraHost,
+		gitHubInstallationId,
+		gitHubAppId
+	);
+
+	if (!subscription) {
+		logger.info("No subscription was found, stop processing the push");
+		return;
+	}
 
 	if (await isBlocked(jiraHost, gitHubInstallationId, logger)) {
 		logger.warn("blocking processing of push message because installationId is on the blocklist");
@@ -89,7 +101,17 @@ export const processDeployment = async (
 		return;
 	}
 
-	const result: DeploymentsResult = await jiraClient.deployment.submit(jiraPayload, webhookPayload.repository.id);
+	const result: DeploymentsResult = await jiraClient.deployment.submit(
+		jiraPayload,
+		webhookPayload.repository.id,
+		{
+			preventTransitions: false,
+			operationType: "NORMAL",
+			auditLogsource: "WEBHOOK",
+			entityAction: `DEPLOYMENT_STATUS${contextAction}`.toUpperCase(),
+			subscriptionId: subscription.id
+		}
+	);
 
 	// TODO - remove the rate limited test once valid metrics have been decided
 	!rateLimited && emitWebhookProcessedMetrics(

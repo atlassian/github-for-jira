@@ -1,4 +1,4 @@
-import { processBatchedBulkUpdateResp, processWorkflowSubmitResp } from "./jira-client-audit-log-helper";
+import { processBatchedBulkUpdateResp, processWorkflowSubmitResp, processDeploySubmitResp } from "./jira-client-audit-log-helper";
 import { getLogger } from "config/logger";
 import { JiraSubmitOptions } from "interfaces/jira";
 
@@ -639,6 +639,289 @@ describe("processWorkflowSubmitResp", () => {
 				"source": "WEBHOOK",
 				"subscriptionId": 1122334455
 			}]
+		});
+	});
+});
+
+describe("processDeploySubmitResp", () => {
+	const mockLogger = getLogger("mock-logger");
+	it("should return isSuccess as false when status code is anything other than 202", () => {
+		const reqDeploymentDataArray = [
+			{
+				schemaVersion: "1.0",
+				deploymentSequenceNumber: 1194529862,
+				updateSequenceNumber: 2835516764,
+				displayName: "Update manifest.json KAM-6",
+				url: "https://github.com/KamaksheeSamant/react-cods-hub/actions/runs/7014571070/job/19082502671",
+				description: "deploy",
+				lastUpdated: "2023-11-28T05:22:38.000Z",
+				state: "successful",
+				pipeline: {
+					id: "deploy",
+					displayName: "deploy",
+					url: "https://github.com/KamaksheeSamant/react-cods-hub/actions/runs/7014571070/job/19082502671"
+				},
+				environment: {
+					id: "github-pages",
+					displayName: "github-pages",
+					type: "unmapped"
+				},
+				associations: [
+					{ associationType: "issueIdOrKeys", values: ["KAM-6"] },
+					{
+						associationType: "commit",
+						values: [
+							{
+								commitHash: "f4bc81f3ddb980ac34e4ae9acef108e34840567f",
+								repositoryId: "691330555"
+							}
+						]
+					}
+				]
+			}
+		];
+		const response = {
+			status: 400,
+			data: {
+				unknownIssueKeys: [],
+				acceptedDeployments: [],
+				rejectedDeployments: []
+			}
+		};
+		const options: JiraSubmitOptions = { preventTransitions:false, operationType: "NORMAL", auditLogsource: "WEBHOOK", entityAction: "DEPLOYMENT_STATUS", subscriptionId: 1122334455 };
+
+		const result = processDeploySubmitResp({
+			reqDeploymentDataArray,
+			response,
+			options,
+			logger: mockLogger
+		});
+
+		expect(result).toEqual({
+			isSuccess: false
+		});
+	});
+	it("should return isSuccess as false when status code is 202 but there is no acceptedDeployments", () => {
+		const reqDeploymentDataArray = [
+			{
+				schemaVersion: "1.0",
+				deploymentSequenceNumber: 1194529862,
+				updateSequenceNumber: 2835516764,
+				displayName: "Update manifest.json KAM-6",
+				url: "https://github.com/KamaksheeSamant/react-cods-hub/actions/runs/7014571070/job/19082502671",
+				description: "deploy",
+				lastUpdated: "2023-11-28T05:22:38.000Z",
+				state: "successful",
+				pipeline: {
+					id: "deploy",
+					displayName: "deploy",
+					url: "https://github.com/KamaksheeSamant/react-cods-hub/actions/runs/7014571070/job/19082502671"
+				},
+				environment: {
+					id: "github-pages",
+					displayName: "github-pages",
+					type: "unmapped"
+				},
+				associations: [
+					{ associationType: "issueIdOrKeys", values: ["KAM-6"] },
+					{
+						associationType: "commit",
+						values: [
+							{
+								commitHash: "f4bc81f3ddb980ac34e4ae9acef108e34840567f",
+								repositoryId: "691330555"
+							}
+						]
+					}
+				]
+			}
+		];
+		const response = {
+			status: 202,
+			data: {
+				unknownIssueKeys: [],
+				acceptedDeployments: [],
+				rejectedDeployments: []
+			}
+		};
+		const options: JiraSubmitOptions = { preventTransitions:false, operationType: "NORMAL", auditLogsource: "WEBHOOK", entityAction: "DEPLOYMENT_STATUS", subscriptionId: 1122334455 };
+
+		const result = processDeploySubmitResp({
+			reqDeploymentDataArray,
+			response,
+			options,
+			logger: mockLogger
+		});
+
+		expect(result).toEqual({
+			isSuccess: false
+		});
+	});
+	it("should return isSuccess as true when status code is 202 and there are/is acceptedDeployments but the result has rejectedDeployments as well", () => {
+		const reqDeploymentDataArray = [
+			{
+				schemaVersion: "1.0",
+				deploymentSequenceNumber: 1194529862,
+				updateSequenceNumber: 2835516764,
+				displayName: "Update manifest.json KAM-6",
+				url: "https://github.com/KamaksheeSamant/react-cods-hub/actions/runs/7014571070/job/19082502671",
+				description: "deploy",
+				lastUpdated: "2023-11-28T05:22:38.000Z",
+				state: "successful",
+				pipeline: {
+					id: "deploy",
+					displayName: "deploy",
+					url: "https://github.com/KamaksheeSamant/react-cods-hub/actions/runs/7014571070/job/19082502671"
+				},
+				environment: {
+					id: "github-pages",
+					displayName: "github-pages",
+					type: "unmapped"
+				},
+				associations: [
+					{ associationType: "issueIdOrKeys", values: ["KAM-6"] },
+					{
+						associationType: "commit",
+						values: [
+							{
+								commitHash: "f4bc81f3ddb980ac34e4ae9acef108e34840567f",
+								repositoryId: "691330555"
+							}
+						]
+					}
+				]
+			}
+		];
+		const response = {
+			status: 202,
+			data: {
+				unknownIssueKeys: [],
+				acceptedDeployments: [
+					{
+						pipelineId: "deploy",
+						environmentId: "github-pages",
+						deploymentSequenceNumber: 1194529862
+					}
+				],
+				rejectedDeployments: [
+					{
+						pipelineId: "deploy",
+						environmentId: "github-pages",
+						deploymentSequenceNumber: 1188282781
+					}
+				]
+			}
+		};
+		const options: JiraSubmitOptions = { preventTransitions:false, operationType: "NORMAL", auditLogsource: "WEBHOOK", entityAction: "DEPLOYMENT_STATUS", subscriptionId: 1122334455 };
+
+		const result = processDeploySubmitResp({
+			reqDeploymentDataArray,
+			response,
+			options,
+			logger: mockLogger
+		});
+
+		expect(result).toEqual({
+			isSuccess: true,
+			auditInfo: [
+				{
+					createdAt: expect.anything(),
+					entityAction: "DEPLOYMENT_STATUS",
+					entityId: "1194529862",
+					entityType: "deployments",
+					issueKey: "KAM-6",
+					source: "WEBHOOK",
+					subscriptionId: 1122334455
+				}
+			]
+		});
+	});
+	it("should extract the build with 2 issue keys linked - audit info for logging", () => {
+		const reqDeploymentDataArray = [
+			{
+				schemaVersion: "1.0",
+				deploymentSequenceNumber: 1194529862,
+				updateSequenceNumber: 2835516764,
+				displayName: "Update manifest.json KAM-6",
+				url: "https://github.com/KamaksheeSamant/react-cods-hub/actions/runs/7014571070/job/19082502671",
+				description: "deploy",
+				lastUpdated: "2023-11-28T05:22:38.000Z",
+				state: "successful",
+				pipeline: {
+					id: "deploy",
+					displayName: "deploy",
+					url: "https://github.com/KamaksheeSamant/react-cods-hub/actions/runs/7014571070/job/19082502671"
+				},
+				environment: {
+					id: "github-pages",
+					displayName: "github-pages",
+					type: "unmapped"
+				},
+				associations: [
+					{ associationType: "issueIdOrKeys", values: ["KAM-6", "KAM-5"] },
+					{
+						associationType: "commit",
+						values: [
+							{
+								commitHash: "f4bc81f3ddb980ac34e4ae9acef108e34840567f",
+								repositoryId: "691330555"
+							}
+						]
+					}
+				]
+			}
+		];
+		const response = {
+			status: 202,
+			data: {
+				unknownIssueKeys: [],
+				acceptedDeployments: [
+					{
+						pipelineId: "deploy",
+						environmentId: "github-pages",
+						deploymentSequenceNumber: 1194529862
+					}
+				],
+				rejectedDeployments: [
+					{
+						pipelineId: "deploy",
+						environmentId: "github-pages",
+						deploymentSequenceNumber: 1188282781
+					}
+				]
+			}
+		};
+		const options: JiraSubmitOptions = { preventTransitions:false, operationType: "NORMAL", auditLogsource: "WEBHOOK", entityAction: "DEPLOYMENT_STATUS", subscriptionId: 1122334455 };
+
+		const result = processDeploySubmitResp({
+			reqDeploymentDataArray,
+			response,
+			options,
+			logger: mockLogger
+		});
+
+		expect(result).toEqual({
+			isSuccess: true,
+			auditInfo: [
+				{
+					createdAt: expect.anything(),
+					entityAction: "DEPLOYMENT_STATUS",
+					entityId: "1194529862",
+					entityType: "deployments",
+					issueKey: "KAM-6",
+					source: "WEBHOOK",
+					subscriptionId: 1122334455
+				},
+				{
+					createdAt: expect.anything(),
+					entityAction: "DEPLOYMENT_STATUS",
+					entityId: "1194529862",
+					entityType: "deployments",
+					issueKey: "KAM-5",
+					source: "WEBHOOK",
+					subscriptionId: 1122334455
+				}
+			]
 		});
 	});
 });

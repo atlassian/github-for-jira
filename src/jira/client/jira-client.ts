@@ -10,6 +10,7 @@ import {
 	JiraAssociation,
 	JiraBuildBulkSubmitData,
 	JiraBuild,
+	JiraDeployment,
 	JiraCommit,
 	JiraDeploymentBulkSubmitData,
 	JiraIssue,
@@ -23,7 +24,7 @@ import { uniq } from "lodash";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { getDeploymentDebugInfo } from "./jira-client-deployment-helper";
-import { processAuditLogsForDevInfoBulkUpdate, processAuditLogsForWorkflowSubmit } from "./jira-client-audit-log-helper";
+import { processAuditLogsForDevInfoBulkUpdate, processAuditLogsForWorkflowSubmit, processAuditLogsForDeploymentSubmit } from "./jira-client-audit-log-helper";
 import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
 import { sendAnalytics } from "~/src/util/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "~/src/interfaces/common";
@@ -410,7 +411,7 @@ export const getJiraClient = async (
 				const response =  await instance.post("/rest/builds/0.1/bulk", payload);
 				const responseData = {
 					status: response.status,
-					data:response.data
+					data: response.data
 				};
 				const reqBuildDataArray: JiraBuild[] = data?.builds || [];
 				if (await booleanFlag(BooleanFlags.USE_DYNAMODB_TO_PERSIST_AUDIT_LOG, jiraHost)) {
@@ -462,8 +463,16 @@ export const getJiraClient = async (
 						options,
 						...getDeploymentDebugInfo(data)
 					}, "Jira API accepted deployment!");
-				}
+					const responseData = {
+						status: response.status,
+						data: response.data
+					};
+					const reqDeploymentDataArray: JiraDeployment[] = data?.deployments || [];
+					if (await booleanFlag(BooleanFlags.USE_DYNAMODB_TO_PERSIST_AUDIT_LOG, jiraHost)) {
+						processAuditLogsForDeploymentSubmit({ reqDeploymentDataArray, response:responseData, options, logger });
+					}
 
+				}
 				return {
 					status: response.status,
 					rejectedDeployments: response.data?.rejectedDeployments
