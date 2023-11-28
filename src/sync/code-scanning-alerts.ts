@@ -75,6 +75,7 @@ export const getCodeScanningAlertTask = async (
 			};
 		}
 		logger.error({ err, reason: err.cause?.response?.data }, "Code Scanning backfill failed");
+		// eslint-disable-next-line @typescript-eslint/no-throw-literal
 		throw err;
 	}
 

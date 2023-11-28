@@ -52,6 +52,7 @@ const validateScriptAgainstDB = async (targetScript: string) => {
 	});
 
 	if (lastScript.length < 1) {
+		// eslint-disable-next-line @typescript-eslint/no-throw-literal
 		throw {
 			statusCode: 500,
 			message: `There're no scripts in db to migration down, stop proceeding. \n}`
@@ -61,6 +62,7 @@ const validateScriptAgainstDB = async (targetScript: string) => {
 	const scriptInDB = lastScript[0].name;
 
 	if (scriptInDB !== targetScript) {
+		// eslint-disable-next-line @typescript-eslint/no-throw-literal
 		throw {
 			statusCode: 400,
 			message: `The script (${targetScript}) asked to migration down DOES NOT match latest script in db ${scriptInDB}. Stop rolling back`
