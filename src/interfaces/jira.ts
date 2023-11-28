@@ -254,6 +254,6 @@ export interface JiraSubmitOptions {
 	preventTransitions: boolean;
 	operationType: JiraOperationType;
 	auditLogsource: AuditLogSourceType;
-	entityAction?: AuditEntityType;
-	subscriptionId?: number;
+	entityAction: AuditEntityType;
+	subscriptionId: number;
 }
