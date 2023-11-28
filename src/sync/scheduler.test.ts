@@ -18,9 +18,9 @@ describe("scheduler", () => {
 		const newRepoSyncStatesData: any[] = [];
 		for (let newRepoStateNo = 1; newRepoStateNo < 500; newRepoStateNo++) {
 			const newRepoSyncState = { ...repoSyncState.get() };
-			delete newRepoSyncState["id"];
-			delete newRepoSyncState["commitStatus"];
-			delete newRepoSyncState["branchStatus"];
+			delete newRepoSyncState.id;
+			delete newRepoSyncState.commitStatus;
+			delete newRepoSyncState.branchStatus;
 			newRepoSyncState["repoId"] = repoSyncState.repoId + newRepoStateNo;
 			newRepoSyncState["repoName"] = repoSyncState.repoName + newRepoStateNo.toString();
 			newRepoSyncState["repoFullName"] = repoSyncState.repoFullName + newRepoStateNo.toString();

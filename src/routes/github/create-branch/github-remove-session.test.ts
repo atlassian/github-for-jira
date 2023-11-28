@@ -21,6 +21,7 @@ describe("GitHub Remove Session", () => {
 	});
 
 	it.each(["gitHubAppConfig"])("Should 401 when missing required fields", (attribute) => {
+		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 		delete res.locals[attribute];
 		GithubRemoveSession(req, res);
 		expect(res.sendStatus).toHaveBeenCalledWith(401);
