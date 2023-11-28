@@ -160,6 +160,7 @@ export const GithubOAuthCallbackGet = async (req: Request, res: Response, next: 
 		next(new UIDisplayableError(400, "No state was found"));
 		return;
 	}
+	// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 	delete req.session[stateKey];
 
 	req.log.info({ query: req.query }, `Received request to ${req.url}`);
@@ -202,7 +203,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 			req.session.githubToken = undefined;
 			req.session.githubRefreshToken = undefined;
 
-			delete query["resetGithubToken"];
+			delete query.resetGithubToken;
 
 			const newUrl = originalUrl.split("?")[0] + "?" + queryToQueryString(query);
 			req.log.info("Github Token reset for URL: ", newUrl);

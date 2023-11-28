@@ -1,8 +1,14 @@
 import { AuditInfo, saveAuditLog } from "../../services/audit-log-service";
 import { isArray, isObject } from "lodash";
+import {
+	JiraBuild,
+	JiraSubmitOptions
+} from "interfaces/jira";
+import Logger from "bunyan";
 
 const getAuditInfo = ({
 	acceptedGithubEntities,
+	repoFullName,
 	repoEntities,
 	githubEntityType,
 	options
@@ -15,7 +21,7 @@ const getAuditInfo = ({
 		issueKeys.map((issueKey) => {
 			const obj: AuditInfo = {
 				createdAt,
-				entityId: githubEntityId,
+				entityId: `${repoFullName}_${githubEntityId}`,
 				entityType: githubEntityType,
 				issueKey,
 				subscriptionId: options?.subscriptionId,
@@ -59,6 +65,7 @@ export const processBatchedBulkUpdateResp = ({
 				const commitAuditInfo = getAuditInfo({
 					acceptedGithubEntities: commits,
 					githubEntityType: "commits",
+					repoFullName: repoData.name,
 					repoEntities: repoData["commits"],
 					options
 				});
@@ -68,6 +75,7 @@ export const processBatchedBulkUpdateResp = ({
 				const branchAuditInfo = getAuditInfo({
 					acceptedGithubEntities: branches,
 					githubEntityType: "branches",
+					repoFullName: repoData.name,
 					repoEntities: repoData["branches"],
 					options
 				});
@@ -77,6 +85,7 @@ export const processBatchedBulkUpdateResp = ({
 				const PRAuditInfo = getAuditInfo({
 					acceptedGithubEntities: pullRequests,
 					githubEntityType: "pullRequests",
+					repoFullName: repoData.name,
 					repoEntities: repoData["pullRequests"],
 					options
 				});
@@ -95,10 +104,15 @@ export const processBatchedBulkUpdateResp = ({
 };
 
 export const processWorkflowSubmitResp = ({
-	reqBuildData,
+	reqBuildDataArray,
 	response,
 	options,
 	logger
+}: {
+	reqBuildDataArray: JiraBuild[],
+	response: { status: number, data: any },
+	options: JiraSubmitOptions,
+	logger: Logger
 }): {
 	isSuccess: boolean;
 	auditInfo?: Array<AuditInfo>;
@@ -112,27 +126,29 @@ export const processWorkflowSubmitResp = ({
 			acceptedBuilds.length > 0;
 		const auditInfo: Array<AuditInfo> = [];
 		if (isSuccess && hasAcceptedBuilds) {
-			const reqBuildNo = reqBuildData.buildNumber;
-			const reqBuildPipelineId = reqBuildData.pipelineId;
-			const createdAt = new Date();
-			const acceptedBuildFound = acceptedBuilds.some(acceptedBuild => acceptedBuild?.buildNumber.toString() === reqBuildNo.toString() && acceptedBuild.pipelineId.toString() === reqBuildPipelineId.toString());
-			if (acceptedBuildFound) {
-				const issueKeys = reqBuildData?.issueKeys;
-				issueKeys.map((issueKey) => {
-					const obj: AuditInfo = {
-						createdAt,
-						entityId: `${reqBuildNo}_${reqBuildPipelineId}`,
-						entityType: "builds",
-						issueKey,
-						subscriptionId: options?.subscriptionId,
-						source: options?.auditLogsource || "WEBHOOK",
-						entityAction: options?.entityAction || "null"
-					};
-					if (obj.subscriptionId && obj.entityId) {
-						auditInfo.push(obj);
-					}
-				});
-			}
+			reqBuildDataArray.forEach((reqBuildData) => {
+				const reqBuildNo = reqBuildData.buildNumber;
+				const reqBuildPipelineId = reqBuildData.pipelineId;
+				const createdAt = new Date();
+				const acceptedBuildFound = acceptedBuilds.some(acceptedBuild => acceptedBuild?.buildNumber.toString() === reqBuildNo.toString() && acceptedBuild.pipelineId.toString() === reqBuildPipelineId.toString());
+				if (acceptedBuildFound) {
+					const issueKeys = reqBuildData?.issueKeys;
+					issueKeys.map((issueKey) => {
+						const obj: AuditInfo = {
+							createdAt,
+							entityId: `${reqBuildNo}_${reqBuildPipelineId}`,
+							entityType: "builds",
+							issueKey,
+							subscriptionId: options.subscriptionId,
+							source: options.auditLogsource || "WEBHOOK",
+							entityAction: options.entityAction || "null"
+						};
+						if (obj.subscriptionId && obj.entityId) {
+							auditInfo.push(obj);
+						}
+					});
+				}
+			});
 			return { isSuccess: true, auditInfo };
 		}
 		return { isSuccess: false };
@@ -164,12 +180,24 @@ export const processAuditLogsForDevInfoBulkUpdate = ({ reqRepoData, response, op
 	}
 };
 
-export const processAuditLogsForWorkflowSubmit = ({ reqBuildData, response, options, logger }) => {
+export const processAuditLogsForWorkflowSubmit = (
+	{ reqBuildDataArray, response, options, logger }: {
+		reqBuildDataArray: JiraBuild[],
+		response: { status: number, data: any },
+		options: JiraSubmitOptions,
+		logger: Logger
+	}
+) => {
 	try {
+
+		if (!options) {
+			logger.debug("Skip sending to audit log as options are undefined");
+		}
+
 		const { isSuccess, auditInfo } = processWorkflowSubmitResp({
-			reqBuildData,
+			reqBuildDataArray,
 			response,
-			options,
+			options: options,
 			logger
 		});
 		if (isSuccess) {

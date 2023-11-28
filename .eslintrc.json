@@ -142,8 +142,6 @@
 			// TODO: Re-enable gradually
 			"@typescript-eslint/no-confusing-void-expression": "off",
 			"@typescript-eslint/no-throw-literal": "off",
-			"@typescript-eslint/no-dynamic-delete": "off",
-			"@typescript-eslint/no-base-to-string": "off",
 			"@typescript-eslint/no-unnecessary-condition": "off"
 		}
 	}

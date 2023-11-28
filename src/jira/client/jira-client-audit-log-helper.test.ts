@@ -1,5 +1,6 @@
 import { processBatchedBulkUpdateResp, processWorkflowSubmitResp } from "./jira-client-audit-log-helper";
 import { getLogger } from "config/logger";
+import { JiraSubmitOptions } from "interfaces/jira";
 
 describe("processBatchedBulkUpdateResp", () => {
 	const mockLogger = getLogger("mock-logger");
@@ -139,7 +140,7 @@ describe("processBatchedBulkUpdateResp", () => {
 			auditInfo:[{
 				"createdAt": expect.anything(),
 				"entityAction": "COMMIT_PUSH",
-				"entityId": "e3fe8bf05f50f87c18611298e312217c4895747b",
+				"entityId": "KamaksheeSamant/react-cods-hub_e3fe8bf05f50f87c18611298e312217c4895747b",
 				"entityType": "commits",
 				"issueKey": "KAM-1",
 				"source": "WEBHOOK",
@@ -195,7 +196,7 @@ describe("processBatchedBulkUpdateResp", () => {
 			auditInfo:[{
 				"createdAt": expect.anything(),
 				"entityAction": "COMMIT_PUSH",
-				"entityId": "e3fe8bf05f50f87c18611298e312217c4895747b",
+				"entityId": "KamaksheeSamant/react-cods-hub_e3fe8bf05f50f87c18611298e312217c4895747b",
 				"entityType": "commits",
 				"issueKey": "KAM-1",
 				"source": "WEBHOOK",
@@ -204,7 +205,7 @@ describe("processBatchedBulkUpdateResp", () => {
 			{
 				"createdAt": expect.anything(),
 				"entityAction": "COMMIT_PUSH",
-				"entityId": "e3fe8bf05f50f87c18611298e312217c4895747b",
+				"entityId": "KamaksheeSamant/react-cods-hub_e3fe8bf05f50f87c18611298e312217c4895747b",
 				"entityType": "commits",
 				"issueKey": "KAM-2",
 				"source": "WEBHOOK",
@@ -260,7 +261,7 @@ describe("processBatchedBulkUpdateResp", () => {
 			auditInfo:[{
 				"createdAt": expect.anything(),
 				"entityAction": "COMMIT_PUSH",
-				"entityId": "e3fe8bf05f50f87c18611298e312217c4895747b",
+				"entityId": "KamaksheeSamant/react-cods-hub_e3fe8bf05f50f87c18611298e312217c4895747b",
 				"entityType": "commits",
 				"issueKey": "KAM-1",
 				"source": "WEBHOOK",
@@ -314,7 +315,7 @@ describe("processBatchedBulkUpdateResp", () => {
 			auditInfo:[{
 				"createdAt": expect.anything(),
 				"entityAction": "COMMIT_PUSH",
-				"entityId": "KAM-1-and-KAM-2",
+				"entityId": "KamaksheeSamant/react-cods-hub_KAM-1-and-KAM-2",
 				"entityType": "branches",
 				"issueKey": "KAM-1",
 				"source": "WEBHOOK",
@@ -323,7 +324,7 @@ describe("processBatchedBulkUpdateResp", () => {
 			{
 				"createdAt": expect.anything(),
 				"entityAction": "COMMIT_PUSH",
-				"entityId": "KAM-1-and-KAM-2",
+				"entityId": "KamaksheeSamant/react-cods-hub_KAM-1-and-KAM-2",
 				"entityType": "branches",
 				"issueKey": "KAM-2",
 				"source": "WEBHOOK",
@@ -399,7 +400,7 @@ describe("processBatchedBulkUpdateResp", () => {
 			auditInfo:[{
 				"createdAt": expect.anything(),
 				"entityAction": "PR_OPENED",
-				"entityId": "KAM-5-feat",
+				"entityId": "kamaOrgOne/repo_react_KAM-5-feat",
 				"entityType": "branches",
 				"issueKey": "KAM-5",
 				"source": "WEBHOOK",
@@ -408,7 +409,7 @@ describe("processBatchedBulkUpdateResp", () => {
 			{
 				"createdAt": expect.anything(),
 				"entityAction": "PR_OPENED",
-				"entityId": "10",
+				"entityId": "kamaOrgOne/repo_react_10",
 				"entityType": "pullRequests",
 				"issueKey": "KAM-5",
 				"source": "WEBHOOK",
@@ -421,9 +422,9 @@ describe("processBatchedBulkUpdateResp", () => {
 describe("processWorkflowSubmitResp", () => {
 	const mockLogger = getLogger("mock-logger");
 	it("should return isSuccess as false when status code is anything other than 202", () => {
-		const reqBuildData = {
+		const reqBuildDataArray = [{
 			schemaVersion: "1.0",
-			pipelineId: 77164279,
+			pipelineId: "77164279",
 			buildNumber: 6,
 			updateSequenceNumber: 1700991428371,
 			displayName: "CI",
@@ -431,7 +432,7 @@ describe("processWorkflowSubmitResp", () => {
 			state: "successful",
 			lastUpdated: "2023-11-26T09:37:07Z",
 			issueKeys: ["KAM-5"]
-		};
+		}];
 		const response = {
 			status: 400,
 			data: {
@@ -440,10 +441,10 @@ describe("processWorkflowSubmitResp", () => {
 				rejectedBuilds: []
 			}
 		};
-		const options = { preventTransitions:false, operationType: "WEBHOOK", auditLogsource: "WEBHOOK", entityAction: "WORKFLOW_RUN", subscriptionId: 1122334455 };
+		const options: JiraSubmitOptions = { preventTransitions:false, operationType: "NORMAL", auditLogsource: "WEBHOOK", entityAction: "WORKFLOW_RUN", subscriptionId: 1122334455 };
 
 		const result = processWorkflowSubmitResp({
-			reqBuildData,
+			reqBuildDataArray,
 			response,
 			options,
 			logger: mockLogger
@@ -454,9 +455,9 @@ describe("processWorkflowSubmitResp", () => {
 		});
 	});
 	it("should return isSuccess as false when status code is 202 but there is no acceptedBuilds", () => {
-		const reqBuildData = {
+		const reqBuildDataArray = [{
 			schemaVersion: "1.0",
-			pipelineId: 77164279,
+			pipelineId: "77164279",
 			buildNumber: 6,
 			updateSequenceNumber: 1700991428371,
 			displayName: "CI",
@@ -464,7 +465,7 @@ describe("processWorkflowSubmitResp", () => {
 			state: "successful",
 			lastUpdated: "2023-11-26T09:37:07Z",
 			issueKeys: ["KAM-5"]
-		};
+		}];
 		const response = {
 			status: 202,
 			data: {
@@ -473,10 +474,10 @@ describe("processWorkflowSubmitResp", () => {
 				rejectedBuilds: []
 			}
 		};
-		const options = { preventTransitions:false, operationType: "WEBHOOK", auditLogsource: "WEBHOOK", entityAction: "WORKFLOW_RUN", subscriptionId: 1122334455 };
+		const options: JiraSubmitOptions = { preventTransitions:false, operationType: "NORMAL", auditLogsource: "WEBHOOK", entityAction: "WORKFLOW_RUN", subscriptionId: 1122334455 };
 
 		const result = processWorkflowSubmitResp({
-			reqBuildData,
+			reqBuildDataArray,
 			response,
 			options,
 			logger: mockLogger
@@ -487,9 +488,9 @@ describe("processWorkflowSubmitResp", () => {
 		});
 	});
 	it("should return isSuccess as true when status code is 202 and there are/is acceptedBuilds but the result has rejectedBuilds as well", () => {
-		const reqBuildData = {
+		const reqBuildDataArray = [{
 			schemaVersion: "1.0",
-			pipelineId: 77164279,
+			pipelineId: "77164279",
 			buildNumber: 6,
 			updateSequenceNumber: 1700991428371,
 			displayName: "CI",
@@ -497,7 +498,7 @@ describe("processWorkflowSubmitResp", () => {
 			state: "successful",
 			lastUpdated: "2023-11-26T09:37:07Z",
 			issueKeys: ["KAM-5"]
-		};
+		}];
 		const response = {
 			status: 202,
 			data: {
@@ -506,10 +507,10 @@ describe("processWorkflowSubmitResp", () => {
 				rejectedBuilds: [{ pipelineId: "11223434", buildNumber: 10 }]
 			}
 		};
-		const options = { preventTransitions:false, operationType: "WEBHOOK", auditLogsource: "WEBHOOK", entityAction: "WORKFLOW_RUN", subscriptionId: 1122334455 };
+		const options: JiraSubmitOptions = { preventTransitions:false, operationType: "NORMAL", auditLogsource: "WEBHOOK", entityAction: "WORKFLOW_RUN", subscriptionId: 1122334455 };
 
 		const result = processWorkflowSubmitResp({
-			reqBuildData,
+			reqBuildDataArray,
 			response,
 			options,
 			logger: mockLogger
@@ -529,9 +530,9 @@ describe("processWorkflowSubmitResp", () => {
 		});
 	});
 	it("should extract the build with 2 issue keys linked - audit info for logging", () => {
-		const reqBuildData = {
+		const reqBuildDataArray = [{
 			schemaVersion: "1.0",
-			pipelineId: 77164279,
+			pipelineId: "77164279",
 			buildNumber: 6,
 			updateSequenceNumber: 1700991428371,
 			displayName: "CI",
@@ -539,7 +540,7 @@ describe("processWorkflowSubmitResp", () => {
 			state: "successful",
 			lastUpdated: "2023-11-26T09:37:07Z",
 			issueKeys: ["KAM-5", "KAM-6"]
-		};
+		}];
 		const response = {
 			status: 202,
 			data: {
@@ -548,10 +549,10 @@ describe("processWorkflowSubmitResp", () => {
 				rejectedBuilds: []
 			}
 		};
-		const options = { preventTransitions:false, operationType: "WEBHOOK", auditLogsource: "WEBHOOK", entityAction: "WORKFLOW_RUN", subscriptionId: 1122334455 };
+		const options: JiraSubmitOptions = { preventTransitions:false, operationType: "NORMAL", auditLogsource: "WEBHOOK", entityAction: "WORKFLOW_RUN", subscriptionId: 1122334455 };
 
 		const result = processWorkflowSubmitResp({
-			reqBuildData,
+			reqBuildDataArray,
 			response,
 			options,
 			logger: mockLogger
@@ -572,6 +573,67 @@ describe("processWorkflowSubmitResp", () => {
 				"createdAt": expect.anything(),
 				"entityAction": "WORKFLOW_RUN",
 				"entityId": "6_77164279",
+				"entityType": "builds",
+				"issueKey": "KAM-6",
+				"source": "WEBHOOK",
+				"subscriptionId": 1122334455
+			}]
+		});
+	});
+	it("should extract the two builds with 1 issue keys linked - audit info for logging", () => {
+		const reqBuildDataArray = [{
+			schemaVersion: "1.0",
+			pipelineId: "77164279",
+			buildNumber: 6,
+			updateSequenceNumber: 1700991428371,
+			displayName: "CI",
+			url: "https://github.com/kamaOrgOne/repo_react/actions/runs/6994742701",
+			state: "successful",
+			lastUpdated: "2023-11-26T09:37:07Z",
+			issueKeys: ["KAM-5"]
+		}, {
+			schemaVersion: "1.0",
+			pipelineId: "77164280",
+			buildNumber: 7,
+			updateSequenceNumber: 1700991428372,
+			displayName: "CI2",
+			url: "https://github.com/kamaOrgOne/repo_react/actions/runs/6994742701",
+			state: "successful",
+			lastUpdated: "2023-11-26T09:37:07Z",
+			issueKeys: ["KAM-6"]
+		}];
+		const response = {
+			status: 202,
+			data: {
+				unknownIssueKeys: [],
+				acceptedBuilds: [{ pipelineId: "77164279", buildNumber: 6 }, { pipelineId: "77164280", buildNumber: 7 }],
+				rejectedBuilds: []
+			}
+		};
+		const options: JiraSubmitOptions = { preventTransitions:false, operationType: "NORMAL", auditLogsource: "WEBHOOK", entityAction: "WORKFLOW_RUN", subscriptionId: 1122334455 };
+
+		const result = processWorkflowSubmitResp({
+			reqBuildDataArray,
+			response,
+			options,
+			logger: mockLogger
+		});
+
+		expect(result).toEqual({
+			isSuccess: true,
+			auditInfo:[{
+				"createdAt": expect.anything(),
+				"entityAction": "WORKFLOW_RUN",
+				"entityId": "6_77164279",
+				"entityType": "builds",
+				"issueKey": "KAM-5",
+				"source": "WEBHOOK",
+				"subscriptionId": 1122334455
+			},
+			{
+				"createdAt": expect.anything(),
+				"entityAction": "WORKFLOW_RUN",
+				"entityId": "7_77164280",
 				"entityType": "builds",
 				"issueKey": "KAM-6",
 				"source": "WEBHOOK",
