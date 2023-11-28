@@ -81,7 +81,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 		operationType: "NORMAL",
 		auditLogsource: "WEBHOOK",
 		entityAction: context?.name === "pull_request_review" ? "PR_REVIEW" : `PR_${context?.action?.toUpperCase()}`,
-		subscriptionId: subscription?.id
+		subscriptionId: subscription.id
 	});
 	const { webhookReceived, name, log } = context;
 

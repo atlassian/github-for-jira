@@ -206,7 +206,7 @@ describe("Test getting a jira client", () => {
 
 		const response = await client.workflow.submit({
 			builds: [{}]
-		});
+		}, {});
 
 		expect(response).toEqual({
 			status: 200,
