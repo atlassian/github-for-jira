@@ -36,7 +36,7 @@ export const workflowWebhookHandler = async (context: WebhookContext, jiraClient
 		preventTransitions: false,
 		operationType: "NORMAL",
 		auditLogsource: "WEBHOOK",
-		entityAction: "WORKFLOW_RUN",
+		entityAction: `WORKFLOW_RUN_${context.action}`.toUpperCase(),
 		subscriptionId: subscription?.id
 	});
 	const { webhookReceived, name, log } = context;
