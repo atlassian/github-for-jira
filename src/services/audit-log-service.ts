@@ -78,7 +78,7 @@ export const getAuditLog = async (
 				":id": { S: getKey(params) }
 			},
 			ScanIndexForward: false,
-			Limit: 1
+			Limit: 100
 		})
 		.promise();
 
