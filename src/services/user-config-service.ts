@@ -169,10 +169,10 @@ const updateRepoConfigFromGitHub = async (repoSyncState: RepoSyncState, gitHubIn
 export const updateRepoConfigsFromGitHub = async (repoSyncStates: RepoSyncState[], gitHubInstallationClient: GitHubInstallationClient, logger: Logger): Promise<void> => {
 	await Promise.all(repoSyncStates.map(async (repoSyncState) => {
 		await updateRepoConfigFromGitHub(repoSyncState, gitHubInstallationClient, logger)
-			.catch((err: unknown) => logger.error({
+			.catch((err: unknown) => { logger.error({
 				err,
 				gitHubInstallationId: gitHubInstallationClient.githubInstallationId,
 				repositoryId: repoSyncState.repoId
-			}, "error while updating a single repo config"));
+			}, "error while updating a single repo config"); });
 	}));
 };

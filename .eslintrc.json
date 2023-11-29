@@ -140,7 +140,6 @@
 		"files": ["src/**/*.ts", "test/**/*.ts"],
 		"rules": {
 			// TODO: Re-enable gradually
-			"@typescript-eslint/no-confusing-void-expression": "off",
 			"@typescript-eslint/no-unnecessary-condition": "off"
 		}
 	}

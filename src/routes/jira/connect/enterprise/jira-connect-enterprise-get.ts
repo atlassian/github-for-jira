@@ -42,7 +42,7 @@ export const JiraConnectEnterpriseGet = async (
 
 		req.log.debug("Jira Connect Enterprise GET page rendered successfully.");
 	} catch (error: unknown) {
-		return next(new Error(`Failed to render Jira Connect Enterprise GET page: ${errorStringFromUnknown(error)}`));
+		next(new Error(`Failed to render Jira Connect Enterprise GET page: ${errorStringFromUnknown(error)}`)); return;
 	}
 };
 
