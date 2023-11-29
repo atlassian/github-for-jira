@@ -436,7 +436,7 @@ describe("sync/deployments", () => {
 			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			await verifyMessageSent(data);
 
-			expect(lastMockedDeploymentSubmitFn).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.objectContaining({
+			expect(lastMockedDeploymentSubmitFn).toHaveBeenCalledWith(expect.anything(), 1, "test-repo-name", expect.objectContaining({
 				auditLogsource: "BACKFILL",
 				operationType: "BACKFILL",
 				preventTransitions: true,
