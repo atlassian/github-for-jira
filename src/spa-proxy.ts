@@ -15,7 +15,7 @@ const proxy = httpProxy.createProxyServer({
 
 export const proxyLocalUIForDev = (app: Express) => {
 	if (isNodeDev()) {
-		app.use(SPA_PATH, (req, res) => proxy.web(req, res));
+		app.use(SPA_PATH, (req, res) => { proxy.web(req, res); });
 	}
 };
 

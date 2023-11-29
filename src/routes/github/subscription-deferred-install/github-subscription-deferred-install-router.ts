@@ -46,7 +46,7 @@ const validatePayloadAndPopulateJiraHost = async (req: Request, res: Response, n
 	res.locals.installation = installation;
 	// DO NOT PUT jiraHost to session! This router is invoked by jira non-admins, that would give them admin perms!
 
-	return next();
+	next();
 };
 
 const validateGitHubConfig = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -58,7 +58,7 @@ const validateGitHubConfig = async (req: Request, res: Response, next: NextFunct
 		return;
 	}
 
-	return next();
+	next();
 };
 
 subRouter.use(validatePayloadAndPopulateJiraHost);

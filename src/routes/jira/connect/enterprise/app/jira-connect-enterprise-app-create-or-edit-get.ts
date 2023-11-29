@@ -81,6 +81,6 @@ export const JiraConnectEnterpriseAppCreateOrEditGet = async (
 		});
 		req.log.debug("Jira create or edit app page rendered successfully.");
 	} catch (error: unknown) {
-		return next(new Error(`Failed to render Jira create or edit app page: ${errorStringFromUnknown(error)}`));
+		next(new Error(`Failed to render Jira create or edit app page: ${errorStringFromUnknown(error)}`)); return;
 	}
 };

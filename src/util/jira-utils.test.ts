@@ -49,16 +49,16 @@ describe("Jira Utils", () => {
 	describe("jiraIssueKeyParser", () => {
 		it("should handle incorrect types and always return empty array", () => {
 			[2, "", [], {}, undefined, null]
-				.forEach((value: any) => expect(jiraIssueKeyParser(value)).toEqual([]));
+				.forEach((value: any) => { expect(jiraIssueKeyParser(value)).toEqual([]); });
 		});
 
 		it("should extract jira issue key with different casing", () => {
 			["JRA-123", "jra-123", "jRa-123"]
-				.forEach((value: any) => expect(jiraIssueKeyParser(value)).toEqual(["JRA-123"]));
+				.forEach((value: any) => { expect(jiraIssueKeyParser(value)).toEqual(["JRA-123"]); });
 		});
 
 		it("should not extract jira issue key starting with number", () => {
-			["2PAC-123", "42-123"].forEach(value => expect(jiraIssueKeyParser(value)).toEqual([]));
+			["2PAC-123", "42-123"].forEach(value => { expect(jiraIssueKeyParser(value)).toEqual([]); });
 		});
 
 		it("should extract jira issue key with number(s) in it that's not the first character", () => {
@@ -98,7 +98,7 @@ describe("Jira Utils", () => {
 				"JRA-123 with suffix spaces",
 				"prefix spaces with JRA-123"
 			]
-				.forEach(value => expect(jiraIssueKeyParser(value)).toEqual(["JRA-123"]));
+				.forEach(value => { expect(jiraIssueKeyParser(value)).toEqual(["JRA-123"]); });
 		});
 
 		it("should extract multiple issue keys in a single string", () => {

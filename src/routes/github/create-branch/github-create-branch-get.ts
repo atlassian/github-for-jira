@@ -23,7 +23,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	if (!jiraHost) {
 		logger.warn(Errors.MISSING_JIRA_HOST);
 		res.status(400).send(Errors.MISSING_JIRA_HOST);
-		return next();
+		next(); return;
 	}
 
 	const multiGHInstance = req.query.multiGHInstance;
@@ -33,7 +33,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	if (!issueKey) {
 		logger.error(Errors.MISSING_ISSUE_KEY);
 		res.status(400).send(Errors.MISSING_ISSUE_KEY);
-		return next(new Error(Errors.MISSING_ISSUE_KEY));
+		next(new Error(Errors.MISSING_ISSUE_KEY)); return;
 	}
 	const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppConfig.gitHubAppId || null);
 

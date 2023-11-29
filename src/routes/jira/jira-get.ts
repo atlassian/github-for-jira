@@ -115,6 +115,6 @@ export const JiraGet = async (
 		await renderJiraCloudAndEnterpriseServer(res, req);
 		req.log.debug("Jira configuration rendered successfully.");
 	} catch (error: unknown) {
-		return next(new Error(`Failed to render Jira configuration: ${errorStringFromUnknown(error)}`));
+		next(new Error(`Failed to render Jira configuration: ${errorStringFromUnknown(error)}`)); return;
 	}
 };
