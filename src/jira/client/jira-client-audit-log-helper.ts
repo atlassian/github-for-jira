@@ -204,9 +204,7 @@ export const processWorkflowSubmitResp = ({
 							source: options.auditLogsource || "WEBHOOK",
 							entityAction: (reqBuildData.state || "").toUpperCase()
 						};
-						if (obj.subscriptionId && obj.entityId) {
-							auditInfo.push(obj);
-						}
+						auditInfo.push(obj);
 					});
 				}
 			});

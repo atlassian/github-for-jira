@@ -1,4 +1,4 @@
-import { processBatchedBulkUpdateResp, processWorkflowSubmitResp, processDeploySubmitResp } from "./jira-client-audit-log-helper";
+import { processBatchedBulkUpdateResp, processWorkflowSubmitResp, processDeploySubmitResp, processAuditLogsForDeploymentSubmit } from "./jira-client-audit-log-helper";
 import { getLogger } from "config/logger";
 import { JiraSubmitOptions } from "interfaces/jira";
 
@@ -211,6 +211,54 @@ describe("processBatchedBulkUpdateResp", () => {
 				"source": "WEBHOOK",
 				"subscriptionId": 1122334455
 			}]
+		});
+	});
+	it("should not extract the commit as subscription id is missing", () => {
+		const reqRepoData = {
+			id: "691330555",
+			name: "KamaksheeSamant/react-cods-hub",
+			url: "https://github.com/KamaksheeSamant/react-cods-hub",
+			updateSequenceId: 1700453687210,
+			commits: [
+				{
+					hash: "e3fe8bf05f50f87c18611298e312217c4895747b",
+					message: "KAM-1 and KAM-2",
+					authorTimestamp: "2023-11-20T04:14:44Z",
+					displayId: "e3fe8b",
+					fileCount: 1,
+					id: "e3fe8bf05f50f87c18611298e312217c4895747b",
+					issueKeys: ["KAM-1", "KAM-2"],
+					url: "https://github.com/KamaksheeSamant/react-cods-hub/commit/e3fe8bf05f50f87c18611298e312217c4895747b",
+					updateSequenceId: 1700453687210
+				}
+			]
+		};
+		const response = {
+			status: 202,
+			data: {
+				acceptedDevinfoEntities: {
+					"691330555": {
+						branches: [],
+						commits: ["e3fe8bf05f50f87c18611298e312217c4895747b"],
+						pullRequests: []
+					}
+				},
+				failedDevinfoEntities: {},
+				unknownIssueKeys: []
+			}
+		};
+		const options = { preventTransitions:false, operationType: "WEBHOOK", entityAction: "COMMIT_PUSH", subscriptionId: undefined };
+
+		const result = processBatchedBulkUpdateResp({
+			reqRepoData,
+			response,
+			options,
+			logger: mockLogger
+		});
+
+		expect(result).toEqual({
+			isSuccess: true,
+			auditInfo:[]
 		});
 	});
 	it("should extract the commit with 1 issue keys linked - audit info for logging", () => {
@@ -648,6 +696,48 @@ describe("processWorkflowSubmitResp", () => {
 	});
 });
 
+describe("processAuditLogsForDeploymentSubmit", () => {
+	const mockLogger = getLogger("mock-logger");
+	it("should skip sending to audit log if options are undefined", () => {
+		// Arrange
+		const reqDeploymentDataArray = []; // Provide the necessary data for the test
+		const repoFullName = "example/repo";
+		const options = undefined;
+		mockLogger.debug = jest.fn();
+		const response = {
+			status: 202,
+			data: {
+				unknownIssueKeys: [],
+				acceptedDeployments: [
+					{
+						pipelineId: "deploy",
+						environmentId: "github-pages",
+						deploymentSequenceNumber: 1194529862
+					}
+				],
+				rejectedDeployments: [
+					{
+						pipelineId: "deploy",
+						environmentId: "github-pages",
+						deploymentSequenceNumber: 1188282781
+					}
+				]
+			}
+		};
+		// Act
+		processAuditLogsForDeploymentSubmit({
+			reqDeploymentDataArray,
+			repoFullName,
+			response,
+			options,
+			logger: mockLogger
+		});
+
+		// Assert
+		expect(mockLogger.debug).toHaveBeenCalled();
+	});
+});
+
 describe("processDeploySubmitResp", () => {
 	const mockLogger = getLogger("mock-logger");
 	it("should return isSuccess as false when status code is anything other than 202", () => {
@@ -931,6 +1021,76 @@ describe("processDeploySubmitResp", () => {
 					subscriptionId: 1122334455
 				}
 			]
+		});
+	});
+	it("should  not extract the build as subscribtion id is missing", () => {
+		const reqDeploymentDataArray = [
+			{
+				schemaVersion: "1.0",
+				deploymentSequenceNumber: 1194529862,
+				updateSequenceNumber: 2835516764,
+				displayName: "Update manifest.json KAM-6",
+				url: "https://github.com/KamaksheeSamant/react-cods-hub/actions/runs/7014571070/job/19082502671",
+				description: "deploy",
+				lastUpdated: "2023-11-28T05:22:38.000Z",
+				state: "successful",
+				pipeline: {
+					id: "deploy",
+					displayName: "deploy",
+					url: "https://github.com/KamaksheeSamant/react-cods-hub/actions/runs/7014571070/job/19082502671"
+				},
+				environment: {
+					id: "github-pages",
+					displayName: "github-pages",
+					type: "unmapped"
+				},
+				associations: [
+					{ associationType: "issueIdOrKeys", values: ["KAM-6", "KAM-5"] },
+					{
+						associationType: "commit",
+						values: [
+							{
+								commitHash: "f4bc81f3ddb980ac34e4ae9acef108e34840567f",
+								repositoryId: "691330555"
+							}
+						]
+					}
+				]
+			}
+		];
+		const response = {
+			status: 202,
+			data: {
+				unknownIssueKeys: [],
+				acceptedDeployments: [
+					{
+						pipelineId: "deploy",
+						environmentId: "github-pages",
+						deploymentSequenceNumber: 1194529862
+					}
+				],
+				rejectedDeployments: [
+					{
+						pipelineId: "deploy",
+						environmentId: "github-pages",
+						deploymentSequenceNumber: 1188282781
+					}
+				]
+			}
+		};
+		const options = { preventTransitions:false, operationType: "NORMAL", auditLogsource: "WEBHOOK",	 subscriptionId: undefined };
+		const repoFullName = "react-code-hub";
+		const result = processDeploySubmitResp({
+			reqDeploymentDataArray,
+			response,
+			options,
+			repoFullName,
+			logger: mockLogger
+		});
+
+		expect(result).toEqual({
+			isSuccess: true,
+			auditInfo: []
 		});
 	});
 });
