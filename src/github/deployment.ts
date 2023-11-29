@@ -30,13 +30,11 @@ export const deploymentWebhookHandler = async (context: WebhookContext, jiraClie
 		webhookPayload: context.payload,
 		webhookReceived: Date.now(),
 		webhookId: context.id,
-		entityAction: context.action,
 		gitHubAppConfig: context.gitHubAppConfig
 	}, 0, context.log);
 };
 
 export const processDeployment = async (
-	entityAction: string,
 	newGitHubClient: GitHubInstallationClient,
 	webhookId: string,
 	webhookPayload: DeploymentStatusEvent,
@@ -109,7 +107,6 @@ export const processDeployment = async (
 			preventTransitions: false,
 			operationType: "NORMAL",
 			auditLogsource: "WEBHOOK",
-			entityAction: `DEPLOYMENT_STATUS${entityAction}`.toUpperCase(),
 			subscriptionId: subscription.id
 		}
 	);

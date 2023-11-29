@@ -688,7 +688,7 @@ describe("processDeploySubmitResp", () => {
 				rejectedDeployments: []
 			}
 		};
-		const options: JiraSubmitOptions = { preventTransitions:false, operationType: "NORMAL", auditLogsource: "WEBHOOK", entityAction: "DEPLOYMENT_STATUS", subscriptionId: 1122334455 };
+		const options: JiraSubmitOptions = { preventTransitions:false, operationType: "NORMAL", auditLogsource: "WEBHOOK",	 subscriptionId: 1122334455 };
 
 		const result = processDeploySubmitResp({
 			reqDeploymentDataArray,
@@ -744,7 +744,7 @@ describe("processDeploySubmitResp", () => {
 				rejectedDeployments: []
 			}
 		};
-		const options: JiraSubmitOptions = { preventTransitions:false, operationType: "NORMAL", auditLogsource: "WEBHOOK", entityAction: "DEPLOYMENT_STATUS", subscriptionId: 1122334455 };
+		const options: JiraSubmitOptions = { preventTransitions:false, operationType: "NORMAL", auditLogsource: "WEBHOOK",	 subscriptionId: 1122334455 };
 
 		const result = processDeploySubmitResp({
 			reqDeploymentDataArray,
@@ -812,7 +812,7 @@ describe("processDeploySubmitResp", () => {
 				]
 			}
 		};
-		const options: JiraSubmitOptions = { preventTransitions:false, operationType: "NORMAL", auditLogsource: "WEBHOOK", entityAction: "DEPLOYMENT_STATUS", subscriptionId: 1122334455 };
+		const options: JiraSubmitOptions = { preventTransitions:false, operationType: "NORMAL", auditLogsource: "WEBHOOK",	 subscriptionId: 1122334455 };
 
 		const result = processDeploySubmitResp({
 			reqDeploymentDataArray,
@@ -826,7 +826,7 @@ describe("processDeploySubmitResp", () => {
 			auditInfo: [
 				{
 					createdAt: expect.anything(),
-					entityAction: "DEPLOYMENT_STATUS",
+					entityAction: "successful",
 					entityId: "1194529862",
 					entityType: "deployments",
 					issueKey: "KAM-6",
@@ -891,7 +891,7 @@ describe("processDeploySubmitResp", () => {
 				]
 			}
 		};
-		const options: JiraSubmitOptions = { preventTransitions:false, operationType: "NORMAL", auditLogsource: "WEBHOOK", entityAction: "DEPLOYMENT_STATUS", subscriptionId: 1122334455 };
+		const options: JiraSubmitOptions = { preventTransitions:false, operationType: "NORMAL", auditLogsource: "WEBHOOK",	 subscriptionId: 1122334455 };
 
 		const result = processDeploySubmitResp({
 			reqDeploymentDataArray,
@@ -905,7 +905,7 @@ describe("processDeploySubmitResp", () => {
 			auditInfo: [
 				{
 					createdAt: expect.anything(),
-					entityAction: "DEPLOYMENT_STATUS",
+					entityAction: "successful",
 					entityId: "1194529862",
 					entityType: "deployments",
 					issueKey: "KAM-6",
@@ -914,7 +914,7 @@ describe("processDeploySubmitResp", () => {
 				},
 				{
 					createdAt: expect.anything(),
-					entityAction: "DEPLOYMENT_STATUS",
+					entityAction: "successful",
 					entityId: "1194529862",
 					entityType: "deployments",
 					issueKey: "KAM-5",

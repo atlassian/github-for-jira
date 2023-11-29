@@ -140,7 +140,7 @@ export const processDeploySubmitResp = ({
 								issueKey,
 								subscriptionId: options.subscriptionId,
 								source: options.auditLogsource || "WEBHOOK",
-								entityAction: options.entityAction || "null"
+								entityAction: reqDeploymentData.state
 							};
 							if (obj.subscriptionId && obj.entityId) {
 								auditInfo.push(obj);

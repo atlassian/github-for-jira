@@ -23,9 +23,7 @@ export const deploymentQueueMessageHandler: MessageHandler<DeploymentMessagePayl
 		subTrigger: "deployment_status"
 	};
 	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, metrics, context.log, messagePayload.gitHubAppConfig?.gitHubAppId);
-	const entityAction = messagePayload.entityAction || "";
 	await processDeployment(
-		entityAction,
 		gitHubInstallationClient,
 		webhookId,
 		messagePayload.webhookPayload,

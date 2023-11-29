@@ -149,7 +149,6 @@ export type DeploymentMessagePayload = BaseMessagePayload & {
 	// that payload size for deployment_status webhooks maxes out at 13KB.
 	webhookPayload: DeploymentStatusEvent,
 	rateLimited?: boolean,
-	entityAction?: string
 }
 
 export type PushQueueMessagePayload = BaseMessagePayload & {
