@@ -55,7 +55,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request<ParamsDictionary, 
 			res.clearCookie("jwt");
 		}
 		req.addLogFields({ jiraHost: installation.jiraHost });
-		return next();
+		next(); return;
 
 	} else if (req.session?.jiraHost) {
 
@@ -69,7 +69,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request<ParamsDictionary, 
 		res.locals.installation = installation;
 		res.locals.jiraHost = installation.jiraHost;
 		req.addLogFields({ jiraHost: installation.jiraHost });
-		return next();
+		next(); return;
 	}
 
 	req.log.warn("No token found and session cookie has no jiraHost");

@@ -160,11 +160,11 @@ describe("audit log service", () => {
 				const result = await getAuditLog({ entityType: "commits", entityId: "commit-1234", subscriptionId: 1234, issueKey: "ABC-123" }, logger);
 
 				expect(result.length).toBe(100);
-				result.forEach(r => expect(r).toEqual(expect.objectContaining({
+				result.forEach(r => { expect(r).toEqual(expect.objectContaining({
 					entityId: "commit-1234",
 					issueKey: "ABC-123",
 					subscriptionId: 1234
-				})));
+				})); });
 
 			});
 		});

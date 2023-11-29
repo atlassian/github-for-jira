@@ -39,7 +39,7 @@ const sendErrorMetricAndAnalytics = (jiraHost: string, errorCode: ErrorResponseC
 	}, {
 		jiraHost,
 		...errorCodeAndStatusObj
-	});
+	}).catch(() => { /* ignore */ });
 };
 
 const isResponseFromGhe = (logger: Logger, response?: AxiosResponse) => {

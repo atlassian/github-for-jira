@@ -40,10 +40,10 @@ export const githubAppUpdateURLs = async (page: Page) => {
 
 export const githubAppInstall = async (page: Page) => {
 	// TODO: add github app install
-	await page.goto(data.urls.apps);
+	return await page.goto(data.urls.apps);
 };
 
 export const githubAppUninstall = async (page: Page) => {
 	// TODO: add github app uninstall
-	await page.goto(data.urls.apps);
+	return await page.goto(data.urls.apps);
 };

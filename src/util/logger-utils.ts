@@ -36,7 +36,7 @@ class RawLogStream extends Writable {
 	public _write(record: ChunkData, encoding: BufferEncoding, next: Callback): void {
 		// Skip unwanted logs
 		if (filterHttpRequests(record)) {
-			return next();
+			next(); return;
 		}
 
 		const chunk = `${safeJsonStringify(record)}\n`;
@@ -50,7 +50,7 @@ export class SafeRawLogStream extends RawLogStream {
 	public _write(record: ChunkData, encoding: BufferEncoding, next: Callback): void {
 		// Skip unsafe data
 		if (record.unsafe) {
-			return next();
+			next(); return;
 		}
 		const hashedRecord = this.hashSensitiveData(record);
 		super._write(hashedRecord, encoding, next);
