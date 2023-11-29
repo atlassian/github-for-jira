@@ -80,6 +80,7 @@ export interface JiraClient {
 		submit: (
 			data: JiraDeploymentBulkSubmitData,
 			repositoryId: number,
+			repoFullName: string,
 			options?: JiraSubmitOptions
 		) => Promise<DeploymentsResult>;
 	},
@@ -421,7 +422,7 @@ export const getJiraClient = async (
 			}
 		},
 		deployment: {
-			submit: async (data: JiraDeploymentBulkSubmitData, repositoryId: number, options?: JiraSubmitOptions): Promise<DeploymentsResult> => {
+			submit: async (data: JiraDeploymentBulkSubmitData, repositoryId: number, repoFullName: string, options?: JiraSubmitOptions): Promise<DeploymentsResult> => {
 				updateIssueKeysFor(data.deployments, uniq);
 				if (!withinIssueKeyLimit(data.deployments)) {
 					logger.warn({
@@ -469,7 +470,7 @@ export const getJiraClient = async (
 					};
 					const reqDeploymentDataArray: JiraDeployment[] = data?.deployments || [];
 					if (await booleanFlag(BooleanFlags.USE_DYNAMODB_TO_PERSIST_AUDIT_LOG, jiraHost)) {
-						processAuditLogsForDeploymentSubmit({ reqDeploymentDataArray, response:responseData, options, logger });
+						processAuditLogsForDeploymentSubmit({ reqDeploymentDataArray, repoFullName, response:responseData, options, logger });
 					}
 
 				}

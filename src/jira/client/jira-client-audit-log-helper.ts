@@ -110,6 +110,7 @@ export const processBatchedBulkUpdateResp = ({
 export const processDeploySubmitResp = ({
 	reqDeploymentDataArray,
 	response,
+	repoFullName,
 	options,
 	logger
 }): {
@@ -135,7 +136,7 @@ export const processDeploySubmitResp = ({
 						issueKeys.map((issueKey) => {
 							const obj: AuditInfo = {
 								createdAt,
-								entityId: reqDeploymentSqNo.toString(),
+								entityId: `${repoFullName}_${reqDeploymentSqNo.toString()}`,
 								entityType: "deployments",
 								issueKey,
 								subscriptionId: options.subscriptionId,
@@ -275,8 +276,9 @@ export const processAuditLogsForWorkflowSubmit = (
 };
 
 export const processAuditLogsForDeploymentSubmit = (
-	{ reqDeploymentDataArray, response, options, logger }: {
+	{ reqDeploymentDataArray, response, options, repoFullName, logger }: {
 		reqDeploymentDataArray: JiraDeployment[],
+		repoFullName: string,
 		response: Response,
 		options: any,
 		logger: Logger
@@ -291,6 +293,7 @@ export const processAuditLogsForDeploymentSubmit = (
 		const { isSuccess, auditInfo } = processDeploySubmitResp({
 			reqDeploymentDataArray,
 			response,
+			repoFullName,
 			options: options,
 			logger
 		});

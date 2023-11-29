@@ -694,9 +694,10 @@ describe("processDeploySubmitResp", () => {
 			}
 		};
 		const options: JiraSubmitOptions = { preventTransitions:false, operationType: "NORMAL", auditLogsource: "WEBHOOK",	 subscriptionId: 1122334455 };
-
+		const repoFullName = "react-code-hub";
 		const result = processDeploySubmitResp({
 			reqDeploymentDataArray,
+			repoFullName,
 			response,
 			options,
 			logger: mockLogger
@@ -750,10 +751,11 @@ describe("processDeploySubmitResp", () => {
 			}
 		};
 		const options: JiraSubmitOptions = { preventTransitions:false, operationType: "NORMAL", auditLogsource: "WEBHOOK",	 subscriptionId: 1122334455 };
-
+		const repoFullName = "react-code-hub";
 		const result = processDeploySubmitResp({
 			reqDeploymentDataArray,
 			response,
+			repoFullName,
 			options,
 			logger: mockLogger
 		});
@@ -818,10 +820,11 @@ describe("processDeploySubmitResp", () => {
 			}
 		};
 		const options: JiraSubmitOptions = { preventTransitions:false, operationType: "NORMAL", auditLogsource: "WEBHOOK",	 subscriptionId: 1122334455 };
-
+		const repoFullName = "react-code-hub";
 		const result = processDeploySubmitResp({
 			reqDeploymentDataArray,
 			response,
+			repoFullName,
 			options,
 			logger: mockLogger
 		});
@@ -832,7 +835,7 @@ describe("processDeploySubmitResp", () => {
 				{
 					createdAt: expect.anything(),
 					entityAction: "successful",
-					entityId: "1194529862",
+					entityId: "react-code-hub_1194529862",
 					entityType: "deployments",
 					issueKey: "KAM-6",
 					source: "WEBHOOK",
@@ -897,11 +900,12 @@ describe("processDeploySubmitResp", () => {
 			}
 		};
 		const options: JiraSubmitOptions = { preventTransitions:false, operationType: "NORMAL", auditLogsource: "WEBHOOK",	 subscriptionId: 1122334455 };
-
+		const repoFullName = "react-code-hub";
 		const result = processDeploySubmitResp({
 			reqDeploymentDataArray,
 			response,
 			options,
+			repoFullName,
 			logger: mockLogger
 		});
 
@@ -911,7 +915,7 @@ describe("processDeploySubmitResp", () => {
 				{
 					createdAt: expect.anything(),
 					entityAction: "successful",
-					entityId: "1194529862",
+					entityId: "react-code-hub_1194529862",
 					entityType: "deployments",
 					issueKey: "KAM-6",
 					source: "WEBHOOK",
@@ -920,7 +924,7 @@ describe("processDeploySubmitResp", () => {
 				{
 					createdAt: expect.anything(),
 					entityAction: "successful",
-					entityId: "1194529862",
+					entityId: "react-code-hub_1194529862",
 					entityType: "deployments",
 					issueKey: "KAM-5",
 					source: "WEBHOOK",
