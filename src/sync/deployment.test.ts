@@ -438,7 +438,8 @@ describe("sync/deployments", () => {
 
 			expect(lastMockedDeploymentSubmitFn).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.objectContaining({
 				auditLogsource: "BACKFILL",
-				entityAction: "DEPLOYMENT",
+				operationType: "BACKFILL",
+				preventTransitions: true,
 				subscriptionId: dbState.subscription.id
 			}));
 		});

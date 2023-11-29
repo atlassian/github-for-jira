@@ -6,11 +6,6 @@ import { dynamodb as ddb } from "config/dynamodb";
 const defaultLogger = getLogger("DeploymentDynamoLogger");
 
 export type AuditLogSourceType = "BACKFILL" | "WEBHOOK";
-type AuditEntityTypePR = "PR_OPENED" | "PR_REOPENED" | "PR_CLOSED" | "PR_EDITED" | "PR_READY_FOR_REVIEW" | "PR_CONVERTED_TO_DRAFT" | "PR_REVIEW";
-type AuditEntityTypeCommit = "COMMIT_PUSH";
-type AuditEntityTypeBranch = "BRANCH_CREATE" | "BRANCH_DELETE";
-type AuditEntityTypeBuild = "WORKFLOW_RUN";
-export type AuditEntityType = AuditEntityTypePR | AuditEntityTypeBranch | AuditEntityTypeCommit | AuditEntityTypeBuild;
 
 export type AuditInfoPK = {
 	entityType: string;
