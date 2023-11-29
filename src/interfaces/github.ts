@@ -161,15 +161,11 @@ interface GitHubWorkflowRun {
 	// Can be null according to https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28 (see response schema)
 	head_commit: GitHubWorkflowRunHeadCommit | null;
 	repository: GitHubWorkflowRunRepository;
-}
-
-interface GitHubWorkflow {
-	id: string;
+	workflow_id: number;
 }
 
 export interface GitHubWorkflowPayload {
 	workflow_run: GitHubWorkflowRun;
-	workflow: GitHubWorkflow;
 }
 
 interface GitHubData {

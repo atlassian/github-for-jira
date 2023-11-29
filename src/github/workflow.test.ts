@@ -63,7 +63,7 @@ describe("Workflow Webhook", () => {
 				[
 					{
 						schemaVersion: "1.0",
-						pipelineId: 9751894,
+						pipelineId: "9751894",
 						buildNumber: 84,
 						updateSequenceNumber: 12345678,
 						displayName: "My Deployment flow",

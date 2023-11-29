@@ -408,6 +408,7 @@ export const getJiraClient = async (
 					operationType: options?.operationType || "NORMAL"
 				};
 
+				logger.info("Posting backfill workflow info for " , { repositoryId, repoFullName, data });
 				const response =  await instance.post("/rest/builds/0.1/bulk", payload);
 				const responseData = {
 					status: response.status,
