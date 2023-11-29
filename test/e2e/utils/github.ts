@@ -6,7 +6,7 @@ const data = testData.github;
 export const githubLogin = async (page: Page, roleName: keyof GithubTestDataRoles, saveState = false) => {
 	const role = data.roles[roleName];
 	if (!role.username || !role.password) {
-		throw "github username or github password missing";
+		throw new Error("github username or github password missing");
 	}
 	await page.goto(data.urls.login);
 	await page.waitForLoadState();

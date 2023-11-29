@@ -223,11 +223,11 @@ const markSyncAsCompleteAndStop = async (data: BackfillMessagePayload, subscript
 	logger.info({ startTime, endTime, timeDiff, gitHubProduct }, "Sync status is complete");
 };
 
-const sendPayloadToJira = async (task: TaskType, jiraClient, subscription: Subscription, jiraPayload, repositoryId, sentry: Hub, logger: Logger) => {
+const sendPayloadToJira = async (task: TaskType, jiraClient, subscription: Subscription, jiraPayload, repository: Task["repository"], sentry: Hub, logger: Logger) => {
 	try {
 		switch (task) {
 			case "build":
-				await jiraClient.workflow.submit(jiraPayload, repositoryId, {
+				await jiraClient.workflow.submit(jiraPayload, repository.id, repository.full_name, {
 					preventTransitions: true,
 					operationType: "BACKFILL",
 					auditLogsource: "BACKFILL",
@@ -236,7 +236,7 @@ const sendPayloadToJira = async (task: TaskType, jiraClient, subscription: Subsc
 				});
 				break;
 			case "deployment":
-				await jiraClient.deployment.submit(jiraPayload, repositoryId, {
+				await jiraClient.deployment.submit(jiraPayload, repository.id, {
 					preventTransitions: true,
 					operationType: "BACKFILL",
 					auditLogsource: "BACKFILL",
@@ -331,7 +331,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 					data.gitHubAppConfig?.gitHubAppId,
 					logger
 				);
-				await sendPayloadToJira(task, jiraClient, subscription, taskPayload.jiraPayload, repository.id, sentry, logger);
+				await sendPayloadToJira(task, jiraClient, subscription, taskPayload.jiraPayload, repository, sentry, logger);
 			}
 
 			await updateTaskStatusAndContinue(
