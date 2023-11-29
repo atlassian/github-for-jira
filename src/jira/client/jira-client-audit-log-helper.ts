@@ -105,11 +105,13 @@ export const processBatchedBulkUpdateResp = ({
 
 export const processWorkflowSubmitResp = ({
 	reqBuildDataArray,
+	repoFullName,
 	response,
 	options,
 	logger
 }: {
 	reqBuildDataArray: JiraBuild[],
+	repoFullName: string,
 	response: { status: number, data: any },
 	options: JiraSubmitOptions,
 	logger: Logger
@@ -136,12 +138,12 @@ export const processWorkflowSubmitResp = ({
 					issueKeys.map((issueKey) => {
 						const obj: AuditInfo = {
 							createdAt,
-							entityId: `${reqBuildNo}_${reqBuildPipelineId}`,
+							entityId: `${repoFullName}_${reqBuildPipelineId}_${reqBuildNo}`,
 							entityType: "builds",
 							issueKey,
 							subscriptionId: options.subscriptionId,
 							source: options.auditLogsource || "WEBHOOK",
-							entityAction: options.entityAction || "null"
+							entityAction: (reqBuildData.state || "").toUpperCase()
 						};
 						if (obj.subscriptionId && obj.entityId) {
 							auditInfo.push(obj);
@@ -181,8 +183,9 @@ export const processAuditLogsForDevInfoBulkUpdate = ({ reqRepoData, response, op
 };
 
 export const processAuditLogsForWorkflowSubmit = (
-	{ reqBuildDataArray, response, options, logger }: {
+	{ reqBuildDataArray, repoFullName, response, options, logger }: {
 		reqBuildDataArray: JiraBuild[],
+		repoFullName: string,
 		response: { status: number, data: any },
 		options: JiraSubmitOptions,
 		logger: Logger
@@ -196,6 +199,7 @@ export const processAuditLogsForWorkflowSubmit = (
 
 		const { isSuccess, auditInfo } = processWorkflowSubmitResp({
 			reqBuildDataArray,
+			repoFullName,
 			response,
 			options: options,
 			logger
