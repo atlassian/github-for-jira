@@ -205,14 +205,6 @@ export const processAuditLogsForWorkflowSubmit = (
 			logger
 		});
 
-		logger.info("workflow audit log processed result", {
-			repoFullName,
-			responseData: response?.data,
-			isSuccess,
-			auditInfo,
-			options
-		});
-
 		if (isSuccess) {
 			auditInfo?.map(async (auditInf) => {
 				await saveAuditLog(auditInf, logger);
