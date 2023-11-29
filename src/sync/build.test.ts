@@ -122,11 +122,16 @@ describe("sync/builds", () => {
 		await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 		expect(mockBackfillQueueSendMessage).toBeCalledWith(data, 0, expect.anything());
 
-		expect(lastMockedWorkflowSubmit).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.objectContaining({
-			auditLogsource: "BACKFILL",
-			entityAction: "WORKFLOW_RUN",
-			subscriptionId: db.subscription.id
-		}));
+		expect(lastMockedWorkflowSubmit).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.anything(),
+			"test-repo-name",
+			expect.objectContaining({
+				auditLogsource: "BACKFILL",
+				entityAction: "WORKFLOW_RUN",
+				subscriptionId: db.subscription.id
+			})
+		);
 	});
 
 	it("should not explode when returned payload doesn't have head_commit", async () => {

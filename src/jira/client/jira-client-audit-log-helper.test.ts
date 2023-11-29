@@ -445,6 +445,7 @@ describe("processWorkflowSubmitResp", () => {
 
 		const result = processWorkflowSubmitResp({
 			reqBuildDataArray,
+			repoFullName: "org/repo1",
 			response,
 			options,
 			logger: mockLogger
@@ -478,6 +479,7 @@ describe("processWorkflowSubmitResp", () => {
 
 		const result = processWorkflowSubmitResp({
 			reqBuildDataArray,
+			repoFullName: "org/repo1",
 			response,
 			options,
 			logger: mockLogger
@@ -511,6 +513,7 @@ describe("processWorkflowSubmitResp", () => {
 
 		const result = processWorkflowSubmitResp({
 			reqBuildDataArray,
+			repoFullName: "org/repo1",
 			response,
 			options,
 			logger: mockLogger
@@ -520,8 +523,8 @@ describe("processWorkflowSubmitResp", () => {
 			isSuccess: true,
 			auditInfo:[{
 				"createdAt": expect.anything(),
-				"entityAction": "WORKFLOW_RUN",
-				"entityId": "6_77164279",
+				"entityAction": "SUCCESSFUL",
+				"entityId": "org/repo1_77164279_6",
 				"entityType": "builds",
 				"issueKey": "KAM-5",
 				"source": "WEBHOOK",
@@ -553,6 +556,7 @@ describe("processWorkflowSubmitResp", () => {
 
 		const result = processWorkflowSubmitResp({
 			reqBuildDataArray,
+			repoFullName: "org/repo1",
 			response,
 			options,
 			logger: mockLogger
@@ -562,8 +566,8 @@ describe("processWorkflowSubmitResp", () => {
 			isSuccess: true,
 			auditInfo:[{
 				"createdAt": expect.anything(),
-				"entityAction": "WORKFLOW_RUN",
-				"entityId": "6_77164279",
+				"entityAction": "SUCCESSFUL",
+				"entityId": "org/repo1_77164279_6",
 				"entityType": "builds",
 				"issueKey": "KAM-5",
 				"source": "WEBHOOK",
@@ -571,8 +575,8 @@ describe("processWorkflowSubmitResp", () => {
 			},
 			{
 				"createdAt": expect.anything(),
-				"entityAction": "WORKFLOW_RUN",
-				"entityId": "6_77164279",
+				"entityAction": "SUCCESSFUL",
+				"entityId": "org/repo1_77164279_6",
 				"entityType": "builds",
 				"issueKey": "KAM-6",
 				"source": "WEBHOOK",
@@ -614,6 +618,7 @@ describe("processWorkflowSubmitResp", () => {
 
 		const result = processWorkflowSubmitResp({
 			reqBuildDataArray,
+			repoFullName: "org/repo1",
 			response,
 			options,
 			logger: mockLogger
@@ -623,8 +628,8 @@ describe("processWorkflowSubmitResp", () => {
 			isSuccess: true,
 			auditInfo:[{
 				"createdAt": expect.anything(),
-				"entityAction": "WORKFLOW_RUN",
-				"entityId": "6_77164279",
+				"entityAction": "SUCCESSFUL",
+				"entityId": "org/repo1_77164279_6",
 				"entityType": "builds",
 				"issueKey": "KAM-5",
 				"source": "WEBHOOK",
@@ -632,8 +637,8 @@ describe("processWorkflowSubmitResp", () => {
 			},
 			{
 				"createdAt": expect.anything(),
-				"entityAction": "WORKFLOW_RUN",
-				"entityId": "7_77164280",
+				"entityAction": "SUCCESSFUL",
+				"entityId": "org/repo1_77164280_7",
 				"entityType": "builds",
 				"issueKey": "KAM-6",
 				"source": "WEBHOOK",

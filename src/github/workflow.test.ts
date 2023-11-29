@@ -108,6 +108,7 @@ describe("Workflow Webhook", () => {
 		expect(lastMockedWorkflowSubmitFn).toBeCalledWith(
 			expect.anything(),
 			123,
+			"test-repo-owner/test-repo-name",
 			expect.objectContaining({
 				auditLogsource: "WEBHOOK",
 				entityAction: "WORKFLOW_RUN_REQUESTED",
