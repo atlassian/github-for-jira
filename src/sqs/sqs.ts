@@ -341,7 +341,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 			await this.changeVisibilityTimeout(message, this.timeoutSec + EXTRA_VISIBILITY_TIMEOUT_DELAY, context.log);
 
 			const timeoutPromise = new Promise((_, reject) =>
-				setTimeout(() => reject(new SqsTimeoutError()), this.timeoutSec * 1000)
+				setTimeout(() => { reject(new SqsTimeoutError()); }, this.timeoutSec * 1000)
 			);
 
 			await Promise.race([this.messageHandler(context), timeoutPromise]);

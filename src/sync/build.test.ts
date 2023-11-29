@@ -94,7 +94,7 @@ describe("sync/builds", () => {
 		createJiraNock([
 			{
 				"schemaVersion": "1.0",
-				"pipelineId": 2152266464,
+				"pipelineId": "19236895",
 				"buildNumber": 59,
 				"updateSequenceNumber": 12345678,
 				"displayName": "Build",
@@ -249,7 +249,7 @@ describe("sync/builds", () => {
 		createJiraNock([
 			{
 				"schemaVersion": "1.0",
-				"pipelineId": 2152266464,
+				"pipelineId": "19236895",
 				"buildNumber": 59,
 				"updateSequenceNumber": 12345678,
 				"displayName": "Build",
@@ -274,7 +274,7 @@ describe("sync/builds", () => {
 			},
 			{
 				"schemaVersion": "1.0",
-				"pipelineId": 2152266464,
+				"pipelineId": "19236895",
 				"buildNumber": 59,
 				"updateSequenceNumber": 12345678,
 				"displayName": "Build",

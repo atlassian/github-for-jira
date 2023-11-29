@@ -125,8 +125,8 @@ export const transformCodeScanningAlertToJiraSecurity = async (context: WebhookC
 	};
 	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraHost, metrics, context.log, context.gitHubAppConfig?.gitHubAppId);
 
-	const handleUnmappedState = (state: string) => context.log.info(`Received unmapped state from code_scanning_alert webhook: ${state}`);
-	const handleUnmappedSeverity = (severity: string | null) => context.log.info(`Received unmapped severity from code_scanning_alert webhook: ${severity ?? "Missing Severity"}`);
+	const handleUnmappedState = (state: string) => { context.log.info(`Received unmapped state from code_scanning_alert webhook: ${state}`); };
+	const handleUnmappedSeverity = (severity: string | null) => { context.log.info(`Received unmapped severity from code_scanning_alert webhook: ${severity ?? "Missing Severity"}`); };
 
 	const identifiers = transformRuleTagsToIdentifiers(alert.rule.tags);
 

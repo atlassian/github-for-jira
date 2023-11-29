@@ -11,7 +11,8 @@ export const JiraAdminEnforceMiddleware = errorWrapper("jiraAdminEnforceMiddlewa
 	const { accountId, installation, jiraHost } = res.locals;
 
 	if (!(await booleanFlag(BooleanFlags.JIRA_ADMIN_CHECK, jiraHost))) {
-		return next();
+		next();
+		return;
 	}
 
 	if (!accountId) {
