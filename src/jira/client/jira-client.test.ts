@@ -1,6 +1,7 @@
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
-import { getJiraClient } from "./jira-client";
+import { getJiraClient, JiraClient, ISSUE_KEY_API_LIMIT, issueKeyLimitWarning } from "./jira-client";
+import { JiraDeploymentBulkSubmitData, JiraBuildBulkSubmitData } from "interfaces/jira";
 import { getHashedKey } from "models/sequelize";
 import * as Axios from "./axios";
 import { when } from "jest-when";
@@ -11,7 +12,7 @@ jest.mock("config/feature-flags");
 describe("Test getting a jira client", () => {
 	const gitHubInstallationId = Math.round(Math.random() * 10000);
 	let subscription: Subscription;
-	let client: any;
+	let client: JiraClient;
 
 	beforeEach(async () => {
 		await Installation.install({
@@ -23,7 +24,7 @@ describe("Test getting a jira client", () => {
 			jiraHost,
 			gitHubInstallationId
 		});
-		client = await getJiraClient(jiraHost, gitHubInstallationId, undefined, undefined);
+		client = (await getJiraClient(jiraHost, gitHubInstallationId, undefined, undefined))!;
 	});
 
 	it("Installation exists", async () => {
@@ -189,7 +190,7 @@ describe("Test getting a jira client", () => {
 
 		const response = await client.deployment.submit({
 			deployments: [{}]
-		});
+		} as JiraDeploymentBulkSubmitData, 1);
 
 		expect(response).toEqual({
 			status: 200,
@@ -206,7 +207,12 @@ describe("Test getting a jira client", () => {
 
 		const response = await client.workflow.submit({
 			builds: [{}]
-		}, {});
+		} as JiraBuildBulkSubmitData, 1, "", {
+			auditLogsource: "WEBHOOK",
+			operationType: "NORMAL",
+			preventTransitions: false,
+			subscriptionId: subscription.id
+		});
 
 		expect(response).toEqual({
 			status: 200,
@@ -227,7 +233,7 @@ describe("Test getting a jira client", () => {
 		});
 		it("should use new encrypted shared secret field", async () => {
 			jest.spyOn(Axios, "getAxiosInstance");
-			client = await getJiraClient(jiraHost, gitHubInstallationId, undefined, undefined);
+			client = (await getJiraClient(jiraHost, gitHubInstallationId, undefined, undefined))!;
 			expect(Axios.getAxiosInstance).toHaveBeenCalledWith(
 				expect.anything(),
 				"new-encrypted-shared-secret",
@@ -254,4 +260,47 @@ describe("Test getting a jira client", () => {
 		const jiraRes = await client.devinfo.repository.delete(123, "https://githubBaseTest.com");
 		expect(jiraRes[0].status).toEqual(202);
 	});
+
+	it("should truncate deployment issue keys if exceed limit", async () => {
+
+		jiraNock.post("/rest/deployments/0.1/bulk").reply(200);
+
+		await client.deployment.submit({
+			deployments: [
+				{
+					schemaVersion: "1",
+					deploymentSequenceNumber: 1,
+					updateSequenceNumber: 2,
+					displayName: "hello",
+					url: "url",
+					description: "",
+					lastUpdated: new Date(),
+					state: "success",
+					pipeline: {
+						id: "123",
+						displayName: "p123",
+						url: "pUrl"
+					},
+					environment: {
+						id: "4",
+						displayName: "prod",
+						type: "prod"
+					},
+					associations: [{
+						associationType: "issueIdOrKeys",
+						values: Array.from(new Array(ISSUE_KEY_API_LIMIT + 1)).map((_, i) => `TSTDEP-${i}`)
+					}]
+				}
+			]
+		}, 1, {
+			auditLogsource: "WEBHOOK",
+			operationType: "NORMAL",
+			preventTransitions: false,
+			subscriptionId: subscription.id
+		});
+		await subscription.reload();
+		expect(subscription.syncWarning).toEqual(issueKeyLimitWarning);
+
+	});
+
 });
