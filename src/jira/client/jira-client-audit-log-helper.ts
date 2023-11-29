@@ -204,6 +204,7 @@ export const processAuditLogsForWorkflowSubmit = (
 			options: options,
 			logger
 		});
+
 		if (isSuccess) {
 			auditInfo?.map(async (auditInf) => {
 				await saveAuditLog(auditInf, logger);
