@@ -187,10 +187,10 @@ describe("Test getting a jira client", () => {
 		jiraNock.post("/rest/deployments/0.1/bulk").reply(302, undefined, {
 			"Location": jiraHost + "/rest/deployments/0.1/bulk"
 		});
-
+		const repoFullName: string = "react-code-hub";
 		const response = await client.deployment.submit({
 			deployments: [{}]
-		} as JiraDeploymentBulkSubmitData, 1);
+		} as JiraDeploymentBulkSubmitData, 1, repoFullName);
 
 		expect(response).toEqual({
 			status: 200,
@@ -264,7 +264,7 @@ describe("Test getting a jira client", () => {
 	it("should truncate deployment issue keys if exceed limit", async () => {
 
 		jiraNock.post("/rest/deployments/0.1/bulk").reply(200);
-
+		const repoFullName: string = "react-code-hub";
 		await client.deployment.submit({
 			deployments: [
 				{
@@ -292,7 +292,7 @@ describe("Test getting a jira client", () => {
 					}]
 				}
 			]
-		}, 1, {
+		}, 1, repoFullName, {
 			auditLogsource: "WEBHOOK",
 			operationType: "NORMAL",
 			preventTransitions: false,

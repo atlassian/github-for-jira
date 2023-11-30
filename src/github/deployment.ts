@@ -103,6 +103,7 @@ export const processDeployment = async (
 	const result: DeploymentsResult = await jiraClient.deployment.submit(
 		jiraPayload,
 		webhookPayload.repository.id,
+		webhookPayload.repository.full_name,
 		{
 			preventTransitions: false,
 			operationType: "NORMAL",

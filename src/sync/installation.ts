@@ -236,7 +236,7 @@ const sendPayloadToJira = async (task: TaskType, jiraClient, subscription: Subsc
 				});
 				break;
 			case "deployment":
-				await jiraClient.deployment.submit(jiraPayload, repository.id, {
+				await jiraClient.deployment.submit(jiraPayload, repository.id, repository.full_name, {
 					preventTransitions: true,
 					operationType: "BACKFILL",
 					auditLogsource: "BACKFILL",
