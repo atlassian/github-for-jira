@@ -93,6 +93,7 @@ export const elapsedTimeMetrics = (
 ) => {
 	const elapsedTimeInMs = hrtimer();
 	const method = req.method;
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	(req.log || logger).debug({
 		method: req.method,
 		path: req.path,
@@ -103,8 +104,9 @@ export const elapsedTimeMetrics = (
 	res.once("finish", () => {
 		const elapsedTime = elapsedTimeInMs();
 		const statusCode = `${res.statusCode}`;
-		const path = (req.baseUrl || "") + ((req.route as { path?: string; })?.path || "/*");
+		const path = (req.baseUrl || "") + ((req.route as { path?: string; } | undefined)?.path || "/*");
 		const tags = { path, method, statusCode };
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		(req.log || logger).debug(`${method} request executed in ${elapsedTime} with status ${statusCode} path ${path}`);
 
 		//Count response time metric

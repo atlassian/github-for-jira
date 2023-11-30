@@ -4,7 +4,7 @@ import EventEmitter from "events";
 import { getLogger } from "config/logger";
 
 const logger = getLogger("micros.lifecycle");
-let client: Consumer;
+let client: Consumer | undefined;
 
 // Create a single event emitter for all listeners
 const eventEmitter = new EventEmitter();
@@ -36,6 +36,8 @@ export const listenToMicrosLifecycle = (active: Callback, inactive: Callback): v
 				}
 				try {
 					const lifecycleData: LifecycleData = JSON.parse(data.Body) as LifecycleData;
+					// validate that the data has the required fields
+					// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 					if (lifecycleData.Type === undefined || lifecycleData.Subject === undefined || lifecycleData.Message === undefined) {
 						logger.error({ data }, "Lifecycle event missing required data, skipping.");
 						return;
