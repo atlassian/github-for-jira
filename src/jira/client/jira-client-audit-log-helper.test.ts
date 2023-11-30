@@ -924,7 +924,7 @@ describe("processDeploySubmitResp", () => {
 			auditInfo: [
 				{
 					createdAt: expect.anything(),
-					entityAction: "successful",
+					entityAction: "SUCCESSFUL",
 					entityId: "react-code-hub_1194529862",
 					entityType: "deployments",
 					issueKey: "KAM-6",
@@ -1004,7 +1004,7 @@ describe("processDeploySubmitResp", () => {
 			auditInfo: [
 				{
 					createdAt: expect.anything(),
-					entityAction: "successful",
+					entityAction: "SUCCESSFUL",
 					entityId: "react-code-hub_1194529862",
 					entityType: "deployments",
 					issueKey: "KAM-6",
@@ -1013,7 +1013,7 @@ describe("processDeploySubmitResp", () => {
 				},
 				{
 					createdAt: expect.anything(),
-					entityAction: "successful",
+					entityAction: "SUCCESSFUL",
 					entityId: "react-code-hub_1194529862",
 					entityType: "deployments",
 					issueKey: "KAM-5",
