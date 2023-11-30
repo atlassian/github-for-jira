@@ -141,7 +141,7 @@ export const processDeploySubmitResp = ({
 								issueKey,
 								subscriptionId: options.subscriptionId,
 								source: options.auditLogsource || "WEBHOOK",
-								entityAction: reqDeploymentData.state
+								entityAction: (reqDeploymentData.state || "").toUpperCase()
 							};
 							if (obj.subscriptionId && obj.entityId) {
 								auditInfo.push(obj);
@@ -219,6 +219,7 @@ export const processWorkflowSubmitResp = ({
 		return { isSuccess: false };
 	}
 };
+
 export const processAuditLogsForDevInfoBulkUpdate = ({ reqRepoData, response, options, logger }) => {
 	try {
 		const { isSuccess, auditInfo } = processBatchedBulkUpdateResp({
