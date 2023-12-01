@@ -48,7 +48,7 @@
 			"principals": [
 				"pollinator-check/d4f03d07-12fe-4a69-9d68-c1841066772e"
 			],
-			"allowed": false
+			"allowed": true
 		},
     {
       "name": "Allow pollinator test to call Delete Installation endpoints",
@@ -118,7 +118,7 @@
 			"principals": [
 				"pollinator-check/d4f03d07-12fe-4a69-9d68-c1841066772e"
 			],
-			"allowed": true
+			"allowed": false
 		},
 		{
 			"name": "Not allow Pollinator tests to call other Admin endpoints",
