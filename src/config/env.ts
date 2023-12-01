@@ -23,7 +23,7 @@ type Transforms<T, K extends keyof T = keyof T> = {
 };
 
 const transforms: Transforms<EnvVars> = {
-	MICROS_ENV: (value?: string) =>  EnvironmentEnum[value || ""] as EnvironmentEnum,
+	MICROS_ENV: (value?: string) =>  EnvironmentEnum[value || ""] as EnvironmentEnum | undefined || EnvironmentEnum.development,
 	MICROS_GROUP: (value?: string) => value || "",
 	NODE_ENV: () => nodeEnv,
 	S3_DUMPS_BUCKET_NAME: (value?: string) => value ?? "",
