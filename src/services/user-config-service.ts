@@ -94,7 +94,7 @@ const getRepoConfigFromGitHub = async (gitHubInstallationClient: GitHubInstallat
 /**
  * Iterates through environment patterns and returns true if any environment contains too many patterns to test against.
  */
-const hasTooManyPatternsPerEnvironment = (config: Config): boolean => {
+const hasTooManyPatternsPerEnvironment = (config: Config | undefined): boolean => {
 	const environmentMapping = config?.deployments?.environmentMapping;
 	if (!environmentMapping) {
 		return false;
@@ -113,7 +113,7 @@ const convertYamlToUserConfig = (input: string | undefined, logger: Logger): Con
 		return {};
 	}
 
-	const config: Config = YAML.parse(input) as Config;
+	const config = YAML.parse(input) as Config | undefined;
 	logger.info("User config file yaml content parsed successfully");
 
 	const configDeployments = config?.deployments;
@@ -129,11 +129,6 @@ const convertYamlToUserConfig = (input: string | undefined, logger: Logger): Con
 			};
 			logger.info("Found services ids mappings in user config files");
 		}
-	}
-
-
-	if (!deployments) {
-		throw new Error(`Invalid .jira/config.yml structure`);
 	}
 
 	// Trim the input data to only include the required attributes

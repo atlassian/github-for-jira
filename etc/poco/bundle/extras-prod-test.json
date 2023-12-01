@@ -1,5 +1,45 @@
 {
   "tests": [
+		{
+			"name": "Allow Prod Backfill Cloud Critical Pollinator Test to call Get Audit Log endpoints",
+			"path": "/api/audit-log/subscription/12345",
+			"method": "GET",
+			"mechanism": "asap",
+			"principals": [
+				"pollinator-check/f24ec1a9-d03d-45c7-bbd8-f2094543eaba"
+			],
+			"allowed": true
+		},
+		{
+			"name": "Allow Prod Backfill GHE Critical Pollinator Test to call Get Audit Log endpoints",
+			"path": "/api/audit-log/subscription/12345",
+			"method": "GET",
+			"mechanism": "asap",
+			"principals": [
+				"pollinator-check/8692803e-287a-48e3-bad1-49a60a7a4f9d"
+			],
+			"allowed": true
+		},
+    {
+			"name": "Allow Prod Backfill Cloud Critical Pollinator Test to call Delete Installation endpoints",
+      "path": "/api/deleteInstallation/21266506/https%3A%2F%2Ffusion-arc-pollinator-staging-app.atlassian.net",
+      "method": "DELETE",
+      "mechanism": "asap",
+      "principals": [
+				"pollinator-check/f24ec1a9-d03d-45c7-bbd8-f2094543eaba"
+      ],
+      "allowed": true
+    },
+		{
+			"name": "Allow Prod Backfill GHE Critical Pollinator Test to call Delete Installation endpoints",
+			"path": "/api/deleteInstallation/21266506/https%3A%2F%2Ffusion-arc-pollinator-staging-app.atlassian.net",
+			"method": "DELETE",
+			"mechanism": "asap",
+			"principals": [
+				"pollinator-check/8692803e-287a-48e3-bad1-49a60a7a4f9d"
+			],
+			"allowed": true
+		},
     {
       "name": "Allow pollinator test to call Delete Installation endpoints",
       "path": "/api/deleteInstallation/21266506/https%3A%2F%2Ffusion-arc-pollinator-staging-app.atlassian.net",
