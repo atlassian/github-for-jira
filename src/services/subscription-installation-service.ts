@@ -31,7 +31,7 @@ export const hasAdminAccess = async (githubToken: string, jiraHost: string, gitH
 		const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, { trigger: "hasAdminAccess" }, logger, gitHubServerAppIdPk);
 
 		logger.info("Checking if the user is an admin");
-		return await isUserAdminOfOrganization(gitHubUserClient, jiraHost, gitHubInstallationClient, installation.account.login, login, installation.target_type, logger);
+		return await isUserAdminOfOrganization(gitHubUserClient, gitHubInstallationClient, installation.account.login, login, installation.target_type, logger);
 	} catch (err: unknown) {
 		logger.warn({ err }, "Error checking user access");
 		return false;
@@ -173,7 +173,7 @@ export const submitSecurityWorkspaceToLink = async (
 	await jiraClient.linkedWorkspace(subscription.id);
 	logger.info({ subscriptionId: subscription.id }, "Linked security workspace");
 
-	await sendAnalytics(installation.jiraHost, AnalyticsEventTypes.TrackEvent, {
+	return await sendAnalytics(installation.jiraHost, AnalyticsEventTypes.TrackEvent, {
 		action: AnalyticsTrackEventsEnum.GitHubSecurityConfiguredEventName,
 		actionSubject: AnalyticsTrackEventsEnum.GitHubSecurityConfiguredEventName,
 		source: !subscription.gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise
@@ -197,7 +197,7 @@ const hasSecurityPermissionsAndEvents = async (subscription: Subscription, gitHu
 
 const setSecurityPermissionAccepted = async (subscription: Subscription, logger: Logger) => {
 	try {
-		await subscription.update({ isSecurityPermissionsAccepted: true });
+		return await subscription.update({ isSecurityPermissionsAccepted: true });
 	} catch (err: unknown) {
 		logger.warn({ err }, "Failed to set security permissions accepted field in Subscriptions");
 		throw err;

@@ -89,7 +89,7 @@ describe("github-create-branch-post.frontend", () => {
 			}, element))!;
 
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
+			// @ts-expect-error
 			await parentAnchor.click();
 
 			// await page.keyboard.type("Your desired text");

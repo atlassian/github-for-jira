@@ -1,7 +1,7 @@
 buildNumber: 0.0.0
 name: Github For Jira
 description: Connect app for integrating GitHub into Jira
-organization: Engineering-DevOps
+organization: Infrastructure Services - Open Toolchain
 notifications:
   email: fusion-arc@atlassian.com
 tags:
@@ -172,6 +172,17 @@ resources:
   - name: deployment-history-cache
     type: dynamo-db
     attributes: &table-attributes
+      HashKeyName: Id
+      HashKeyType: "S"
+      RangeKeyName: CreatedAt
+      RangeKeyType: "N"
+      ReadWriteCapacityMode: ON_DEMAND
+      TTLAttributeName: ExpiredAfter
+      dataType:
+        - UGC/PrimaryIdentifier    # Sha of a commit that point to user's code
+  - name: audit-log
+    type: dynamo-db
+    attributes: &audit-log-table-attributes
       HashKeyName: Id
       HashKeyType: "S"
       RangeKeyName: CreatedAt
@@ -432,6 +443,10 @@ environmentOverrides:
         type: dynamo-db
         attributes:
           <<: *table-attributes
+      - name: audit-log
+        type: dynamo-db
+        attributes:
+          <<: *audit-log-table-attributes
 
     alarms:
       overrides:
@@ -535,6 +550,10 @@ environmentOverrides:
         type: dynamo-db
         attributes:
           <<: *table-attributes
+      - name: audit-log
+        type: dynamo-db
+        attributes:
+          <<: *audit-log-table-attributes
 
       - type: globaledge
         name: proxy
@@ -636,6 +655,10 @@ environmentOverrides:
         type: dynamo-db
         attributes:
           <<: *table-attributes
+      - name: audit-log
+        type: dynamo-db
+        attributes:
+          <<: *audit-log-table-attributes
 
       - type: globaledge
         name: proxy

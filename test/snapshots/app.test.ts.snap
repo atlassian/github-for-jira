@@ -25,14 +25,14 @@ exports[`app getFrontendApp please review routes and update snapshot when adding
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,OAuthRedirectUrl
 :POST ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/oauth/?(?=/|$)^/exchangeToken/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,OAuthExchangeToken
-:GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/deferred/?(?=/|$)^/parse/(?:([^/]+?))/?$
-	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,ParseRequestId
 :POST ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/deferred/?(?=/|$)^/analytics-proxy/(?:([^/]+?))/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,DeferredAnalyticsProxy
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/deferred/?(?=/|$)^/installation-url/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,GetDeferredInstallationUrl
 :POST ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/deferred/?(?=/|$)^/connect/(?:([^/]+?))/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,GitHubTokenHandler,CheckOwnershipAndConnectRoute
+:GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/deferred/?(?=/|$)^/parse/(?:([^/]+?))/?$
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,GitHubTokenHandler,ParseRequestId
 :POST ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/analytics-proxy/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,AnalyticsProxyHandler
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/installation/?(?=/|$)^/new/?$
@@ -95,6 +95,10 @@ exports[`app getFrontendApp please review routes and update snapshot when adding
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,ApiReplyFailedEntitiesFromDataDepotPost
 :POST ^/?(?=/|$)^/api/?(?=/|$)^/resync-failed-tasks/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,ApiResyncFailedTasksPost
+:POST ^/?(?=/|$)^/api/?(?=/|$)^/verify/githubapp/(?:([^/]+?))/?(?=/|$)^/verify-get-apps/?$
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,GHESVerifyGetApps
+:GET ^/?(?=/|$)^/api/?(?=/|$)^/audit-log/?(?=/|$)^/subscription/(?:([^/]+?))/?$
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,middleware,middleware,middleware,middleware,returnOnValidationError,ApiAuditLogGetBySubscriptionId
 :POST ^/?(?=/|$)^/api/?(?=/|$)^/jira/?(?=/|$)^/(?:([^/]+?))/verify/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,urlencodedParser,jsonParser,LogMiddleware,slauthMiddleware,rateLimit,middleware,returnOnValidationError,ApiJiraVerifyPost
 :POST ^/?(?=/|$)^/api/?(?=/|$)^/jira/?(?=/|$)^/(?:([^/]+?))/uninstall/?$
@@ -155,8 +159,6 @@ exports[`app getFrontendApp please review routes and update snapshot when adding
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,jiraSymmetricJwtMiddleware,GithubServerAppMiddleware,csrf,GithubBranchGet
 :GET ^/?(?=/|$)^/github/?(?=/|$)^(?:/([0-9a-fA-F]{8}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{12}))?/?(?=/|$)^/login/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,jiraSymmetricJwtMiddleware,GithubServerAppMiddleware,jiraAdminPermissionsMiddleware,GithubOAuthLoginGet
-:POST ^/?(?=/|$)^/github/?(?=/|$)^(?:/([0-9a-fA-F]{8}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{12}))?/?(?=/|$)^/encrypt/header/?$
-	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,jiraSymmetricJwtMiddleware,GithubServerAppMiddleware,jiraAdminPermissionsMiddleware,GithubEncryptHeaderPost
 :GET ^/?(?=/|$)^/github/?(?=/|$)^(?:/([0-9a-fA-F]{8}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{12}))?/?(?=/|$)^/setup/?(?=/|$)^/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,jiraSymmetricJwtMiddleware,GithubServerAppMiddleware,jiraAdminPermissionsMiddleware,csrf,middleware,returnOnValidationError,GithubSetupGet
 :POST ^/?(?=/|$)^/github/?(?=/|$)^(?:/([0-9a-fA-F]{8}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{12}))?/?(?=/|$)^/setup/?(?=/|$)^/?$

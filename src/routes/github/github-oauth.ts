@@ -85,7 +85,8 @@ const finishOAuthFlow = async (
 ) => {
 	const jiraHost = (await Installation.findByPk(secureState.installationIdPk))?.jiraHost;
 	if (!jiraHost) {
-		return respondWithError(400, "No installation found");
+		respondWithError(400, "No installation found");
+		return;
 	}
 
 	log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
@@ -93,7 +94,8 @@ const finishOAuthFlow = async (
 
 	const gitHubClientSecret = await getCloudOrGHESAppClientSecret(secureState.gitHubServerUuid, jiraHost);
 	if (!gitHubClientSecret) {
-		return respondWithError(400, "Missing GitHubApp client secret from uuid");
+		respondWithError(400, "Missing GitHubApp client secret from uuid");
+		return;
 	}
 
 	log.info(`${createHashWithSharedSecret(gitHubClientSecret)} is used`);
@@ -113,7 +115,8 @@ const finishOAuthFlow = async (
 		});
 
 		if (!exchangeGitHubToken) {
-			return respondWithError(400, `didn't get access token from GitHub`);
+			respondWithError(400, `didn't get access token from GitHub`);
+			return;
 		}
 
 		const { accessToken, refreshToken } = exchangeGitHubToken;
@@ -125,7 +128,8 @@ const finishOAuthFlow = async (
 		return secureState.postLoginRedirectUrl;
 	} catch (err: unknown) {
 		log.warn({ err }, `Cannot retrieve access token from Github`);
-		return respondWithError(401, "Cannot retrieve access token from Github");
+		respondWithError(401, "Cannot retrieve access token from Github");
+		return;
 	}
 };
 export const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -160,6 +164,7 @@ export const GithubOAuthCallbackGet = async (req: Request, res: Response, next: 
 		next(new UIDisplayableError(400, "No state was found"));
 		return;
 	}
+	// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 	delete req.session[stateKey];
 
 	req.log.info({ query: req.query }, `Received request to ${req.url}`);
@@ -202,11 +207,12 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 			req.session.githubToken = undefined;
 			req.session.githubRefreshToken = undefined;
 
-			delete query["resetGithubToken"];
+			delete query.resetGithubToken;
 
 			const newUrl = originalUrl.split("?")[0] + "?" + queryToQueryString(query);
 			req.log.info("Github Token reset for URL: ", newUrl);
-			return res.redirect(newUrl);
+			res.redirect(newUrl);
+			return;
 		}
 
 		const { githubToken, gitHubUuid } = req.session;
@@ -220,7 +226,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		 */
 		if (!githubToken || gitHubUuid !== gitHubAppConfig.uuid) {
 			req.log.info("github token missing, calling login()");
-			throw "Missing github token";
+			throw new Error("Missing github token");
 		}
 		req.log.debug("found github token in session. validating token with API.");
 
@@ -234,7 +240,8 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 
 		// Everything's good, set it to res.locals
 		res.locals.githubToken = githubToken;
-		return next();
+		next();
+		return;
 	} catch (err: unknown) {
 		req.log.info({ err }, `Github token is not valid.`);
 		if (req.session?.githubRefreshToken) {
@@ -244,7 +251,8 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 				req.session.githubToken = token.accessToken;
 				req.session.githubRefreshToken = token.refreshToken;
 				res.locals.githubToken = token.accessToken;
-				return next();
+				next();
+				return;
 			}
 		}
 		if (req.method == "GET") {

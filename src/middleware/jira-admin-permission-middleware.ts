@@ -27,9 +27,10 @@ export const fetchAndSaveUserJiraAdminStatus = async (req: Request, claims: { su
 	}
 };
 
-export const jiraAdminPermissionsMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void | Response>  => {
+export const jiraAdminPermissionsMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<Response | undefined>  => {
 	if (!(await booleanFlag(BooleanFlags.JIRA_ADMIN_CHECK))) {
-		return next();
+		next();
+		return undefined;
 	}
 	const { isJiraAdmin } = req.session;
 
@@ -44,4 +45,5 @@ export const jiraAdminPermissionsMiddleware = async (req: Request, res: Response
 		return res.status(403).send("Forbidden - User does not have Jira administer permissions.");
 	}
 	next();
+	return undefined;
 };

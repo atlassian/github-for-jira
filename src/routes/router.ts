@@ -78,7 +78,7 @@ const GitHubAppMarketplaceRedirectGet = async (req: Request, res: Response) => {
 	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId, { trigger: "root_path" });
 	const { data: info } = await gitHubAppClient.getApp();
 
-	return res.redirect(info.external_url);
+	res.redirect(info.external_url);
 };
 RootRouter.get("/", jiraSymmetricJwtMiddleware, GitHubAppMarketplaceRedirectGet);
 

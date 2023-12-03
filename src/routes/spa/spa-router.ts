@@ -17,16 +17,19 @@ let indexHtmlContent: string = "";
 
 SpaRouter.use(JwtHandlerWithoutQsh);
 SpaRouter.use("/*", async (_, res) => {
-	if (!indexHtmlContent) {
-		const { jiraHost } = res.locals;
-		const featureFlags = {
-			ENABLE_5KU_BACKFILL_PAGE: await booleanFlag(BooleanFlags.ENABLE_5KU_BACKFILL_PAGE, jiraHost)
-		};
+	const { jiraHost } = res.locals;
+	const featureFlags = {
+		ENABLE_5KU_BACKFILL_PAGE: await booleanFlag(BooleanFlags.ENABLE_5KU_BACKFILL_PAGE, jiraHost)
+	};
 
-		indexHtmlContent = (await fs.readFile(path.join(process.cwd(), "spa/build/index.html"), "utf-8"))
-			.replace("##SPA_APP_ENV##", envVars.MICROS_ENVTYPE || "")
-			.replace("##SENTRY_SPA_DSN##", envVars.SENTRY_SPA_DSN || "")
-			.replace("\"##FRONTEND_FEATURE_FLAGS##\"", JSON.stringify(featureFlags));
+	if (!indexHtmlContent) {
+		indexHtmlContent = await fs.readFile(path.join(process.cwd(), "spa/build/index.html"), "utf-8");
 	}
-	res.status(200).send(indexHtmlContent);
+
+	const updatedContentWithFFValues = indexHtmlContent
+		.replace("##SPA_APP_ENV##", envVars.MICROS_ENVTYPE || "")
+		.replace("##SENTRY_SPA_DSN##", envVars.SENTRY_SPA_DSN || "")
+		.replace("\"##FRONTEND_FEATURE_FLAGS##\"", JSON.stringify(featureFlags));
+
+	res.status(200).send(updatedContentWithFFValues);
 });

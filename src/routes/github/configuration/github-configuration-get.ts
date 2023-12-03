@@ -89,7 +89,6 @@ export const getInstallationsWithAdmin = async (
 		//  all orgs the user is a member of and cross reference with the installation org
 		const checkAdmin = isUserAdminOfOrganization(
 			gitHubUserClient,
-			jiraHost,
 			gitHubClient,
 			installation.account.login,
 			login,
@@ -244,7 +243,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		// or getting the data we need from GitHub, so we'll show the user an error.
 		req.log.debug(`Error while getting github configuration page`);
 		log.error({ err, req, res }, "Error while getting github configuration page");
-		return next(err);
+		next(err); return;
 	}
 };
 

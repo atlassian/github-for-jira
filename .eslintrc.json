@@ -18,8 +18,7 @@
 		"eslint:recommended",
 		"plugin:import/recommended",
 		"plugin:import/typescript",
-		"plugin:@typescript-eslint/eslint-recommended",
-		"plugin:@typescript-eslint/recommended-requiring-type-checking"
+		"plugin:@typescript-eslint/strict-type-checked"
 	],
 	"settings": {
 		"import/parsers": {
@@ -115,7 +114,9 @@
 			"@typescript-eslint/no-unsafe-call": "off",
 			"@typescript-eslint/require-await": "off",
 			"@typescript-eslint/await-thenable": "off",
-			"@typescript-eslint/no-misused-promises": "off"
+			"@typescript-eslint/no-misused-promises": "off",
+			"@typescript-eslint/no-explicit-any": "off",
+			"@typescript-eslint/no-unnecessary-condition": "off"
 		}
 	},
 	{
@@ -124,7 +125,10 @@
 			"src/jira/**",
 			"src/models/**",
 			"src/sync/**",
-			"src/transforms/**"
+			"src/transforms/**",
+			"src/util/**",
+			"src/sqs/**",
+			"src/middleware/**"
 		],
 		"rules": {
 			// To be removed later
@@ -132,7 +136,10 @@
 			"@typescript-eslint/no-unsafe-argument": "off",
 			"@typescript-eslint/no-unsafe-member-access": "off",
 			"@typescript-eslint/no-unsafe-return": "off",
-			"@typescript-eslint/no-unsafe-call": "off"
+			"@typescript-eslint/no-unsafe-call": "off",
+			"@typescript-eslint/no-explicit-any": "off",
+			"@typescript-eslint/no-unnecessary-condition": "off"
 		}
-	}]
+	}
+]
 }

@@ -57,6 +57,7 @@ export const getSecretScanningAlertTask = async (
 			};
 		}
 		logger.error({ err, reason: err.cause?.response?.data }, "Secret scanning backfill failed");
+		// eslint-disable-next-line @typescript-eslint/no-throw-literal
 		throw err;
 	}
 

@@ -25,7 +25,7 @@ test.describe("App Installation", () => {
 		});
 
 		test("githubAppUninstall", async ({ page }) => {
-			expect(await githubAppUninstall(page)).toBeTruthy();
+			expect((await githubAppUninstall(page))).toBeTruthy();
 		});
 	});
 });

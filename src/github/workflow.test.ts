@@ -2,20 +2,36 @@ import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import workflowBasicFixture from "fixtures/workflow-basic.json";
 import { createWebhookApp, WebhookApp } from "test/utils/create-webhook-app";
+const lastMockedWorkflowSubmitFn = jest.fn();
+jest.mock("../jira/client/jira-client", () => ({
+	getJiraClient: async (...args) => {
+		const actual = await jest.requireActual("../jira/client/jira-client").getJiraClient(...args);
+		return {
+			...actual,
+			workflow: {
+				...actual.workflow,
+				submit: (...repoArgs) => {
+					lastMockedWorkflowSubmitFn(...repoArgs);
+					return actual.workflow.submit(...repoArgs);
+				}
+			}
+		};
+	}
+}));
 
-jest.mock("../config/feature-flags");
 
 describe("Workflow Webhook", () => {
 	let app: WebhookApp;
 	const gitHubInstallationId = 1234;
+	let subscriptionId;
 
 	beforeEach(async () => {
 		app = await createWebhookApp();
 
-		await Subscription.create({
+		subscriptionId = (await Subscription.create({
 			gitHubInstallationId,
 			jiraHost
-		});
+		})).id;
 
 		await Installation.create({
 			jiraHost,
@@ -47,7 +63,7 @@ describe("Workflow Webhook", () => {
 				[
 					{
 						schemaVersion: "1.0",
-						pipelineId: 9751894,
+						pipelineId: "9751894",
 						buildNumber: 84,
 						updateSequenceNumber: 12345678,
 						displayName: "My Deployment flow",
@@ -88,5 +104,16 @@ describe("Workflow Webhook", () => {
 		mockSystemTime(12345678);
 
 		await expect(app.receive(workflowBasicFixture)).toResolve();
+
+		expect(lastMockedWorkflowSubmitFn).toBeCalledWith(
+			expect.anything(),
+			123,
+			"test-repo-owner/test-repo-name",
+			expect.objectContaining({
+				auditLogsource: "WEBHOOK",
+				entityAction: "WORKFLOW_RUN_REQUESTED",
+				subscriptionId
+			})
+		);
 	});
 });

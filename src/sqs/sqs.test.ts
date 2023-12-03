@@ -57,7 +57,6 @@ describe("SQS", () => {
 		when(jest.mocked(preemptiveRateLimitCheck))
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			.calledWith(expect.anything(), expect.anything()) .mockResolvedValue({ isExceedThreshold: false });
-
 	});
 
 	afterEach(async () => {
@@ -80,6 +79,7 @@ describe("SQS", () => {
 
 		it("Message gets received", async () => {
 			await queue.sendMessage(payload);
+			// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 			await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toBeCalledTimes(1)));
 			expect(mockRequestHandler).toBeCalledWith(expect.objectContaining({ payload }));
 		});
@@ -88,6 +88,7 @@ describe("SQS", () => {
 			await queue.stop();
 			queue.start();
 			await queue.sendMessage(payload);
+			// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 			await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toBeCalledTimes(1)));
 			expect(mockRequestHandler).toBeCalledWith(expect.objectContaining({ payload }));
 		});
@@ -95,6 +96,7 @@ describe("SQS", () => {
 		it("Message received with delay", async () => {
 			const startTime = Date.now();
 			await queue.sendMessage(payload, 1);
+			// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 			await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toHaveBeenCalledTimes(1)));
 			expect(Date.now() - startTime).toBeGreaterThanOrEqual(1000);
 		});
@@ -123,6 +125,7 @@ describe("SQS", () => {
 			await queue.sendMessage(payload);
 			const time = Date.now();
 			await delay(1000);
+			// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 			await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toHaveBeenCalledTimes(1)));
 			expect(mockRequestHandler).toBeCalledWith(expect.objectContaining({ payload }));
 			expect(Date.now() - time).toBeGreaterThanOrEqual(1000); // wait 1 second to make sure everything's processed
@@ -137,6 +140,7 @@ describe("SQS", () => {
 				queue.sendMessage(payload),
 				queue.sendMessage(payload)
 			]);
+			// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 			await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toHaveBeenCalledTimes(2)));
 			await expect(mockRequestHandler).toHaveResolved();
 			expect(Date.now() - time).toBeGreaterThanOrEqual(2000);
@@ -148,6 +152,7 @@ describe("SQS", () => {
 				mockErrorHandler.mockReturnValue({ retryable: true, retryDelaySec: timeout, isFailure: true });
 				const time = Date.now();
 				await queue.sendMessage(payload);
+				// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 				await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toHaveBeenCalledTimes(2)));
 				await expect(mockRequestHandler).toHaveResolvedTimes(1);
 				expect(Date.now() - time).toBeGreaterThanOrEqual(timeout * 1000);
@@ -172,6 +177,7 @@ describe("SQS", () => {
 			mockRequestHandler.mockRejectedValue("Something bad happened");
 			mockErrorHandler.mockReturnValue({ isFailure: false });
 			await queue.sendMessage(payload);
+			// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 			await waitUntil(() => Promise.resolve(expect(queueDeletionSpy).toBeCalledTimes(1)));
 			expect(statsdIncrementSpy).not.toBeCalledWith(sqsQueueMetrics.failed, expect.anything());
 		});
@@ -191,6 +197,7 @@ describe("SQS", () => {
 			await queue.sendMessage(payload);
 			const time = Date.now();
 			await delay(2000);
+			// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 			await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toHaveBeenCalled()));
 			expect(mockRequestHandler).toBeCalledWith(expect.objectContaining({ payload }));
 			expect(Date.now() - time).toBeGreaterThanOrEqual(1000); // wait 1 second to make sure everything's processed
@@ -204,8 +211,11 @@ describe("SQS", () => {
 			await queue.sendMessage(payload);
 			const time = Date.now();
 			await delay(2000);
+			// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 			await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toHaveBeenCalledTimes(0)));
+			// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 			await waitUntil(() => Promise.resolve(expect(queueDeletionSpy).toBeCalledTimes(1)));
+			// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 			await waitUntil(() => Promise.resolve(expect(queueSendSpy).toBeCalledWith(expect.objectContaining({
 				DelaySeconds: 123,
 				MessageBody: JSON.stringify({ ...payload, rateLimited: true })
@@ -240,6 +250,7 @@ describe("SQS", () => {
 				});
 
 			await queue.sendMessage(payload);
+			// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 			await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toHaveBeenCalledTimes(3)));
 			expect(mockRequestHandler).lastCalledWith(expect.objectContaining({
 				receiveCount: 3,
@@ -247,4 +258,5 @@ describe("SQS", () => {
 			}));
 		});
 	});
+
 });

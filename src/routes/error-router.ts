@@ -50,7 +50,8 @@ export const attachErrorHandler = (router: Router) => {
 		req.log.error({ payload: req.body, errorReference, err, req, res }, "Error in frontend");
 
 		if (!isNodeProd() && res.locals.showError) {
-			return next(err);
+			next(err);
+			return;
 		}
 
 		// Check for IP Allowlist error from Github and set the message explicitly
@@ -84,7 +85,7 @@ export const attachErrorHandler = (router: Router) => {
 
 		statsd.increment(metricError.githubErrorRendered, tags, {});
 
-		return res.status(errorStatusCode).render("error.hbs", {
+		res.status(errorStatusCode).render("error.hbs", {
 			title: "GitHub + Jira integration",
 			errorReference,
 			message,

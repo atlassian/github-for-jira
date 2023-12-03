@@ -1,16 +1,18 @@
 import "@testing-library/jest-dom";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import DeferredInstallation from "./index";
 import DeferralManager from "../../services/deferral-manager";
-import OAuthManager from "../../services/oauth-manager";
-import { AxiosError } from "axios";
+import { AxiosError, AxiosResponse } from "axios";
 import userEvent from "@testing-library/user-event";
+import Api from "../../api";
 
 jest.mock("../../services/deferral-manager");
+jest.mock("../../api");
 
 const searchParams = { get: () => ({ "requestId": "request-id"}) };
 const navigate = jest.fn();
+window.open = jest.fn();
 
 jest.mock("react-router-dom", () => ({
 	...(jest.requireActual("react-router-dom")),
@@ -25,87 +27,39 @@ jest.mock("../../analytics/analytics-proxy-client", () => ({
 	}
 }));
 
-test("Invalid/Expired Deferred installation screen", async () => {
-	jest.mocked(DeferralManager).extractFromRequestId = jest.fn().mockReturnValue(Promise.resolve(new AxiosError()));
-
-	await act(async () => {
-		render(
-			<BrowserRouter>
-				<DeferredInstallation />
-			</BrowserRouter>
-		);
-	});
-
-	expect(screen.getByText("This link is either expired or invalid.")).toBeTruthy();
-	expect(screen.getByText("Connect a GitHub organization to Jira software")).toBeTruthy();
-	expect(screen.getByTestId("content").textContent).toBe("Please inform the person who sent you the link that the link has expired and send a new link.");
+afterEach(() => {
+	jest.clearAllMocks();
 });
 
-test("Default Deferred installation screen", async () => {
-	jest.mocked(DeferralManager).extractFromRequestId = jest.fn().mockReturnValue(Promise.resolve({ jiraHost: "https://myJirahost.com", orgName: "myOrg"}));
-
-	await act(async () => {
-		render(
-			<BrowserRouter>
-				<DeferredInstallation />
-			</BrowserRouter>
-		);
-	});
-
-	expect(screen.getByText("Connect Github to Jira")).toBeTruthy();
-	expect(screen.getByText("Connect GitHub organization myOrg to Jira Software")).toBeTruthy();
-	expect(screen.getByText("A Jira administrator has asked for approval to connect the GitHub organization myOrg to the Jira site https://myJirahost.com.")).toBeTruthy();
-	expect(screen.getByText("Sign in & connect")).toBeTruthy();
-});
-
-test("Forbidden Deferred installation screen", async () => {
-	jest.mocked(DeferralManager).extractFromRequestId = jest.fn().mockReturnValue(Promise.resolve({ jiraHost: "https://myJirahost.com", orgName: "myOrg"}));
-	jest.mocked(DeferralManager).connectOrgByDeferral = jest.fn().mockReturnValue(Promise.resolve(new AxiosError()));
-	jest.mocked(OAuthManager).authenticateInGitHub = jest.fn().mockReturnValue(Promise.resolve());
-	jest.mocked(OAuthManager).finishOAuthFlow = jest.fn().mockReturnValue(Promise.resolve());
-
-	await act(async () => {
-		render(
-			<BrowserRouter>
-				<DeferredInstallation />
-			</BrowserRouter>
-		);
-	});
-
-	expect(screen.getByText("Sign in & connect")).toBeTruthy();
-
-	// Clicking the button, which mocks the Authentication
-	await userEvent.click(screen.getByText("Sign in & connect"));
-	// Simulating the sending of message after successful authentication
-	fireEvent(
-		window,
-		new MessageEvent("message", { data: { type: "oauth-callback", code: 1 } })
+test("Default/Start Deferred installation screen", async () => {
+	render(
+		<BrowserRouter>
+			<DeferredInstallation />
+		</BrowserRouter>
 	);
 
-	await waitFor(() => {
-		expect(screen.getByText("The GitHub account you’ve used doesn’t have owner permissions for organization myOrg.")).toBeInTheDocument();
-		expect(screen.getByText("Let the person who sent you the request know to")).toBeInTheDocument();
-		expect(screen.getByText("find an owner for that organization.")).toBeInTheDocument();
-	});
+	expect(screen.getByText("Connect Github to Jira")).toBeTruthy();
+	expect(screen.getByText("Connect a GitHub organization to Jira Software")).toBeTruthy();
+	expect(screen.getByText("A Jira administrator has asked for approval to connect a GitHub organization to a Jira site.")).toBeTruthy();
+	expect(screen.getByText("Sign in")).toBeTruthy();
 });
-test("Successful Deferred installation screen", async () => {
-	jest.mocked(DeferralManager).extractFromRequestId = jest.fn().mockReturnValue(Promise.resolve({ jiraHost: "https://myJirahost.com", orgName: "myOrg"}));
-	jest.mocked(DeferralManager).connectOrgByDeferral = jest.fn().mockReturnValue(Promise.resolve(true));
-	jest.mocked(OAuthManager).finishOAuthFlow = jest.fn().mockReturnValue(Promise.resolve());
-	jest.mocked(OAuthManager).authenticateInGitHub = jest.fn().mockReturnValue(Promise.resolve());
+test("Invalid/Expired Deferred installation screen", async () => {
+	jest.mocked(DeferralManager).extractFromRequestId = jest.fn().mockReturnValue(Promise.resolve(new AxiosError()));
+	jest.mocked(Api).auth.generateOAuthUrl = jest.fn().mockReturnValue(Promise.resolve({
+		data: {
+			redirectUrl: "https://redirect-url.com",
+			state: 1
+		}
+	}));
 
-	await act(async () => {
-		render(
-			<BrowserRouter>
-				<DeferredInstallation />
-			</BrowserRouter>
-		);
-	});
-
-	expect(screen.getByText("Sign in & connect")).toBeTruthy();
+	render(
+		<BrowserRouter>
+			<DeferredInstallation />
+		</BrowserRouter>
+	);
 
 	// Clicking the button, which mocks the Authentication
-	await userEvent.click(screen.getByText("Sign in & connect"));
+	await userEvent.click(screen.getByText("Sign in"));
 	// Simulating the sending of message after successful authentication
 	fireEvent(
 		window,
@@ -114,6 +68,87 @@ test("Successful Deferred installation screen", async () => {
 
 	await waitFor(() => {
 		expect(navigate).toHaveBeenCalled();
-		expect(navigate).toHaveBeenCalledWith("/spa/connected", {"state": {"orgLogin": "myOrg", "requestId": {"requestId": "request-id"}}});
+		expect(navigate).toHaveBeenCalledWith("error", {
+			"state": {
+				"error": {
+					"errorCode": "INVALID_DEFERRAL_REQUEST_ID",
+					"message": "This link is either expired or invalid.",
+					"type": "error"
+				},
+				"requestId": {
+					"requestId": "request-id"
+				}
+			}
+		});
+	});
+});
+test("Forbidden Deferred installation screen", async () => {
+	jest.mocked(DeferralManager).extractFromRequestId = jest.fn().mockReturnValue(
+		Promise.resolve(new AxiosError("","", undefined, undefined, { status: 403 } as AxiosResponse))
+	);
+	jest.mocked(Api).auth.generateOAuthUrl = jest.fn().mockReturnValue(Promise.resolve({
+		data: {
+			redirectUrl: "https://redirect-url.com",
+			state: 1
+		}
+	}));
+
+	render(
+		<BrowserRouter>
+			<DeferredInstallation />
+		</BrowserRouter>
+	);
+
+	// Clicking the button, which mocks the Authentication
+	await userEvent.click(screen.getByText("Sign in"));
+	// Simulating the sending of message after successful authentication
+	fireEvent(
+		window,
+		new MessageEvent("message", { data: { type: "oauth-callback", code: 1 } })
+	);
+
+	await waitFor(() => {
+		expect(navigate).toHaveBeenCalled();
+		expect(navigate).toHaveBeenCalledWith("forbidden", {
+			"state": {
+				"requestId": {
+					"requestId": "request-id"
+				}
+			}
+		});
+	});
+});
+test("Successful Deferred installation screen", async () => {
+	jest.mocked(DeferralManager).extractFromRequestId = jest.fn().mockReturnValue(Promise.resolve({ jiraHost: "https://myJirahost.com", orgName: "myOrg"}));
+	jest.mocked(Api).auth.generateOAuthUrl = jest.fn().mockReturnValue(Promise.resolve({
+		data: {
+			redirectUrl: "https://redirect-url.com",
+			state: 1
+		}
+	}));
+
+	render(
+		<BrowserRouter>
+			<DeferredInstallation />
+		</BrowserRouter>
+	);
+
+	// Clicking the button, which mocks the Authentication
+	await userEvent.click(screen.getByText("Sign in"));
+	// Simulating the sending of message after successful authentication
+	fireEvent(
+		window,
+		new MessageEvent("message", { data: { type: "oauth-callback", code: 1 } })
+	);
+
+	await waitFor(() => {
+		expect(navigate).toHaveBeenCalled();
+		expect(navigate).toHaveBeenCalledWith("connect", {
+			"state": {
+				"orgName": "myOrg",
+				"jiraHost": "https://myJirahost.com",
+				"requestId": {"requestId": "request-id"}
+			}
+		});
 	});
 });

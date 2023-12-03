@@ -17,7 +17,6 @@ import {
 	GetRepositoriesResponse,
 	ViewerRepositoryCountQuery,
 	getDeploymentsResponse,
-	getDeploymentsQuery,
 	getDeploymentsQueryWithStatuses,
 	SearchedRepositoriesResponse,
 	getPullRequests,
@@ -244,7 +243,7 @@ export class GitHubInstallationClient extends GitHubClient {
 		}
 	};
 
-	public getRepository = async (id: number): Promise<AxiosResponse<any>> => {
+	public getRepository = async (id: number): Promise<AxiosResponse> => {
 		return await this.get<Octokit.GitGetRefResponse>(`/repositories/{id}`, {}, {
 			id
 		});
@@ -462,12 +461,9 @@ export class GitHubInstallationClient extends GitHubClient {
 		return response?.data?.data;
 	}
 
-	public async getDeploymentsPage(jiraHost: string, owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getDeploymentsResponse> {
+	public async getDeploymentsPage(owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getDeploymentsResponse> {
 
-		const useDyanmoForBackfill = await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost);
-		const graphQuery = useDyanmoForBackfill ? getDeploymentsQueryWithStatuses : getDeploymentsQuery;
-
-		const response = await this.graphql<getDeploymentsResponse>(graphQuery,
+		const response = await this.graphql<getDeploymentsResponse>(getDeploymentsQueryWithStatuses,
 			await this.installationAuthenticationHeaders(),
 			{
 				owner,
@@ -536,6 +532,7 @@ export class GitHubInstallationClient extends GitHubClient {
 				this.logger.debug({ err, owner, repo, path }, "could not find file in repo");
 				return undefined;
 			}
+			// eslint-disable-next-line @typescript-eslint/no-throw-literal
 			throw err;
 		}
 	}

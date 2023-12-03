@@ -7,7 +7,7 @@ const data = testData.jira;
 export const jiraLogin = async (page: Page, roleName: keyof JiraTestDataRoles, saveState = false): Promise<Page> => {
 	const role = data.roles[roleName];
 	if (!role.username || !role.password) {
-		throw "Jira username or password missing";
+		throw new Error("Jira username or password missing");
 	}
 	await page.goto(data.urls.login);
 	await page.waitForLoadState();
@@ -107,7 +107,8 @@ export const jiraCreateIssue = async (page: Page, projectId: string = testData.p
 	// const taskInput = page.locator("[data-test-id='platform-inline-card-create.ui.form.summary.styled-text-area']");
 	await taskInput.fill("Task " + Date.now().toString());
 	await taskInput.press("Enter");
-	const url = await page.locator("[data-test-id='platform-board-kit.ui.column.draggable-column.styled-wrapper']:first-child [data-test-id='platform-board-kit.ui.card.card'][draggable]").last().getAttribute("id");
+	await page.waitForTimeout(2000);
+	const url = await page.locator("[data-testid='platform-board-kit.ui.column.draggable-column.styled-wrapper']:first-child [data-testid='platform-board-kit.ui.card.card']").getAttribute("id");
 	return url?.replace("card-", "") || "";
 };
 

@@ -52,8 +52,11 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 	}
 
 	const jiraClient = await getJiraClient(jiraHost, gitHubInstallationId, gitHubAppId, req.log);
-	// jiraClient is null when jiraHost is an empty string which we know is defined above.
-	await jiraClient!.devinfo.installation.delete(gitHubInstallationId);
+	if (jiraClient === undefined) {
+		throw new Error("jiraClient is undefined");
+	}
+
+	await jiraClient.devinfo.installation.delete(gitHubInstallationId);
 	if (await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost)) {
 		await deleteSecurityWorkspaceLinkAndVulns(installation, subscription, req.log);
 		req.log.info({ subscriptionId: subscription.id }, "Deleted security workspace and vulnerabilities");

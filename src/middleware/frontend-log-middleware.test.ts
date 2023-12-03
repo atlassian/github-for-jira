@@ -25,7 +25,8 @@ describe("frontend-log-middleware", () => {
 		} as Request;
 
 		response = {
-			once: jest.fn()
+			once: jest.fn(),
+			locals: {}
 		} as unknown as Response;
 	});
 

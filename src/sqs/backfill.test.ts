@@ -13,7 +13,7 @@ jest.mock("~/src/sqs/queues");
 const sentryCaptureExceptionMock = jest.fn();
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
+// @ts-expect-error
 mocked(Sentry.Hub).mockImplementation(() => ({
 	configureScope: jest.fn(),
 	setTag: jest.fn(),
@@ -23,7 +23,7 @@ mocked(Sentry.Hub).mockImplementation(() => ({
 
 const mockSentryGetClient = () => {
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
+	// @ts-expect-error
 	mocked(Sentry.getCurrentHub).mockImplementation(() => ({
 		getClient: jest.fn()
 	}));
@@ -51,7 +51,7 @@ describe("backfill", () => {
 			const mockedProcessor = jest.fn();
 			mocked(processInstallation).mockReturnValue(mockedProcessor);
 			mockedProcessor.mockRejectedValue(new Error("something went horribly wrong"));
-			await backfillQueueMessageHandler(jest.fn())(BACKFILL_MESSAGE_CONTEXT).catch(e => getLogger("test").warn(e));
+			await backfillQueueMessageHandler(jest.fn())(BACKFILL_MESSAGE_CONTEXT).catch(e => { getLogger("test").warn(e); });
 			expect(sentryCaptureExceptionMock).toBeCalled();
 		});
 

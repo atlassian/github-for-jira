@@ -196,6 +196,8 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 	}
 
 	static async findRepoByRepoIdAndJiraHost(repoId: number, jiraHost: string): Promise<RepoSyncState & Subscription | null> {
+		// sequelize is always set in this class but is optional in the base class
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const results = await this.sequelize!.query(
 			"SELECT * " +
 			"FROM \"Subscriptions\" s " +
@@ -323,6 +325,8 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 			LIMIT :limit
 		`;
 
+		// sequelize is always set in this class but is optional in the base class
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const repositories = await this.sequelize!.query(query, {
 			replacements: {
 				jiraHost,
@@ -338,6 +342,8 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 	}
 
 	static async findOneForRepoUrlAndRepoIdAndJiraHost(repoUrl: string, repoId: number, jiraHost: string):Promise<RepoSyncState | null> {
+		// sequelize is always set in this class but is optional in the base class
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const results = await this.sequelize!.query(
 			`SELECT rss.*
 			FROM "RepoSyncStates" rss

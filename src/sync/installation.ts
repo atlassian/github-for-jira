@@ -223,19 +223,24 @@ const markSyncAsCompleteAndStop = async (data: BackfillMessagePayload, subscript
 	logger.info({ startTime, endTime, timeDiff, gitHubProduct }, "Sync status is complete");
 };
 
-const sendPayloadToJira = async (task: TaskType, jiraClient, jiraPayload, repositoryId, sentry: Hub, logger: Logger) => {
+const sendPayloadToJira = async (task: TaskType, jiraClient, subscription: Subscription, jiraPayload, repository: Task["repository"], sentry: Hub, logger: Logger) => {
 	try {
 		switch (task) {
 			case "build":
-				await jiraClient.workflow.submit(jiraPayload, repositoryId, {
+				await jiraClient.workflow.submit(jiraPayload, repository.id, repository.full_name, {
 					preventTransitions: true,
-					operationType: "BACKFILL"
+					operationType: "BACKFILL",
+					auditLogsource: "BACKFILL",
+					entityAction: "WORKFLOW_RUN",
+					subscriptionId: subscription.id
 				});
 				break;
 			case "deployment":
-				await jiraClient.deployment.submit(jiraPayload, repositoryId, {
+				await jiraClient.deployment.submit(jiraPayload, repository.id, repository.full_name, {
 					preventTransitions: true,
-					operationType: "BACKFILL"
+					operationType: "BACKFILL",
+					auditLogsource: "BACKFILL",
+					subscriptionId: subscription.id
 				});
 				break;
 			case "dependabotAlert":
@@ -249,7 +254,10 @@ const sendPayloadToJira = async (task: TaskType, jiraClient, jiraPayload, reposi
 			default:
 				await jiraClient.devinfo.repository.update(jiraPayload, {
 					preventTransitions: true,
-					operationType: "BACKFILL"
+					operationType: "BACKFILL",
+					auditLogsource: "BACKFILL",
+					entityAction: task.toUpperCase(),
+					subscriptionId: subscription.id
 				});
 		}
 	} catch (err: unknown) {
@@ -323,7 +331,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 					data.gitHubAppConfig?.gitHubAppId,
 					logger
 				);
-				await sendPayloadToJira(task, jiraClient, taskPayload.jiraPayload, repository.id, sentry, logger);
+				await sendPayloadToJira(task, jiraClient, subscription, taskPayload.jiraPayload, repository, sentry, logger);
 			}
 
 			await updateTaskStatusAndContinue(
@@ -465,10 +473,11 @@ export const processInstallation = (sendBackfillMessage: (message: BackfillMessa
 				jiraHost
 			});
 
-			let hasNextMessage = false;
-			let nextMessage: BackfillMessagePayload | undefined = undefined;
-			let nextMessageDelaySecs: number | undefined = undefined;
-			let nextMessageLogger: Logger | undefined = undefined;
+			let nextMessage: {
+				payload: BackfillMessagePayload,
+				delaySecs: number,
+				logger: Logger
+			} | undefined = undefined;
 
 			const result = await deduplicator.executeWithDeduplication(
 				`i-${installationId}-${jiraHost}-ghaid-${gitHubAppId || "cloud"}`,
@@ -476,10 +485,11 @@ export const processInstallation = (sendBackfillMessage: (message: BackfillMessa
 					// We cannot send off the message straight away because otherwise it will be
 					// de-duplicated as we are still processing the current message. Send it
 					// only after deduplicator (tm) releases the flag.
-					hasNextMessage = true;
-					nextMessage = message;
-					nextMessageDelaySecs = delaySecs;
-					nextMessageLogger = logger;
+					nextMessage = {
+						payload: message,
+						delaySecs: delaySecs,
+						logger: logger
+					};
 					return Promise.resolve();
 				})
 			);
@@ -490,10 +500,13 @@ export const processInstallation = (sendBackfillMessage: (message: BackfillMessa
 				case DeduplicatorResult.E_OK:
 					logAdditionalData ? logger.info({ installationId }, "Job was executed by deduplicator")
 						: logger.info("Job was executed by deduplicator");
-					if (hasNextMessage) {
-						logAdditionalData ? nextMessageLogger!.info({ installationId }, "Sending off a new message")
-							: nextMessageLogger!.info("Sending off a new message");
-						await sendBackfillMessage(nextMessage!, nextMessageDelaySecs!, nextMessageLogger!);
+					if (nextMessage) {
+						// The compiler doesn't know that nextMessage is defined here and thinks it is never
+						// because it can't do control flow analysis of the async block of doProcessInstallation.
+						nextMessage = nextMessage as { payload: BackfillMessagePayload, delaySecs: number, logger: Logger };
+						logAdditionalData ? nextMessage.logger.info({ installationId }, "Sending off a new message")
+							: nextMessage.logger.info("Sending off a new message");
+						await sendBackfillMessage(nextMessage.payload, nextMessage.delaySecs, nextMessage.logger);
 					}
 					break;
 				case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {

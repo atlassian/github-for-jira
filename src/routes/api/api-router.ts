@@ -29,6 +29,8 @@ import { GenerateOncePerNodeHeadumpGenerator } from "services/generate-once-per-
 import { ApiReplyFailedEntitiesFromDataDepotPost } from "./api-replay-failed-entities-from-data-depot";
 import { RepoSyncState } from "models/reposyncstate";
 import { ApiResyncFailedTasksPost } from "./api-resync-failed-tasks";
+import { GHESVerificationRouter } from "./ghes-app-verification/ghes-app-verification-router";
+import { AuditLogApiRouter } from "./audit-log/audit-log-api-router";
 
 export const ApiRouter = Router();
 
@@ -224,6 +226,8 @@ ApiRouter.post("/recover-commits-from-date", RecoverCommitsFromDatePost);
 ApiRouter.post("/reset-failed-pending-deployment-cursor", ResetFailedAndPendingDeploymentCursorPost);
 ApiRouter.post("/replay-rejected-entities-from-data-depot", ApiReplyFailedEntitiesFromDataDepotPost);
 ApiRouter.post("/resync-failed-tasks",ApiResyncFailedTasksPost);
+ApiRouter.use("/verify/githubapp/:gitHubAppId", GHESVerificationRouter);
+ApiRouter.use("/audit-log", AuditLogApiRouter);
 
 ApiRouter.use("/jira", ApiJiraRouter);
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);

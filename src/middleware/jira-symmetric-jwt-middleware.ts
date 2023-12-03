@@ -15,7 +15,7 @@ import { envVars } from "~/src/config/env";
 import { errorStringFromUnknown } from "../util/error-string-from-unknown";
 import { BaseLocals } from "../rest/routes";
 
-export const jiraSymmetricJwtMiddleware = async (req: Request<ParamsDictionary, any, { jwt?: string }, { jwt?: string }, BaseLocals>, res: Response, next: NextFunction) => {
+export const jiraSymmetricJwtMiddleware = async (req: Request<ParamsDictionary, unknown, { jwt?: string }, { jwt?: string }, BaseLocals>, res: Response, next: NextFunction) => {
 	const authHeader = req.headers["authorization"] as string;
 	const authHeaderPrefix = "JWT ";
 	const cookies = req.cookies as { jwt?: string };
@@ -36,7 +36,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request<ParamsDictionary, 
 			req.log.warn("No Installation found");
 			return res.status(401).send("Unauthorised");
 		}
-		let verifiedClaims: Record<any, any>;
+		let verifiedClaims: Record<string, string | number>;
 		try {
 			verifiedClaims = await verifySymmetricJwt(req, token, installation);
 		} catch (err: unknown) {
@@ -55,7 +55,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request<ParamsDictionary, 
 			res.clearCookie("jwt");
 		}
 		req.addLogFields({ jiraHost: installation.jiraHost });
-		return next();
+		next(); return;
 
 	} else if (req.session?.jiraHost) {
 
@@ -69,7 +69,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request<ParamsDictionary, 
 		res.locals.installation = installation;
 		res.locals.jiraHost = installation.jiraHost;
 		req.addLogFields({ jiraHost: installation.jiraHost });
-		return next();
+		next(); return;
 	}
 
 	req.log.warn("No token found and session cookie has no jiraHost");
@@ -107,7 +107,7 @@ const verifySymmetricJwt = async (req: Request, token: string, installation: Ins
 	const secret = await installation.decrypt("encryptedSharedSecret", req.log);
 
 	try {
-		const claims = decodeSymmetric(token, secret, algorithm, false) as { exp?: number, qsh?: string };
+		const claims = decodeSymmetric(token, secret, algorithm, false) as Record<string, string | number>;
 		const tokenType = await getTokenType(req.originalUrl, req.method);
 
 		verifyJwtClaims(claims, tokenType, req);

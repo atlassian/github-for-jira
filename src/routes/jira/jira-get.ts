@@ -5,7 +5,6 @@ import { GitHubServerApp } from "models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { Errors } from "config/errors";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import {
 	countNumberSkippedRepos,
 	countStatus,
@@ -71,7 +70,6 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 			hasCloudServers: !!(successfulCloudConnections.length || failedCloudConnections.length),
 			hasConnections,
 			APP_URL: process.env.APP_URL,
-			enableRepoConnectedPage: await booleanFlag(BooleanFlags.ENABLE_CONNECTED_REPOS_VIEW, jiraHost),
 			csrfToken: req.csrfToken(),
 			nonce
 		});
@@ -117,6 +115,6 @@ export const JiraGet = async (
 		await renderJiraCloudAndEnterpriseServer(res, req);
 		req.log.debug("Jira configuration rendered successfully.");
 	} catch (error: unknown) {
-		return next(new Error(`Failed to render Jira configuration: ${errorStringFromUnknown(error)}`));
+		next(new Error(`Failed to render Jira configuration: ${errorStringFromUnknown(error)}`)); return;
 	}
 };

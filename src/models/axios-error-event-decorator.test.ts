@@ -24,7 +24,7 @@ describe("AxiosErrorDecorator", () => {
 		it("adds response data", async () => {
 			const decoratedEvent = AxiosErrorEventDecorator.decorate(event, hint);
 
-			expect(decoratedEvent.extra.response).toEqual({
+			expect(decoratedEvent.extra?.response).toEqual({
 				status: 403,
 				headers: {
 					"x-request-id": "abcdef"
@@ -35,7 +35,7 @@ describe("AxiosErrorDecorator", () => {
 		it("adds request data", () => {
 			const decoratedEvent = AxiosErrorEventDecorator.decorate(event, hint);
 
-			expect(decoratedEvent.extra.request).toMatchObject({
+			expect(decoratedEvent.extra?.request).toMatchObject({
 				method: "GET",
 				path: "/foo/bar",
 				host: "www.example.com",
@@ -106,16 +106,16 @@ describe("AxiosErrorDecorator", () => {
 		it("adds truncated response body", () => {
 			const decoratedEvent = AxiosErrorEventDecorator.decorate(event, hint);
 
-			expect(decoratedEvent.extra.response.body).toMatch(
+			expect(decoratedEvent.extra?.response.body).toMatch(
 				/^This is the really long body/
 			);
-			expect(decoratedEvent.extra.response.body.length).toEqual(255);
+			expect(decoratedEvent.extra?.response.body.length).toEqual(255);
 		});
 
 		it("adds parsed request body", () => {
 			const decoratedEvent = AxiosErrorEventDecorator.decorate(event, hint);
 
-			expect(decoratedEvent.extra.request.body).toEqual({ hello: "hi" });
+			expect(decoratedEvent.extra?.request.body).toEqual({ hello: "hi" });
 		});
 	});
 
@@ -136,7 +136,7 @@ describe("AxiosErrorDecorator", () => {
 		it("adds raw request body", () => {
 			const decoratedEvent = AxiosErrorEventDecorator.decorate(event, hint);
 
-			expect(decoratedEvent.extra.request.body).toEqual("hi=hello");
+			expect(decoratedEvent.extra?.request.body).toEqual("hi=hello");
 		});
 	});
 
@@ -147,8 +147,8 @@ describe("AxiosErrorDecorator", () => {
 
 			const decoratedEvent = AxiosErrorEventDecorator.decorate(event, hint);
 
-			expect(decoratedEvent.extra.response).toEqual(undefined);
-			expect(decoratedEvent.extra.request).toEqual(undefined);
+			expect(decoratedEvent.extra?.response).toEqual(undefined);
+			expect(decoratedEvent.extra?.request).toEqual(undefined);
 		});
 	});
 });

@@ -8,8 +8,11 @@ export const RestErrorHandler = (err: Error, req: Request, res: Response<ApiErro
 
 	logErrorOrWarning(err, req);
 
+	const reqTraceId = (res.locals as { reqTraceId: string }).reqTraceId;
+
 	if (err instanceof RestApiError) {
 		res.status(err.httpStatus).json({
+			reqTraceId,
 			errorCode: err.errorCode,
 			message: err.message
 		});
@@ -18,6 +21,7 @@ export const RestErrorHandler = (err: Error, req: Request, res: Response<ApiErro
 
 	if (err instanceof GH.GithubClientError) {
 		res.status(err.status || 500).json({
+			reqTraceId,
 			errorCode: err.uiErrorCode,
 			message: err.message
 		});
@@ -25,6 +29,7 @@ export const RestErrorHandler = (err: Error, req: Request, res: Response<ApiErro
 	}
 
 	res.status(500).json({
+		reqTraceId,
 		message: "Unknown Error",
 		errorCode: "UNKNOWN"
 	});
@@ -33,7 +38,7 @@ export const RestErrorHandler = (err: Error, req: Request, res: Response<ApiErro
 
 const logErrorOrWarning = (err: Error, req: Request) => {
 
-	const httpStatus = parseInt(err["status"] as string ?? "") || parseInt(err["httpStatus"] as string ?? "") || 500;
+	const httpStatus = parseInt(err["status"] as string | undefined ?? "") || parseInt(err["httpStatus"] as string| undefined ?? "") || 500;
 	const extraInfo = {
 		httpStatus,
 		method: req.method,

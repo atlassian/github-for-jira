@@ -13,7 +13,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	const { issueKey } = req.query;
 
 	if (!issueKey) {
-		return next(new Error(Errors.MISSING_ISSUE_KEY));
+		next(new Error(Errors.MISSING_ISSUE_KEY)); return;
 	}
 
 	const jiraHost: string = res.locals.jiraHost;
@@ -31,7 +31,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	if (!servers.hasCloudServer && !servers.gheServerInfos.length) {
 		res.render("no-configuration.hbs", {
 			nonce: res.locals.nonce,
-			configurationUrl: `${jiraHost}/plugins/servlet/ac/${envVars.APP_KEY}/github-select-product-page`
+			configurationUrl: `${jiraHost}/plugins/servlet/ac/${envVars.APP_KEY}/spa-index-page`
 		});
 
 		await sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {

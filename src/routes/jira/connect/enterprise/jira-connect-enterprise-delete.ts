@@ -44,6 +44,6 @@ export const JiraConnectEnterpriseDelete = async (
 		});
 
 		res.status(200).send({ success: false, message: "Failed to delete GitHub Enterprise Server." });
-		return next(new Error(`Failed to DELETE GitHub Enterprise Server: ${errorStringFromUnknown(error)}`));
+		next(new Error(`Failed to DELETE GitHub Enterprise Server: ${errorStringFromUnknown(error)}`)); return;
 	}
 };
