@@ -197,7 +197,7 @@ describe("sync/installation", () => {
 
 		describe("with scheduler", () => {
 			beforeEach(async () => {
-				await configureRateLimit(10, 10); // no subtasks by default, please
+				configureRateLimit(10, 10); // no subtasks by default, please
 			});
 
 			it("should update cursor and continue sync", async () => {
@@ -426,7 +426,7 @@ describe("sync/installation", () => {
 				await RepoSyncState.bulkCreate(newRepoSyncStatesData);
 
 				// That would give 2 tasks: one main and one subtask
-				await configureRateLimit(1000, 1000);
+				configureRateLimit(1000, 1000);
 			});
 
 			it("for multiple tasks throws error only for the first one", async () => {
