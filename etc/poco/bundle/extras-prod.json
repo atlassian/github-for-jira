@@ -1,7 +1,7 @@
 {
   "allow": [
     {
-      "description": "Allow prod pollinator checks to call endpoints for testing",
+      "description": "Allow prod pollinator checks to call delete installation endpoints for testing",
       "paths": [
         "/api/deleteInstallation/**"
       ],
@@ -14,10 +14,47 @@
 						"pollinator-check/9d09aa37-c3e7-4b85-b86d-4d299ad54954",
 						"pollinator-check/d99d882f-74a9-4093-822a-9ddf38b5e523",
 						"pollinator-check/713bec45-18fb-48c7-b6c2-46e6e824caec",
-						"pollinator-check/b33f33a7-c308-468e-a2a2-06c1f2443bfb"
+						"pollinator-check/b33f33a7-c308-468e-a2a2-06c1f2443bfb",
+						"pollinator-check/f24ec1a9-d03d-45c7-bbd8-f2094543eaba",
+						"pollinator-check/8692803e-287a-48e3-bad1-49a60a7a4f9d",
+						"pollinator-check/d4f03d07-12fe-4a69-9d68-c1841066772e"
 					]
         }
       }
-    }
+    },
+		{
+			"description": "Allow prod pollinator checks to call view audit log endpoints for testing",
+			"paths": [
+				"/api/audit-log/**"
+			],
+			"methods": [
+				"GET"
+			],
+			"principals": {
+				"asap": {
+					"issuers": [
+						"pollinator-check/f24ec1a9-d03d-45c7-bbd8-f2094543eaba",
+						"pollinator-check/8692803e-287a-48e3-bad1-49a60a7a4f9d",
+						"pollinator-check/d4f03d07-12fe-4a69-9d68-c1841066772e"
+					]
+				}
+			}
+		},
+		{
+			"description": "Allow prod pollinator checks to call post configuration endpoints for testing",
+			"paths": [
+				"/api/configuration"
+			],
+			"methods": [
+				"POST"
+			],
+			"principals": {
+				"asap": {
+					"issuers": [
+						"pollinator-check/98a88b09-1541-4c0d-aded-4f1cc467d1fd"
+					]
+				}
+			}
+		}
   ]
 }

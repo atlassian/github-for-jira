@@ -96,7 +96,7 @@ export const startMonitorOnWorker = (parentLogger: Logger, workerConfig: {
 const logRunningProcesses = (logger: Logger) => {
 	exec("ps aux", (err, stdout) => {
 		if (err) {
-			logger.error({ err }, `exec error: ${err.toString()}`);
+			logger.error({ err }, `exec error: ${err.message}`);
 			return;
 		}
 
@@ -117,7 +117,7 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 	logger.info(config, "master config");
 
 	const registeredWorkers: Record<string, boolean> = { }; // pid => true
-	const liveWorkers: Record<string, number> = { }; // pid => timestamp
+	const liveWorkers: Map<string, number> = new Map(); // pid => timestamp
 
 	const registerNewWorkers = () => {
 		logInfoSampled(logger, "monRegWorkers", `registering workers`, 100);
@@ -130,7 +130,7 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 					registeredWorkers[workerPid] = true;
 					worker.on("message", () => {
 						logInfoSampled(logger, "workerIsAlive:" + workerPid.toString(), `received message from worker ${workerPid}, marking as live`, 100);
-						liveWorkers[workerPid] = Date.now();
+						liveWorkers.set(String(workerPid), Date.now());
 					});
 					worker.on("exit", (code, signal) => {
 						G("/tmp/*", (err: Error | null, tmpFiles: string[]) => {
@@ -210,14 +210,14 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 			logInfoSampled(logger, `removing dead workers`, `removing dead workers`, 100);
 			const keysToKill: Array<string> = [];
 			const now = Date.now();
-			Object.keys(liveWorkers).forEach((key) => {
-				if (now - liveWorkers[key] > config.workerUnresponsiveThresholdMsecs) {
+			liveWorkers.forEach((value, key) => {
+				if (now - value > config.workerUnresponsiveThresholdMsecs) {
 					keysToKill.push(key);
 				}
 			});
 			keysToKill.forEach((key) => {
 				logger.info(`remove worker with pid=${key} from live workers`);
-				delete liveWorkers[key];
+				liveWorkers.delete(key);
 				logRunningProcesses(logger);
 			});
 		} else {
@@ -226,7 +226,7 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 	};
 
 	const maybeSendShutdownToAllWorkers = () => {
-		const nLiveWorkers = Object.keys(liveWorkers).length;
+		const nLiveWorkers = liveWorkers.size;
 		if (areWorkersReady() && (nLiveWorkers < config.numberOfWorkersThreshold)) {
 			logger.info({
 				nLiveWorkers

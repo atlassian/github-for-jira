@@ -33,7 +33,8 @@ module.exports = {
 	},
 	"collectCoverageFrom": [
 		"src/**/*.{ts,tsx}",
-		"!src/**/*.d.ts"
+		"!src/**/*.d.ts",
+		"!src/util/workers-health-monitor.ts"
 	],
 	"maxConcurrency": 1,
 	"maxWorkers": 1,

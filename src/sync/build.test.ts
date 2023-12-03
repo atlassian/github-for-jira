@@ -94,7 +94,7 @@ describe("sync/builds", () => {
 		createJiraNock([
 			{
 				"schemaVersion": "1.0",
-				"pipelineId": 2152266464,
+				"pipelineId": "19236895",
 				"buildNumber": 59,
 				"updateSequenceNumber": 12345678,
 				"displayName": "Build",
@@ -122,11 +122,16 @@ describe("sync/builds", () => {
 		await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 		expect(mockBackfillQueueSendMessage).toBeCalledWith(data, 0, expect.anything());
 
-		expect(lastMockedWorkflowSubmit).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.objectContaining({
-			auditLogsource: "BACKFILL",
-			entityAction: "BUILD",
-			subscriptionId: db.subscription.id
-		}));
+		expect(lastMockedWorkflowSubmit).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.anything(),
+			"test-repo-name",
+			expect.objectContaining({
+				auditLogsource: "BACKFILL",
+				entityAction: "WORKFLOW_RUN",
+				subscriptionId: db.subscription.id
+			})
+		);
 	});
 
 	it("should not explode when returned payload doesn't have head_commit", async () => {
@@ -244,7 +249,7 @@ describe("sync/builds", () => {
 		createJiraNock([
 			{
 				"schemaVersion": "1.0",
-				"pipelineId": 2152266464,
+				"pipelineId": "19236895",
 				"buildNumber": 59,
 				"updateSequenceNumber": 12345678,
 				"displayName": "Build",
@@ -269,7 +274,7 @@ describe("sync/builds", () => {
 			},
 			{
 				"schemaVersion": "1.0",
-				"pipelineId": 2152266464,
+				"pipelineId": "19236895",
 				"buildNumber": 59,
 				"updateSequenceNumber": 12345678,
 				"displayName": "Build",

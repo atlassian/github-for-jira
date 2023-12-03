@@ -75,6 +75,7 @@ export const getCodeScanningAlertTask = async (
 			};
 		}
 		logger.error({ err, reason: err.cause?.response?.data }, "Code Scanning backfill failed");
+		// eslint-disable-next-line @typescript-eslint/no-throw-literal
 		throw err;
 	}
 
@@ -127,8 +128,8 @@ export const transformCodeScanningAlert = async (
 
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
 
-	const handleUnmappedState = (state: string) => logger.info(`Received unmapped state from code_scanning_alert sync: ${state}`);
-	const handleUnmappedSeverity = (severity: string | null) => logger.info(`Received unmapped severity from code_scanning_alert sync: ${severity ?? "Missing Severity"}`);
+	const handleUnmappedState = (state: string) => { logger.info(`Received unmapped state from code_scanning_alert sync: ${state}`); };
+	const handleUnmappedSeverity = (severity: string | null) => { logger.info(`Received unmapped severity from code_scanning_alert sync: ${severity ?? "Missing Severity"}`); };
 
 	const vulnerabilities = alerts.map((alert) => {
 		const identifiers = transformRuleTagsToIdentifiers(alert.rule.tags);

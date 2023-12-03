@@ -21,6 +21,6 @@ export const JiraConnectGet = async (
 
 		req.log.info("Jira Connect page rendered successfully.");
 	} catch (error: unknown) {
-		return next(new Error(`Failed to render Jira Connect page: ${errorStringFromUnknown(error)}`));
+		next(new Error(`Failed to render Jira Connect page: ${errorStringFromUnknown(error)}`)); return;
 	}
 };

@@ -410,8 +410,8 @@ describe("sync/installation", () => {
 				const	newRepoSyncStatesData: any[] = [];
 				for (let newRepoStateNo = 1; newRepoStateNo < 50; newRepoStateNo++) {
 					const newRepoSyncState = { ...repoSyncState.get() };
-					delete newRepoSyncState["id"];
-					delete newRepoSyncState["branchStatus"];
+					delete newRepoSyncState.id;
+					delete newRepoSyncState.branchStatus;
 					newRepoSyncState["repoId"] = repoSyncState.repoId + newRepoStateNo;
 					if (newRepoStateNo < 49) {
 						// the last one should be main

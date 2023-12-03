@@ -9,7 +9,7 @@ import {
 import { envVars } from "config/env";
 import { InvalidArgumentError } from "config/errors";
 
-export const DeferredInstallationUrlRoute = errorWrapper("GetDeferredInstallationUrl", async function DeferredInstallationUrlRoute(req: Request, res: Response<GetDeferredInstallationUrl, BaseLocals>) {
+export const DeferredInstallationUrlRoute = errorWrapper("GetDeferredInstallationUrl", async function DeferredInstallationUrlRoute(req: Request<unknown, unknown, unknown, { gitHubInstallationId?: string, gitHubOrgName?: string }, BaseLocals>, res: Response<GetDeferredInstallationUrl, BaseLocals>) {
 	const { gitHubInstallationId, gitHubOrgName } = req.query;
 	const { installation } = res.locals;
 

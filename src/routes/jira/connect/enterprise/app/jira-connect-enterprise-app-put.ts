@@ -16,7 +16,7 @@ export const JiraConnectEnterpriseAppPut = async (
 
 		if (!verifiedApp.gitHubAppId || verifiedApp.uuid !== req.body.uuid) {
 			res.status(404).send({ message: "No GitHub App found. Cannot update." });
-			return next(new Error("No GitHub App found for provided UUID and installationId."));
+			next(new Error("No GitHub App found for provided UUID and installationId.")); return;
 		}
 
 		const updatedAppPayload = { ...req.body };
@@ -59,6 +59,6 @@ export const JiraConnectEnterpriseAppPut = async (
 		});
 
 		res.status(404).send({ message: "Failed to update GitHub App." });
-		return next(new Error(`Failed to update GitHub app: ${errorStringFromUnknown(error)}`));
+		next(new Error(`Failed to update GitHub app: ${errorStringFromUnknown(error)}`)); return;
 	}
 };

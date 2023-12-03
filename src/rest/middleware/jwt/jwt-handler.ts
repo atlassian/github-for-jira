@@ -36,7 +36,8 @@ export const JwtHandlerWithoutQsh = errorWrapper("JwtHandlerWithoutQsh", async (
 	const path = req.originalUrl.split("?")[0];
 
 	if (SKIP_PATHS.includes(path)) {
-		return next();
+		next();
+		return;
 	}
 
 	if (!token) {

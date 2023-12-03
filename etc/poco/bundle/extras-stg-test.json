@@ -199,6 +199,36 @@
 				"pollinator-check/72b41d2e-7612-4ad2-afa1-6affe7e527b9"
 			],
 			"allowed": false
+		},
+		{
+			"name": "Allow Pollinator Pollinator test to call API configuration POST endpoint",
+			"path": "/api/configuration",
+			"method": "POST",
+			"mechanism": "asap",
+			"principals": [
+				"pollinator-check/3d2bd81e-5a4f-46dd-a0eb-806a6f17c0e6"
+			],
+			"allowed": true
+		},
+		{
+			"name": "Not allow Pollinator Pollinator test to call API configuration POST endpoint for any other principals",
+			"path": "/api/configuration",
+			"method": "POST",
+			"mechanism": "asap",
+			"principals": [
+				"pollinator-check/random-one"
+			],
+			"allowed": false
+		},
+		{
+			"name": "Not allow Pollinator Pollinator test to call any API configuration endpoint except POST",
+			"path": "/api/configuration",
+			"method": "GET",
+			"mechanism": "asap",
+			"principals": [
+				"pollinator-check/random-one"
+			],
+			"allowed": false
 		}
 	]
 }

@@ -115,7 +115,8 @@
 			"@typescript-eslint/require-await": "off",
 			"@typescript-eslint/await-thenable": "off",
 			"@typescript-eslint/no-misused-promises": "off",
-			"@typescript-eslint/no-explicit-any": "off"
+			"@typescript-eslint/no-explicit-any": "off",
+			"@typescript-eslint/no-unnecessary-condition": "off"
 		}
 	},
 	{
@@ -124,7 +125,10 @@
 			"src/jira/**",
 			"src/models/**",
 			"src/sync/**",
-			"src/transforms/**"
+			"src/transforms/**",
+			"src/util/**",
+			"src/sqs/**",
+			"src/middleware/**"
 		],
 		"rules": {
 			// To be removed later
@@ -133,17 +137,7 @@
 			"@typescript-eslint/no-unsafe-member-access": "off",
 			"@typescript-eslint/no-unsafe-return": "off",
 			"@typescript-eslint/no-unsafe-call": "off",
-			"@typescript-eslint/no-explicit-any": "off"
-		}
-	},
-	{
-		"files": ["src/**/*.ts", "test/**/*.ts"],
-		"rules": {
-			// TODO: Re-enable gradually
-			"@typescript-eslint/no-confusing-void-expression": "off",
-			"@typescript-eslint/no-throw-literal": "off",
-			"@typescript-eslint/no-dynamic-delete": "off",
-			"@typescript-eslint/no-base-to-string": "off",
+			"@typescript-eslint/no-explicit-any": "off",
 			"@typescript-eslint/no-unnecessary-condition": "off"
 		}
 	}

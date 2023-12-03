@@ -1,7 +1,6 @@
 import { getLogger } from "config/logger";
 import { envVars } from "config/env";
 import { dynamodb as ddb } from "config/dynamodb";
-import { createHashWithoutSharedSecret } from "utils/encryption";
 import { saveAuditLog, getAuditLog } from "./audit-log-service";
 
 const logger = getLogger("test");
@@ -34,7 +33,7 @@ describe("audit log service", () => {
 				.getItem({
 					TableName: envVars.DYNAMO_AUDIT_LOG_TABLE_NAME,
 					Key: {
-						Id: { S: createHashWithoutSharedSecret(ID) },
+						Id: { S: ID },
 						CreatedAt: { N: String(createdAt.getTime()) }
 					},
 					AttributesToGet: [
@@ -52,7 +51,7 @@ describe("audit log service", () => {
 				.promise();
 			expect(result.$response.error).toBeNull();
 			expect(result.Item).toEqual({
-				Id: { S: createHashWithoutSharedSecret(ID) },
+				Id: { S: ID },
 				CreatedAt: { N: String(createdAt.getTime()) },
 				ExpiredAfter: {
 					N: String(
@@ -107,6 +106,66 @@ describe("audit log service", () => {
 					subscriptionId,
 					createdAt
 				}]);
+			});
+		});
+
+		describe("getAuditLog", () => {
+			const saveLog = async (subscriptionId: number, entityId: string) => {
+				const createdAt = new Date();
+				await saveAuditLog({
+					subscriptionId,
+					source: "WEBHOOK",
+					entityType: "commits",
+					entityAction: "push",
+					entityId,
+					issueKey: "ABC-123",
+					createdAt
+				}, getLogger("test"));
+				return { createdAt };
+			};
+
+			it("should successfully fetch saved audit info to dynamo db by order of createdAt desc", async () => {
+
+				const subId1 = 123;
+				const subId2 = 456;
+				const { createdAt: createdAtEarlier } = await saveLog(subId1, "commit-123");
+				await saveLog(subId2, "commit-456");
+				const { createdAt: createdAtLater } = await saveLog(subId1, "commit-123");
+				await saveLog(subId1, "commit-789");
+
+				const result = await getAuditLog({ entityType: "commits", entityId: "commit-123", subscriptionId: subId1, issueKey: "ABC-123" }, logger);
+
+				expect(result).toEqual([
+					expect.objectContaining({
+						entityId: "commit-123",
+						issueKey: "ABC-123",
+						subscriptionId: subId1,
+						createdAt: createdAtLater
+					}),
+					expect.objectContaining({
+						entityId: "commit-123",
+						issueKey: "ABC-123",
+						subscriptionId: subId1,
+						createdAt: createdAtEarlier
+					})
+				]);
+			});
+
+			it("should successfully fetch saved audit info to dynamo db up to 100 items", async () => {
+
+				for (let i=0; i < 100; i++) {
+					await saveLog(1234, "commit-1234");
+				}
+
+				const result = await getAuditLog({ entityType: "commits", entityId: "commit-1234", subscriptionId: 1234, issueKey: "ABC-123" }, logger);
+
+				expect(result.length).toBe(100);
+				result.forEach(r => { expect(r).toEqual(expect.objectContaining({
+					entityId: "commit-1234",
+					issueKey: "ABC-123",
+					subscriptionId: 1234
+				})); });
+
 			});
 		});
 	});
