@@ -51,6 +51,7 @@ describe("sync/code-scanning-alerts", () => {
 				.get("/repos/integrations/test-repo-name/code-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
 				.reply(200, codeScanningAlerts);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			jiraNock
 				.post("/rest/security/1.0/bulk", expectedResponseCloudServer(subscription))
 				.reply(200);
@@ -73,6 +74,7 @@ describe("sync/code-scanning-alerts", () => {
 				.get("/repos/integrations/test-repo-name/code-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
 				.reply(200, []);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			// No Jira Nock
 
 			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
@@ -85,6 +87,7 @@ describe("sync/code-scanning-alerts", () => {
 			githubNock
 				.get("/repos/integrations/test-repo-name/code-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
 				.reply(403, { message: "Code scanning is not enabled for this repository" });
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			// No Jira Nock
 
@@ -99,6 +102,7 @@ describe("sync/code-scanning-alerts", () => {
 				.get("/repos/integrations/test-repo-name/code-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
 				.reply(403, { message: "Advanced Security must be enabled for this repository to use code scanning" });
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			// No Jira Nock
 
 			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
@@ -111,6 +115,7 @@ describe("sync/code-scanning-alerts", () => {
 			githubNock
 				.get("/repos/integrations/test-repo-name/code-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
 				.reply(404, { message: "Ano analysis found" });
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			// No Jira Nock
 
@@ -125,6 +130,7 @@ describe("sync/code-scanning-alerts", () => {
 				.get("/repos/integrations/test-repo-name/code-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
 				.reply(404);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			// No Jira Nock
 
 			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
@@ -137,6 +143,7 @@ describe("sync/code-scanning-alerts", () => {
 			githubNock
 				.get("/repos/integrations/test-repo-name/code-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
 				.reply(451);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			// No Jira Nock
 
@@ -191,6 +198,7 @@ describe("sync/code-scanning-alerts", () => {
 				}
 			};
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			gheNock
 				.get("/api/v3/repos/integrations/test-repo-name/code-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
 				.reply(200, codeScanningAlerts);
@@ -215,6 +223,7 @@ describe("sync/code-scanning-alerts", () => {
 					gitHubApiUrl: gitHubServerApp.gitHubBaseUrl + "/v3/api"
 				}
 			};
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			gheNock
 				.get("/api/v3/repos/integrations/test-repo-name/code-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
