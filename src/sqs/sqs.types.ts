@@ -95,6 +95,18 @@ export interface ErrorHandlingResult {
 	 */
 	skipDlq?: boolean;
 
+	/**
+	 * the http status of error
+	 * For metrics only, NOT used for logic handling.
+	 */
+	statusCode?: number;
+
+	/**
+	 * the source of error
+	 * For metrics only, NOT used for logic handling.
+	 */
+	source?: "github" | "jira" | "other";
+
 }
 
 export interface SQSContext {

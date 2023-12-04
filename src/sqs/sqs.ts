@@ -359,6 +359,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 			context.log.warn({ err }, "Failed message");
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			const errorHandlingResult = await this.errorHandler(err as Error, context);
+			let visibilityChangedSec: number | undefined;
 
 			this.log.info({ errorHandlingResult }, "Error handling result");
 			if (errorHandlingResult.isFailure) {
@@ -379,18 +380,29 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 				await this.deleteMessage(context);
 			} else {
 				context.log.warn({ err }, "SQS message visibility timeout changed");
-				await this.changeVisibilityTimeoutIfNeeded(errorHandlingResult, context.message, context.log);
+				visibilityChangedSec = await this.changeVisibilityTimeoutIfNeeded(errorHandlingResult, context.message, context.log);
 			}
+
+			statsd.increment(sqsQueueMetrics.exception, {
+				...this.metricsTags,
+				isFailure: String(errorHandlingResult.isFailure),
+				retryable: String(errorHandlingResult.retryable),
+				retryDelayInMin: String(errorHandlingResult.retryDelaySec && Math.floor(errorHandlingResult.retryDelaySec / 60)),
+				msgVisibilityChangedInMin: String(visibilityChangedSec && Math.floor(visibilityChangedSec / 60)),
+				skipDlq: String(errorHandlingResult.skipDlq),
+				reachedRetryLimit: String(this.isMessageReachedRetryLimit(context))
+			}, { jiraHost: context.payload?.jiraHost });
+
 		} catch (errorHandlingException: unknown) {
 			context.log.error({ err: errorHandlingException, originalError: err }, "Error while performing error handling on SQS message");
 		}
 	}
 
-	private async changeVisibilityTimeoutIfNeeded(errorHandlingResult: ErrorHandlingResult, message: Message, log: Logger) {
+	private async changeVisibilityTimeoutIfNeeded(errorHandlingResult: ErrorHandlingResult, message: Message, log: Logger): Promise<number | undefined> {
 		const retryDelaySec = errorHandlingResult.retryDelaySec;
 		if (retryDelaySec !== undefined /*zero seconds delay is also supported*/) {
 			log.info(`Delaying the retry for ${retryDelaySec} seconds`);
-			await this.changeVisibilityTimeout(message, retryDelaySec, log);
+			return await this.changeVisibilityTimeout(message, retryDelaySec, log);
 		}
 	}
 
@@ -399,7 +411,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 		return context.receiveCount >= this.maxAttempts;
 	}
 
-	public async changeVisibilityTimeout(message: Message, timeoutSec: number, logger: Logger): Promise<void> {
+	public async changeVisibilityTimeout(message: Message, timeoutSec: number, logger: Logger): Promise<number | undefined> {
 		if (!message.ReceiptHandle) {
 			logger.error(`No ReceiptHandle in message with ID = ${message.MessageId ?? ""}`);
 			return;
@@ -415,13 +427,15 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 			timeoutSec = MAX_MESSAGE_VISIBILITY_TIMEOUT_SEC;
 		}
 
+		const finalRoundedSec = Math.round(timeoutSec);
 		const params: ChangeMessageVisibilityRequest = {
 			QueueUrl: this.queueUrl,
 			ReceiptHandle: message.ReceiptHandle,
-			VisibilityTimeout: Math.round(timeoutSec)
+			VisibilityTimeout: finalRoundedSec
 		};
 		try {
 			await this.sqs.changeMessageVisibility(params).promise();
+			return finalRoundedSec;
 		} catch (err: unknown) {
 			logger.error("Message visibility timeout change failed");
 		}
