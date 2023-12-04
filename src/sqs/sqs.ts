@@ -390,6 +390,9 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 				retryDelayInMin: String(errorHandlingResult.retryDelaySec && Math.floor(errorHandlingResult.retryDelaySec / 60)),
 				msgVisibilityChangedInMin: String(visibilityChangedSec && Math.floor(visibilityChangedSec / 60)),
 				skipDlq: String(errorHandlingResult.skipDlq),
+				receiveCount: String(context.receiveCount),
+				maxAttempts: String(this.maxAttempts),
+				remainingBeforeDlq: String(this.maxAttempts - context.receiveCount),
 				reachedRetryLimit: String(this.isMessageReachedRetryLimit(context))
 			}, { jiraHost: context.payload?.jiraHost });
 
