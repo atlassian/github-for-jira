@@ -89,6 +89,7 @@ describe("sync/commits", () => {
 				.create();
 
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		});
 
 		const verifyMessageSent = async (data: BackfillMessagePayload, delaySec ?: number) => {
@@ -259,6 +260,7 @@ describe("sync/commits", () => {
 				.create();
 			gitHubServerApp = builderResult.gitHubServerApp!;
 
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		});
 
