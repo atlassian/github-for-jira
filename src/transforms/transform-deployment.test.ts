@@ -248,9 +248,6 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			const deploymentPayload = cloneDeep(deployment_status_staging.payload) as any;
 			deploymentPayload.deployment.ref = "not-a-issue-key";
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 			// Mocking all GitHub API Calls
 			// Get commit
@@ -300,9 +297,6 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 
 		it(`uses user config to associate services`, async () => {
 
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 			// Mocking all GitHub API Calls
@@ -395,9 +389,6 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 
 			//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 			// Mocking all GitHub API Calls
 			// Get commit
@@ -479,7 +470,6 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 		it(`supports branch and merge workflows, sending related commits in deploymentfor Cloud`, async () => {
 
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 			await cacheSuccessfulDeploymentInfo({
 				gitHubBaseUrl: gitHubClient.baseUrl,
@@ -546,9 +536,6 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 		describe("limits to 500 total", () => {
 			beforeEach(() => {
 				//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 				// Mocking all GitHub API Calls
@@ -713,9 +700,6 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 
 			//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 			// Mocking all GitHub API Calls
 			// Get commit
@@ -806,9 +790,6 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 		it(`supports branch and merge workflows, sending related commits in deployment for Server`, async () => {
 
 			//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 			// Mocking all GitHub API Calls

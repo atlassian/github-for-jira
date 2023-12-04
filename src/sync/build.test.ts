@@ -138,7 +138,6 @@ describe("sync/builds", () => {
 		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 		const fixture = cloneDeep(buildFixture);
 		fixture.workflow_runs[0].head_commit = null as unknown as any;
@@ -170,7 +169,6 @@ describe("sync/builds", () => {
 		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
 		const pageNocks = new Array(NUMBER_OF_PARALLEL_FETCHES).fill(0).map((_, index) => {
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			return githubNock
 				.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=${21 + index}`)
@@ -236,7 +234,6 @@ describe("sync/builds", () => {
 	it("should sync multiple builds to Jira when they contain issue keys", async () => {
 		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
-		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 		githubNock
@@ -355,8 +352,6 @@ describe("sync/builds", () => {
 
 		it("should not miss build data when page contains older build", async () => {
 
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 			githubNock.get(`/repos/integrations/integration-test-jira/compare/BASE_REF...HEAD_REF`).reply(200, compareReferencesFixture);

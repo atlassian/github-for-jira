@@ -29,11 +29,13 @@ declare global {
 	let jiraNock: nock.Scope;
 	let jiraStagingNock: nock.Scope;
 	let githubNock: nock.Scope;
+	let githubNockPersisted: nock.Scope;
 	let gheUrl: string;
 	let uuid: string;
 	let gheNock: nock.Scope;
 	let gheApiUrl: string;
 	let gheApiNock: nock.Scope;
+	let gheApiNockPersisted: nock.Scope;
 	let githubUserTokenNock: GithubUserTokenNockFunc;
 	let githubAppTokenNock: GithubAppTokenNockFunc;
 	let gheUserTokenNock: GithubUserTokenNockFunc;
@@ -50,11 +52,13 @@ declare global {
 			jiraNock: nock.Scope;
 			jiraStagingNock: nock.Scope;
 			githubNock: nock.Scope;
+			githubNockPersisted: nock.Scope;
 			gheUrl: string;
 			uuid: string;
 			gheNock: nock.Scope;
 			gheApiUrl: string;
 			gheApiNock: nock.Scope;
+			gheApiNockPersisted: nock.Scope;
 			githubUserTokenNock: GithubUserTokenNockFunc;
 			githubAppTokenNock: GithubAppTokenNockFunc;
 			gheUserTokenNock: GithubUserTokenNockFunc;
@@ -138,15 +142,16 @@ beforeEach(() => {
 	global.jiraNock = nock(global.jiraHost);
 	global.jiraStagingNock = nock(global.jiraHost);
 	global.githubNock = nock("https://api.github.com");
+	global.githubNockPersisted = nock("https://api.github.com");
 	global.gheUrl = "https://github.mydomain.com";
 	global.uuid = "c97806fc-c433-4ad5-b569-bf5191590be2";
 	global.gheNock = nock(global.gheUrl);
 	global.gheApiUrl = `${global.gheUrl}/api/v3`;
 	global.gheApiNock = nock(global.gheApiUrl);
-	global.githubUserTokenNock = githubUserToken(githubNock);
-	global.githubAppTokenNock = githubAppToken(githubNock);
-	global.gheUserTokenNock = githubUserToken(gheApiNock);
-	global.gheAppTokenNock = githubAppToken(gheApiNock);
+	global.githubUserTokenNock = githubUserToken(githubNockPersisted);
+	global.githubAppTokenNock = githubAppToken(githubNockPersisted);
+	global.gheUserTokenNock = githubUserToken(gheApiNockPersisted);
+	global.gheAppTokenNock = githubAppToken(gheApiNockPersisted);
 	global.testEnvVars = envVars as TestEnvVars;
 	global.mockSystemTime = (time: number | string | Date) => {
 		const mock = jest.isMockFunction(Date.now) ? jest.mocked(Date.now) : jest.spyOn(Date, "now");

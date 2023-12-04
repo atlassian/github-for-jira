@@ -17,7 +17,7 @@ describe("discovery", () => {
 
 	beforeEach(async () => {
 		data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, commitsFromDate: "2023-01-01" };
-		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID).persist();
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		when(booleanFlag).calledWith(BooleanFlags.USE_REST_API_FOR_DISCOVERY, jiraHost).mockResolvedValue(false);
 		mockSystemTime(12345678);
 		await new DatabaseStateCreator().create();
