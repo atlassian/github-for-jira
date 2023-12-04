@@ -31,7 +31,8 @@ export const handleUnknownError: ErrorHandler<BaseMessagePayload> = <MessagePayl
 		retryDelaySec: delaySec,
 		isFailure: true,
 		statusCode: parseInt(err["status"]),
-		source: err instanceof GithubClientError ? "github" : (err instanceof JiraClientError ? "jira" : "other")
+		source: err instanceof GithubClientError ? "github" : (err instanceof JiraClientError ? "jira" : "other"),
+		errorName: err.constructor?.name
 	});
 };
 
@@ -73,7 +74,7 @@ const maybeHandleNonFailureCase = <MessagePayload extends BaseMessagePayload>(er
 		error.status &&
 		UNRETRYABLE_STATUS_CODES.includes(error.status)) {
 		context.log.warn(`Received ${error.status} from Jira. Unretryable. Discarding the message`);
-		return { retryable: false, isFailure: false, statusCode: error.status, source: "jira" };
+		return { retryable: false, isFailure: false, statusCode: error.status, source: "jira", errorName: error.constructor?.name };
 	}
 
 	return undefined;
@@ -91,7 +92,8 @@ const maybeHandleNonRetryableResponseCode = <MessagePayload extends BaseMessageP
 			retryable: false,
 			isFailure: false,
 			statusCode: status,
-			source: error instanceof GithubClientError ? "github" : (error instanceof JiraClientError ? "jira" : "other")
+			source: error instanceof GithubClientError ? "github" : (error instanceof JiraClientError ? "jira" : "other"),
+			errorName: error.constructor?.name
 		};
 	}
 	return undefined;
@@ -108,13 +110,13 @@ const maybeHandleRateLimitingError = async <MessagePayload extends BaseMessagePa
 		// this attempts to ease the load across multiple refreshes
 		const retryDelaySec = rateLimitReset + ONE_HOUR_IN_SECONDS * (context.receiveCount - 1);
 		context.log.warn({ error, source: "github", retryDelaySec }, `Rate limiting error, retrying`);
-		return { retryable: true, retryDelaySec, isFailure: true, source: "github", statusCode: error.status };
+		return { retryable: true, retryDelaySec, isFailure: true, source: "github", statusCode: error.status, errorName: error.constructor?.name };
 	}
 
 	if (await booleanFlag(BooleanFlags.USE_RATELIMIT_ON_JIRA_CLIENT, context.payload.jiraHost)) {
 		if (error instanceof JiraClientRateLimitingError && error.retryAfterInSeconds !== undefined) {
 			context.log.warn({ error, source: "jira", retryDelaySec: error.retryAfterInSeconds }, `Rate limiting error, retrying`);
-			return { retryable: true, retryDelaySec: error.retryAfterInSeconds, isFailure: true, source: "jira", statusCode: error.status };
+			return { retryable: true, retryDelaySec: error.retryAfterInSeconds, isFailure: true, source: "jira", statusCode: error.status, errorName: error.constructor?.name };
 		}
 	}
 

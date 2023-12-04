@@ -14,7 +14,7 @@ import {
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logger) => Promise<SQS.SendMessageResult>, task: Task, cause: Error, context: SQSMessageContext<BackfillMessagePayload>, rootLogger: Logger
-) => {
+): Promise<ErrorHandlingResult> => {
 	const log = rootLogger.child({
 		task,
 		receiveCount: context.receiveCount,
@@ -32,7 +32,10 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 			: log.warn("InvalidPermissionError: marking the task as failed and continue with the next one");
 		await markCurrentTaskAsFailedAndContinue(context.payload, task, true, sendSQSBackfillMessage, log, cause);
 		return {
-			isFailure: false
+			isFailure: false,
+			statusCode: cause.status,
+			source: "github",
+			errorName: cause.constructor?.name
 		};
 	}
 
@@ -50,7 +53,10 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 			await sendSQSBackfillMessage(context.payload, 0, log);
 		}
 		return {
-			isFailure: false
+			isFailure: false,
+			statusCode: cause.status,
+			source: "github",
+			errorName: cause.constructor?.name
 		};
 	}
 
@@ -59,7 +65,10 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 			: log.info("Repo was deleted, marking the task as completed");
 		await updateTaskStatusAndContinue(context.payload, { edges: [] }, task,  log, sendSQSBackfillMessage);
 		return {
-			isFailure: false
+			isFailure: false,
+			statusCode: cause.status,
+			source: "github",
+			errorName: cause.constructor?.name
 		};
 	}
 
@@ -69,7 +78,10 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 			: log.warn("That was the last attempt: marking the task as failed and continue with the next one");
 		await markCurrentTaskAsFailedAndContinue(context.payload, task, false, sendSQSBackfillMessage, log, cause);
 		return {
-			isFailure: false
+			isFailure: false,
+			statusCode: parseInt(cause["status"]),
+			source: "github",
+			errorName: cause.constructor?.name
 		};
 	}
 

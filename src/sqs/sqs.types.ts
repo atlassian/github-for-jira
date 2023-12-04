@@ -107,6 +107,12 @@ export interface ErrorHandlingResult {
 	 */
 	source?: "github" | "jira" | "other";
 
+	/**
+	 * name of error
+	 * For metrics only, NOT used for logic handling.
+	 */
+	errorName?: string;
+
 }
 
 export interface SQSContext {

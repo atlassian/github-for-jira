@@ -404,6 +404,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 			log.info(`Delaying the retry for ${retryDelaySec} seconds`);
 			return await this.changeVisibilityTimeout(message, retryDelaySec, log);
 		}
+		return undefined;
 	}
 
 	private isMessageReachedRetryLimit(context: SQSMessageContext<MessagePayload>) {
@@ -414,12 +415,12 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 	public async changeVisibilityTimeout(message: Message, timeoutSec: number, logger: Logger): Promise<number | undefined> {
 		if (!message.ReceiptHandle) {
 			logger.error(`No ReceiptHandle in message with ID = ${message.MessageId ?? ""}`);
-			return;
+			return undefined;
 		}
 
 		if (timeoutSec < 0) {
 			logger.error(`Timeout needs to be a positive number.`);
-			return;
+			return undefined;
 		}
 
 		if (timeoutSec >= MAX_MESSAGE_VISIBILITY_TIMEOUT_SEC) {
@@ -438,6 +439,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 			return finalRoundedSec;
 		} catch (err: unknown) {
 			logger.error("Message visibility timeout change failed");
+			return undefined;
 		}
 	}
 
