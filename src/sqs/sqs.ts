@@ -385,6 +385,9 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 
 			statsd.increment(sqsQueueMetrics.exception, {
 				...this.metricsTags,
+				statusCode: String(errorHandlingResult.statusCode),
+				source: String(errorHandlingResult.source),
+				errorName: String(errorHandlingResult.errorName),
 				isFailure: String(errorHandlingResult.isFailure),
 				retryable: String(errorHandlingResult.retryable),
 				retryDelayInMin: String(errorHandlingResult.retryDelaySec && Math.floor(errorHandlingResult.retryDelaySec / 60)),
