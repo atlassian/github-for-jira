@@ -1,11 +1,15 @@
 import { statsd }  from "config/statsd";
 import { jiraAndGitHubErrorsHandler, webhookMetricWrapper } from "./error-handlers";
 import { getLogger } from "config/logger";
-import { JiraClientError } from "../jira/client/axios";
+import { JiraClientError, JiraClientRateLimitingError } from "../jira/client/axios";
 import { Octokit } from "@octokit/rest";
 import { GithubClientRateLimitingError } from "../github/client/github-client-errors";
 import { AxiosError, AxiosResponse, AxiosResponseHeaders } from "axios";
 import { ErrorHandlingResult, SQSMessageContext, BaseMessagePayload } from "~/src/sqs/sqs.types";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { when } from "jest-when";
+
+jest.mock("config/feature-flags");
 
 describe("error-handlers", () => {
 
@@ -68,7 +72,7 @@ describe("error-handlers", () => {
 				message: "",
 				name: "",
 				config: {}, isAxiosError: true, toJSON: () => ({})
-			}, code, undefined);
+			}, code);
 		};
 
 		it("Unretryable and not an error on Jira 401", async () => {
@@ -114,6 +118,46 @@ describe("error-handlers", () => {
 			expect(result.retryable).toBe(true);
 			//Make sure delay is equal to recommended delay + 50 seconds
 			expect(result.retryDelaySec).toBe(150);
+			expect(result.isFailure).toBe(true);
+		});
+
+		it("Retryable with proper delay on Rate Limiting - Jira Error when ff is on", async () => {
+
+			when(booleanFlag).calledWith(BooleanFlags.USE_RATELIMIT_ON_JIRA_CLIENT, expect.anything())
+				.mockResolvedValue(true);
+
+			const headers: AxiosResponseHeaders = { "retry-after": "1000" };
+			const mockedResponse = { status: 403, headers: headers } as AxiosResponse;
+
+			const result = await jiraAndGitHubErrorsHandler(
+				new JiraClientRateLimitingError("test rate limit error", {
+					response: mockedResponse
+				} as AxiosError, 429, 1000),
+				createContext(1, false)
+			);
+
+			expect(result.retryable).toBe(true);
+			expect(result.retryDelaySec).toBe(1000);
+			expect(result.isFailure).toBe(true);
+		});
+
+		it("Retryable with proper origin delay on Rate Limiting - Jira Error when ff is off", async () => {
+
+			when(booleanFlag).calledWith(BooleanFlags.USE_RATELIMIT_ON_JIRA_CLIENT, expect.anything())
+				.mockResolvedValue(false);
+
+			const headers: AxiosResponseHeaders = { "retry-after": "1000" };
+			const mockedResponse = { status: 403, headers: headers } as AxiosResponse;
+
+			const result = await jiraAndGitHubErrorsHandler(
+				new JiraClientRateLimitingError("test rate limit error", {
+					response: mockedResponse
+				} as AxiosError, 429, 1000),
+				createContext(1, false)
+			);
+
+			expect(result.retryable).toBe(true);
+			expect(result.retryDelaySec).toBe(180);
 			expect(result.isFailure).toBe(true);
 		});
 

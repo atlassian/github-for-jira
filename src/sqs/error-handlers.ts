@@ -1,7 +1,8 @@
-import { JiraClientError } from "../jira/client/axios";
+import { JiraClientError, JiraClientRateLimitingError } from "../jira/client/axios";
 import { emitWebhookFailedMetrics } from "utils/webhook-utils";
 import { ErrorHandler, ErrorHandlingResult, SQSMessageContext, BaseMessagePayload } from "./sqs.types";
 import { GithubClientRateLimitingError } from "../github/client/github-client-errors";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 /**
  * Sometimes we can get errors from Jira and GitHub which does not indicate a failured webhook. For example:
@@ -34,7 +35,7 @@ export const jiraAndGitHubErrorsHandler: ErrorHandler<BaseMessagePayload> = asyn
 	context.log.warn({ err: error }, "Handling Jira or GitHub error");
 
 	const maybeResult = maybeHandleNonFailureCase(error, context)
-		|| maybeHandleRateLimitingError(error, context)
+		|| await maybeHandleRateLimitingError(error, context)
 		|| maybeHandleNonRetryableResponseCode(error, context);
 
 	if (maybeResult) {
@@ -85,9 +86,8 @@ const maybeHandleNonRetryableResponseCode = <MessagePayload extends BaseMessageP
 	return undefined;
 };
 
-const maybeHandleRateLimitingError = <MessagePayload extends BaseMessagePayload>(error: Error, context: SQSMessageContext<MessagePayload>): ErrorHandlingResult | undefined => {
+const maybeHandleRateLimitingError = async <MessagePayload extends BaseMessagePayload>(error: Error, context: SQSMessageContext<MessagePayload>): Promise<ErrorHandlingResult | undefined> => {
 	if (error instanceof GithubClientRateLimitingError) {
-		context.log.warn({ error }, `Rate limiting error, retrying`);
 		// A stepped buffer to prioritize messages with a higher received count to get replayed slightly sooner than newer messages
 		// e.g. a receiveCount 5 message will be visible 50 seconds sooner than a receiveCount 1 message
 		const buffer = Math.max(RATE_LIMITING_BUFFER_STEP, BASE_RATE_LIMITING_DELAY_BUFFER_SEC - context.receiveCount * RATE_LIMITING_BUFFER_STEP);
@@ -96,7 +96,15 @@ const maybeHandleRateLimitingError = <MessagePayload extends BaseMessagePayload>
 		// GitHub Rate limit resets hourly, in the scenario of burst traffic it continues to overwhelm the rate limit
 		// this attempts to ease the load across multiple refreshes
 		const retryDelaySec = rateLimitReset + ONE_HOUR_IN_SECONDS * (context.receiveCount - 1);
+		context.log.warn({ error, source: "github", retryDelaySec }, `Rate limiting error, retrying`);
 		return { retryable: true, retryDelaySec, isFailure: true };
+	}
+
+	if (await booleanFlag(BooleanFlags.USE_RATELIMIT_ON_JIRA_CLIENT, context.payload.jiraHost)) {
+		if (error instanceof JiraClientRateLimitingError) {
+			context.log.warn({ error, source: "jira", retryDelaySec: error.retryAfterInSeconds }, `Rate limiting error, retrying`);
+			return { retryable: true, retryDelaySec: error.retryAfterInSeconds, isFailure: true };
+		}
 	}
 
 	return undefined;

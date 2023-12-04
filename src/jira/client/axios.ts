@@ -17,17 +17,27 @@ type SkipRedirect ={
 export class JiraClientError extends Error {
 	status?: number;
 	cause: AxiosError;
-	retryAfterInSeconds: number | undefined;
 
+	constructor(
+		message: string,
+		cause: AxiosError,
+		status: number | undefined
+	) {
+		super(message);
+		this.status = status;
+		this.cause = cause;
+	}
+}
+
+export class JiraClientRateLimitingError extends JiraClientError {
+	retryAfterInSeconds: number | undefined;
 	constructor(
 		message: string,
 		cause: AxiosError,
 		status: number | undefined,
 		retryAfterInSeconds: number | undefined
 	) {
-		super(message);
-		this.status = status;
-		this.cause = cause;
+		super(message, cause, status);
 		this.retryAfterInSeconds = retryAfterInSeconds;
 	}
 }
@@ -93,7 +103,11 @@ const getErrorMiddleware = (logger: Logger) =>
 			logger.error({ err: error, res: error?.response }, errorMessage);
 		}
 
-		return Promise.reject(new JiraClientError(errorMessage, error, status, status === 429 ? getRetryAfterInSec(error) : undefined));
+		if (error.response?.status === 429) {
+			return Promise.reject(new JiraClientRateLimitingError(errorMessage, error, status, getRetryAfterInSec(error)));
+		} else {
+			return Promise.reject(new JiraClientError(errorMessage, error, status));
+		}
 	};
 
 const getRetryAfterInSec = (error: AxiosError): number | undefined => {
