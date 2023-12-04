@@ -126,9 +126,7 @@
 			"src/models/**",
 			"src/sync/**",
 			"src/transforms/**",
-			"src/util/**",
-			"src/sqs/**",
-			"src/middleware/**"
+			"src/util/**"
 		],
 		"rules": {
 			// To be removed later

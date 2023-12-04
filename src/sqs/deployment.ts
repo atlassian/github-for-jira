@@ -4,6 +4,8 @@ import { DeploymentMessagePayload, MessageHandler, SQSMessageContext } from "./s
 
 export const deploymentQueueMessageHandler: MessageHandler<DeploymentMessagePayload> = async (context: SQSMessageContext<DeploymentMessagePayload>) => {
 	const messagePayload: DeploymentMessagePayload = context.payload;
+	// validate payload before using it
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	if (messagePayload.webhookReceived === undefined || messagePayload.webhookPayload === undefined || messagePayload.webhookId === undefined) {
 		context.log.error({ messagePayload }, "Missing required fields");
 	}

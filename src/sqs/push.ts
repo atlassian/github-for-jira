@@ -5,6 +5,8 @@ import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const pushQueueMessageHandler: MessageHandler<PushQueueMessagePayload> = async (context: SQSMessageContext<PushQueueMessagePayload>) => {
 	const { payload } = context;
+	// validate payload before using it
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	if (payload.repository === undefined || payload.repository.full_name === undefined || payload.shas === undefined || payload.webhookId === undefined) {
 		context.log.error({ payload }, "Missing required fields");
 		return;
