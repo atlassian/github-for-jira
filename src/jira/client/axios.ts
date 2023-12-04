@@ -17,11 +17,18 @@ type SkipRedirect ={
 export class JiraClientError extends Error {
 	status?: number;
 	cause: AxiosError;
+	retryAfterInSeconds: number | undefined;
 
-	constructor(message: string, cause: AxiosError, status?: number) {
+	constructor(
+		message: string,
+		cause: AxiosError,
+		status: number | undefined,
+		retryAfterInSeconds: number | undefined
+	) {
 		super(message);
 		this.status = status;
 		this.cause = cause;
+		this.retryAfterInSeconds = retryAfterInSeconds;
 	}
 }
 
@@ -86,8 +93,15 @@ const getErrorMiddleware = (logger: Logger) =>
 			logger.error({ err: error, res: error?.response }, errorMessage);
 		}
 
-		return Promise.reject(new JiraClientError(errorMessage, error, status));
+		return Promise.reject(new JiraClientError(errorMessage, error, status, status === 429 ? getRetryAfterInSec(error) : undefined));
 	};
+
+const getRetryAfterInSec = (error: AxiosError): number | undefined => {
+	const retryAfterInSecondsStr = error.response?.headers[	"retry-after"];
+	const retryAfterInSeconds = parseInt(retryAfterInSecondsStr || "unknown");
+	if (isNaN(retryAfterInSeconds)) return undefined;
+	else return retryAfterInSeconds;
+};
 
 /**
  * Middleware to enhance successful requests in Jira.

@@ -68,7 +68,7 @@ describe("error-handlers", () => {
 				message: "",
 				name: "",
 				config: {}, isAxiosError: true, toJSON: () => ({})
-			}, code);
+			}, code, undefined);
 		};
 
 		it("Unretryable and not an error on Jira 401", async () => {
