@@ -80,7 +80,7 @@ describe("Pull Request Webhook", () => {
 	});
 
 	it("should have reviewers on pull request action", async () => {
-		githubUserTokenNock(gitHubInstallationId).persist();
+		githubUserTokenNock(gitHubInstallationId);
 		githubNock.get("/users/test-pull-request-user-login")
 			.reply(200, {
 				login: "test-pull-request-author-login",
@@ -209,7 +209,7 @@ describe("Pull Request Webhook", () => {
 
 
 	it("no Write perms case should be tolerated", async () => {
-		githubUserTokenNock(gitHubInstallationId).persist();
+		githubUserTokenNock(gitHubInstallationId);
 		githubNock.get("/users/test-pull-request-user-login")
 			.reply(200, {
 				login: "test-pull-request-author-login",
@@ -309,7 +309,7 @@ describe("Pull Request Webhook", () => {
 
 	it("will not delete references if a branch still has an issue key", async () => {
 
-		githubUserTokenNock(gitHubInstallationId).persist();
+		githubUserTokenNock(gitHubInstallationId);
 
 		githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 			.reply(200, reviewsPayload);
@@ -336,7 +336,7 @@ describe("Pull Request Webhook", () => {
 	describe("Trigged by Bot", () => {
 
 		it("should update the Jira issue with the linked GitHub pull_request if PR opened action was triggered by bot", async () => {
-			githubUserTokenNock(gitHubInstallationId).persist();
+			githubUserTokenNock(gitHubInstallationId);
 
 			githubNock.get("/users/test-pull-request-user-login")
 				.reply(200, {
@@ -468,7 +468,7 @@ describe("Pull Request Webhook", () => {
 
 		it("should update the Jira issue with the linked GitHub pull_request if PR closed action was triggered by bot", async () => {
 
-			githubUserTokenNock(gitHubInstallationId).persist();
+			githubUserTokenNock(gitHubInstallationId);
 
 			githubNock.get("/users/test-pull-request-user-login")
 				.reply(200, {
@@ -561,7 +561,7 @@ describe("Pull Request Webhook", () => {
 
 		it("should update the Jira issue with the linked GitHub pull_request if PR reopened action was triggered by bot", async () => {
 
-			githubUserTokenNock(gitHubInstallationId).persist();
+			githubUserTokenNock(gitHubInstallationId);
 
 			githubNock.get("/users/test-pull-request-user-login")
 				.twice()

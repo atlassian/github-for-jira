@@ -76,9 +76,6 @@ describe("Deployment Webhook", () => {
 			const sha = deploymentStatusBasic.payload.deployment.sha;
 
 			githubUserTokenNock(1234);
-			githubUserTokenNock(1234);
-			githubUserTokenNock(1234);
-			githubUserTokenNock(1234);
 
 			githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/${sha}`)
 				.reply(200, {

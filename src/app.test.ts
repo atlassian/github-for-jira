@@ -1,4 +1,5 @@
 import { getFrontendApp } from "~/src/app";
+import { Axios } from "axios";
 
 const sanitizeRegexStr = (regexStr: string) => regexStr.split("\\").join("");
 describe("app", () => {
@@ -55,6 +56,34 @@ describe("app", () => {
 			).join("\n");
 
 			expect(allRoutes).toMatchSnapshot();
+		});
+	});
+	describe("test utils for app", () => {
+		describe("nocking scope", () => {
+
+			const axios = new Axios({ baseURL: "https://api.github.com" });
+			const getToken = async () => {
+				const result = await axios.post("/app/installations/123/access_tokens", undefined, { headers: { "authorization": "Bearer token" } });
+				return JSON.parse(result.data).token;
+			};
+			const callTestApi = async () => {
+				const result = await axios.get("/test");
+				return result.data;
+			};
+
+			it("should only persist on access token but not the following api nock even using same nock scope", async () => {
+
+				githubUserTokenNock(123, "ret_token").persist(); //This should be a persist nock
+				githubNock.get("/test").reply(200, "hello"); //This should only mock once
+
+				//since it is a persist nock, it should success twice
+				expect(await getToken()).toEqual("ret_token");
+				expect(await getToken()).toEqual("ret_token");
+
+				expect(await callTestApi()).toEqual("hello");
+				//The second time should throw as the nock only nock once
+				await expect(async () => await callTestApi()).rejects.toThrowError(/No match for request/);
+			});
 		});
 	});
 });

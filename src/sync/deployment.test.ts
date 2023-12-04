@@ -317,9 +317,6 @@ describe("sync/deployments", () => {
 			const data: BackfillMessagePayload = { installationId, jiraHost };
 
 			githubUserTokenNock(installationId);
-			githubUserTokenNock(installationId);
-			githubUserTokenNock(installationId);
-			githubUserTokenNock(installationId);
 
 			createGitHubNock(deploymentNodesFixture);
 			const lastEdges = deploymentNodesFixture.data.repository.deployments.edges;
@@ -454,9 +451,6 @@ describe("sync/deployments", () => {
 			["51e16759cdac67b0d2a94e0674c9603b75a840f6", "7544f2fec0321a32d5effd421682463c2ebd5018"]
 				.forEach((commitId, index) => {
 					index++;
-					githubUserTokenNock(installationId);
-					githubUserTokenNock(installationId);
-					githubUserTokenNock(installationId);
 					githubUserTokenNock(installationId);
 					githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/${commitId}`)
 						.reply(200, {
@@ -728,9 +722,6 @@ describe("sync/deployments", () => {
 				uuid: gitHubServerApp.uuid
 			} };
 
-			gheUserTokenNock(installationId);
-			gheUserTokenNock(installationId);
-			gheUserTokenNock(installationId);
 			gheUserTokenNock(installationId);
 
 			createGitHubServerNock(deploymentNodesFixture);

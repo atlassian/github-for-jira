@@ -44,7 +44,6 @@ describe("Branch Webhook", () => {
 			const sha = "test-branch-ref-sha";
 
 			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
 			githubNock.get(`/repos/test-repo-owner/test-repo-name/git/ref/${ref}`)
 				.reply(200, {
 					ref: `refs/${ref}`,

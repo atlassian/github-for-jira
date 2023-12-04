@@ -29,6 +29,7 @@ declare global {
 	let jiraNock: nock.Scope;
 	let jiraStagingNock: nock.Scope;
 	let githubNock: nock.Scope;
+	let githubNockPersisted: nock.Scope;
 	let gheUrl: string;
 	let uuid: string;
 	let gheNock: nock.Scope;
@@ -50,6 +51,7 @@ declare global {
 			jiraNock: nock.Scope;
 			jiraStagingNock: nock.Scope;
 			githubNock: nock.Scope;
+			githubNockPersisted: nock.Scope;
 			gheUrl: string;
 			uuid: string;
 			gheNock: nock.Scope;
@@ -138,13 +140,14 @@ beforeEach(() => {
 	global.jiraNock = nock(global.jiraHost);
 	global.jiraStagingNock = nock(global.jiraHost);
 	global.githubNock = nock("https://api.github.com");
+	global.githubNockPersisted = nock("https://api.github.com");
 	global.gheUrl = "https://github.mydomain.com";
 	global.uuid = "c97806fc-c433-4ad5-b569-bf5191590be2";
 	global.gheNock = nock(global.gheUrl);
 	global.gheApiUrl = `${global.gheUrl}/api/v3`;
 	global.gheApiNock = nock(global.gheApiUrl);
-	global.githubUserTokenNock = githubUserToken(githubNock);
-	global.githubAppTokenNock = githubAppToken(githubNock);
+	global.githubUserTokenNock = githubUserToken(githubNockPersisted);
+	global.githubAppTokenNock = githubAppToken(githubNockPersisted);
 	global.gheUserTokenNock = githubUserToken(gheApiNock);
 	global.gheAppTokenNock = githubAppToken(gheApiNock);
 	global.testEnvVars = envVars as TestEnvVars;

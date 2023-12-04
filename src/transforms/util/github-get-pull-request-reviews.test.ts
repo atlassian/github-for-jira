@@ -28,7 +28,6 @@ describe("getPullRequestReviews", () => {
 
 	it("should return array of reviewers with valid repo and pr", async () => {
 		githubUserTokenNock(GITHUB_INSTALLATION_ID);
-		githubUserTokenNock(GITHUB_INSTALLATION_ID);
 		githubNock
 			.get(`/repos/batman/gotham-city-bus-pass/pulls/2/requested_reviewers`)
 			.reply(200, {
@@ -44,7 +43,6 @@ describe("getPullRequestReviews", () => {
 	});
 
 	it("should map a error from /reviews into an empty array", async () => {
-		githubUserTokenNock(GITHUB_INSTALLATION_ID);
 		githubUserTokenNock(GITHUB_INSTALLATION_ID);
 		githubNock
 			.get(`/repos/batman/gotham-city-bus-pass/pulls/2/requested_reviewers`)
@@ -72,7 +70,6 @@ describe("getPullRequestReviews", () => {
 	});
 
 	it("should merge requested_reviewers and reviews together", async () => {
-		githubUserTokenNock(GITHUB_INSTALLATION_ID);
 		githubUserTokenNock(GITHUB_INSTALLATION_ID);
 		githubNock
 			.get(`/repos/batman/gotham-city-bus-pass/pulls/2/requested_reviewers`)

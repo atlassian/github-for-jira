@@ -121,7 +121,7 @@ describe("api-replay-failed-entities-from-data-depot", () => {
 
 	it("should replay dependabot alert", async () => {
 		app = createApp();
-		githubUserTokenNock(subscription.gitHubInstallationId).persist();
+		githubUserTokenNock(subscription.gitHubInstallationId);
 		githubNock
 			.get("/repos/atlassian/repo-0/dependabot/alerts/10")
 			.reply(200, dependabotAlert);
@@ -147,7 +147,7 @@ describe("api-replay-failed-entities-from-data-depot", () => {
 
 	it("should replay code scanning alert", async () => {
 		app = createApp();
-		githubUserTokenNock(subscription.gitHubInstallationId).persist();
+		githubUserTokenNock(subscription.gitHubInstallationId);
 		githubNock
 			.get("/repos/atlassian/repo-0/code-scanning/alerts/11")
 			.reply(200, codeScanningAlert);

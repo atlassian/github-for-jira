@@ -226,7 +226,7 @@ describe("sync/pull-request", () => {
 		});
 
 		it("should not sync if nodes do not contain issue keys", async () => {
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID).persist();
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubNock
 				.post("/graphql")
 				.query(true)
