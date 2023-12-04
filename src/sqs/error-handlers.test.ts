@@ -121,7 +121,7 @@ describe("error-handlers", () => {
 			expect(result.isFailure).toBe(true);
 		});
 
-		it("Retryable with proper delay on Rate Limiting - Jira Error when ff is on", async () => {
+		it("Retryable with proper delay on Rate Limiting - when ff is on", async () => {
 
 			when(booleanFlag).calledWith(BooleanFlags.USE_RATELIMIT_ON_JIRA_CLIENT, expect.anything())
 				.mockResolvedValue(true);
@@ -141,7 +141,27 @@ describe("error-handlers", () => {
 			expect(result.isFailure).toBe(true);
 		});
 
-		it("Retryable with proper origin delay on Rate Limiting - Jira Error when ff is off", async () => {
+		it("Retryable with origin delay on Rate Limiting but have undefined retry after header - when ff is on", async () => {
+
+			when(booleanFlag).calledWith(BooleanFlags.USE_RATELIMIT_ON_JIRA_CLIENT, expect.anything())
+				.mockResolvedValue(true);
+
+			const headers: AxiosResponseHeaders = { };
+			const mockedResponse = { status: 403, headers: headers } as AxiosResponse;
+
+			const result = await jiraAndGitHubErrorsHandler(
+				new JiraClientRateLimitingError("test rate limit error", {
+					response: mockedResponse
+				} as AxiosError, 429, undefined),
+				createContext(1, false)
+			);
+
+			expect(result.retryable).toBe(true);
+			expect(result.retryDelaySec).toBe(180);
+			expect(result.isFailure).toBe(true);
+		});
+
+		it("Retryable with origin delay on Rate Limiting - when ff is off", async () => {
 
 			when(booleanFlag).calledWith(BooleanFlags.USE_RATELIMIT_ON_JIRA_CLIENT, expect.anything())
 				.mockResolvedValue(false);

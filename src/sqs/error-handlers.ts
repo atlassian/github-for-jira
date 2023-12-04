@@ -101,7 +101,7 @@ const maybeHandleRateLimitingError = async <MessagePayload extends BaseMessagePa
 	}
 
 	if (await booleanFlag(BooleanFlags.USE_RATELIMIT_ON_JIRA_CLIENT, context.payload.jiraHost)) {
-		if (error instanceof JiraClientRateLimitingError) {
+		if (error instanceof JiraClientRateLimitingError && error.retryAfterInSeconds !== undefined) {
 			context.log.warn({ error, source: "jira", retryDelaySec: error.retryAfterInSeconds }, `Rate limiting error, retrying`);
 			return { retryable: true, retryDelaySec: error.retryAfterInSeconds, isFailure: true };
 		}
