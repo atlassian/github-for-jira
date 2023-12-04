@@ -35,6 +35,7 @@ declare global {
 	let gheNock: nock.Scope;
 	let gheApiUrl: string;
 	let gheApiNock: nock.Scope;
+	let gheApiNockPersisted: nock.Scope;
 	let githubUserTokenNock: GithubUserTokenNockFunc;
 	let githubAppTokenNock: GithubAppTokenNockFunc;
 	let gheUserTokenNock: GithubUserTokenNockFunc;
@@ -57,6 +58,7 @@ declare global {
 			gheNock: nock.Scope;
 			gheApiUrl: string;
 			gheApiNock: nock.Scope;
+			gheApiNockPersisted: nock.Scope;
 			githubUserTokenNock: GithubUserTokenNockFunc;
 			githubAppTokenNock: GithubAppTokenNockFunc;
 			gheUserTokenNock: GithubUserTokenNockFunc;
@@ -148,8 +150,8 @@ beforeEach(() => {
 	global.gheApiNock = nock(global.gheApiUrl);
 	global.githubUserTokenNock = githubUserToken(githubNockPersisted);
 	global.githubAppTokenNock = githubAppToken(githubNockPersisted);
-	global.gheUserTokenNock = githubUserToken(gheApiNock);
-	global.gheAppTokenNock = githubAppToken(gheApiNock);
+	global.gheUserTokenNock = githubUserToken(gheApiNockPersisted);
+	global.gheAppTokenNock = githubAppToken(gheApiNockPersisted);
 	global.testEnvVars = envVars as TestEnvVars;
 	global.mockSystemTime = (time: number | string | Date) => {
 		const mock = jest.isMockFunction(Date.now) ? jest.mocked(Date.now) : jest.spyOn(Date, "now");
