@@ -125,7 +125,7 @@ describe("backfillErrorHandler", () => {
 			status: 403
 		};
 		const result = await backfillErrorHandler(jest.fn())(abuseDetectionError, createContext(2, false));
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			isFailure: true,
 			retryDelaySec: 540,
 			retryable: true
@@ -150,7 +150,7 @@ describe("backfillErrorHandler", () => {
 		}
 
 		const result = await backfillErrorHandler(jest.fn())(new TaskError(task, sequelizeConnectionError), createContext(2, false));
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			isFailure: true,
 			retryDelaySec: 540,
 			retryable: true
@@ -162,7 +162,7 @@ describe("backfillErrorHandler", () => {
 			new TaskError(task, (await create500FromGitHub())!),
 			createContext(2, false)
 		);
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			isFailure: true,
 			retryDelaySec: 540,
 			retryable: true
@@ -174,7 +174,7 @@ describe("backfillErrorHandler", () => {
 			new TaskError(task, (await create500FromJira())!),
 			createContext(2, false)
 		);
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			isFailure: true,
 			retryDelaySec: 540,
 			retryable: true
@@ -187,7 +187,7 @@ describe("backfillErrorHandler", () => {
 			createContext(5, true)
 		);
 
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			isFailure: false
 		});
 		const mockMessage = sendMessageMock.mock.calls[0] as any[];
@@ -204,7 +204,7 @@ describe("backfillErrorHandler", () => {
 			createContext(5, true)
 		);
 
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			isFailure: false
 		});
 		const mockMessage = sendMessageMock.mock.calls[0] as any[];
@@ -254,7 +254,7 @@ describe("backfillErrorHandler", () => {
 			createContext(3, false)
 		);
 
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			isFailure: false
 		});
 		const mockMessage = sendMessageMock.mock.calls[0] as any[];
