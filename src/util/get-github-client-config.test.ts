@@ -127,7 +127,7 @@ describe("user client", () => {
 		gheApiNock.get("/user")
 			.matchHeader("ApiKeyHeader", "super-key")
 			.reply(200);
-		const client = await createUserClient("MY_TOKEN", jiraHost, { trigger: "test" }, getLogger("test"), gitHubServerApp?.id);
+		const client = await createUserClient("MY_TOKEN", jiraHost, { trigger: "test" }, getLogger("test"), gitHubServerApp.id);
 		const response = await client.getUser();
 		expect(response.status).toStrictEqual(200);
 	});
@@ -135,7 +135,7 @@ describe("user client", () => {
 	it("should not inject API key when provided", async () => {
 		gheApiNock.get("/user")
 			.reply(200);
-		const client = await createUserClient("MY_TOKEN", jiraHost, { trigger: "test" }, getLogger("test"), gitHubServerApp?.id);
+		const client = await createUserClient("MY_TOKEN", jiraHost, { trigger: "test" }, getLogger("test"), gitHubServerApp.id);
 		const response = await client.getUser();
 		expect(response.status).toStrictEqual(200);
 	});
@@ -161,7 +161,7 @@ describe("installation client", () => {
 		gheApiNock.get("/rate_limit")
 			.matchHeader("ApiKeyHeader", "super-key")
 			.reply(200);
-		const client = await createInstallationClient(subscription!.gitHubInstallationId, jiraHost, { trigger: "test" }, getLogger("test"), gitHubServerApp?.id);
+		const client = await createInstallationClient(subscription!.gitHubInstallationId, jiraHost, { trigger: "test" }, getLogger("test"), gitHubServerApp.id);
 		const response = await client.getRateLimit();
 		expect(response.status).toStrictEqual(200);
 	});
@@ -172,7 +172,7 @@ describe("installation client", () => {
 		gheApiNock.get("/rate_limit")
 			.reply(200);
 
-		const client = await createInstallationClient(subscription!.gitHubInstallationId, jiraHost, { trigger: "test" }, getLogger("test"), gitHubServerApp?.id);
+		const client = await createInstallationClient(subscription!.gitHubInstallationId, jiraHost, { trigger: "test" }, getLogger("test"), gitHubServerApp.id);
 		const response = await client.getRateLimit();
 		expect(response.status).toStrictEqual(200);
 	});
@@ -193,7 +193,7 @@ describe("app client", () => {
 		gheAppTokenNock()
 			.matchHeader("ApiKeyHeader", "super-key");
 
-		const client = await createAppClient(getLogger("test"), jiraHost, gitHubServerApp?.id, { trigger: "test" });
+		const client = await createAppClient(getLogger("test"), jiraHost, gitHubServerApp.id, { trigger: "test" });
 		const response = await client.getApp();
 		expect(response.status).toStrictEqual(200);
 	});
@@ -201,7 +201,7 @@ describe("app client", () => {
 	it("should not inject API key when not provided", async () => {
 		gheAppTokenNock();
 
-		const client = await createAppClient(getLogger("test"), jiraHost, gitHubServerApp?.id, { trigger: "test" });
+		const client = await createAppClient(getLogger("test"), jiraHost, gitHubServerApp.id, { trigger: "test" });
 		const response = await client.getApp();
 		expect(response.status).toStrictEqual(200);
 	});

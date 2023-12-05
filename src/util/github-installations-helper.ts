@@ -45,7 +45,7 @@ const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): ConnectionS
 export const getInstallations = async (subscriptions: Subscription[], log: Logger, gitHubAppId: number | undefined): Promise<InstallationResults> => {
 	const installations = await Promise.allSettled(subscriptions.map((sub) => getInstallation(sub, gitHubAppId, log)));
 	// Had to add "unknown" in between type as lodash, types is incorrect for groupBy of `installations`
-	const connections = groupBy(installations, "status") as unknown as { fulfilled: PromiseFulfilledResult<AppInstallation>[], rejected: PromiseRejectedResult[] };
+	const connections = groupBy(installations, "status") as unknown as { fulfilled?: PromiseFulfilledResult<AppInstallation>[], rejected?: PromiseRejectedResult[] };
 	const fulfilled = connections.fulfilled?.map(v => v.value) || [];
 	const rejected = connections.rejected?.map(v => v.reason as FailedAppInstallation) || [];
 	return {
@@ -119,8 +119,8 @@ export const getConnectionsAndInstallations = async (subscriptions: Subscription
 };
 
 export const countStatus = (connections: SuccessfulConnection[], syncStatus: string): number =>
-	connections.filter(org => org?.syncStatus === syncStatus).length || 0;
+	connections.filter(org => org.syncStatus === syncStatus).length || 0;
 
 export const countNumberSkippedRepos = (connections: SuccessfulConnection[]): number => {
-	return connections.reduce((acc, obj) => acc + (obj?.totalNumberOfRepos || 0) - (obj?.numberOfSyncedRepos || 0) , 0);
+	return connections.reduce((acc, obj) => acc + (obj.totalNumberOfRepos || 0) - (obj.numberOfSyncedRepos || 0) , 0);
 };
