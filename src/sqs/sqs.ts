@@ -48,7 +48,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 	/**
 	 * Context of the currently active listener, or the last active if the queue stopped
 	 */
-	listenerContext: SQSContext;
+	listenerContext: SQSContext | undefined;
 
 	public constructor(settings: QueueSettings, messageHandler: MessageHandler<MessagePayload>, errorHandler: ErrorHandler<MessagePayload>) {
 		this.queueUrl = settings.queueUrl;
@@ -159,7 +159,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 	private async waitUntilListenerStopped() {
 		const listenerContext = this.listenerContext;
 
-		if (!listenerContext.stopped) {
+		if (!listenerContext?.stopped) {
 			throw new Error("Listener is not stopped, nothing to await");
 		}
 
@@ -237,20 +237,20 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 		try {
 			await this.sqs.deleteMessage(deleteParams)
 				.promise();
-			statsd.increment(sqsQueueMetrics.deleted, this.metricsTags, { jiraHost: context.payload?.jiraHost });
+			statsd.increment(sqsQueueMetrics.deleted, this.metricsTags, { jiraHost: context.payload.jiraHost });
 			context.log.debug("Successfully deleted message from queue");
 		} catch (err: unknown) {
 			context.log.warn({ err }, "Error deleting message from the queue");
 		}
 	}
 
-	public async deleteStaleMessages(message: Message, context: SQSMessageContext<MessagePayload>): Promise<boolean> {
+	public async deleteStaleMessages(message: Message | undefined, context: SQSMessageContext<MessagePayload>): Promise<boolean> {
 		const TARGETED_QUEUES = ["deployment"];
 		if (!message?.Body || !TARGETED_QUEUES.includes(this.queueName)) {
 			return false;
 		}
 
-		const messageBody = JSON.parse(message.Body) as { webhookReceived?: number };
+		const messageBody = JSON.parse(message.Body) as { webhookReceived?: number } | undefined;
 		const webhookReceived = messageBody?.webhookReceived;
 		if (!webhookReceived) {
 			context.log.warn(
@@ -294,7 +294,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 		}
 
 		// Sets the log level depending on FF for the specific jira host
-		listenerContext.log.level(await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, payload?.jiraHost));
+		listenerContext.log.level(await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, payload.jiraHost));
 
 		const receiveCount = Number(message.Attributes?.ApproximateReceiveCount || "1");
 
@@ -306,10 +306,10 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 				messageId: message.MessageId,
 				executionId: uuidv4(),
 				queue: this.queueName,
-				jiraHost: payload?.jiraHost,
-				installationId: payload?.installationId,
-				gitHubAppId: payload?.gitHubAppConfig?.gitHubAppId,
-				webhookId: payload?.webhookId,
+				jiraHost: payload.jiraHost,
+				installationId: payload.installationId,
+				gitHubAppId: payload.gitHubAppConfig?.gitHubAppId,
+				webhookId: payload.webhookId,
 				receiveCount,
 				lastAttempt
 			}),
@@ -347,7 +347,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 			await Promise.race([this.messageHandler(context), timeoutPromise]);
 
 			const messageProcessingDuration = Date.now() - messageProcessingStartTime;
-			this.sendProcessedMetrics(messageProcessingDuration, payload?.jiraHost);
+			this.sendProcessedMetrics(messageProcessingDuration, payload.jiraHost);
 			await this.deleteMessage(context);
 		} catch (err: unknown) {
 			await this.handleSqsMessageExecutionError(err, context);
@@ -363,7 +363,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 			this.log.info({ errorHandlingResult }, "Error handling result");
 			if (errorHandlingResult.isFailure) {
 				context.log.error({ err }, "Error while executing SQS message");
-				statsd.increment(sqsQueueMetrics.failed, this.metricsTags, { jiraHost: context.payload?.jiraHost });
+				statsd.increment(sqsQueueMetrics.failed, this.metricsTags, { jiraHost: context.payload.jiraHost });
 			} else {
 				context.log.warn({ err }, "Expected exception while executing SQS message. Not an error, deleting the message.");
 			}

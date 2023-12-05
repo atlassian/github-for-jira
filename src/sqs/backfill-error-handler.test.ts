@@ -44,7 +44,7 @@ describe("backfillErrorHandler", () => {
 		subscription = ret.subscription;
 		repoSyncState = ret.repoSyncState!;
 
-		task = { task: "commit", repositoryId: repoSyncState?.repoId, repository: _.cloneDeep(TEST_REPO) };
+		task = { task: "commit", repositoryId: repoSyncState.repoId, repository: _.cloneDeep(TEST_REPO) };
 		sendMessageMock = jest.fn();
 	});
 

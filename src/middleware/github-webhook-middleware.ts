@@ -21,13 +21,13 @@ export const LOGGER_NAME = "github.webhooks";
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
 // A new Sentry hub is assigned to context.sentry and can be used later to add context to the error message.
-const withSentry = function(callback: (context: WebhookContext<{ action?: string }>) => Promise<void>) {
+const withSentry = function(callback: (context: WebhookContext<{ action?: string } | undefined>) => Promise<void>) {
 	return async (context: WebhookContext<{ action?: string }>) => {
 		context.sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
-		context.sentry?.configureScope((scope) =>
+		context.sentry.configureScope((scope) =>
 			scope.addEventProcessor((event, hint) => AxiosErrorEventDecorator.decorate(event, hint))
 		);
-		context.sentry?.configureScope((scope) =>
+		context.sentry.configureScope((scope) =>
 			scope.addEventProcessor((event, hint) => SentryScopeProxy.processEvent(event, hint))
 		);
 
@@ -36,7 +36,7 @@ const withSentry = function(callback: (context: WebhookContext<{ action?: string
 		} catch (err: unknown) {
 			context.log.error({ err, context }, "Error while processing webhook");
 			emitWebhookFailedMetrics(extractWebhookEventNameFromContext(context), undefined);
-			context.sentry?.captureException(err);
+			context.sentry.captureException(err);
 			throw err;
 		}
 	};
@@ -60,7 +60,7 @@ const isStateChangeBranchCreateOrDeploymentAction = (action: string) =>
 		action
 	);
 
-const extractWebhookEventNameFromContext = (context: WebhookContext<{ action?: string }>): string => {
+const extractWebhookEventNameFromContext = (context: WebhookContext<{ action?: string } | undefined>): string => {
 	let webhookEvent = context.name;
 	if (context.payload?.action) {
 		webhookEvent = `${webhookEvent}.${context.payload.action}`;
@@ -68,7 +68,7 @@ const extractWebhookEventNameFromContext = (context: WebhookContext<{ action?: s
 	return webhookEvent;
 };
 
-const moreWebhookSpecificTags = (webhookContext: WebhookContext<{ deployment_status?: { state?: string } }>): Record<string, string | undefined> => {
+const moreWebhookSpecificTags = (webhookContext: WebhookContext<{ deployment_status?: { state?: string } } | undefined>): Record<string, string | undefined> => {
 	if (webhookContext.name === "deployment_status") {
 		return {
 			deploymentStatusState: webhookContext.payload?.deployment_status?.state
@@ -88,7 +88,7 @@ export const GithubWebhookMiddleware = (
 		sender?: { type?: string; id?: number; login?: string };
 		action?: string;
 		deployment_status?: { state?: string };
-	}>): Promise<void> => {
+	} | undefined>): Promise<void> => {
 		const webhookEvent = extractWebhookEventNameFromContext(context);
 
 		// Metrics for webhook payload size
@@ -102,7 +102,7 @@ export const GithubWebhookMiddleware = (
 			action: context.payload?.action,
 			id: context.id,
 			repo: context.payload?.repository ? {
-				owner: context.payload.repository?.owner?.login,
+				owner: context.payload.repository.owner?.login,
 				repo: context.payload.repository.name
 			} : undefined,
 			payload: context.payload,
@@ -116,7 +116,9 @@ export const GithubWebhookMiddleware = (
 			context.log.info("Halting further execution since no installation id found.");
 			return;
 		}
-		const gitHubInstallationId = Number(payload?.installation?.id);
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+		const gitHubInstallationId = Number(payload.installation?.id);
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 
 		const subscriptions = await Subscription.getAllForInstallation(gitHubInstallationId, gitHubAppId);
@@ -140,7 +142,7 @@ export const GithubWebhookMiddleware = (
 
 		const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 
-		const action = String(payload?.action);
+		const action = String(payload.action);
 		statsd.increment(metricWebhooks.webhookEvent, {
 			name: "webhooks",
 			event: name,
@@ -152,22 +154,22 @@ export const GithubWebhookMiddleware = (
 		// Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.
 		// State change actions are allowed because they're one-time actions, therefore they won’t cause a loop.
 		if (
-			context.payload?.sender?.type === "Bot" &&
+			payload.sender?.type === "Bot" &&
 			!isStateChangeBranchCreateOrDeploymentAction(action) &&
 			!isStateChangeBranchCreateOrDeploymentAction(context.name)
 		) {
 			context.log.info(
 				{
 					noop: "bot",
-					botId: context.payload?.sender?.id,
-					botLogin: context.payload?.sender?.login
+					botId: payload.sender.id,
+					botLogin: payload.sender.login
 				},
 				"Halting further execution since the sender is a bot and action is not a state change nor a deployment"
 			);
 			return;
 		}
 
-		if (isFromIgnoredRepo(context.payload)) {
+		if (isFromIgnoredRepo(payload)) {
 			context.log.info(
 				{
 					installation_id: context.payload?.installation?.id,
@@ -232,6 +234,7 @@ export const GithubWebhookMiddleware = (
 			const jiraClient = await getJiraClient(
 				jiraHost,
 				gitHubInstallationId,
+				// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 				context.gitHubAppConfig?.gitHubAppId,
 				context.log
 			);
