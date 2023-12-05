@@ -130,7 +130,7 @@ describe("Discovery Queue Test - GitHub Client", () => {
 			const subscription = await Subscription.getSingleInstallation(jiraHost, TEST_INSTALLATION_ID, undefined);
 			expect(subscription).toBeTruthy();
 			const states = await RepoSyncState.findAllFromSubscription(subscription!, 100, 0, [["id", "ASC"]]);
-			expect(states?.length).toBe(2);
+			expect(states.length).toBe(2);
 		});
 	});
 
@@ -153,7 +153,7 @@ describe("Discovery Queue Test - GitHub Client", () => {
 			const subscription = await Subscription.getSingleInstallation(jiraHost, TEST_INSTALLATION_ID, gitHubServerApp.id);
 			expect(subscription).toBeTruthy();
 			const states = await RepoSyncState.findAllFromSubscription(subscription!, 100, 0, [["id", "ASC"]]);
-			expect(states?.length).toBe(2);
+			expect(states.length).toBe(2);
 		});
 	});
 });

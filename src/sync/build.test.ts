@@ -83,6 +83,7 @@ describe("sync/builds", () => {
 
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 		githubNock
 			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=21`)
@@ -137,6 +138,7 @@ describe("sync/builds", () => {
 	it("should not explode when returned payload doesn't have head_commit", async () => {
 		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
@@ -202,6 +204,7 @@ describe("sync/builds", () => {
 			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(NUMBER_OF_PARALLEL_FETCHES);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
@@ -225,6 +228,7 @@ describe("sync/builds", () => {
 		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		githubNock
 			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=6`)
 			.reply(200, []);
@@ -236,6 +240,7 @@ describe("sync/builds", () => {
 	it("should sync multiple builds to Jira when they contain issue keys", async () => {
 		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
@@ -308,6 +313,7 @@ describe("sync/builds", () => {
 
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 		githubNock
 			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=21`)
@@ -329,6 +335,7 @@ describe("sync/builds", () => {
 	it("should not call Jira if no data is returned", async () => {
 		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		githubNock
 			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=21`)

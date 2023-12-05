@@ -120,4 +120,21 @@ describe("Jira axios instance", () => {
 		expect(error?.message).toEqual("Error executing Axios Request HTTP 404 - Bad REST path, or Jira instance not found, renamed or temporarily suspended.");
 	});
 
+	describe("when having a rate limited", () => {
+		it("should extract the retry after header if present", async () => {
+			const requestPayload = "TestRequestPayload";
+			jiraNock.post("/foo/bar", requestPayload)
+				.reply(429, "", {
+					"Retry-After": "100"
+				});
+
+			await expect(getAxiosInstance(jiraHost, "secret", getLogger("test")).post("/foo/bar", requestPayload))
+				.rejects.toMatchObject({
+					status: 429,
+					retryAfterInSeconds: 100
+				});
+
+		});
+	});
+
 });

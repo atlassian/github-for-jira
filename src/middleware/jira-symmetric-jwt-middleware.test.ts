@@ -240,8 +240,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 					authorization: `JWT ${await generateJwt()}`
 				});
 
-			expect(await checkGenericContainerActionUrl(
-				"https://test-github-app-instance.com/jira/workspaces/search"))
+			expect(checkGenericContainerActionUrl("https://test-github-app-instance.com/jira/workspaces/search"))
 				.toBeTruthy();
 		});
 
@@ -267,8 +266,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 					)}`
 				});
 
-			expect(await checkGenericContainerActionUrl(
-				"https://test-github-app-instance.com/jira/workspaces/repositories/search?searchQuery=atlas"))
+			expect(checkGenericContainerActionUrl("https://test-github-app-instance.com/jira/workspaces/repositories/search?searchQuery=atlas"))
 				.toBeTruthy();
 		});
 
@@ -290,7 +288,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 					authorization: `JWT ${await generateJwt()}`
 				});
 
-			expect(await checkGenericContainerActionUrl("https://test-github-app-instance.com/jira/workspaces/repositories/associate")).toBeTruthy();
+			expect(checkGenericContainerActionUrl("https://test-github-app-instance.com/jira/workspaces/repositories/associate")).toBeTruthy();
 		});
 
 		it("should return false for create branch", async () => {
@@ -302,8 +300,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 						githubToken: "random-token"
 					}));
 
-			expect(await checkGenericContainerActionUrl(
-				"https://test-github-app-instance.com/create-branch-options"))
+			expect(checkGenericContainerActionUrl("https://test-github-app-instance.com/create-branch-options"))
 				.toBeFalsy();
 		});
 	});
@@ -339,7 +336,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 					authorization: `JWT ${await generateJwt()}`
 				});
 
-			expect(await getTokenType("/jira/workspaces/search", "GET")).toEqual("normal");
+			expect(getTokenType("/jira/workspaces/search", "GET")).toEqual("normal");
 		});
 
 		it("should return normal tokenType for search repositories", async () => {
@@ -364,7 +361,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 					)}`
 				});
 
-			expect(await getTokenType("/jira/workspaces/repositories/search?searchQuery=atlas", "GET")).toEqual("normal");
+			expect(getTokenType("/jira/workspaces/repositories/search?searchQuery=atlas", "GET")).toEqual("normal");
 		});
 
 		it("should return normal tokenType for associate repository", async () => {
@@ -385,7 +382,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 					authorization: `JWT ${await generateJwt()}`
 				});
 
-			expect(await getTokenType("/jira/workspaces/repositories/associate", "POST")).toEqual("normal");
+			expect(getTokenType("/jira/workspaces/repositories/associate", "POST")).toEqual("normal");
 		});
 
 		it("should return context tokenType for create branch", async () => {
@@ -397,7 +394,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 						githubToken: "random-token"
 					}));
 
-			expect(await getTokenType("/create-branch-options", "GET")).toEqual("context");
+			expect(getTokenType("/create-branch-options", "GET")).toEqual("context");
 		});
 	});
 

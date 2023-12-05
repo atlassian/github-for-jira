@@ -60,6 +60,7 @@ describe("SQS", () => {
 	});
 
 	afterEach(async () => {
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		if (queue) {
 			await queue.stop();
 			await queue.purgeQueue();
