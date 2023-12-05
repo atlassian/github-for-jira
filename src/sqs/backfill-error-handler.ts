@@ -35,7 +35,7 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 			isFailure: false,
 			statusCode: cause.status,
 			source: "github",
-			errorName: cause.constructor?.name
+			errorName: cause.constructor.name
 		};
 	}
 
@@ -56,7 +56,7 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 			isFailure: false,
 			statusCode: cause.status,
 			source: "github",
-			errorName: cause.constructor?.name
+			errorName: cause.constructor.name
 		};
 	}
 
@@ -68,7 +68,7 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 			isFailure: false,
 			statusCode: cause.status,
 			source: "github",
-			errorName: cause.constructor?.name
+			errorName: cause.constructor.name
 		};
 	}
 
@@ -79,9 +79,9 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 		await markCurrentTaskAsFailedAndContinue(context.payload, task, false, sendSQSBackfillMessage, log, cause);
 		return {
 			isFailure: false,
-			statusCode: parseInt(cause["status"]),
+			statusCode: parseInt(String(cause["status"])),
 			source: "github",
-			errorName: cause.constructor?.name
+			errorName: cause.constructor.name
 		};
 	}
 

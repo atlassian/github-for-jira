@@ -397,7 +397,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 				maxAttempts: String(this.maxAttempts),
 				remainingBeforeDlq: String(this.maxAttempts - context.receiveCount),
 				reachedRetryLimit: String(this.isMessageReachedRetryLimit(context))
-			}, { jiraHost: context.payload?.jiraHost });
+			}, { jiraHost: context.payload.jiraHost });
 
 		} catch (errorHandlingException: unknown) {
 			context.log.error({ err: errorHandlingException, originalError: err }, "Error while performing error handling on SQS message");
