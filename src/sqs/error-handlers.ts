@@ -30,7 +30,7 @@ export const handleUnknownError: ErrorHandler<BaseMessagePayload> = <MessagePayl
 		retryable: true,
 		retryDelaySec: delaySec,
 		isFailure: true,
-		statusCode: parseInt(String(err["status"])),
+		statusCode: parseInt(String(err["status"])) || err.message || err.name,
 		source: err instanceof GithubClientError ? "github" : (err instanceof JiraClientError ? "jira" : "other"),
 		errorName: err.constructor.name
 	});
@@ -92,7 +92,7 @@ const maybeHandleNonRetryableResponseCode = <MessagePayload extends BaseMessageP
 		return {
 			retryable: false,
 			isFailure: false,
-			statusCode: status,
+			statusCode: status || error.message || error.name,
 			source: error instanceof GithubClientError ? "github" : (error instanceof JiraClientError ? "jira" : "other"),
 			errorName: error.constructor.name
 		};
