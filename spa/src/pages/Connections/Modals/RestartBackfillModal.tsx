@@ -1,8 +1,10 @@
+import { useState } from "react";
 import Modal, { ModalBody, ModalFooter, ModalHeader, ModalTitle } from "@atlaskit/modal-dialog";
 import Button from "@atlaskit/button";
 import { SuccessfulConnection } from "../../../../../src/rest-interfaces";
 import { Checkbox } from "@atlaskit/checkbox";
-import { useState } from "react";
+import { Label } from "@atlaskit/form";
+// import { DatePicker } from "@atlaskit/datetime-picker";
 
 /**
  * NOTE: While testing in dev mode, please disable the React.StrictMode first,
@@ -24,12 +26,21 @@ const RestartBackfillModal = ({ subscription, setIsModalOpened }: {
 		<>
 			<Modal onClose={() => setIsModalOpened(false)}>
 				<ModalHeader>
-					<ModalTitle appearance="warning">Backfill your data</ModalTitle>
+					<ModalTitle>Backfill your data</ModalTitle>
 				</ModalHeader>
 				<ModalBody>
 					<p>
 						Backfilling data can take a long time, so we’ll only backfill your data from the last 6 months.
 						If you want to backfill more data, choose a date below. Branches will be backfilled regardless of their age.
+					</p>
+					<p>
+						<Label htmlFor="backfill-date-picker">Choose date</Label>
+						{/* TODO: This datepicker is throwing a dependency issue saying module not found, add it later when fixed*/}
+						{/*<DatePicker*/}
+						{/*	selectProps={{*/}
+						{/*		inputId: "default-date-picker-example",*/}
+						{/*	}}*/}
+						{/*/>*/}
 					</p>
 					<p>
 						<Checkbox
