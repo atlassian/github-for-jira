@@ -1,6 +1,8 @@
 import Modal, { ModalBody, ModalFooter, ModalHeader, ModalTitle } from "@atlaskit/modal-dialog";
 import Button from "@atlaskit/button";
 import { SuccessfulConnection } from "../../../../../src/rest-interfaces";
+import { Checkbox } from "@atlaskit/checkbox";
+import { useState } from "react";
 
 /**
  * NOTE: While testing in dev mode, please disable the React.StrictMode first,
@@ -10,9 +12,11 @@ const RestartBackfillModal = ({ subscription, setIsModalOpened }: {
 	subscription: SuccessfulConnection,
 	setIsModalOpened: (x: boolean) => void
 }) => {
+	const [restartFromDateCheck, setRestartFromDateCheck] = useState(false);
+
 	const backfill = () => {
 		// TODO: API call to disconnect this subscription
-		console.log("Backfill for", subscription.account.login);
+		console.log("Backfill for", subscription.account.login, restartFromDateCheck);
 		setIsModalOpened(false);
 	};
 
@@ -26,6 +30,13 @@ const RestartBackfillModal = ({ subscription, setIsModalOpened }: {
 					<p>
 						Backfilling data can take a long time, so we’ll only backfill your data from the last 6 months.
 						If you want to backfill more data, choose a date below. Branches will be backfilled regardless of their age.
+					</p>
+					<p>
+						<Checkbox
+							onChange={() => setRestartFromDateCheck(!restartFromDateCheck)}
+							label={`Restart the backfill from today to this date`}
+							name="restart-from-selected-date"
+						/>
 					</p>
 				</ModalBody>
 				<ModalFooter>
