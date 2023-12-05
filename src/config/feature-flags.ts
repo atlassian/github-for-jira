@@ -24,7 +24,8 @@ export enum BooleanFlags {
 	ENABLE_5KU_BACKFILL_PAGE = "enable-5ku-experience-backfill-page",
 	USE_DYNAMODB_TO_PERSIST_AUDIT_LOG = "use-dynamodb-to-persist-audit-log",
 	USE_CUSTOM_ROOT_CA_BUNDLE = "use-custom-root-ca-bundle",
-	GENERATE_CORE_HEAP_DUMPS_ON_LOW_MEM = "generate-core-heap-dumps-on-low-mem"
+	GENERATE_CORE_HEAP_DUMPS_ON_LOW_MEM = "generate-core-heap-dumps-on-low-mem",
+	USE_RATELIMIT_ON_JIRA_CLIENT = "use-ratelimit-on-jira-client"
 }
 
 export enum StringFlags {

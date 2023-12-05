@@ -32,7 +32,7 @@ Create a new [GitHub App](https://github.com/settings/apps), setting the followi
 
 - **GitHub App name**: Anything you want, but it must be unique across GitHub
 - **Homepage URL**: `https://github.com/apps/GITHUB_APP_NAME` (The full URL to your GitHub App’s website)
-- **Callback URL**: `https://DOMAIN/github/callback`
+- **Callback URL**: `https://DOMAIN/rest/app/cloud/github-callback`
 - **Setup URL**: `https://DOMAIN/github/setup`
 - **Webhook URL**: `https://DOMAIN/github/webhooks`
 - **Webhook Secret**: `development`
