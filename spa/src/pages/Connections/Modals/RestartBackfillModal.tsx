@@ -38,7 +38,7 @@ const RestartBackfillModal = ({ subscription, setIsModalOpened }: {
 						{/* TODO: This datepicker is throwing a dependency issue saying module not found, add it later when fixed*/}
 						{/*<DatePicker*/}
 						{/*	selectProps={{*/}
-						{/*		inputId: "default-date-picker-example",*/}
+						{/*		inputId: "backfill-date-picker",*/}
 						{/*	}}*/}
 						{/*/>*/}
 					</p>
