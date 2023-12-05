@@ -62,6 +62,7 @@ export const webhookMetricWrapper = <MessagePayload extends BaseMessagePayload>(
 
 		if (errorHandlingResult.isFailure && (!errorHandlingResult.retryable || context.lastAttempt)) {
 			context.log.error({ error }, `${webhookName} webhook processing failed and won't be retried anymore`);
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 			emitWebhookFailedMetrics(webhookName, context.payload?.jiraHost);
 		}
 

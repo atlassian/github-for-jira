@@ -36,7 +36,7 @@ const SEARCH_CONNECTED_WORKSPACES_ENDPOINT = `${envVars.APP_URL}/jira/workspaces
 const SEARCH_REPOSITORIES_ENDPOINT = `${envVars.APP_URL}/jira/workspaces/repositories/search`;
 const ASSOCIATE_REPOSITORY_ENDPOINT = `${envVars.APP_URL}/jira/workspaces/repositories/associate`;
 
-export const getGenericContainerUrls = async (): Promise<string[]> => {
+export const getGenericContainerUrls = (): string[] => {
 	return [
 		SEARCH_CONNECTED_WORKSPACES_ENDPOINT,
 		SEARCH_REPOSITORIES_ENDPOINT,
