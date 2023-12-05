@@ -99,7 +99,7 @@ export interface ErrorHandlingResult {
 	 * the http status of error
 	 * For metrics only, NOT used for logic handling.
 	 */
-	statusCode?: number;
+	statusCode?: number | string;
 
 	/**
 	 * the source of error
