@@ -119,6 +119,8 @@ export interface SQSContext {
 	log: Logger;
 }
 
+
+
 export type BaseMessagePayload = {
 	jiraHost: string,
 	installationId: number,
