@@ -528,7 +528,7 @@ environmentOverrides:
         type: dedicated-rds
         attributes:
           parameters:
-            InstanceClass: db.t2.medium
+            DBInstanceClass: db.t2.medium
           # Adding read replica in staging as it's not enabled by default so we can read state
             ReadReplica: true
 
