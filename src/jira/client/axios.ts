@@ -105,16 +105,19 @@ const getErrorMiddleware = (logger: Logger) =>
 
 		if (error.response?.status === 429) {
 			return Promise.reject(new JiraClientRateLimitingError(errorMessage, error, status, getRetryAfterInSec(error)));
-		} else {
-			return Promise.reject(new JiraClientError(errorMessage, error, status));
 		}
+
+		return Promise.reject(new JiraClientError(errorMessage, error, status));
 	};
 
 const getRetryAfterInSec = (error: AxiosError): number | undefined => {
-	const retryAfterInSecondsStr = error.response?.headers[	"retry-after"];
+
+	const retryAfterInSecondsStr = error.response?.headers["retry-after"];
 	const retryAfterInSeconds = parseInt(retryAfterInSecondsStr || "unknown");
+
 	if (isNaN(retryAfterInSeconds)) return undefined;
-	else return retryAfterInSeconds;
+
+	return retryAfterInSeconds;
 };
 
 /**
