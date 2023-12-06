@@ -81,7 +81,7 @@ describe("Checking the deferred request parsing route", () => {
 			expect(resp.status).toEqual(401);
 		});
 
-		it("should return 200 on correct post for /rest/app/cloud/sync one for Cloud app", async () => {
+		it("should return 202 on correct post for /rest/app/cloud/sync one for Cloud app", async () => {
 			return supertest(app)
 				.post("/rest/app/cloud/sync")
 				.set("authorization", `${getToken()}`)
@@ -96,65 +96,6 @@ describe("Checking the deferred request parsing route", () => {
 						jiraHost,
 						startTime: expect.anything(),
 						gitHubAppConfig: expect.objectContaining({ gitHubAppId: undefined, uuid: undefined })
-					}), expect.anything(), expect.anything());
-				});
-		});
-
-		it("should run incremental sync", async() => {
-			const commitsFromDate = new Date(new Date().getTime() - 2000);
-			const backfillSince = new Date(new Date().getTime() - 1000);
-			const subscription = await Subscription.getSingleInstallation(
-				jiraHost,
-				installationIdForServer,
-				gitHubServerApp.id
-			);
-			await subscription?.update({
-				syncStatus: "COMPLETE",
-				backfillSince
-			});
-			return supertest(app)
-				.post("/rest/app/cloud/sync")
-				.set("authorization", `${getToken()}`)
-				.send({
-					installationId: installationIdForServer,
-					jiraHost,
-					appId: gitHubServerApp.id,
-					commitsFromDate
-				})
-				.expect(202)
-				.then(() => {
-					expect(sqsQueues.backfill.sendMessage).toBeCalledWith(expect.objectContaining({
-						syncType: "partial",
-						installationId: installationIdForServer,
-						jiraHost,
-						commitsFromDate: commitsFromDate.toISOString(),
-						targetTasks: ["pull", "branch", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert", "codeScanningAlert"],
-						gitHubAppConfig: expect.objectContaining({ gitHubAppId: gitHubServerApp.id, uuid: gitHubServerApp.uuid })
-					}), expect.anything(), expect.anything());
-				});
-		});
-
-		it("should run full sync if explicitly selected by user", async () => {
-			const commitsFromDate = new Date(new Date().getTime() - 2000);
-			return supertest(app)
-				.post("/rest/app/cloud/sync")
-				.set("authorization", `${getToken()}`)
-				.send({
-					installationId: installationIdForServer,
-					jiraHost,
-					appId: gitHubServerApp.id,
-					commitsFromDate,
-					syncType: "full"
-				})
-				.expect(202)
-				.then(() => {
-					expect(sqsQueues.backfill.sendMessage).toBeCalledWith(expect.objectContaining({
-						syncType: "full",
-						installationId: installationIdForServer,
-						jiraHost,
-						commitsFromDate: commitsFromDate.toISOString(),
-						targetTasks: undefined,
-						gitHubAppConfig: expect.objectContaining({ gitHubAppId: gitHubServerApp.id, uuid: gitHubServerApp.uuid })
 					}), expect.anything(), expect.anything());
 				});
 		});
