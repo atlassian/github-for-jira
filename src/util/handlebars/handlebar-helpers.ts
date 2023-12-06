@@ -3,7 +3,9 @@ import { isPlainObject } from "lodash";
 import { ConnectionSyncStatus } from "utils/github-installations-helper";
 
 export const concatStringHelper = (...strings: string[]) => strings.filter((arg: unknown) => typeof arg !== "object").join(" ");
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 export const toLowercaseHelper = (str?: string) => !isPlainObject(str) && str?.toString?.().toLowerCase() || "";
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 export const replaceSpaceWithHyphenHelper = (str?: string) => !isPlainObject(str) && str?.toString?.().replace(/ /g, "-") || "";
 export const toISOStringHelper = (date?: Date) => date ? date.toISOString() : undefined;
 
@@ -62,7 +64,7 @@ export const registerHandlebarsHelpers = () => {
 	hbs.registerHelper("isModal", (modalId) => modalId === "jiraDomainModal");
 
 
-	hbs.registerHelper("isMissingPermissions", (syncWarning: string) => syncWarning?.includes("Invalid permissions for"));
+	hbs.registerHelper("isMissingPermissions", (syncWarning?: string) => syncWarning?.includes("Invalid permissions for"));
 
 	hbs.registerHelper(
 		"disableDeleteSubscription",

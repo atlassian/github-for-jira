@@ -125,10 +125,7 @@
 			"src/jira/**",
 			"src/models/**",
 			"src/sync/**",
-			"src/transforms/**",
-			"src/util/**",
-			"src/sqs/**",
-			"src/middleware/**"
+			"src/transforms/**"
 		],
 		"rules": {
 			// To be removed later

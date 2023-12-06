@@ -24,13 +24,13 @@ export enum BooleanFlags {
 	ENABLE_5KU_BACKFILL_PAGE = "enable-5ku-experience-backfill-page",
 	USE_DYNAMODB_TO_PERSIST_AUDIT_LOG = "use-dynamodb-to-persist-audit-log",
 	USE_CUSTOM_ROOT_CA_BUNDLE = "use-custom-root-ca-bundle",
-	GENERATE_CORE_HEAP_DUMPS_ON_LOW_MEM = "generate-core-heap-dumps-on-low-mem"
+	GENERATE_CORE_HEAP_DUMPS_ON_LOW_MEM = "generate-core-heap-dumps-on-low-mem",
+	USE_RATELIMIT_ON_JIRA_CLIENT = "use-ratelimit-on-jira-client"
 }
 
 export enum StringFlags {
 	BLOCKED_INSTALLATIONS = "blocked-installations",
 	LOG_LEVEL = "log-level",
-	HEADERS_TO_ENCRYPT = "headers-to-encrypt",
 	SEND_ALL = "send-all"
 }
 
@@ -40,7 +40,6 @@ export enum NumberFlags {
 	PREEMPTIVE_RATE_LIMIT_THRESHOLD = "preemptive-rate-limit-threshold",
 	NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL = "number-of-build-to-fetch-in-parallel",
 	BACKFILL_PAGE_SIZE = "backfill-page-size",
-	BACKFILL_MAX_SUBTASKS = "backfill-max-subtasks",
 	INSTALLATION_TOKEN_CACHE_MAX_SIZE = "installation-token-cache-max-size"
 }
 
