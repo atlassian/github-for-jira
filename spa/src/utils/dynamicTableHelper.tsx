@@ -8,6 +8,8 @@ import { ThemeAppearance } from "@atlaskit/lozenge/dist/types/Lozenge";
 import { css } from "@emotion/react";
 import EditIcon from "@atlaskit/icon/glyph/edit";
 import Button from "@atlaskit/button";
+import MoreIcon from "@atlaskit/icon/glyph/more";
+import DropdownMenu, { DropdownItem, DropdownItemGroup } from "@atlaskit/dropdown-menu";
 
 type Row = {
 	key: string;
@@ -67,6 +69,11 @@ const createHead = (withWidth: boolean) => {
 				key: "status",
 				content: "Status",
 				width: withWidth ? 30 : undefined,
+			},
+			{
+				key: "settings",
+				content: "Settings",
+				width: withWidth ? 10: undefined
 			}
 		],
 	};
@@ -156,6 +163,31 @@ export const getGHSubscriptionsRows = (
 							</div>
 						</div>
 					),
+				},{
+					key: cloudConnection.id,
+					content: (
+						<div css={rowWrapperStyle}>
+							<DropdownMenu
+								trigger={({ triggerRef, ...props }) => (
+									<Button
+										{...props}
+										appearance="subtle"
+										iconBefore={<MoreIcon label="more" size="small"/>}
+										ref={triggerRef}
+									/>
+								)}
+							>
+								<DropdownItemGroup>
+									<DropdownItem
+										href={cloudConnection.html_url}
+										target="_blank"
+									>
+										Configure
+									</DropdownItem>
+								</DropdownItemGroup>
+							</DropdownMenu>
+						</div>
+					)
 				}
 			],
 		})
