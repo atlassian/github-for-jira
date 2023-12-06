@@ -5,7 +5,7 @@ import { Subscription } from "models/subscription";
 import { findOrStartSync } from "~/src/sync/sync-utils";
 import { determineSyncTypeAndTargetTasks } from "~/src/util/github-sync-helper";
 import { BaseLocals } from "..";
-import { InvalidArgumentError, RestApiError } from "~/src/config/errors";
+import { RestApiError } from "~/src/config/errors";
 import { RestSyncReqBody } from "~/src/rest-interfaces";
 
 
@@ -45,13 +45,11 @@ const restSyncPost = async (
 				},
 				"Subscription not found when retrying sync."
 			);
-			throw new RestApiError(400, "RESOURCE_NOT_FOUND", "Subscription not found, cannot resync.");
+			throw new RestApiError(400, "INVALID_OR_MISSING_ARG", "Subscription not found, cannot resync.");
 		}
 
 		if (commitsFromDate && commitsFromDate.valueOf() > Date.now()) {
-			throw new InvalidArgumentError(
-				"Invalid date value, cannot select a future date!"
-			);
+			throw new RestApiError(400, "INVALID_OR_MISSING_ARG", "Invalid date value, cannot select a future date");
 		}
 
 		const { syncType, targetTasks } = determineSyncTypeAndTargetTasks(
