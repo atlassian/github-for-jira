@@ -1,11 +1,11 @@
-import { Subscription, SyncStatus } from "models/subscription";
+import { Subscription } from "models/subscription";
 import * as Sentry from "@sentry/node";
 import { NextFunction, Request, Response } from "express";
 import { findOrStartSync } from "~/src/sync/sync-utils";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
-import { TaskType, SyncType } from "~/src/sync/sync.types";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { determineSyncTypeAndTargetTasks, getStartTimeInDaysAgo } from "../../../util/github-sync-helper";
 
 export const JiraSyncPost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { installationId: gitHubInstallationId, appId: gitHubAppId, syncType: syncTypeFromReq, source } = req.body;
@@ -35,7 +35,7 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 			return;
 		}
 
-		const { syncType, targetTasks } = await determineSyncTypeAndTargetTasks(syncTypeFromReq, subscription);
+		const { syncType, targetTasks } = determineSyncTypeAndTargetTasks(syncTypeFromReq, subscription);
 		await findOrStartSync(subscription, req.log, syncType, commitsFromDate || subscription.backfillSince, targetTasks, { source });
 
 		await sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
@@ -63,27 +63,4 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 
 		next(new Error("Unauthorized"));
 	}
-};
-
-const MILLISECONDS_IN_ONE_DAY = 24 * 60 * 60 * 1000;
-const getStartTimeInDaysAgo = (commitsFromDate: Date | undefined) => {
-	if (commitsFromDate === undefined) return undefined;
-	return Math.floor((Date.now() -  commitsFromDate?.getTime()) / MILLISECONDS_IN_ONE_DAY);
-};
-
-type SyncTypeAndTargetTasks = {
-	syncType: SyncType,
-	targetTasks: TaskType[] | undefined,
-};
-
-const determineSyncTypeAndTargetTasks = async (syncTypeFromReq: string, subscription: Subscription): Promise<SyncTypeAndTargetTasks> => {
-	if (syncTypeFromReq === "full") {
-		return { syncType: "full", targetTasks: undefined };
-	}
-
-	if (subscription.syncStatus === SyncStatus.FAILED) {
-		return { syncType: "full", targetTasks: undefined };
-	}
-
-	return { syncType: "partial", targetTasks: ["pull", "branch", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert", "codeScanningAlert"] };
 };

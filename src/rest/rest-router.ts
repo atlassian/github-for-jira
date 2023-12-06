@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { JwtHandler } from "./middleware/jwt/jwt-handler";
+import { body } from "express-validator";
 import { OAuthRouter } from "./routes/oauth";
 import { OAuthCallbackHandler, OrgsInstalledHandler, OrgsInstallRequestedHandler } from "./routes/github-callback";
 import { GitHubOrgsRouter } from "./routes/github-orgs";
@@ -10,6 +11,7 @@ import { RestErrorHandler } from "./middleware/error";
 import { JiraAdminEnforceMiddleware } from "./middleware/jira-admin/jira-admin-check";
 import { AnalyticsProxyHandler } from "./routes/analytics-proxy";
 import { SubscriptionsRouter } from "./routes/subscriptions";
+import { SyncRouter } from "./routes/sync";
 import { DeferredRouter } from "./routes/deferred";
 
 export const RestRouter = Router({ mergeParams: true });
@@ -20,6 +22,17 @@ const subRouter = Router({ mergeParams: true });
  * Separate route which returns the list of both cloud and server subscriptions
  */
 RestRouter.use("/subscriptions", JwtHandler, JiraAdminEnforceMiddleware, SubscriptionsRouter);
+
+/**
+ * Separate route for SPA to start backfill of both cloud and server subscriptions
+ */
+RestRouter.use(
+	"/sync",
+	body("commitsFromDate").optional().isISO8601(),
+	JwtHandler,
+	JiraAdminEnforceMiddleware,
+	SyncRouter
+);
 
 /**
  * For cloud flow, the path will be `/rest/app/cloud/XXX`,
