@@ -19,7 +19,7 @@ const logger = getLogger("url-params");
 export const urlParamsMiddleware = (config: AxiosRequestConfig): AxiosRequestConfig => {
 	const uri = () => `${config.baseURL || ""}${config.url || ""}`;
 	// If uri is empty and there's no url params, just skip this middleware
-	if (!uri()?.length) {
+	if (!uri().length) {
 		return config;
 	}
 
@@ -35,7 +35,7 @@ export const urlParamsMiddleware = (config: AxiosRequestConfig): AxiosRequestCon
 			}
 			const key = `{${k}}`;
 			const value = encodeURIComponent(String(v));
-			if (!value.length || !uri()?.includes(key)) {
+			if (!value.length || !uri().includes(key)) {
 				logger.error({ key, value, config }, "URL Param doesn't exist in url path - ignoring");
 				return;
 			}

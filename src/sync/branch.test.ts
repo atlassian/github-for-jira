@@ -133,6 +133,7 @@ describe("sync/branches", () => {
 				.create();
 
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 		});
 
@@ -292,6 +293,7 @@ describe("sync/branches", () => {
 				.create();
 			gitHubServerApp = builderResult.gitHubServerApp!;
 
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		});
 

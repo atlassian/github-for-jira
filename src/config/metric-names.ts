@@ -16,6 +16,7 @@ export const sqsQueueMetrics = {
 	received: `${server}.sqs.queue.received`,
 	completed: `${server}.sqs.queue.success`,
 	failed: `${server}.sqs.queue.failed`,
+	exception: `${server}.sqs.queue.exception`,
 	sent: `${server}.sqs.queue.sent`,
 	deleted: `${server}.sqs.queue.deleted`,
 	duration: `${server}.sqs.queue.duration`

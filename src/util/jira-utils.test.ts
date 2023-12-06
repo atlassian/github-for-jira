@@ -116,7 +116,7 @@ describe("Jira Utils", () => {
 			["JIRA-123abcd JIRA-456 abcd", "JIRA-456"]
 		])("matching with whole word", (full, ...issueKeys) => {
 			it(`should match "${full}" to "${issueKeys.toString()}"`, () => {
-				expect(jiraIssueKeyParser(full)).toEqual(issueKeys ? issueKeys : []);
+				expect(jiraIssueKeyParser(full)).toEqual(issueKeys);
 			});
 		});
 	});

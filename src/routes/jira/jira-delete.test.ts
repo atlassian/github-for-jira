@@ -34,6 +34,7 @@ describe("DELETE /jira/configuration", () => {
 		};
 
 		mocked(Subscription.getSingleInstallation).mockResolvedValue(subscription);
+		mocked(Subscription.getAllForHost).mockResolvedValue([]);
 		mocked(Installation.getForHost).mockResolvedValue(installation);
 	});
 

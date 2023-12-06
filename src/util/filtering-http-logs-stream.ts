@@ -20,7 +20,7 @@ export const filteringHttpLogsStream = (filteringLoggerName: string, out: Writab
 		write: (chunk: unknown, encoding: BufferEncoding, next) => {
 			//TODO Remove this code when there will be convenient way to do it in Probot.
 			//See https://github.com/probot/probot/issues/1577
-			if (String(chunk)?.match(`${filteringLoggerName}.*(GET|POST|DELETE|PUT|PATCH) /`)) {
+			if (String(chunk).match(`${filteringLoggerName}.*(GET|POST|DELETE|PUT|PATCH) /`)) {
 				out.write(chunk, encoding);
 			}
 			next();

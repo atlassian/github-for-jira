@@ -115,6 +115,7 @@ describe("sync/pull-request", () => {
 			it("should sync to Jira when Pull Request Nodes have jira references", async () => {
 
 				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 				githubNock
 					.post("/graphql")
 					.query(true)
@@ -200,6 +201,7 @@ describe("sync/pull-request", () => {
 		});
 
 		it("should not sync if nodes are empty", async () => {
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubNock
 				.post("/graphql")

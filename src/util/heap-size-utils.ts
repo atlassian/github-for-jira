@@ -20,6 +20,7 @@ export const hasEnoughFreeHeap = (notEnoughHeapPctThreshold: number, logger: Log
 	if (freeHeapPctBeforeGc < notEnoughHeapPctThreshold) {
 		const timestampBeforeGc = Date.now();
 		logger.info(`Free heap size is less than ${notEnoughHeapPctThreshold}. Triggering GC...`);
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		global.gc?.call(global);
 		const timestampAfterGc = Date.now();
 
