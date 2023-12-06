@@ -59,12 +59,12 @@ const createHead = (withWidth: boolean) => {
 				width: withWidth ? 30 : undefined,
 			},
 			{
-				key: "party",
+				key: "repos",
 				content: "Repos",
 				width: withWidth ? 30 : undefined,
 			},
 			{
-				key: "term",
+				key: "status",
 				content: "Status",
 				width: withWidth ? 30 : undefined,
 			}
