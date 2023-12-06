@@ -76,7 +76,7 @@ describe("Checking the deferred request parsing route", () => {
 	describe("cloud", () => {
 		it("should throw 401 error when no github token is passed", async () => {
 			const resp = await supertest(app)
-				.get(`/rest/app/cloud/sync`);
+				.get("/rest/app/cloud/sync");
 
 			expect(resp.status).toEqual(401);
 		});
