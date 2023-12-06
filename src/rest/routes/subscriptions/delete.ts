@@ -11,7 +11,7 @@ import { Subscription } from "models/subscription";
 export const SubscriptionDeleteRoute = errorWrapper("SubscriptionDelete", async (req: Request, res: Response) => {
 	// TODO: Get the github app id for GHE subscriptions
 	const gitHubAppId = undefined;
-	const { installationId: gitHubInstallationId }: { installationId: number; } = req.body as { installationId: number };
+	const gitHubInstallationId: number = Number(req.params.installationId);
 	const { githubToken, jiraHost } = res.locals as { githubToken: string, jiraHost: string; };
 	const metrics = {
 		trigger: "github-subscription-delete-spa"

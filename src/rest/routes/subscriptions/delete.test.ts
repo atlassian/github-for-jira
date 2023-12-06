@@ -36,9 +36,9 @@ describe("delete-subscription", () => {
 		});
 	});
 
-	it("Should 400 when missing body", async () => {
+	it("Should 400 when no proper installationId is passed", async () => {
 		const resp = await supertest(app)
-			.delete("/rest/app/cloud/subscriptions")
+			.delete("/rest/app/cloud/subscription/random-installation-id")
 			.set("authorization", `${getToken()}`)
 			.set("github-auth", "github-token");
 
@@ -58,10 +58,9 @@ describe("delete-subscription", () => {
 		});
 
 		const resp = await supertest(app)
-			.delete("/rest/app/cloud/subscriptions")
+			.delete("/rest/app/cloud/subscription/" + gitHubInstallationId)
 			.set("authorization", `${getToken()}`)
-			.set("github-auth", "github-token")
-			.send({ installationId: gitHubInstallationId });
+			.set("github-auth", "github-token");
 
 		expect(resp.status).toBe(202);
 		expect(await Subscription.count()).toEqual(0);
@@ -75,12 +74,10 @@ describe("delete-subscription", () => {
 			login: "test-user"
 		});
 
-
 		const resp = await supertest(app)
-			.delete("/rest/app/cloud/subscriptions")
+			.delete("/rest/app/cloud/subscription/" + gitHubInstallationId)
 			.set("authorization", `${getToken()}`)
-			.set("github-auth", "github-token")
-			.send({ installationId: gitHubInstallationId });
+			.set("github-auth", "github-token");
 
 		expect(resp.status).toBe(202);
 		expect(await Subscription.count()).toEqual(0);
@@ -98,10 +95,9 @@ describe("delete-subscription", () => {
 		});
 
 		const resp = await supertest(app)
-			.delete("/rest/app/cloud/subscriptions")
+			.delete("/rest/app/cloud/subscription/" + gitHubInstallationId)
 			.set("authorization", `${getToken()}`)
-			.set("github-auth", "github-token")
-			.send({ installationId: gitHubInstallationId });
+			.set("github-auth", "github-token");
 
 		expect(resp.status).toBe(403);
 		expect(await Subscription.count()).toEqual(1);
@@ -117,11 +113,11 @@ describe("delete-subscription", () => {
 		createGitHubNockGet("/user/memberships/orgs/something-something-test-user", 200, {
 			role: "batman", user: { login: "test-user" }
 		});
+
 		const resp = await supertest(app)
-			.delete("/rest/app/cloud/subscriptions")
+			.delete("/rest/app/cloud/subscription/" + gitHubInstallationId)
 			.set("authorization", `${getToken()}`)
-			.set("github-auth", "github-token")
-			.send({ installationId: gitHubInstallationId });
+			.set("github-auth", "github-token");
 
 		expect(resp.status).toBe(403);
 		expect(await Subscription.count()).toEqual(1);
@@ -129,9 +125,8 @@ describe("delete-subscription", () => {
 
 	it("Should 401 when missing githubToken", async () => {
 		const resp = await supertest(app)
-			.delete("/rest/app/cloud/subscriptions")
-			.set("authorization", `${getToken()}`)
-			.send({ installationId: gitHubInstallationId });
+			.delete("/rest/app/cloud/subscription/" + gitHubInstallationId)
+			.set("authorization", `${getToken()}`);
 
 		expect(resp.status).toBe(401);
 		expect(await Subscription.count()).toEqual(1);

@@ -51,6 +51,6 @@ subRouter.use(GitHubTokenHandler);
 
 subRouter.use("/org", GitHubOrgsRouter);
 
-subRouter.delete("/subscriptions", SubscriptionDeleteRoute);
+subRouter.delete("/subscription/:installationId", SubscriptionDeleteRoute);
 
 subRouter.use(RestErrorHandler);
