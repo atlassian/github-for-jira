@@ -13,6 +13,7 @@ import Connections from "./pages/Connections";
 import ForbiddenState from "./pages/DeferredInstallation/ForbiddenState";
 import ConnectState from "./pages/DeferredInstallation/ConnectState";
 import ErrorState from "./pages/DeferredInstallation/ErrorState";
+import Repositories from "./pages/Repositories";
 
 import * as Sentry from "@sentry/react";
 import { initSentry } from "./sentry";
@@ -47,6 +48,7 @@ const App = () => {
 						<Route path="error" element={<ErrorState />} />
 					</Route>
 					<Route path="deferred" element={<DeferredInstallation />}/>
+					<Route path="repositories" element={<Repositories />}/>
 				</Route>
 			</SentryRoutes>
 		</BrowserRouter>

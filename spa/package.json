@@ -38,6 +38,7 @@
     "@atlaskit/skeleton": "^0.2.3",
     "@atlaskit/spinner": "^15.6.1",
     "@atlaskit/textarea": "^4.7.7",
+    "@atlaskit/textfield": "^6.0.0",
     "@atlaskit/tokens": "^1.11.1",
     "@atlaskit/tooltip": "^17.8.3",
     "@emotion/styled": "^11.11.0",
