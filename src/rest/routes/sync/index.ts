@@ -1,33 +1,28 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import { ParamsDictionary } from "express-serve-static-core";
 import { errorWrapper } from "../../helper";
 import { Subscription } from "models/subscription";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { findOrStartSync } from "~/src/sync/sync-utils";
 import { determineSyncTypeAndTargetTasks } from "~/src/util/github-sync-helper";
 import { BaseLocals } from "..";
-import { InvalidArgumentError } from "~/src/config/errors";
+import { InvalidArgumentError, RestApiError } from "~/src/config/errors";
+import { RestSyncReqBody } from "~/src/rest-interfaces";
 
-interface RequestBody {
-	installationId: number;
-	appId: number;
-	syncType: string;
-	source: string;
-	commitsFromDate: string;
-}
 
 const restSyncPost = async (
-	req: Request<ParamsDictionary, unknown, RequestBody>,
-	res: Response<unknown, BaseLocals>,
-	next: NextFunction
+	req: Request<ParamsDictionary, unknown, RestSyncReqBody>,
+	res: Response<unknown, BaseLocals>
 ) => {
 	//TODO: We are yet to handle enterprise backfill
-	// const cloudOrUUID = req.params.cloudOrUUID;
-	// const gheUUID = cloudOrUUID === "cloud" ? undefined : "some-ghe-uuid";
+	const cloudOrUUID = req.params.cloudOrUUID;
+	const gheUUID = cloudOrUUID === "cloud" ? undefined : req.params.cloudOrUUID;
+	let gitHubAppId : number | undefined = undefined;
+	if (gheUUID) {
+		gitHubAppId = parseFloat(gheUUID);
+	}
 
 	const {
 		installationId: gitHubInstallationId,
-		appId: gitHubAppId,
 		syncType: syncTypeFromReq,
 		source
 	} = req.body;
@@ -35,17 +30,6 @@ const restSyncPost = async (
 	const commitsFromDate = req.body.commitsFromDate
 		? new Date(req.body.commitsFromDate)
 		: undefined;
-
-	const logAdditionalData = await booleanFlag(
-		BooleanFlags.VERBOSE_LOGGING,
-		res.locals.installation.jiraHost
-	);
-
-	logAdditionalData
-		? req.log.info(
-			{ gitHubInstallationId },
-			"verbose logging - Received sync request on rest route")
-		: req.log.info("Received sync request on rest route");
 
 	try {
 		const subscription = await Subscription.getSingleInstallation(
@@ -61,7 +45,7 @@ const restSyncPost = async (
 				},
 				"Subscription not found when retrying sync."
 			);
-			throw new InvalidArgumentError("Subscription not found, cannot resync.");
+			throw new RestApiError(400, "RESOURCE_NOT_FOUND", "Subscription not found, cannot resync.");
 		}
 
 		if (commitsFromDate && commitsFromDate.valueOf() > Date.now()) {
@@ -85,7 +69,7 @@ const restSyncPost = async (
 
 		res.sendStatus(202);
 	} catch (error: unknown) {
-		next(new Error("Unauthorized"));
+		throw new RestApiError(500, "UNKNOWN", "Something went wrong");
 	}
 };
 
