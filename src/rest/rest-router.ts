@@ -11,7 +11,6 @@ import { JiraAdminEnforceMiddleware } from "./middleware/jira-admin/jira-admin-c
 import { AnalyticsProxyHandler } from "./routes/analytics-proxy";
 import { SubscriptionsRouter } from "./routes/subscriptions";
 import { DeferredRouter } from "./routes/deferred";
-import { SubscriptionDeleteRouter } from "~/src/rest/routes/subscriptions/delete";
 
 export const RestRouter = Router({ mergeParams: true });
 
@@ -47,7 +46,7 @@ subRouter.use("/installation", GitHubAppsRoute);
 
 subRouter.use("/jira/cloudid", JiraCloudIDRouter);
 
-subRouter.use("/subscription/:subscriptionId", SubscriptionDeleteRouter);
+subRouter.use("/subscriptions/:subscriptionId", SubscriptionsRouter);
 
 subRouter.use(GitHubTokenHandler);
 

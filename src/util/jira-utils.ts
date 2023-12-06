@@ -1,7 +1,7 @@
 /* eslint-disable */
 import { envVars } from "config/env";
 import axios from "axios";
-import { Request, Response } from "express";
+import { Response } from "express";
 import { JiraAuthor } from "interfaces/jira";
 import { isEmpty, isString, pickBy, uniq } from "lodash";
 import { GitHubServerApp } from "models/github-server-app";
@@ -149,9 +149,9 @@ const deleteSecurityWorkspaceLinkAndVulns = async (
 
 export const removeSubscription = async (
 	installation: Installation,
-	ghInstallationId: number,
+	ghInstallationId: number | undefined,
 	gitHubAppId: number | undefined,
-	req: Request,
+	logger: Logger,
 	res: Response,
 	subscriptionId: number | undefined
 ) => {
@@ -160,29 +160,29 @@ export const removeSubscription = async (
 	const subscription = subscriptionId ? await Subscription.findByPk(subscriptionId) :
 		await Subscription.getSingleInstallation(
 			jiraHost,
-			ghInstallationId,
+			ghInstallationId as number,
 			gitHubAppId
 		);
 	if (!subscription) {
-		req.log.warn("Cannot find subscription");
+		logger.warn("Cannot find subscription");
 		throw new RestApiError(404, "RESOURCE_NOT_FOUND", "Can not find subscription");
 	}
 
 	const gitHubInstallationId = subscription.gitHubInstallationId;
 
-	const jiraClient = await getJiraClient(jiraHost, gitHubInstallationId, gitHubAppId, req.log);
+	const jiraClient = await getJiraClient(jiraHost, gitHubInstallationId, gitHubAppId, logger);
 	if (jiraClient === undefined) {
 		throw new RestApiError(500, "UNKNOWN", "jiraClient is undefined");
 	}
 	await jiraClient.devinfo.installation.delete(gitHubInstallationId);
 	if (await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost)) {
-		await deleteSecurityWorkspaceLinkAndVulns(installation, subscription, req.log);
-		req.log.info({ subscriptionId: subscription.id }, "Deleted security workspace and vulnerabilities");
+		await deleteSecurityWorkspaceLinkAndVulns(installation, subscription, logger);
+		logger.info({ subscriptionId: subscription.id }, "Deleted security workspace and vulnerabilities");
 	}
 	await subscription.destroy();
 
 	if (!(await isConnected(jiraHost))) {
-		await saveConfiguredAppProperties(jiraHost, req.log, false);
+		await saveConfiguredAppProperties(jiraHost, logger, false);
 	}
 
 	await sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {

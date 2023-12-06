@@ -5,7 +5,7 @@ import { getFrontendApp } from "~/src/app";
 import supertest from "supertest";
 import { envVars } from "config/env";
 
-describe("delete-subscription", () => {
+describe("Subscription", () => {
 	const testSharedSecret = "test-secret";
 	const gitHubInstallationId = 15;
 	const getToken = ({
@@ -31,24 +31,41 @@ describe("delete-subscription", () => {
 		});
 	});
 
-	it("Should 401 when missing githubToken", async () => {
+	it("Should return 400 for invalid delete subscription route", async () => {
 		const resp = await supertest(app)
-			.delete("/rest/app/cloud/subscription/" + gitHubInstallationId);
+			.delete("/rest/subscriptions/" + gitHubInstallationId)
+			.set("authorization", `${getToken()}`);
+
+		expect(resp.status).toBe(404);
+	});
+
+	it("Should return 401 for valid delete subscription route when missing githubToken", async () => {
+		const resp = await supertest(app)
+			.delete("/rest/app/cloud/subscriptions/" + gitHubInstallationId);
 
 		expect(resp.status).toBe(401);
 		expect(await Subscription.count()).toEqual(1);
 	});
 
-	it("Should 404 when no valid subscriptionId is passed", async () => {
+	it("Should return 404 for valid delete subscription route  when no valid subscriptionId is passed", async () => {
 		const resp = await supertest(app)
-			.delete("/rest/app/cloud/subscription/random-installation-id")
+			.delete("/rest/app/cloud/subscriptions/random-installation-id")
 			.set("authorization", `${getToken()}`);
 
 		expect(resp.status).toBe(404);
 		expect(await Subscription.count()).toEqual(1);
 	});
 
-	it("Should 202 when subscription is deleted", async () => {
+	it("Should return 404 for valid delete subscription route  when a different subscriptionId is passed", async () => {
+		const resp = await supertest(app)
+			.delete("/rest/app/cloud/subscriptions/12")
+			.set("authorization", `${getToken()}`);
+
+		expect(resp.status).toBe(404);
+		expect(await Subscription.count()).toEqual(1);
+	});
+
+	it("Should return 204 for valid delete subscription route when subscription is deleted", async () => {
 		jiraNock
 			.delete("/rest/devinfo/0.10/bulkByProperties")
 			.query({ installationId: subscription.gitHubInstallationId })
@@ -71,7 +88,7 @@ describe("delete-subscription", () => {
 			.reply(200);
 
 		const resp = await supertest(app)
-			.delete("/rest/app/cloud/subscription/" + subscription.id)
+			.delete("/rest/app/cloud/subscriptions/" + subscription.id)
 			.set("authorization", `${getToken()}`);
 
 		expect(resp.status).toBe(204);

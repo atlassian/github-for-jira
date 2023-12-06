@@ -28,5 +28,5 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 	if (!gitHubAppId) {
 		req.log.info("No gitHubAppId passed. Disconnecting cloud subscription.");
 	}
-	await removeSubscription(installation, gitHubInstallationId, gitHubAppId, req, res, undefined);
+	await removeSubscription(installation, gitHubInstallationId, gitHubAppId, req.log, res, undefined);
 };
