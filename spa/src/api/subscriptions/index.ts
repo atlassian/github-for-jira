@@ -5,8 +5,7 @@ export default {
 	syncSubscriptions: (data: {
 		installationId: number;
 		commitsFromDate: string;
-		appId?: number;
 		source: string;
 		syncType: string;
-	}) => axiosRest.post("/rest/sync", data),
+	}) => axiosRest.post(`/rest/app/cloud/sync`, data),
 };

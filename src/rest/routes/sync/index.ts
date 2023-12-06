@@ -1,4 +1,4 @@
-import { Router, Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from "express";
 import { ParamsDictionary } from "express-serve-static-core";
 import { errorWrapper } from "../../helper";
 import { Subscription } from "models/subscription";
@@ -7,8 +7,6 @@ import { findOrStartSync } from "~/src/sync/sync-utils";
 import { determineSyncTypeAndTargetTasks } from "~/src/util/github-sync-helper";
 import { BaseLocals } from "..";
 import { InvalidArgumentError } from "~/src/config/errors";
-
-export const SyncRouter = Router();
 
 interface RequestBody {
 	installationId: number;
@@ -23,6 +21,10 @@ const restSyncPost = async (
 	res: Response<unknown, BaseLocals>,
 	next: NextFunction
 ) => {
+	//TODO: We are yet to handle enterprise backfill
+	// const cloudOrUUID = req.params.cloudOrUUID;
+	// const gheUUID = cloudOrUUID === "cloud" ? undefined : "some-ghe-uuid";
+
 	const {
 		installationId: gitHubInstallationId,
 		appId: gitHubAppId,
@@ -87,4 +89,4 @@ const restSyncPost = async (
 	}
 };
 
-SyncRouter.post("/", errorWrapper("SubscriptionsGet", restSyncPost));
+export const SyncRouterHandler = errorWrapper("AnalyticsProxyHandler",restSyncPost);

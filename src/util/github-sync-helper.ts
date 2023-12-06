@@ -5,7 +5,7 @@ import { TaskType, SyncType } from "~/src/sync/sync.types";
 const MILLISECONDS_IN_ONE_DAY = 24 * 60 * 60 * 1000;
 export const getStartTimeInDaysAgo = (commitsFromDate: Date | undefined) => {
 	if (commitsFromDate === undefined) return undefined;
-	return Math.floor((Date.now() -  commitsFromDate?.getTime()) / MILLISECONDS_IN_ONE_DAY);
+	return Math.floor((Date.now() -  commitsFromDate.getTime()) / MILLISECONDS_IN_ONE_DAY);
 };
 
 type SyncTypeAndTargetTasks = {
