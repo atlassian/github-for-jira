@@ -11,7 +11,7 @@ const wrapperStyle = css`
 `;
 const wrapperCenterStyle = css`
 	margin: 0 auto;
-	max-width: 580px;
+	max-width: 600px;
 	height: calc(100vh - ${navHeight * 2}px);
 	display: flex;
 	flex-direction: column;

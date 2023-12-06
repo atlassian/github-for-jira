@@ -6,6 +6,8 @@ import Lozenge from "@atlaskit/lozenge";
 import { SuccessfulConnection } from "../rest-interfaces";
 import { ThemeAppearance } from "@atlaskit/lozenge/dist/types/Lozenge";
 import { css } from "@emotion/react";
+import EditIcon from "@atlaskit/icon/glyph/edit";
+import Button from "@atlaskit/button";
 
 type Row = {
 	key: string;
@@ -116,6 +118,13 @@ export const getGHSubscriptionsRows = (
 									cloudConnection.totalNumberOfRepos
 								)}
 							</Badge>
+							<Button
+							href={cloudConnection.html_url}
+							target="_blank"
+							appearance="subtle"
+							iconBefore={<EditIcon label="" size="small"/>}
+							>
+							</Button>
 						</div>
 					),
 				},
