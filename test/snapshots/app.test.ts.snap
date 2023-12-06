@@ -15,6 +15,8 @@ exports[`app getFrontendApp please review routes and update snapshot when adding
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,serveStatic
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/subscriptions/?(?=/|$)^/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,SubscriptionsGet
+:POST ^/?(?=/|$)^/rest/?(?=/|$)^/sync/?(?=/|$)^/?$
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,middleware,JwtHandler,jiraAdminEnforceMiddleware,SubscriptionsGet
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/github-callback/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,OAuthCallbackHandler
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/github-installed/?$
