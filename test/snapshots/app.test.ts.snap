@@ -15,6 +15,8 @@ exports[`app getFrontendApp please review routes and update snapshot when adding
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,serveStatic
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/subscriptions/?(?=/|$)^/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,SubscriptionsGet
+:DELETE ^/?(?=/|$)^/rest/?(?=/|$)^/subscriptions/?(?=/|$)^/?$
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,SubscriptionDelete
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/github-callback/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,OAuthCallbackHandler
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/github-installed/?$
@@ -39,7 +41,9 @@ exports[`app getFrontendApp please review routes and update snapshot when adding
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,GetGitHubAppsUrl
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/jira/cloudid/?(?=/|$)^/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,JiraCloudIDGet
-:DELETE ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/subscription/(?:([^/]+?))/?(?=/|$)^/?$
+:GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/subscriptions/(?:([^/]+?))/?(?=/|$)^/?$
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,SubscriptionsGet
+:DELETE ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/subscriptions/(?:([^/]+?))/?(?=/|$)^/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,SubscriptionDelete
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/org/?(?=/|$)^/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,GitHubTokenHandler,GitHubOrgsFetchOrgs
