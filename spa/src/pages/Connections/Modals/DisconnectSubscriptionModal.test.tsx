@@ -3,6 +3,9 @@ import { render, screen } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
 import DisconnectSubscriptionModal from "./DisconnectSubscriptionModal";
+import SubscriptionManager from "../../../services/subscription-manager";
+
+jest.mock("../../../services/subscription-manager");
 
 const sampleSubscription = {
 	app_slug: "string",
@@ -29,7 +32,7 @@ const sampleSubscription = {
 };
 const isModalOpened = jest.fn();
 
-test("Disconnect subscription Modal", async () => {
+test("Clicking cancel in disconnect subscription Modal", async () => {
 	render(
 		<BrowserRouter>
 			<DisconnectSubscriptionModal subscription={sampleSubscription} setIsModalOpened={isModalOpened} />
@@ -42,4 +45,25 @@ test("Disconnect subscription Modal", async () => {
 
 	await userEvent.click(screen.getByText("Cancel"));
 	expect(isModalOpened).toBeCalled();
+});
+
+test("Clicking Disconnect in disconnect subscription Modal", async () => {
+	jest.mocked(SubscriptionManager).deleteSubscription = jest.fn().mockReturnValue(Promise.resolve(true));
+
+	render(
+		<BrowserRouter>
+			<DisconnectSubscriptionModal subscription={sampleSubscription} setIsModalOpened={isModalOpened} />
+		</BrowserRouter>
+	);
+
+	expect(screen.getByText("Disconnect sample?")).toBeInTheDocument();
+	const text = screen.getByTestId("disconnect-content");
+	expect(text.textContent).toBe("Are you sure you want to disconnect your organization sample? This means that you will have to redo the backfill of historical data if you ever want to reconnect");
+
+	await userEvent.click(screen.getByText("Disconnect"));
+	/**
+	 * Called twice, once when the loading is set to true,
+	 * and later after getting the response from the API request
+	 */
+	expect(isModalOpened).toBeCalledTimes(2);
 });
