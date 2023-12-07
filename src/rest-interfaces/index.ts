@@ -185,9 +185,5 @@ export type GHSubscriptions = {
 	ghEnterpriseServers: GhEnterpriseServer[];
 };
 
-export type SubscriptionsInBackfill = {
-	ghSubscriptions: GHSubscriptions;
-	ghEnterpriseServers: GhEnterpriseServer;
-}
 
 export type BackfillPageModalTypes = "BACKFILL" | "DISCONNECT_SUBSCRIPTION" | "DISCONNECT_SERVER_APP" | "DISCONNECT_SERVER";

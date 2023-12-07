@@ -1,9 +1,9 @@
 import Api from "../../api";
 import { AxiosError } from "axios";
 import { reportError } from "../../utils";
-import { SubscriptionsInBackfill } from "../../../../src/rest-interfaces";
+import { GHSubscriptions } from "../../../../src/rest-interfaces";
 
-async function getSubscriptions(): Promise<SubscriptionsInBackfill | AxiosError> {
+async function getSubscriptions(): Promise<GHSubscriptions | AxiosError> {
 	try {
 		const response= await Api.subscriptions.getSubscriptions();
 		const status = response.status === 200;

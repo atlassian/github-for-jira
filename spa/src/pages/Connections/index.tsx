@@ -4,16 +4,16 @@ import Step from "../../components/Step";
 import { Wrapper } from "../../common/Wrapper";
 import GitHubCloudConnections from "./GHCloudConnections";
 import GitHubEnterpriseConnections from "./GHEnterpriseConnections";
-import { SubscriptionsInBackfill } from "../../rest-interfaces";
+import { GHSubscriptions } from "../../rest-interfaces";
 import SkeletonForLoading from "./SkeletonForLoading";
 import { useNavigate } from "react-router-dom";
-import SubscriptionManager from "~/src/services/subscription-manager";
+import SubscriptionManager from "../../services/subscription-manager";
 import { AxiosError } from "axios";
 
 const Connections = () => {
 	const navigate = useNavigate();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
-	const [subscriptions, setSubscriptions] = useState<SubscriptionsInBackfill | null>(null);
+	const [subscriptions, setSubscriptions] = useState<GHSubscriptions | null>(null);
 	const fetchGHSubscriptions = async () => {
 		setIsLoading(true);
 		const response = await SubscriptionManager.getSubscriptions();
@@ -21,7 +21,7 @@ const Connections = () => {
 			// TODO: Handle the error once we have the designs
 			console.error("Error", response);
 		}
-		setSubscriptions(response);
+		setSubscriptions(response as GHSubscriptions);
 		setIsLoading(false);
 	};
 	useEffect(() => {
