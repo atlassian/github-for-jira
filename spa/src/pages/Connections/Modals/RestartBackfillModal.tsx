@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Modal, { ModalBody, ModalFooter, ModalHeader, ModalTitle } from "@atlaskit/modal-dialog";
 import Button from "@atlaskit/button";
 import { SuccessfulConnection } from "../../../../../src/rest-interfaces";
@@ -16,6 +16,19 @@ const RestartBackfillModal = ({ subscription, setIsModalOpened }: {
 }) => {
 	const [restartFromDateCheck, setRestartFromDateCheck] = useState(false);
 	const [backfillDate, setBackfillDate] = useState("");
+
+	/**
+	 * TODO: Remove this later once the issue within datepicker is identified and fixed
+	 * Thread: https://atlassian.slack.com/archives/CFJ9DU39U/p1701912243843529
+	 *
+	 * The datepicker jumps around when rendered inside a modal,
+	 * Until that is fixed, adding a short disable for the datepicker,
+	 * which is then enabled to avoid having the jumpy effect.
+	 */
+	const [isDisabled, setIsDisabled] = useState(true);
+	useEffect(() => {
+		setTimeout(() => setIsDisabled(false), 10);
+	}, []);
 
 	const backfill = () => {
 		// TODO: API call to disconnect this subscription
@@ -41,7 +54,7 @@ const RestartBackfillModal = ({ subscription, setIsModalOpened }: {
 								inputId: "backfill-date-picker",
 							}}
 							placeholder="Select date"
-							autoFocus={false}
+							isDisabled={isDisabled} // TODO: remove this later
 							onChange={setBackfillDate}
 						/>
 					</p>
