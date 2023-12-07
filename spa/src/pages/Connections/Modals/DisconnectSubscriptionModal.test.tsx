@@ -31,11 +31,12 @@ const sampleSubscription = {
 	subscriptionId: 1
 };
 const isModalOpened = jest.fn();
+const refetch = jest.fn();
 
 test("Clicking cancel in disconnect subscription Modal", async () => {
 	render(
 		<BrowserRouter>
-			<DisconnectSubscriptionModal subscription={sampleSubscription} setIsModalOpened={isModalOpened} />
+			<DisconnectSubscriptionModal subscription={sampleSubscription} setIsModalOpened={isModalOpened} refetch={refetch} />
 		</BrowserRouter>
 	);
 
@@ -45,6 +46,7 @@ test("Clicking cancel in disconnect subscription Modal", async () => {
 
 	await userEvent.click(screen.getByText("Cancel"));
 	expect(isModalOpened).toBeCalled();
+	expect(refetch).not.toBeCalled();
 });
 
 test("Clicking Disconnect in disconnect subscription Modal", async () => {
@@ -52,7 +54,7 @@ test("Clicking Disconnect in disconnect subscription Modal", async () => {
 
 	render(
 		<BrowserRouter>
-			<DisconnectSubscriptionModal subscription={sampleSubscription} setIsModalOpened={isModalOpened} />
+			<DisconnectSubscriptionModal subscription={sampleSubscription} setIsModalOpened={isModalOpened} refetch={refetch} />
 		</BrowserRouter>
 	);
 
@@ -66,4 +68,5 @@ test("Clicking Disconnect in disconnect subscription Modal", async () => {
 	 * and later after getting the response from the API request
 	 */
 	expect(isModalOpened).toBeCalledTimes(2);
+	expect(refetch).toBeCalled();
 });

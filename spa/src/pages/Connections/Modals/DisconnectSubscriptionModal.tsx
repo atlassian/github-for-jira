@@ -9,9 +9,10 @@ import SubscriptionManager from "../../../services/subscription-manager";
  * NOTE: While testing in dev mode, please disable the React.StrictMode first,
  * otherwise this modal won't show up.
  */
-const DisconnectSubscriptionModal = ({ subscription, setIsModalOpened }: {
+const DisconnectSubscriptionModal = ({ subscription, setIsModalOpened, refetch }: {
 	subscription: SuccessfulConnection,
-	setIsModalOpened: (x: boolean) => void
+	setIsModalOpened: (x: boolean) => void,
+	refetch: () => void
 }) => {
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -22,6 +23,7 @@ const DisconnectSubscriptionModal = ({ subscription, setIsModalOpened }: {
 			// TODO: Handle the error once we have the designs
 			console.error("Error", response);
 		}
+		await refetch();
 		setIsModalOpened(false);
 	};
 

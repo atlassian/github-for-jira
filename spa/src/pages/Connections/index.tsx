@@ -42,7 +42,7 @@ const Connections = () => {
 				isLoading ? <SkeletonForLoading /> : <>
 					{
 						subscriptions?.ghCloudSubscriptions && <Step title="GitHub Cloud">
-							<GitHubCloudConnections ghCloudSubscriptions={subscriptions.ghCloudSubscriptions} />
+							<GitHubCloudConnections ghCloudSubscriptions={subscriptions.ghCloudSubscriptions} refetch={fetchGHSubscriptions} />
 						</Step>
 					}
 

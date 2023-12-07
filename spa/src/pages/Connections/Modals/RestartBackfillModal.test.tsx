@@ -28,11 +28,12 @@ const sampleSubscription = {
 	subscriptionId: 1
 };
 const isModalOpened = jest.fn();
+const refetch = jest.fn();
 
 test("Restart backfill Modal", async () => {
 	render(
 		<BrowserRouter>
-			<RestartBackfillModal subscription={sampleSubscription} setIsModalOpened={isModalOpened} />
+			<RestartBackfillModal subscription={sampleSubscription} setIsModalOpened={isModalOpened} refetch={refetch} />
 		</BrowserRouter>
 	);
 
