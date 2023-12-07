@@ -41,8 +41,18 @@
 			"allowed": true
 		},
 		{
-			"name": "Allow Prod Basic Check Critical Pollinator Test to call Get Audit Log endpoints",
+			"name": "Allow Prod Basic Check Critical Pollinator Test to call Get Audit Log endpoints for cloud",
 			"path": "/api/audit-log/subscription/255625",
+			"method": "GET",
+			"mechanism": "asap",
+			"principals": [
+				"pollinator-check/d4f03d07-12fe-4a69-9d68-c1841066772e"
+			],
+			"allowed": true
+		},
+		{
+			"name": "Allow Prod Basic Check Critical Pollinator Test to call Get Audit Log endpoints for ghe",
+			"path": "/api/audit-log/subscription/256125",
 			"method": "GET",
 			"mechanism": "asap",
 			"principals": [
