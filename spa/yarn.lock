@@ -97,9 +97,9 @@
     "@emotion/react" "^11.7.1"
 
 "@atlaskit/button@^16.17.0":
-  version "16.17.10"
-  resolved "https://packages.atlassian.com/api/npm/npm-remote/@atlaskit/button/-/button-16.17.10.tgz#8e305dc7ff926f44ee1acd51f29fdd270cb5fd05"
-  integrity sha512-C7UIVAKKrHOtwHiLT94XfyqQ/EAvWq4C7BxaxY0iTJZCvBTgZcefuHLsol9j612IaT7B8NJ/+vnwkKFpGjvFkQ==
+  version "16.17.11"
+  resolved "https://packages.atlassian.com/api/npm/npm-remote/@atlaskit/button/-/button-16.17.11.tgz#2b4410b28ea7a627f529e37a50e9fb13aebddbb7"
+  integrity sha512-1zwdb6saW8XTf//8CQ24sEACgQqzG++bJvz1mqQo2t+embRo+OWgOgTYf4MGzkztGw9vIOMdreiiLAv9NNCpvA==
   dependencies:
     "@atlaskit/analytics-next" "^9.1.0"
     "@atlaskit/ds-lib" "^2.2.0"
@@ -149,9 +149,9 @@
     "@emotion/react" "^11.7.1"
 
 "@atlaskit/calendar@^14.0.0":
-  version "14.0.2"
-  resolved "https://packages.atlassian.com/api/npm/npm-remote/@atlaskit/calendar/-/calendar-14.0.2.tgz#df392186a2d64cbc6edab77affead0436c2fb4ad"
-  integrity sha512-v81dRWJ0EVGV2H+VVE3IPLaOehJxVcK/xIk9He1WgjN0fN/1Ejmmt96+9oxo6FbR8prSg4IDGMpUyJrBzgOg0g==
+  version "14.0.3"
+  resolved "https://packages.atlassian.com/api/npm/npm-remote/@atlaskit/calendar/-/calendar-14.0.3.tgz#4e27ed33457958eec024af98512c957b77f50348"
+  integrity sha512-+mSUBALjCd3Qk4VwHmPvO6Y0KdblzvQSF5TAaRPRjMwoDw3V/i3USOWcTQ1obFSXm327ZulW+uLqTM3YsklvDA==
   dependencies:
     "@atlaskit/analytics-next" "^9.1.0"
     "@atlaskit/button" "^16.17.0"
@@ -199,10 +199,10 @@
     "@babel/runtime" "^7.0.0"
     fbjs "^3.0.0"
 
-"@atlaskit/datetime-picker@^13.0.2":
-  version "13.0.2"
-  resolved "https://packages.atlassian.com/api/npm/npm-remote/@atlaskit/datetime-picker/-/datetime-picker-13.0.2.tgz#6ce8899117134801dd7ef89730b6c4b77307ec48"
-  integrity sha512-kz/h+/dTT8QyajUm4nWt7BTfQo1D5efpqennHQNfjck70Y0TApNVZSnesFaVn3hNn1EaLwJ5KsubtQqdSUjiiA==
+"@atlaskit/datetime-picker@^13.0.3":
+  version "13.0.3"
+  resolved "https://packages.atlassian.com/api/npm/npm-remote/@atlaskit/datetime-picker/-/datetime-picker-13.0.3.tgz#36ed3ac39e2baac5e69580ee197be70c9e26fc49"
+  integrity sha512-xWo7faLWzOnNbpk1HcpkD0XyryPhmIWwA+ee4xSjIBnHhxTJAbUTH0CdpeYJ6sZqnm2HjmVdKDmMl6cDo61xpg==
   dependencies:
     "@atlaskit/analytics-next" "^9.1.0"
     "@atlaskit/calendar" "^14.0.0"
@@ -536,16 +536,16 @@
     shallow-equal "^1.0.0"
 
 "@atlaskit/select@^17.0.0":
-  version "17.0.1"
-  resolved "https://packages.atlassian.com/api/npm/npm-remote/@atlaskit/select/-/select-17.0.1.tgz#04de803672673ada760101f149d622a04275cb91"
-  integrity sha512-vh4UALGNoislGUSVt4VZXSrgYpGWnQn5jTQwlSkrX3hutkM3z/0P8YvoEdFPIAJHdu2ryg2nq3P1w7mwLwjWTQ==
+  version "17.0.3"
+  resolved "https://packages.atlassian.com/api/npm/npm-remote/@atlaskit/select/-/select-17.0.3.tgz#03fbee4d6caa74c7ee4660107f3aaa42be9efd42"
+  integrity sha512-YEr7plvrlqw4z/dGc6srKZI8QsyBkMf63p7PAS7mLIYuAnPG1eONwcRoVLqBVeAJeWcK5is1GUdQM5Z6kdJ5xw==
   dependencies:
     "@atlaskit/analytics-next" "^9.1.0"
     "@atlaskit/icon" "^22.0.0"
     "@atlaskit/platform-feature-flags" "^0.2.0"
     "@atlaskit/spinner" "^16.0.0"
     "@atlaskit/theme" "^12.6.0"
-    "@atlaskit/tokens" "^1.28.0"
+    "@atlaskit/tokens" "^1.29.0"
     "@atlaskit/visually-hidden" "^1.2.0"
     "@babel/runtime" "^7.0.0"
     "@emotion/react" "^11.7.1"
@@ -670,10 +670,22 @@
     "@babel/types" "^7.20.0"
     bind-event-listener "^2.1.1"
 
-"@atlaskit/tokens@^1.28.0", "@atlaskit/tokens@^1.29.0":
+"@atlaskit/tokens@^1.28.0":
   version "1.29.0"
   resolved "https://packages.atlassian.com/api/npm/npm-remote/@atlaskit/tokens/-/tokens-1.29.0.tgz#812ddab4d1baacec80f57934b92823bb9fcfd6ba"
   integrity sha512-VDSl6+HKwInNt9mHXO2M2wKlWDo9rCOFhcAbXD+V3z5AsM7ccjX7Dl9Z2H9lciV6o+pkS0FkdE83DfJVgCBiRg==
+  dependencies:
+    "@atlaskit/ds-lib" "^2.2.0"
+    "@atlaskit/platform-feature-flags" "^0.2.0"
+    "@babel/runtime" "^7.0.0"
+    "@babel/traverse" "^7.23.2"
+    "@babel/types" "^7.20.0"
+    bind-event-listener "^2.1.1"
+
+"@atlaskit/tokens@^1.29.0":
+  version "1.29.2"
+  resolved "https://packages.atlassian.com/api/npm/npm-remote/@atlaskit/tokens/-/tokens-1.29.2.tgz#0f909d5315c002bcda6349039d11c544c0c23351"
+  integrity sha512-gxJSfvpDPmVDPt76swB1GFPhrAlKcKnmKtyP/I18amBbvvW3dmcPWJn94f1e78Aax363ozfcmGbsYj/NK3bZ6A==
   dependencies:
     "@atlaskit/ds-lib" "^2.2.0"
     "@atlaskit/platform-feature-flags" "^0.2.0"

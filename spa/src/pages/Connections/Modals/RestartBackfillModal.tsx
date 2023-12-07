@@ -4,7 +4,7 @@ import Button from "@atlaskit/button";
 import { SuccessfulConnection } from "../../../../../src/rest-interfaces";
 import { Checkbox } from "@atlaskit/checkbox";
 import { Label } from "@atlaskit/form";
-// import { DatePicker } from "@atlaskit/datetime-picker";
+import { DatePicker } from "@atlaskit/datetime-picker";
 
 /**
  * NOTE: While testing in dev mode, please disable the React.StrictMode first,
@@ -15,10 +15,11 @@ const RestartBackfillModal = ({ subscription, setIsModalOpened }: {
 	setIsModalOpened: (x: boolean) => void
 }) => {
 	const [restartFromDateCheck, setRestartFromDateCheck] = useState(false);
+	const [backfillDate, setBackfillDate] = useState("");
 
 	const backfill = () => {
 		// TODO: API call to disconnect this subscription
-		console.log("Backfill for", subscription.account.login, restartFromDateCheck);
+		console.log("Backfill for", subscription.account.login, restartFromDateCheck, backfillDate);
 		setIsModalOpened(false);
 	};
 
@@ -35,12 +36,14 @@ const RestartBackfillModal = ({ subscription, setIsModalOpened }: {
 					</p>
 					<p>
 						<Label htmlFor="backfill-date-picker">Choose date</Label>
-						{/* TODO: This datepicker is throwing a dependency issue saying module not found, add it later when fixed*/}
-						{/*<DatePicker*/}
-						{/*	selectProps={{*/}
-						{/*		inputId: "backfill-date-picker",*/}
-						{/*	}}*/}
-						{/*/>*/}
+						<DatePicker
+							selectProps={{
+								inputId: "backfill-date-picker",
+							}}
+							placeholder="Select date"
+							autoFocus={false}
+							onChange={setBackfillDate}
+						/>
 					</p>
 					<p>
 						<Checkbox
