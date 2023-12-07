@@ -35,7 +35,6 @@ SubscriptionsRouter.delete("/", errorWrapper("SubscriptionDelete", async (req: R
 	const gitHubAppId = cloudOrUUID === "cloud" ? undefined :
 		(await GitHubServerApp.getForUuidAndInstallationId(cloudOrUUID, installation.id))?.appId; //TODO: validate the uuid regex
 
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 	await removeSubscription(installation, undefined, gitHubAppId, req.log, subscriptionId);
 
 	res.sendStatus(204);
