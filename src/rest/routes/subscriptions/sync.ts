@@ -11,7 +11,7 @@ import { RestSyncReqBody } from "~/src/rest-interfaces";
 
 const restSyncPost = async (
 	req: Request<ParamsDictionary, unknown, RestSyncReqBody>,
-	res: Response<unknown, BaseLocals>
+	res: Response<string, BaseLocals>
 ) => {
 	const {
 		syncType: syncTypeFromReq,
