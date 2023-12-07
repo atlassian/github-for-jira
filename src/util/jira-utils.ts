@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { envVars } from "config/env";
 import axios from "axios";
-import { Response } from "express";
 import { JiraAuthor } from "interfaces/jira";
 import { isEmpty, isString, pickBy, uniq } from "lodash";
 import { GitHubServerApp } from "models/github-server-app";
@@ -152,7 +151,6 @@ export const removeSubscription = async (
 	ghInstallationId: number | undefined,
 	gitHubAppId: number | undefined,
 	logger: Logger,
-	res: Response,
 	subscriptionId: number | undefined
 ) => {
 	const jiraHost = installation.jiraHost;
@@ -194,6 +192,6 @@ export const removeSubscription = async (
 		spa: !!subscriptionId
 	});
 
-	res.sendStatus(204);
+	return true;
 }
 

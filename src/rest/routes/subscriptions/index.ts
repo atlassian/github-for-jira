@@ -4,7 +4,7 @@ import { getAllSubscriptions } from "./service";
 import { Installation } from "models/installation";
 import { removeSubscription } from "utils/jira-utils";
 import { GitHubServerApp } from "models/github-server-app";
-import { InvalidArgumentError } from "config/errors";
+import { InvalidArgumentError, RestApiError } from "config/errors";
 
 export const SubscriptionsRouter = Router({ mergeParams: true  });
 
@@ -34,5 +34,9 @@ SubscriptionsRouter.delete("/", errorWrapper("SubscriptionDelete", async (req: R
 	const gitHubAppId = cloudOrUUID === "cloud" ? undefined :
 		(await GitHubServerApp.getForUuidAndInstallationId(cloudOrUUID, installation.id))?.appId; //TODO: validate the uuid regex
 
-	await removeSubscription(installation, undefined, gitHubAppId, req.log, res, subscriptionId);
+	if (await removeSubscription(installation, undefined, gitHubAppId, req.log, subscriptionId)) {
+		res.sendStatus(204);
+	} else {
+		throw new RestApiError(500, "UNKNOWN", "Unable to remove this subscription!");
+	}
 }));
