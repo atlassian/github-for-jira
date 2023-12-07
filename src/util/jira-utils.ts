@@ -4,6 +4,18 @@ import axios from "axios";
 import { JiraAuthor } from "interfaces/jira";
 import { isEmpty, isString, pickBy, uniq } from "lodash";
 import { GitHubServerApp } from "models/github-server-app";
+import { Subscription } from "models/subscription";
+import { getJiraClient } from "~/src/jira/client/jira-client";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { isConnected } from "utils/is-connected";
+import { saveConfiguredAppProperties } from "utils/app-properties-utils";
+import { sendAnalytics } from "utils/analytics-client";
+import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
+import { Installation } from "models/installation";
+import Logger from "bunyan";
+import { JiraClient } from "models/jira-client";
+import { RestApiError } from "config/errors";
 
 export const getJiraAppUrl = (jiraHost: string): string =>
 	jiraHost?.length ? `${jiraHost}/plugins/servlet/ac/${envVars.APP_KEY}/github-post-install-page` : "";
@@ -114,3 +126,73 @@ export const hasJiraIssueKey = (str: string): boolean => !isEmpty(jiraIssueKeyPa
 export const isGitHubCloudApp = async (gitHubAppId: number | undefined): Promise<boolean> => {
 	return !(gitHubAppId && await GitHubServerApp.getForGitHubServerAppId(gitHubAppId));
 };
+
+const deleteSecurityWorkspaceLinkAndVulns = async (
+	installation: Installation,
+	subscription: Subscription,
+	logger: Logger,
+) => {
+
+	try {
+		logger.info("Fetching info about GitHub installation");
+
+		const jiraClient = await JiraClient.getNewClient(installation, logger);
+		await Promise.allSettled([
+			jiraClient.deleteWorkspace(subscription.id),
+			jiraClient.deleteVulnerabilities(subscription.id)
+		]);
+	} catch (err: unknown) {
+		logger.warn({ err }, "Failed to delete security workspace or vulnerabilities from Jira");
+	}
+};
+
+export const removeSubscription = async (
+	installation: Installation,
+	ghInstallationId: number | undefined,
+	gitHubAppId: number | undefined,
+	logger: Logger,
+	subscriptionId: number | undefined
+) => {
+	const jiraHost = installation.jiraHost;
+	// TODO: Remove ghInstallationId and replace it by subscriptionId
+	const subscription = subscriptionId ? await Subscription.findByPk(subscriptionId) :
+		await Subscription.getSingleInstallation(
+			jiraHost,
+			ghInstallationId as number,
+			gitHubAppId
+		);
+	if (!subscription) {
+		logger.warn("Cannot find subscription");
+		throw new RestApiError(404, "RESOURCE_NOT_FOUND", "Can not find subscription");
+	}
+
+	if (subscription.jiraHost !== jiraHost) {
+		throw new RestApiError(500, "JIRAHOST_MISMATCH", "Jirahosts do not match for this subscription");
+	}
+
+	const gitHubInstallationId = subscription.gitHubInstallationId;
+
+	const jiraClient = await getJiraClient(jiraHost, gitHubInstallationId, gitHubAppId, logger);
+	if (jiraClient === undefined) {
+		throw new RestApiError(500, "UNKNOWN", "jiraClient is undefined");
+	}
+	await jiraClient.devinfo.installation.delete(gitHubInstallationId);
+	if (await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost)) {
+		await deleteSecurityWorkspaceLinkAndVulns(installation, subscription, logger);
+		logger.info({ subscriptionId: subscription.id }, "Deleted security workspace and vulnerabilities");
+	}
+	await subscription.destroy();
+
+	if (!(await isConnected(jiraHost))) {
+		await saveConfiguredAppProperties(jiraHost, logger, false);
+	}
+
+	await sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
+		action: AnalyticsTrackEventsEnum.DisconnectToOrgTrackEventName,
+		actionSubject: AnalyticsTrackEventsEnum.DisconnectToOrgTrackEventName,
+		source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise
+	}, {
+		gitHubProduct: getCloudOrServerFromGitHubAppId(gitHubAppId),
+		spa: !!subscriptionId
+	});
+}

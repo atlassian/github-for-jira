@@ -1,5 +1,17 @@
 import { AxiosError, AxiosResponse } from "axios";
 import { ErrorCode } from "rest-interfaces";
+import safeJsonStringify from "safe-json-stringify";
+
+const safeParseResponseBody = (data: unknown): string | undefined => {
+	if (data === undefined) return undefined;
+	if ((typeof data) === "string") {
+		return data as string;
+	}
+	if ((typeof data) === "object") {
+		return safeJsonStringify(data as object);
+	}
+	return String(data);
+};
 
 export class GithubClientError extends Error {
 	cause: AxiosError;
@@ -7,6 +19,7 @@ export class GithubClientError extends Error {
 
 	status?: number;
 	code?: string;
+	resBody?: string;
 	uiErrorCode: ErrorCode;
 
 	constructor(message: string, cause: AxiosError) {
@@ -14,6 +27,7 @@ export class GithubClientError extends Error {
 
 		this.status = cause.response?.status;
 		this.code = cause.code;
+		this.resBody = safeParseResponseBody(cause.response?.data);
 		this.uiErrorCode = "UNKNOWN";
 
 		this.cause = { ...cause };

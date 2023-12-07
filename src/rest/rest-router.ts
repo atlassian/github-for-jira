@@ -56,6 +56,8 @@ subRouter.use("/installation", GitHubAppsRoute);
 
 subRouter.use("/jira/cloudid", JiraCloudIDRouter);
 
+subRouter.use("/subscriptions/:subscriptionId", SubscriptionsRouter);
+
 subRouter.use(GitHubTokenHandler);
 
 subRouter.use("/org", GitHubOrgsRouter);
