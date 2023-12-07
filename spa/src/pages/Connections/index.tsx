@@ -9,7 +9,6 @@ import { GHSubscriptions } from "../../rest-interfaces";
 import { reportError } from "../../utils";
 import SkeletonForLoading from "./SkeletonForLoading";
 import { useNavigate } from "react-router-dom";
-import Button from "@atlaskit/button";
 
 const Connections = () => {
 	const navigate = useNavigate();
@@ -26,22 +25,6 @@ const Connections = () => {
 			setIsLoading(false);
 		}
 	};
-
-	const syncGHSubscriptions = async () => {
-		try {
-			setIsLoading(true);
-			await ApiRequest.subscriptions.syncSubscriptions(4,{
-				commitsFromDate: "2021-12-03",
-				syncType: "full",
-				source: "backfill-button",
-			});
-		} catch (e) {
-			reportError(e, { path: "Fetching subscriptions" });
-		} finally {
-			setIsLoading(false);
-		}
-	};
-
 	useEffect(() => {
 		fetchGHSubscriptions();
 	}, []);
@@ -56,7 +39,6 @@ const Connections = () => {
 	return (
 		<Wrapper>
 			<SyncHeader />
-			<Button onClick={async() =>{ await syncGHSubscriptions(); }}>START BACKFILL</Button>
 			{
 				isLoading ? <SkeletonForLoading /> : <>
 					{

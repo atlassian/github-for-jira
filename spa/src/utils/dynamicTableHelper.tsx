@@ -3,7 +3,7 @@ import Avatar from "@atlaskit/avatar";
 import Badge from "@atlaskit/badge";
 import { token } from "@atlaskit/tokens";
 import Lozenge from "@atlaskit/lozenge";
-import { BackfillPageModalTypes, SuccessfulConnection } from "../rest-interfaces";
+import { SuccessfulConnection } from "../rest-interfaces";
 import { ThemeAppearance } from "@atlaskit/lozenge/dist/types/Lozenge";
 import { css } from "@emotion/react";
 
@@ -11,12 +11,6 @@ type Row = {
 	key: string;
 	isHighlighted: boolean;
 	cells: { key: string | number; content: React.JSX.Element | string | number }[];
-};
-
-type ConnectionsActionsCallback = {
-	setIsModalOpened: (x: boolean) => void;
-	setSubscriptionForModal: (sub: SuccessfulConnection) => void;
-	setSelectedModal: (x: BackfillPageModalTypes) => void;
 };
 
 const rowWrapperStyle = css`
@@ -63,19 +57,14 @@ const createHead = (withWidth: boolean) => {
 				width: withWidth ? 30 : undefined,
 			},
 			{
-				key: "repos",
+				key: "party",
 				content: "Repos",
 				width: withWidth ? 30 : undefined,
 			},
 			{
-				key: "status",
+				key: "term",
 				content: "Status",
 				width: withWidth ? 30 : undefined,
-			},
-			{
-				key: "options",
-				content: "Settings",
-				width: withWidth ? 10: undefined,
 			}
 		],
 	};
@@ -84,8 +73,7 @@ const createHead = (withWidth: boolean) => {
 export const head = createHead(true);
 
 export const getGHSubscriptionsRows = (
-	SuccessfulConnections: SuccessfulConnection[],
-	callbacks?: ConnectionsActionsCallback
+	SuccessfulConnections: SuccessfulConnection[]
 ): Row[] => {
 	if (!SuccessfulConnections) {
 		return [];
@@ -106,7 +94,6 @@ export const getGHSubscriptionsRows = (
 										src={cloudConnection.account.avatar_url}
 										size="medium"
 									/>
-									<span>{cloudConnection.subscriptionId}</span>
 								</span>
 							)}
 
@@ -160,28 +147,6 @@ export const getGHSubscriptionsRows = (
 							</div>
 						</div>
 					),
-				},
-				{
-					key: cloudConnection.id,
-					content: (
-						<>
-							{/* TODO: Convert this into a dropdown */}
-							<div onClick={() => {
-								callbacks?.setIsModalOpened(true);
-								callbacks?.setSubscriptionForModal(cloudConnection);
-								callbacks?.setSelectedModal("DISCONNECT_SUBSCRIPTION");
-							}}>
-								Disconnect
-							</div>
-							<div onClick={() => {
-								callbacks?.setIsModalOpened(true);
-								callbacks?.setSubscriptionForModal(cloudConnection);
-								callbacks?.setSelectedModal("BACKFILL");
-							}}>
-								Backfill
-							</div>
-						</>
-					)
 				}
 			],
 		})
