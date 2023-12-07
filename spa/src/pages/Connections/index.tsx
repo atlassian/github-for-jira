@@ -1,29 +1,28 @@
 import { useEffect, useState } from "react";
-import ApiRequest from "../../api";
 import SyncHeader from "../../components/SyncHeader";
 import Step from "../../components/Step";
 import { Wrapper } from "../../common/Wrapper";
 import GitHubCloudConnections from "./GHCloudConnections";
 import GitHubEnterpriseConnections from "./GHEnterpriseConnections";
-import { GHSubscriptions } from "../../rest-interfaces";
-import { reportError } from "../../utils";
+import { SubscriptionsInBackfill } from "../../rest-interfaces";
 import SkeletonForLoading from "./SkeletonForLoading";
 import { useNavigate } from "react-router-dom";
+import SubscriptionManager from "~/src/services/subscription-manager";
+import { AxiosError } from "axios";
 
 const Connections = () => {
 	const navigate = useNavigate();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
-	const [ghSubscriptions, setSubscriptions] = useState<GHSubscriptions | null>(null);
+	const [subscriptions, setSubscriptions] = useState<SubscriptionsInBackfill | null>(null);
 	const fetchGHSubscriptions = async () => {
-		try {
-			setIsLoading(true);
-			const { data } = await ApiRequest.subscriptions.getSubscriptions();
-			setSubscriptions(data);
-		} catch (e) {
-			reportError(e, { path: "Fetching subscriptions" });
-		} finally {
-			setIsLoading(false);
+		setIsLoading(true);
+		const response = await SubscriptionManager.getSubscriptions();
+		if (response instanceof AxiosError) {
+			// TODO: Handle the error once we have the designs
+			console.error("Error", response);
 		}
+		setSubscriptions(response);
+		setIsLoading(false);
 	};
 	useEffect(() => {
 		fetchGHSubscriptions();
@@ -31,10 +30,10 @@ const Connections = () => {
 
 	// If there are no connections then go back to the start page
 	useEffect(() => {
-		if (!ghSubscriptions?.ghCloudSubscriptions && ghSubscriptions?.ghEnterpriseServers && ghSubscriptions.ghEnterpriseServers?.length === 0) {
+		if (!subscriptions?.ghCloudSubscriptions && subscriptions?.ghEnterpriseServers && subscriptions.ghEnterpriseServers?.length === 0) {
 			navigate("/spa");
 		}
-	}, [ghSubscriptions, navigate]);
+	}, [subscriptions, navigate]);
 
 	return (
 		<Wrapper>
@@ -42,14 +41,14 @@ const Connections = () => {
 			{
 				isLoading ? <SkeletonForLoading /> : <>
 					{
-						ghSubscriptions?.ghCloudSubscriptions && <Step title="GitHub Cloud">
-							<GitHubCloudConnections ghCloudSubscriptions={ghSubscriptions.ghCloudSubscriptions} />
+						subscriptions?.ghCloudSubscriptions && <Step title="GitHub Cloud">
+							<GitHubCloudConnections ghCloudSubscriptions={subscriptions.ghCloudSubscriptions} />
 						</Step>
 					}
 
 					{
-						ghSubscriptions?.ghEnterpriseServers && ghSubscriptions.ghEnterpriseServers?.length > 0 && <Step title="GitHub Enterprise Server">
-							<GitHubEnterpriseConnections ghEnterpriseServers={ghSubscriptions.ghEnterpriseServers} />
+						subscriptions?.ghEnterpriseServers && subscriptions.ghEnterpriseServers?.length > 0 && <Step title="GitHub Enterprise Server">
+							<GitHubEnterpriseConnections ghEnterpriseServers={subscriptions.ghEnterpriseServers} />
 						</Step>
 					}
 				</>

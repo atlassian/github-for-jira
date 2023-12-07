@@ -1,6 +1,9 @@
+import { useState } from "react";
+import { AxiosError } from "axios";
 import Modal, { ModalBody, ModalFooter, ModalHeader, ModalTitle } from "@atlaskit/modal-dialog";
-import Button from "@atlaskit/button";
+import Button, { LoadingButton } from "@atlaskit/button";
 import { SuccessfulConnection } from "../../../../../src/rest-interfaces";
+import SubscriptionManager from "../../../services/subscription-manager";
 
 /**
  * NOTE: While testing in dev mode, please disable the React.StrictMode first,
@@ -10,9 +13,15 @@ const DisconnectSubscriptionModal = ({ subscription, setIsModalOpened }: {
 	subscription: SuccessfulConnection,
 	setIsModalOpened: (x: boolean) => void
 }) => {
-	const disconnect = () => {
-		// TODO: API call to disconnect this subscription
-		console.log("Disconnect", subscription.account.login);
+	const [isLoading, setIsLoading] = useState<boolean>(false);
+
+	const disconnect = async () => {
+		setIsLoading(true);
+		const response: boolean | AxiosError = await SubscriptionManager.deleteSubscription(subscription.id);
+		if (response instanceof AxiosError) {
+			// TODO: Handle the error once we have the designs
+			console.error("Error", response);
+		}
 		setIsModalOpened(false);
 	};
 
@@ -31,10 +40,19 @@ const DisconnectSubscriptionModal = ({ subscription, setIsModalOpened }: {
 					</p>
 				</ModalBody>
 				<ModalFooter>
-					<Button appearance="subtle" onClick={() => setIsModalOpened(false)}>Cancel</Button>
-					<Button appearance="danger" onClick={disconnect}>
-						Disconnect
+					<Button
+						appearance="subtle"
+						onClick={() => setIsModalOpened(false)}
+					>
+						Cancel
 					</Button>
+					{
+						isLoading ? <LoadingButton style={{ width: 80 }} isLoading>
+							Loading button
+						</LoadingButton> : <Button appearance="danger" onClick={disconnect}>
+							Disconnect
+						</Button>
+					}
 				</ModalFooter>
 			</Modal>
 		</>
