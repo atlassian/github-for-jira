@@ -164,7 +164,7 @@ export const getGHSubscriptionsRows = (
 					key: cloudConnection.id,
 					content: (
 						<>
-							{/* TODO: Convert this into a dropdown */}
+							{/* TODO: Add this in the dropdown list once merged with ARC-2720 */}
 							<div onClick={() => {
 								callbacks?.setIsModalOpened(true);
 								callbacks?.setSubscriptionForModal(cloudConnection);

@@ -25,7 +25,7 @@ const DisconnectSubscriptionModal = ({ subscription, setIsModalOpened }: {
 					</ModalTitle>
 				</ModalHeader>
 				<ModalBody>
-					<p>
+					<p data-testid="disconnect-content">
 						Are you sure you want to disconnect your organization <b>{subscription.account.login}</b>?
 						This means that you will have to redo the backfill of historical data if you ever want to reconnect
 					</p>
