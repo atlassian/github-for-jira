@@ -1,3 +1,8 @@
+export type RestSyncReqBody = {
+	syncType: string;
+	source: string;
+	commitsFromDate: string;
+}
 
 export type GetRedirectUrlResponse = {
 	redirectUrl: string;
@@ -118,7 +123,8 @@ export type SuccessfulConnection = {
 	jiraHost: string;
 	isGlobalInstall: boolean;
 	backfillSince: string | null;
-	html_url: string
+	html_url: string;
+	subscriptionId: number;
 };
 
 export type FailedCloudConnection = {
