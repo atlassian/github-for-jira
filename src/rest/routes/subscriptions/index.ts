@@ -5,6 +5,7 @@ import { Installation } from "models/installation";
 import { removeSubscription } from "utils/jira-utils";
 import { GitHubServerApp } from "models/github-server-app";
 import { InvalidArgumentError } from "config/errors";
+import { SyncRouterHandler } from "./sync";
 
 export const SubscriptionsRouter = Router({ mergeParams: true  });
 
@@ -34,7 +35,10 @@ SubscriptionsRouter.delete("/", errorWrapper("SubscriptionDelete", async (req: R
 	const gitHubAppId = cloudOrUUID === "cloud" ? undefined :
 		(await GitHubServerApp.getForUuidAndInstallationId(cloudOrUUID, installation.id))?.appId; //TODO: validate the uuid regex
 
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 	await removeSubscription(installation, undefined, gitHubAppId, req.log, subscriptionId);
 
 	res.sendStatus(204);
 }));
+
+SubscriptionsRouter.post("/sync", SyncRouterHandler);

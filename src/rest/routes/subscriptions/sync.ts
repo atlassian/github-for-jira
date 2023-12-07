@@ -14,24 +14,13 @@ const restSyncPost = async (
 	res: Response<unknown, BaseLocals>
 ) => {
 	const {
-		installationId: gitHubInstallationId,
 		syncType: syncTypeFromReq,
 		source,
 		commitsFromDate: commitsFrmDate
 	} = req.body;
 
-	//TODO: We are yet to handle enterprise backfill
-	const gitHubAppId: number | undefined = undefined;
-	// const cloudOrUUID = req.params.cloudOrUUID;
-	// const gheUUID = cloudOrUUID === "cloud" ? undefined : req.params.cloudOrUUID;
-	// if (gheUUID) {
-	// 	const ghEnterpriseServers: GitHubServerApp[] = await GitHubServerApp.findForInstallationId(gitHubInstallationId) || [];
-	// 	gitHubAppId = ghEnterpriseServers[0]?.appId;
-	// }
-
 	// A date to start fetching commit history(main and branch) from.
 	const commitsFromDate = commitsFrmDate ? new Date(commitsFrmDate) : undefined;
-
 	if (commitsFromDate && commitsFromDate.valueOf() > Date.now()) {
 		throw new RestApiError(
 			400,
@@ -40,17 +29,37 @@ const restSyncPost = async (
 		);
 	}
 
-	const subscription = await Subscription.getSingleInstallation(
-		res.locals.installation.jiraHost,
-		gitHubInstallationId,
-		gitHubAppId
-	);
+	const subscriptionId: number = Number(req.params.subscriptionId);
+	if (!subscriptionId) {
+		req.log.info(
+			{
+				jiraHost: res.locals.installation.jiraHost,
+				subscriptionId
+			},
+			"Subscription ID not found when retrying sync."
+		);
+		throw new RestApiError(
+			400,
+			"INVALID_OR_MISSING_ARG",
+			"Subscription ID not found when retrying sync."
+		);
+	}
 
+	//TODO: We are yet to handle enterprise backfill
+	// const gitHubAppId: number | undefined = undefined;
+	// const cloudOrUUID = req.params.cloudOrUUID;
+	// const gheUUID = cloudOrUUID === "cloud" ? undefined : req.params.cloudOrUUID;
+	// if (gheUUID) {
+	// 	const ghEnterpriseServers: GitHubServerApp[] = await GitHubServerApp.findForInstallationId(gitHubInstallationId) || [];
+	// 	gitHubAppId = ghEnterpriseServers[0]?.appId;
+	// }
+
+	const subscription = await Subscription.findByPk(subscriptionId);
 	if (!subscription) {
 		req.log.info(
 			{
 				jiraHost: res.locals.installation.jiraHost,
-				installationId: gitHubInstallationId
+				subscriptionId
 			},
 			"Subscription not found when retrying sync."
 		);
@@ -60,23 +69,20 @@ const restSyncPost = async (
 			"Subscription not found, cannot resync."
 		);
 	}
-	try {
-		const { syncType, targetTasks } = determineSyncTypeAndTargetTasks(
-			syncTypeFromReq,
-			subscription
-		);
-		await findOrStartSync(
-			subscription,
-			req.log,
-			syncType,
-			commitsFromDate || subscription.backfillSince,
-			targetTasks,
-			{ source }
-		);
-		res.sendStatus(202);
-	} catch (error: unknown) {
-		throw new RestApiError(500, "UNKNOWN", "Something went wrong");
-	}
+
+	const { syncType, targetTasks } = determineSyncTypeAndTargetTasks(
+		syncTypeFromReq,
+		subscription
+	);
+	await findOrStartSync(
+		subscription,
+		req.log,
+		syncType,
+		commitsFromDate || subscription.backfillSince,
+		targetTasks,
+		{ source }
+	);
+	res.sendStatus(202);
 };
 
 export const SyncRouterHandler = errorWrapper(

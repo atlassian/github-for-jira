@@ -1,5 +1,4 @@
 export type RestSyncReqBody = {
-	installationId: number;
 	syncType: string;
 	source: string;
 	commitsFromDate: string;
@@ -124,6 +123,7 @@ export type SuccessfulConnection = {
 	jiraHost: string;
 	isGlobalInstall: boolean;
 	backfillSince: string | null;
+	subscriptionId: number;
 };
 
 export type FailedCloudConnection = {

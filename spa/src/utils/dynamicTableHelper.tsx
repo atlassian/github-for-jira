@@ -106,6 +106,7 @@ export const getGHSubscriptionsRows = (
 										src={cloudConnection.account.avatar_url}
 										size="medium"
 									/>
+									<span>{cloudConnection.subscriptionId}</span>
 								</span>
 							)}
 

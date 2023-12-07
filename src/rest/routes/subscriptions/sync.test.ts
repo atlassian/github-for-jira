@@ -17,6 +17,8 @@ describe("Checking the deferred request parsing route", () => {
 	let installation: Installation;
 	const installationIdForCloud = 1;
 	const installationIdForServer = 2;
+	const gitHubInstallationId = 15;
+	let subscription;
 	let gitHubServerApp: GitHubServerApp;
 	// let jwt: string;
 	const testSharedSecret = "test-secret";
@@ -66,43 +68,26 @@ describe("Checking the deferred request parsing route", () => {
 		});
 		app = express();
 		app.use(RootRouter);
+		subscription = await Subscription.create({
+			gitHubInstallationId,
+			jiraHost
+		});
 	});
 
 	describe("cloud", () => {
 		it("should throw 401 error when no github token is passed", async () => {
 			const resp = await supertest(app)
-				.get("/rest/app/cloud/sync");
+				.get(`/rest/app/cloud/subscriptions/${subscription.id}/sync`);
 
 			expect(resp.status).toEqual(401);
 		});
 
-		it("should return 202 on correct post for /rest/app/cloud/sync one for Cloud app", async () => {
-			return supertest(app)
-				.post("/rest/app/cloud/sync")
-				.set("authorization", `${getToken()}`)
-				.send({
-					installationId: installationIdForCloud,
-					jiraHost,
-					syncType: "full"
-				})
-				.expect(202)
-				.then(() => {
-					expect(sqsQueues.backfill.sendMessage).toBeCalledWith(expect.objectContaining({
-						installationId: installationIdForCloud,
-						jiraHost,
-						startTime: expect.anything(),
-						gitHubAppConfig: expect.objectContaining({ gitHubAppId: undefined, uuid: undefined })
-					}), expect.anything(), expect.anything());
-				});
-		});
-
 		it("should return 400 on incorrect commitsFromDate", async () => {
-			const commitsFromDate = new Date(new Date().getTime() + 2000);
+			const commitsFromDate = new Date(new Date().getTime() - 2000);
 			return supertest(app)
-				.post("/rest/app/cloud/sync")
+				.post(`/rest/app/cloud/subscriptions/${undefined}/sync`)
 				.set("authorization", `${getToken()}`)
 				.send({
-					installationId: installationIdForCloud,
 					jiraHost,
 					syncType: "full",
 					commitsFromDate
@@ -113,15 +98,34 @@ describe("Checking the deferred request parsing route", () => {
 		it("should return 400 on incorrect installationIdForCloud", async () => {
 			const commitsFromDate = new Date(new Date().getTime() + 2000);
 			return supertest(app)
-				.post("/rest/app/cloud/sync")
+				.post(`/rest/app/cloud/subscriptions/${subscription.id}/sync`)
 				.set("authorization", `${getToken()}`)
 				.send({
-					installationId: 11,
 					jiraHost,
 					syncType: "full",
 					commitsFromDate
 				})
 				.expect(400);
+		});
+
+		it("should return 202 on correct post for /rest/app/cloud/sync one for Cloud app", async () => {
+			const commitsFromDate = new Date(new Date().getTime() - 2000);
+			return supertest(app)
+				.post(`/rest/app/cloud/subscriptions/${subscription.id}/sync`)
+				.set("authorization", `${getToken()}`)
+				.send({
+					jiraHost,
+					syncType: "full",
+					commitsFromDate
+				})
+				.expect(202)
+				.then(() => {
+					expect(sqsQueues.backfill.sendMessage).toBeCalledWith(expect.objectContaining({
+						jiraHost,
+						startTime: expect.anything(),
+						gitHubAppConfig: expect.objectContaining({ gitHubAppId: undefined, uuid: undefined })
+					}), expect.anything(), expect.anything());
+				});
 		});
 
 	});

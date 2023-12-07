@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { JwtHandler } from "./middleware/jwt/jwt-handler";
-import { body } from "express-validator";
 import { OAuthRouter } from "./routes/oauth";
 import { OAuthCallbackHandler, OrgsInstalledHandler, OrgsInstallRequestedHandler } from "./routes/github-callback";
 import { GitHubOrgsRouter } from "./routes/github-orgs";
@@ -11,7 +10,6 @@ import { RestErrorHandler } from "./middleware/error";
 import { JiraAdminEnforceMiddleware } from "./middleware/jira-admin/jira-admin-check";
 import { AnalyticsProxyHandler } from "./routes/analytics-proxy";
 import { SubscriptionsRouter } from "./routes/subscriptions";
-import { SyncRouterHandler } from "./routes/sync";
 import { DeferredRouter } from "./routes/deferred";
 
 export const RestRouter = Router({ mergeParams: true });
@@ -28,14 +26,6 @@ RestRouter.use("/subscriptions", JwtHandler, JiraAdminEnforceMiddleware, Subscri
  * For enterprise flow, the path will be `/rest/app/SERVER-UUID/XXX`
  */
 RestRouter.use("/app/:cloudOrUUID", subRouter);
-
-subRouter.post(
-	"/sync",
-	body("commitsFromDate").optional().isISO8601(),
-	JwtHandler,
-	JiraAdminEnforceMiddleware,
-	SyncRouterHandler
-);
 
 subRouter.get("/github-callback", OAuthCallbackHandler);
 subRouter.get("/github-installed", OrgsInstalledHandler);
