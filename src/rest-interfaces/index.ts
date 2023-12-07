@@ -1,3 +1,8 @@
+export type RestSyncReqBody = {
+	syncType: string;
+	source: string;
+	commitsFromDate: string;
+}
 
 export type GetRedirectUrlResponse = {
 	redirectUrl: string;

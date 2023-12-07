@@ -5,6 +5,7 @@ import { Installation } from "models/installation";
 import { removeSubscription } from "utils/jira-utils";
 import { GitHubServerApp } from "models/github-server-app";
 import { InvalidArgumentError } from "config/errors";
+import { SyncRouterHandler } from "./sync";
 
 export const SubscriptionsRouter = Router({ mergeParams: true  });
 
@@ -38,3 +39,5 @@ SubscriptionsRouter.delete("/", errorWrapper("SubscriptionDelete", async (req: R
 
 	res.sendStatus(204);
 }));
+
+SubscriptionsRouter.post("/sync", SyncRouterHandler);
