@@ -17,13 +17,13 @@ describe("AuthManager", () => {
 		const mockRedirectUrlOnce = (state: string) => {
 			when(Api.auth.generateOAuthUrl)
 				.calledWith()
-				.mockResolvedValueOnce({ data: { redirectUrl: REDIRECT_URL, state: state } } as any);
-		}
+				.mockResolvedValueOnce({ data: { redirectUrl: REDIRECT_URL, state: state } } as never);
+		};
 
 		const mockExchangeTokenOnce= (code: string, state: string, accessToken: string) => {
 			when(Api.auth.exchangeToken)
 				.calledWith(code, state)
-				.mockResolvedValueOnce({ data: { accessToken } } as any);
+				.mockResolvedValueOnce({ data: { accessToken } } as never);
 		};
 
 		const onWinCloseAndBlock = { onWinClosed: () => {}, onPopupBlocked: () => {} };
