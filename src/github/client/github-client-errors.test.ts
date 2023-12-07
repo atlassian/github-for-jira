@@ -1,4 +1,4 @@
-import { GithubClientBlockedIpError } from "./github-client-errors";
+import { GithubClientBlockedIpError, GithubClientError } from "./github-client-errors";
 
 describe("GitHubClientError", () => {
 
@@ -18,5 +18,20 @@ describe("GitHubClientError", () => {
 		expect(error.stack).toContain("existing stack trace line 1");
 		expect(error.stack).toContain("existing stack trace line 2");
 		expect(error.stack).toContain("existing stack trace line 3");
+	});
+
+	it("extract the error response body (empty)", async () => {
+		const error = new GithubClientError("test", { } as any);
+		expect(error.resBody).toEqual(undefined);
+	});
+
+	it("extract the error response body (str)", async () => {
+		const error = new GithubClientError("test", { response: { data: "test resp body" } } as any);
+		expect(error.resBody).toEqual("test resp body");
+	});
+
+	it("extract the error response body (object)", async () => {
+		const error = new GithubClientError("test", { response: { data: { hello: "error" } } } as any);
+		expect(error.resBody).toEqual(`{"hello":"error"}`);
 	});
 });
