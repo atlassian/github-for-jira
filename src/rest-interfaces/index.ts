@@ -118,6 +118,7 @@ export type SuccessfulConnection = {
 	jiraHost: string;
 	isGlobalInstall: boolean;
 	backfillSince: string | null;
+	subscriptionId: number;
 };
 
 export type FailedCloudConnection = {
