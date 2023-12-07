@@ -5,7 +5,7 @@ import { Subscription } from "models/subscription";
 import { findOrStartSync } from "~/src/sync/sync-utils";
 import { determineSyncTypeAndTargetTasks } from "~/src/util/github-sync-helper";
 import { BaseLocals } from "..";
-import { RestApiError } from "~/src/config/errors";
+import { InsufficientPermissionError, RestApiError } from "~/src/config/errors";
 import { RestSyncReqBody } from "~/src/rest-interfaces";
 // import { GitHubServerApp } from "~/src/models/github-server-app";
 
@@ -55,6 +55,7 @@ const restSyncPost = async (
 	// }
 
 	const subscription = await Subscription.findByPk(subscriptionId);
+
 	if (!subscription) {
 		req.log.info(
 			{
@@ -69,6 +70,13 @@ const restSyncPost = async (
 			"Subscription not found, cannot resync."
 		);
 	}
+
+	const localJiraHost = res.locals.installation.jiraHost;
+
+	if (subscription.jiraHost !== localJiraHost) {
+		throw new InsufficientPermissionError("Forbidden - mismatched Jira Host");
+	}
+
 
 	const { syncType, targetTasks } = determineSyncTypeAndTargetTasks(
 		syncTypeFromReq,
