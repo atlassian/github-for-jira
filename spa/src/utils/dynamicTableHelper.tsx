@@ -115,7 +115,15 @@ export const getGHSubscriptionsRows = (
 					content: (
 						<div css={rowWrapperStyle}>
 							<span>
-								<a href={cloudConnection.html_url} target="_blank">
+								<a
+									href="#"
+									onClick={() => {
+										AP.navigator.go("addonmodule", {
+											moduleKey: "gh-addon-subscription-repos",
+											customData: {subscriptionId: cloudConnection.subscriptionId},
+										});
+									}}
+								>
 									{cloudConnection.isGlobalInstall
 										? `All repos`
 										: `Only select repos`}
