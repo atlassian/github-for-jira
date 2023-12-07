@@ -17,7 +17,7 @@ const DisconnectSubscriptionModal = ({ subscription, setIsModalOpened }: {
 
 	const disconnect = async () => {
 		setIsLoading(true);
-		const response: boolean | AxiosError = await SubscriptionManager.deleteSubscription(subscription.id);
+		const response: boolean | AxiosError = await SubscriptionManager.deleteSubscription(subscription.subscriptionId);
 		if (response instanceof AxiosError) {
 			// TODO: Handle the error once we have the designs
 			console.error("Error", response);
