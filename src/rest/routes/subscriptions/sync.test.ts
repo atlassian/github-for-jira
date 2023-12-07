@@ -8,6 +8,7 @@ import { encodeSymmetric } from "atlassian-jwt";
 import { GitHubServerApp } from "models/github-server-app";
 import { v4 as newUUID } from "uuid";
 import { sqsQueues } from "~/src/sqs/queues";
+import { DatabaseStateCreator } from "~/test/utils/database-state-creator";
 
 jest.mock("~/src/sqs/queues");
 jest.mock("config/feature-flags");
@@ -80,6 +81,22 @@ describe("Checking the deferred request parsing route", () => {
 				.get(`/rest/app/cloud/subscriptions/${subscription.id}/sync`);
 
 			expect(resp.status).toEqual(401);
+		});
+
+		it("should return 403 on correct sub id with different jiraHost", async () => {
+			const commitsFromDate = new Date(new Date().getTime() - 2000);
+			const result = await new DatabaseStateCreator()
+				.forJiraHost("https://another-one.atlassian.net")
+				.create();
+			return supertest(app)
+				.post(`/rest/app/cloud/subscriptions/${result.subscription.id}/sync`)
+				.set("authorization", `${getToken()}`)
+				.send({
+					jiraHost,
+					syncType: "full",
+					commitsFromDate
+				})
+				.expect(403);
 		});
 
 		it("should return 400 on incorrect commitsFromDate", async () => {
