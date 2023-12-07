@@ -10,7 +10,6 @@ import EditIcon from "@atlaskit/icon/glyph/edit";
 import Button from "@atlaskit/button";
 import MoreIcon from "@atlaskit/icon/glyph/more";
 import DropdownMenu, { DropdownItem, DropdownItemGroup } from "@atlaskit/dropdown-menu";
-import { Link } from "react-router-dom";
 
 type Row = {
 	key: string;
@@ -116,11 +115,11 @@ export const getGHSubscriptionsRows = (
 					content: (
 						<div css={rowWrapperStyle}>
 							<span>
-								<Link to="/spa/repositories">
+								<a href={cloudConnection.html_url} target="_blank">
 									{cloudConnection.isGlobalInstall
 										? `All repos`
 										: `Only select repos`}
-								</Link>
+								</a>
 							</span>
 							<Badge>
 								{ifAllReposSynced(

@@ -10,7 +10,6 @@ import Textfield from "@atlaskit/textfield";
 import SearchIcon from "@atlaskit/icon/glyph/search";
 import Select, { ValueType } from "@atlaskit/select";
 import { Inline } from "@atlaskit/primitives";
-import { DynamicTableStateless } from "@atlaskit/dynamic-table";
 
 const Repositories = () => {
 	const navigate = useNavigate();
