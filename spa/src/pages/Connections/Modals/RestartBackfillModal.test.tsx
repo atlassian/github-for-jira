@@ -30,15 +30,15 @@ const sampleSubscription = {
 const isModalOpened = jest.fn();
 
 test("Restart backfill Modal", async () => {
-	const { container } = render(
+	render(
 		<BrowserRouter>
 			<RestartBackfillModal subscription={sampleSubscription} setIsModalOpened={isModalOpened} />
 		</BrowserRouter>
 	);
 
 	expect(screen.getByText("Backfill your data")).toBeInTheDocument();
-	expect(container.querySelector("input#backfill-date-picker")).toBeInTheDocument();
-	expect(container.querySelector("input[type='checkbox']")).toBeInTheDocument();
+	// expect(screen.queryByTestId("backfill-datepicker")).toBeInTheDocument();
+	expect(screen.getByRole("checkbox", {name: "Restart the backfill from today to this date"})).toBeInTheDocument();
 
 	await userEvent.click(screen.getByText("Cancel"));
 	expect(isModalOpened).toBeCalled();

@@ -50,6 +50,7 @@ const RestartBackfillModal = ({ subscription, setIsModalOpened }: {
 					<p>
 						<Label htmlFor="backfill-date-picker">Choose date</Label>
 						<DatePicker
+							testId="backfill-datepicker"
 							selectProps={{
 								inputId: "backfill-date-picker",
 							}}
