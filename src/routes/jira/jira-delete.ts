@@ -1,4 +1,4 @@
-import { Errors, RestApiError } from "config/errors";
+import { Errors } from "config/errors";
 import { Request, Response } from "express";
 import { removeSubscription } from "utils/jira-utils";
 
@@ -29,9 +29,6 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 		req.log.info("No gitHubAppId passed. Disconnecting cloud subscription.");
 	}
 
-	if (await removeSubscription(installation, gitHubInstallationId, gitHubAppId, req.log, undefined)) {
-		res.sendStatus(204);
-	} else {
-		throw new RestApiError(500, "UNKNOWN", "Unable to remove this subscription!");
-	}
+	await removeSubscription(installation, gitHubInstallationId, gitHubAppId, req.log, undefined);
+	res.sendStatus(204);
 };

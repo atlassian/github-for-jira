@@ -166,6 +166,10 @@ export const removeSubscription = async (
 		throw new RestApiError(404, "RESOURCE_NOT_FOUND", "Can not find subscription");
 	}
 
+	if (subscription.jiraHost !== jiraHost) {
+		throw new RestApiError(500, "JIRAHOST_MISMATCH", "Jirahosts do not match for this subscription");
+	}
+
 	const gitHubInstallationId = subscription.gitHubInstallationId;
 
 	const jiraClient = await getJiraClient(jiraHost, gitHubInstallationId, gitHubAppId, logger);
@@ -191,7 +195,4 @@ export const removeSubscription = async (
 		gitHubProduct: getCloudOrServerFromGitHubAppId(gitHubAppId),
 		spa: !!subscriptionId
 	});
-
-	return true;
 }
-
