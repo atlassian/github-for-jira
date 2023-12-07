@@ -7,9 +7,10 @@ import { token } from "@atlaskit/tokens";
 import { css } from "@emotion/react";
 import Form, { Field } from "@atlaskit/form";
 import Textfield from "@atlaskit/textfield";
-import { Fragment } from "react";
 import SearchIcon from "@atlaskit/icon/glyph/search";
 import Select, { ValueType } from "@atlaskit/select";
+import { Inline } from "@atlaskit/primitives";
+import { DynamicTableStateless } from "@atlaskit/dynamic-table";
 
 const Repositories = () => {
 	const navigate = useNavigate();
@@ -37,51 +38,37 @@ const Repositories = () => {
 			<Form onSubmit={(formData) => console.log("form data", formData)}>
 				{({ formProps }) => (
 					<form {...formProps} name="repository-search">
-						<Field name="repository-search-input" defaultValue="">
-							{({ fieldProps }) => (
-								<Fragment>
+						<Inline>
+							<Field name="repository-search-input" defaultValue="">
+								{({ fieldProps }) => (
 									<Textfield
 										{...fieldProps}
 										elemAfterInput={<SearchIcon label="" size="medium" />}
 										placeholder="Search repositories"
 									/>
-								</Fragment>
-							)}
-						</Field>
-						<Field<ValueType<Option>>
-							name="status"
-							defaultValue={{
-								label: "All",
-								value: "all",
-							}}
-						>
-							{({ fieldProps: { id, ...rest } }) => (
-								<Fragment>
+								)}
+							</Field>
+							<Field<ValueType<Option>>
+								name="status"
+								defaultValue={{
+									label: "All",
+									value: "all",
+								}}
+							>
+								{({ fieldProps: { id, ...rest } }) => (
 									<Select<Option>
 										inputId={id}
-										// components={{
-										// 	Option: CustomColorOption,
-										// 	SingleValue: CustomValueOption,
-										// }}
-										{...rest}
 										options={[
 											{ label: "All", value: "all" },
 											{ label: "In Progress", value: "in progress" },
 											{ label: "Failed", value: "failed" },
 										]}
-                                        isSearchable={false}
+										isSearchable={false}
+										{...rest}
 									/>
-								</Fragment>
-							)}
-						</Field>
-						{/* <Select
-							inputId="single-select-example"
-							options={[
-								{ label: "All", value: "all", defaultSelected: true },
-								{ label: "In Progress", value: "in progress" },
-								{ label: "Failed", value: "failed" },
-							]}
-						/> */}
+								)}
+							</Field>
+						</Inline>
 					</form>
 				)}
 			</Form>
