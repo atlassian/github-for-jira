@@ -22,8 +22,9 @@ const DisconnectSubscriptionModal = ({ subscription, setIsModalOpened, refetch }
 		if (response instanceof AxiosError) {
 			// TODO: Handle the error once we have the designs
 			console.error("Error", response);
+		} else {
+			await refetch();
 		}
-		await refetch();
 		setIsModalOpened(false);
 	};
 
@@ -43,6 +44,7 @@ const DisconnectSubscriptionModal = ({ subscription, setIsModalOpened, refetch }
 				</ModalBody>
 				<ModalFooter>
 					<Button
+						isDisabled={isLoading}
 						appearance="subtle"
 						onClick={() => setIsModalOpened(false)}
 					>
