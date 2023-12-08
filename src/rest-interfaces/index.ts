@@ -1,5 +1,5 @@
 export type RestSyncReqBody = {
-	syncType?: string;
+	syncType: string;
 	source: string;
 	commitsFromDate: string;
 }

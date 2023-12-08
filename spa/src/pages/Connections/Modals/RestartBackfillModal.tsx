@@ -36,7 +36,7 @@ const RestartBackfillModal = ({ subscription, setIsModalOpened, refetch }: {
 
 	const backfill = async () => {
 		// TODO: API call to disconnect this subscription
-		let syncType = undefined;
+		let syncType = "";
 		if (restartFromDateCheck) {
 			syncType = "full";
 		}
