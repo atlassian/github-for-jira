@@ -123,6 +123,7 @@ export type SuccessfulConnection = {
 	jiraHost: string;
 	isGlobalInstall: boolean;
 	backfillSince: string | null;
+	html_url: string;
 	subscriptionId: number;
 };
 
