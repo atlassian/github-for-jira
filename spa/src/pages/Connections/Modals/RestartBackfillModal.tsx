@@ -49,6 +49,7 @@ const RestartBackfillModal = ({ subscription, setIsModalOpened, refetch }: {
 			console.error("Error", response);
 		}
 		await refetch();
+		setIsModalOpened(false);
 	};
 
 	return (
