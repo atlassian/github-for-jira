@@ -19,26 +19,30 @@ const containerStyles = xcss({
 
 type GitHubCloudConnectionsProps = {
 	ghCloudSubscriptions: GhCloudSubscriptions;
+	refetch: () => void;
 };
 
 const GitHubCloudConnections = ({
 	ghCloudSubscriptions,
+	refetch,
 }: GitHubCloudConnectionsProps) => {
 	const [isModalOpened, setIsModalOpened] = useState(false);
 	const [subscriptionForModal, setSubscriptionForModal] = useState<SuccessfulConnection | undefined>(undefined);
 	const [selectedModal, setSelectedModal] = useState<BackfillPageModalTypes>("BACKFILL");
 
-	const openedModal = () => {
+	const openedModal = (refetch: () => void) => {
 		switch (selectedModal) {
 			case "BACKFILL":
 				return (<RestartBackfillModal
 					subscription={subscriptionForModal as SuccessfulConnection}
 					setIsModalOpened={setIsModalOpened}
+					refetch={refetch}
 				/>);
 			case "DISCONNECT_SUBSCRIPTION":
 				return <DisconnectSubscriptionModal
 					subscription={subscriptionForModal as SuccessfulConnection}
 					setIsModalOpened={setIsModalOpened}
+					refetch={refetch}
 				/>;
 			// 	TODO: Create modals for GHE later
 			case "DISCONNECT_SERVER":
@@ -64,7 +68,7 @@ const GitHubCloudConnections = ({
 
 			<ModalTransition>
 				{
-					isModalOpened && subscriptionForModal && openedModal()
+					isModalOpened && subscriptionForModal && openedModal(refetch)
 				}
 			</ModalTransition>
 		</>

@@ -10,9 +10,10 @@ import { DatePicker } from "@atlaskit/datetime-picker";
  * NOTE: While testing in dev mode, please disable the React.StrictMode first,
  * otherwise this modal won't show up.
  */
-const RestartBackfillModal = ({ subscription, setIsModalOpened }: {
+const RestartBackfillModal = ({ subscription, setIsModalOpened, refetch }: {
 	subscription: SuccessfulConnection,
-	setIsModalOpened: (x: boolean) => void
+	setIsModalOpened: (x: boolean) => void,
+	refetch: () => void,
 }) => {
 	const [restartFromDateCheck, setRestartFromDateCheck] = useState(false);
 	const [backfillDate, setBackfillDate] = useState("");
@@ -30,9 +31,10 @@ const RestartBackfillModal = ({ subscription, setIsModalOpened }: {
 		setTimeout(() => setIsDisabled(false), 10);
 	}, []);
 
-	const backfill = () => {
+	const backfill = async () => {
 		// TODO: API call to disconnect this subscription
 		console.log("Backfill for", subscription.account.login, restartFromDateCheck, backfillDate);
+		await refetch();
 		setIsModalOpened(false);
 	};
 
