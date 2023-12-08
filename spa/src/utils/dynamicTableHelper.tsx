@@ -6,6 +6,10 @@ import Lozenge from "@atlaskit/lozenge";
 import { BackfillPageModalTypes, SuccessfulConnection } from "../rest-interfaces";
 import { ThemeAppearance } from "@atlaskit/lozenge/dist/types/Lozenge";
 import { css } from "@emotion/react";
+import EditIcon from "@atlaskit/icon/glyph/edit";
+import Button from "@atlaskit/button";
+import MoreIcon from "@atlaskit/icon/glyph/more";
+import DropdownMenu, { DropdownItem, DropdownItemGroup } from "@atlaskit/dropdown-menu";
 
 type Row = {
 	key: string;
@@ -73,9 +77,9 @@ const createHead = (withWidth: boolean) => {
 				width: withWidth ? 30 : undefined,
 			},
 			{
-				key: "options",
+				key: "settings",
 				content: "Settings",
-				width: withWidth ? 10: undefined,
+				width: withWidth ? 10: undefined
 			}
 		],
 	};
@@ -118,9 +122,19 @@ export const getGHSubscriptionsRows = (
 					content: (
 						<div css={rowWrapperStyle}>
 							<span>
-								{cloudConnection.isGlobalInstall
-									? `All repos`
-									: `Only select repos`}
+								<a
+									href="#"
+									onClick={() => {
+										AP.navigator.go("addonmodule", {
+											moduleKey: "gh-addon-subscription-repos",
+											customData: {subscriptionId: cloudConnection.subscriptionId},
+										});
+									}}
+								>
+									{cloudConnection.isGlobalInstall
+										? `All repos`
+										: `Only select repos`}
+								</a>
 							</span>
 							<Badge>
 								{ifAllReposSynced(
@@ -128,6 +142,13 @@ export const getGHSubscriptionsRows = (
 									cloudConnection.totalNumberOfRepos
 								)}
 							</Badge>
+							<Button
+							href={cloudConnection.html_url}
+							target="_blank"
+							appearance="subtle"
+							iconBefore={<EditIcon label="" size="small"/>}
+							>
+							</Button>
 						</div>
 					),
 				},
@@ -159,27 +180,48 @@ export const getGHSubscriptionsRows = (
 							</div>
 						</div>
 					),
-				},
-				{
+				},{
 					key: cloudConnection.id,
 					content: (
-						<>
-							{/* TODO: Add this in the dropdown list once merged with ARC-2720 */}
-							<div onClick={() => {
-								callbacks?.setIsModalOpened(true);
-								callbacks?.setSubscriptionForModal(cloudConnection);
-								callbacks?.setSelectedModal("DISCONNECT_SUBSCRIPTION");
-							}}>
-								Disconnect
-							</div>
-							<div onClick={() => {
-								callbacks?.setIsModalOpened(true);
-								callbacks?.setSubscriptionForModal(cloudConnection);
-								callbacks?.setSelectedModal("BACKFILL");
-							}}>
-								Backfill
-							</div>
-						</>
+						<div css={rowWrapperStyle}>
+							<DropdownMenu
+								trigger={({ triggerRef, ...props }) => (
+									<Button
+										{...props}
+										appearance="subtle"
+										iconBefore={<MoreIcon label="more" size="small"/>}
+										ref={triggerRef}
+									/>
+								)}
+							>
+								<DropdownItemGroup>
+									<DropdownItem
+										href={cloudConnection.html_url}
+										target="_blank"
+									>
+										Configure
+									</DropdownItem>
+									<DropdownItem
+										onClick={() => {
+											callbacks?.setIsModalOpened(true);
+											callbacks?.setSubscriptionForModal(cloudConnection);
+											callbacks?.setSelectedModal("BACKFILL");
+										}}
+									>
+										Backfill
+									</DropdownItem>
+									<DropdownItem
+										onClick={() => {
+											callbacks?.setIsModalOpened(true);
+											callbacks?.setSubscriptionForModal(cloudConnection);
+											callbacks?.setSelectedModal("DISCONNECT_SUBSCRIPTION");
+										}}
+									>
+										Disconnect
+									</DropdownItem>
+								</DropdownItemGroup>
+							</DropdownMenu>
+						</div>
 					)
 				}
 			],

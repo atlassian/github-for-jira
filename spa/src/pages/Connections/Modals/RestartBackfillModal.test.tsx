@@ -25,7 +25,8 @@ const sampleSubscription = {
 	jiraHost: "https://test-jira.atlassian.net",
 	isGlobalInstall: true,
 	backfillSince: null,
-	subscriptionId: 1
+	subscriptionId: 1,
+	html_url: "html_url"
 };
 const isModalOpened = jest.fn();
 
