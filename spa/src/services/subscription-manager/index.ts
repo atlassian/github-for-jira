@@ -4,7 +4,7 @@ import { reportError } from "../../utils";
 import { GHSubscriptions } from "../../../../src/rest-interfaces";
 import { RestSyncReqBody } from "~/src/rest-interfaces";
 
-async function syncSubscription(subscriptionId:number, reqBody: RestSyncReqBody): Promise<GHSubscriptions | AxiosError> {
+async function syncSubscription(subscriptionId:number, reqBody: RestSyncReqBody): Promise<void | AxiosError> {
 	try {
 		const response= await Api.subscriptions.syncSubscriptions(subscriptionId,reqBody);
 		const isSuccessful = response.status === 202;
@@ -14,8 +14,6 @@ async function syncSubscription(subscriptionId:number, reqBody: RestSyncReqBody)
 				{ path: "syncSubscription" }
 			);
 		}
-
-		return response.data;
 	} catch (e: unknown) {
 		reportError(new Error("Unable to backfill subscription", { cause: e }), { path: "syncSubscription" });
 		return e as AxiosError;
