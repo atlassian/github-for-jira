@@ -25,7 +25,8 @@ export enum BooleanFlags {
 	USE_DYNAMODB_TO_PERSIST_AUDIT_LOG = "use-dynamodb-to-persist-audit-log",
 	USE_CUSTOM_ROOT_CA_BUNDLE = "use-custom-root-ca-bundle",
 	GENERATE_CORE_HEAP_DUMPS_ON_LOW_MEM = "generate-core-heap-dumps-on-low-mem",
-	USE_RATELIMIT_ON_JIRA_CLIENT = "use-ratelimit-on-jira-client"
+	USE_RATELIMIT_ON_JIRA_CLIENT = "use-ratelimit-on-jira-client",
+	SKIP_PROCESS_QUEUE_IF_ISSUE_NOT_FOUND = "skip-process-queue-when-issue-not-exists"
 }
 
 export enum StringFlags {

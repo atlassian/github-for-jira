@@ -1,10 +1,11 @@
 import Logger from "bunyan";
 import { Subscription } from "models/subscription";
-import { getJiraClient } from "../jira/client/jira-client";
+import { getJiraClient, JiraClient } from "../jira/client/jira-client";
+import { JiraClientError } from "../jira/client/axios";
 import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { JiraCommit, JiraCommitFile, JiraCommitFileChangeTypeEnum } from "interfaces/jira";
-import { isBlocked, shouldSendAll } from "config/feature-flags";
+import { isBlocked, shouldSendAll, booleanFlag, BooleanFlags } from "config/feature-flags";
 import { sqsQueues } from "../sqs/queues";
 import { GitHubAppConfig, PushQueueMessagePayload } from "~/src/sqs/sqs.types";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
@@ -139,8 +140,16 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 
 		const recentShas = shas.slice(0, MAX_COMMIT_HISTORY);
 		const commitPromises: Promise<JiraCommit | null>[] = recentShas.map(async (sha): Promise<JiraCommit | null> => {
-			log.info("Calling GitHub to fetch commit info " + sha.id);
 			try {
+
+				if (await booleanFlag(BooleanFlags.SKIP_PROCESS_QUEUE_IF_ISSUE_NOT_FOUND, jiraHost)) {
+					if (!await someIssueKeysExistsOnJira(sha.issueKeys, jiraClient)) {
+						return null;
+					}
+				}
+
+				log.info("Calling GitHub to fetch commit info " + sha.id);
+
 				const commitResponse = await github.getCommit(owner.login, repo, sha.id);
 				const {
 					files,
@@ -232,4 +241,23 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		log.warn({ err }, "Push has failed");
 		throw err;
 	}
+};
+
+const someIssueKeysExistsOnJira = async (issueKeys: string[], jiraClient: JiraClient): Promise<boolean> => {
+	for (const issueKey of issueKeys) {
+		try {
+			await jiraClient.issues.get(issueKey);
+			return true;
+		} catch (e) {
+			if (e instanceof JiraClientError) {
+				if (e.status !== 404) {
+					//some other jira client error happen,
+					//return true to continue processing the msg for the safe side
+					return true;
+				}
+			}
+		}
+	}
+	//all issue keys within this commits NOT exist on jira, so should skip processing the msg itself.
+	return false;
 };
