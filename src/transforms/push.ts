@@ -1,16 +1,18 @@
 import Logger from "bunyan";
 import { Subscription } from "models/subscription";
-import { getJiraClient } from "../jira/client/jira-client";
+import { getJiraClient, JiraClient } from "../jira/client/jira-client";
+import { JiraClientError } from "../jira/client/axios";
 import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { JiraCommit, JiraCommitFile, JiraCommitFileChangeTypeEnum } from "interfaces/jira";
-import { isBlocked, shouldSendAll } from "config/feature-flags";
+import { isBlocked, shouldSendAll, booleanFlag, BooleanFlags } from "config/feature-flags";
 import { sqsQueues } from "../sqs/queues";
 import { GitHubAppConfig, PushQueueMessagePayload } from "~/src/sqs/sqs.types";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { compact, isEmpty } from "lodash";
 import { GithubCommitFile, GitHubPushData } from "interfaces/github";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
+import { saveIssueStatusToRedis, getIssueStatusFromRedis } from "utils/jira-issue-check-redis-util";
 
 const MAX_COMMIT_HISTORY = 10;
 // TODO: define better types for this file
@@ -139,8 +141,17 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 
 		const recentShas = shas.slice(0, MAX_COMMIT_HISTORY);
 		const commitPromises: Promise<JiraCommit | null>[] = recentShas.map(async (sha): Promise<JiraCommit | null> => {
-			log.info("Calling GitHub to fetch commit info " + sha.id);
 			try {
+
+				if (await booleanFlag(BooleanFlags.SKIP_PROCESS_QUEUE_IF_ISSUE_NOT_FOUND, jiraHost)) {
+					if (!await someIssueKeysExistsOnJira(subscription.jiraHost, sha.issueKeys, jiraClient, log)) {
+						log.info("Issue key not found on jira, skip processing commits");
+						return null;
+					}
+				}
+
+				log.info("Calling GitHub to fetch commit info " + sha.id);
+
 				const commitResponse = await github.getCommit(owner.login, repo, sha.id);
 				const {
 					files,
@@ -232,4 +243,38 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		log.warn({ err }, "Push has failed");
 		throw err;
 	}
+};
+
+const someIssueKeysExistsOnJira = async (jiraHost: string, issueKeys: string[], jiraClient: JiraClient, log: Logger): Promise<boolean> => {
+	for (const issueKey of issueKeys) {
+		try {
+			const status = await getIssueStatusFromRedis(jiraHost, issueKey);
+			if (status === "not_exist") {
+				continue;
+			} else if (status === "exist") {
+				return true;
+			}
+			await jiraClient.issues.get(issueKey);
+			await saveIssueStatusToRedis(jiraHost, issueKey, "exist");
+			return true;
+		} catch (e) {
+			if (e instanceof JiraClientError) {
+				if (e.status !== 404) {
+					//some other jira client error happen,
+					//return true to continue processing the msg for the safe side
+					log.warn("Found other errors status when fetching issue status", { err: e });
+					return true;
+				} else {
+					await saveIssueStatusToRedis(jiraHost, issueKey, "not_exist");
+				}
+			} else {
+				//some unknow error,
+				//return true to continue processing the msg for the safe side
+				log.warn("Found other errors when fetching issue status", { err: e });
+				return true;
+			}
+		}
+	}
+	//all issue keys within this commits NOT exist on jira, so should skip processing the msg itself.
+	return false;
 };
