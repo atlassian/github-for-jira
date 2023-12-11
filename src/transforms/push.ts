@@ -12,6 +12,7 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { compact, isEmpty } from "lodash";
 import { GithubCommitFile, GitHubPushData } from "interfaces/github";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
+import { saveIssueStatusToRedis, getIssueStatusFromRedis } from "utils/jira-issue-check-redis-util";
 
 const MAX_COMMIT_HISTORY = 10;
 // TODO: define better types for this file
@@ -143,7 +144,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 			try {
 
 				if (await booleanFlag(BooleanFlags.SKIP_PROCESS_QUEUE_IF_ISSUE_NOT_FOUND, jiraHost)) {
-					if (!await someIssueKeysExistsOnJira(sha.issueKeys, jiraClient)) {
+					if (!await someIssueKeysExistsOnJira(subscription.jiraHost, sha.issueKeys, jiraClient)) {
 						return null;
 					}
 				}
@@ -243,10 +244,17 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 	}
 };
 
-const someIssueKeysExistsOnJira = async (issueKeys: string[], jiraClient: JiraClient): Promise<boolean> => {
+const someIssueKeysExistsOnJira = async (jiraHost: string, issueKeys: string[], jiraClient: JiraClient): Promise<boolean> => {
 	for (const issueKey of issueKeys) {
 		try {
+			const status = await getIssueStatusFromRedis(jiraHost, issueKey);
+			if (status === "not_exist") {
+				continue;
+			} else if (status === "exist") {
+				return true;
+			}
 			await jiraClient.issues.get(issueKey);
+			await saveIssueStatusToRedis(jiraHost, issueKey, "exist");
 			return true;
 		} catch (e) {
 			if (e instanceof JiraClientError) {
@@ -254,7 +262,13 @@ const someIssueKeysExistsOnJira = async (issueKeys: string[], jiraClient: JiraCl
 					//some other jira client error happen,
 					//return true to continue processing the msg for the safe side
 					return true;
+				} else {
+					await saveIssueStatusToRedis(jiraHost, issueKey, "not_exist");
 				}
+			} else {
+				//some unknow error,
+				//return true to continue processing the msg for the safe side
+				return true;
 			}
 		}
 	}

@@ -105,14 +105,30 @@ describe("Enqueue push", () => {
 		}), 0, expect.anything());
 	});
 
-	describe.only("Skipping msg when issue not exist", () => {
+	describe("Skipping msg when issue not exist", () => {
 
 		let db: CreatorResult;
+		let issueKey;
+		let sha;
 		beforeEach(async () => {
 			db = await new DatabaseStateCreator()
 				.forCloud()
 				.create();
 			when(shouldSendAll).calledWith("commits", expect.anything(), expect.anything()).mockResolvedValue(false);
+			issueKey = `KEY-${new Date().getTime()}`;
+			sha = `sha-${issueKey}`;
+		});
+
+		describe("Use redis to avoid overload jira", () => {
+			it("should reuse status from redis and only call jira once for same issue-key", async () => {
+				when(booleanFlag).calledWith(BooleanFlags.SKIP_PROCESS_QUEUE_IF_ISSUE_NOT_FOUND, expect.anything())
+					.mockResolvedValue(true);
+
+				mockIssueNotExists();
+
+				await processPush(getGitHubClient(), getPushPayload(), logger);
+				await processPush(getGitHubClient(), getPushPayload(), logger);
+			});
 		});
 
 		it("should NOT process issue if skip ff is on and the issue keys is not valid", async () => {
@@ -120,9 +136,9 @@ describe("Enqueue push", () => {
 			when(booleanFlag).calledWith(BooleanFlags.SKIP_PROCESS_QUEUE_IF_ISSUE_NOT_FOUND, expect.anything())
 				.mockResolvedValue(true);
 
-			mockIssueNotExists("ABC-111");
+			mockIssueNotExists();
 
-			await processPush(getGitHubClient(), getPushPayload("sha-111", [ "ABC-111" ]), logger);
+			await processPush(getGitHubClient(), getPushPayload(), logger);
 
 		});
 
@@ -131,14 +147,14 @@ describe("Enqueue push", () => {
 			when(booleanFlag).calledWith(BooleanFlags.SKIP_PROCESS_QUEUE_IF_ISSUE_NOT_FOUND, expect.anything())
 				.mockResolvedValue(true);
 
-			mockIssueExists("ABC-222");
+			mockIssueExists();
 
 			githubUserTokenNock(db.subscription.gitHubInstallationId);
-			mockGitHubCommitRestApi("sha-222");
+			mockGitHubCommitRestApi();
 
-			mockJiraDevInfoAcceptUpdate("ABC-222");
+			mockJiraDevInfoAcceptUpdate();
 
-			await processPush(getGitHubClient(), getPushPayload("sha-222", [ "ABC-222" ]), logger);
+			await processPush(getGitHubClient(), getPushPayload(), logger);
 
 		});
 
@@ -148,21 +164,21 @@ describe("Enqueue push", () => {
 				.mockResolvedValue(false);
 
 			githubUserTokenNock(db.subscription.gitHubInstallationId);
-			mockGitHubCommitRestApi("sha-333");
+			mockGitHubCommitRestApi();
 
-			mockJiraDevInfoAcceptUpdate("ABC-333");
+			mockJiraDevInfoAcceptUpdate();
 
-			await processPush(getGitHubClient(), getPushPayload("sha-333", [ "ABC-333" ]), logger);
+			await processPush(getGitHubClient(), getPushPayload(), logger);
 
 		});
 
-		const mockJiraDevInfoAcceptUpdate = (...issueKeys) => {
+		const mockJiraDevInfoAcceptUpdate = () => {
 			jiraNock.post("/rest/devinfo/0.10/bulk", (reqBody) => {
-				return reqBody.repositories[0].commits.flatMap(c => c.issueKeys).some(ck => issueKeys.includes(ck));
+				return reqBody.repositories[0].commits.flatMap(c => c.issueKeys).some(ck => ck === issueKey);
 			}).reply(202, "");
 		};
 
-		const mockGitHubCommitRestApi = (sha) => {
+		const mockGitHubCommitRestApi = () => {
 			githubNock
 				.get("/repos/org1/repo1/commits/" + sha)
 				.reply(200, {
@@ -171,7 +187,7 @@ describe("Enqueue push", () => {
 				});
 		};
 
-		const getPushPayload = (sha, issueKeys: string[]) => {
+		const getPushPayload = () => {
 			return {
 				jiraHost,
 				installationId: db.subscription.gitHubInstallationId,
@@ -183,23 +199,19 @@ describe("Enqueue push", () => {
 				} as GitHubRepository,
 				shas: [{
 					id: sha,
-					issueKeys: [...issueKeys]
+					issueKeys: [issueKey]
 				}]
 			};
 		};
 
-		const mockIssueExists = (...issueKeys) => {
-			issueKeys.forEach(k => {
-				jiraNock.get(`/rest/api/latest/issue/${k}`)
-					.query({ fields: "summary" }).reply(200, {});
-			});
+		const mockIssueExists = () => {
+			jiraNock.get(`/rest/api/latest/issue/${issueKey}`)
+				.query({ fields: "summary" }).reply(200, {});
 		};
 
-		const mockIssueNotExists = (...issueKeys) => {
-			issueKeys.forEach(k => {
-				jiraNock.get(`/rest/api/latest/issue/${k}`)
-					.query({ fields: "summary" }).reply(404, "");
-			});
+		const mockIssueNotExists = () => {
+			jiraNock.get(`/rest/api/latest/issue/${issueKey}`)
+				.query({ fields: "summary" }).reply(404, "");
 		};
 
 		const getGitHubClient = () => {
