@@ -144,7 +144,8 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 			try {
 
 				if (await booleanFlag(BooleanFlags.SKIP_PROCESS_QUEUE_IF_ISSUE_NOT_FOUND, jiraHost)) {
-					if (!await someIssueKeysExistsOnJira(subscription.jiraHost, sha.issueKeys, jiraClient)) {
+					if (!await someIssueKeysExistsOnJira(subscription.jiraHost, sha.issueKeys, jiraClient, log)) {
+						log.info("Issue key not found on jira, skip processing commits");
 						return null;
 					}
 				}
@@ -244,7 +245,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 	}
 };
 
-const someIssueKeysExistsOnJira = async (jiraHost: string, issueKeys: string[], jiraClient: JiraClient): Promise<boolean> => {
+const someIssueKeysExistsOnJira = async (jiraHost: string, issueKeys: string[], jiraClient: JiraClient, log: Logger): Promise<boolean> => {
 	for (const issueKey of issueKeys) {
 		try {
 			const status = await getIssueStatusFromRedis(jiraHost, issueKey);
@@ -261,6 +262,7 @@ const someIssueKeysExistsOnJira = async (jiraHost: string, issueKeys: string[], 
 				if (e.status !== 404) {
 					//some other jira client error happen,
 					//return true to continue processing the msg for the safe side
+					log.warn("Found other errors status when fetching issue status", { err: e });
 					return true;
 				} else {
 					await saveIssueStatusToRedis(jiraHost, issueKey, "not_exist");
@@ -268,6 +270,7 @@ const someIssueKeysExistsOnJira = async (jiraHost: string, issueKeys: string[], 
 			} else {
 				//some unknow error,
 				//return true to continue processing the msg for the safe side
+				log.warn("Found other errors when fetching issue status", { err: e });
 				return true;
 			}
 		}
