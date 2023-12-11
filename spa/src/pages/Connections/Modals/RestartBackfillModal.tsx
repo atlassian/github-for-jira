@@ -5,6 +5,9 @@ import { SuccessfulConnection } from "../../../../../src/rest-interfaces";
 import { Checkbox } from "@atlaskit/checkbox";
 import { Label } from "@atlaskit/form";
 import { DatePicker } from "@atlaskit/datetime-picker";
+import { AxiosError } from "axios";
+import SubscriptionManager from "../../../services/subscription-manager";
+
 
 /**
  * NOTE: While testing in dev mode, please disable the React.StrictMode first,
@@ -33,7 +36,15 @@ const RestartBackfillModal = ({ subscription, setIsModalOpened, refetch }: {
 
 	const backfill = async () => {
 		// TODO: API call to disconnect this subscription
-		console.log("Backfill for", subscription.account.login, restartFromDateCheck, backfillDate);
+		const syncType = restartFromDateCheck?  "full" : "";
+		const response = await SubscriptionManager.syncSubscription(
+			subscription.subscriptionId,
+			{ syncType, source: "backfill-button", commitsFromDate: backfillDate }
+		);
+		if (response instanceof AxiosError) {
+			// TODO: Handle the error once we have the designs
+			console.error("Error", response);
+		}
 		await refetch();
 		setIsModalOpened(false);
 	};

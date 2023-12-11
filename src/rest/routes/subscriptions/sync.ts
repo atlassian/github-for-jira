@@ -94,6 +94,6 @@ const restSyncPost = async (
 };
 
 export const SyncRouterHandler = errorWrapper(
-	"AnalyticsProxyHandler",
+	"SyncRouterHandler",
 	restSyncPost
 );
