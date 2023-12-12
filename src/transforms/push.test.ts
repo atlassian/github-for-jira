@@ -2,7 +2,7 @@ import { enqueuePush, processPush } from "./push";
 import { sqsQueues } from "../sqs/queues";
 import { when } from "jest-when";
 import { GitHubCommit, GitHubRepository } from "interfaces/github";
-import { shouldSendAll, booleanFlag, BooleanFlags } from "config/feature-flags";
+import { shouldSendAll, booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
 import { getLogger } from "config/logger";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { DatabaseStateCreator, CreatorResult } from "test/utils/database-state-creator";
@@ -115,6 +115,8 @@ describe("Enqueue push", () => {
 				.forCloud()
 				.create();
 			when(shouldSendAll).calledWith("commits", expect.anything(), expect.anything()).mockResolvedValue(false);
+			when(numberFlag).calledWith(NumberFlags.SKIP_PROCESS_QUEUE_IF_ISSUE_NOT_FOUND_TIMEOUT, expect.anything(), expect.anything())
+				.mockResolvedValue(10000);
 			issueKey = `KEY-${new Date().getTime()}`;
 			sha = `sha-${issueKey}`;
 		});

@@ -257,7 +257,7 @@ const tryGetInvalidIssueKeys = async(
 ): Promise<string[]> => {
 	try {
 		const invalidIssueKeys: string[] = [];
-		if (await booleanFlag(BooleanFlags.SKIP_PROCESS_QUEUE_IF_ISSUE_NOT_FOUND, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.SKIP_PROCESS_QUEUE_IF_ISSUE_NOT_FOUND, subscription.jiraHost)) {
 			const issueKeys = uniq(recentShas.flatMap(sha => sha.issueKeys));
 			for (const issueKey of issueKeys) {
 				const status = await processIssueKeyStatusFromJiraApi(subscription.jiraHost, issueKey, jiraClient, log);
