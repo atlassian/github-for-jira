@@ -1,4 +1,5 @@
 import Logger from "bunyan";
+import { uniq } from "lodash";
 import { Subscription } from "models/subscription";
 import { getJiraClient, JiraClient } from "../jira/client/jira-client";
 import { JiraClientError } from "../jira/client/axios";
@@ -140,11 +141,14 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		}
 
 		const recentShas = shas.slice(0, MAX_COMMIT_HISTORY);
+
+		const invalidIssueKeys = await tryGetInvalidIssueKeys(recentShas, subscription, jiraClient, log);
+
 		const commitPromises: Promise<JiraCommit | null>[] = recentShas.map(async (sha): Promise<JiraCommit | null> => {
 			try {
 
 				if (await booleanFlag(BooleanFlags.SKIP_PROCESS_QUEUE_IF_ISSUE_NOT_FOUND, jiraHost)) {
-					if (!await someIssueKeysExistsOnJira(subscription.jiraHost, sha.issueKeys, jiraClient, log)) {
+					if (sha.issueKeys.every(k => invalidIssueKeys.includes(k))) {
 						log.info("Issue key not found on jira, skip processing commits");
 						return null;
 					}
@@ -245,36 +249,52 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 	}
 };
 
-const someIssueKeysExistsOnJira = async (jiraHost: string, issueKeys: string[], jiraClient: JiraClient, log: Logger): Promise<boolean> => {
-	for (const issueKey of issueKeys) {
-		try {
-			const status = await getIssueStatusFromRedis(jiraHost, issueKey);
-			if (status === "not_exist") {
-				continue;
-			} else if (status === "exist") {
-				return true;
-			}
-			await jiraClient.issues.get(issueKey);
-			await saveIssueStatusToRedis(jiraHost, issueKey, "exist");
-			return true;
-		} catch (e) {
-			if (e instanceof JiraClientError) {
-				if (e.status !== 404) {
-					//some other jira client error happen,
-					//return true to continue processing the msg for the safe side
-					log.warn("Found other errors status when fetching issue status", { err: e });
-					return true;
-				} else {
-					await saveIssueStatusToRedis(jiraHost, issueKey, "not_exist");
+const tryGetInvalidIssueKeys = async(
+	recentShas: PushQueueMessagePayload["shas"],
+	subscription: Subscription,
+	jiraClient: JiraClient,
+	log: Logger
+): Promise<string[]> => {
+	try {
+		const invalidIssueKeys: string[] = [];
+		if (await booleanFlag(BooleanFlags.SKIP_PROCESS_QUEUE_IF_ISSUE_NOT_FOUND, subscription.jiraHost)) {
+			const issueKeys = uniq(recentShas.flatMap(sha => sha.issueKeys));
+			for (const issueKey of issueKeys) {
+				const status = await processIssueKeyStatusFromJiraApi(subscription.jiraHost, issueKey, jiraClient, log);
+				if (status === "not_exist") {
+					invalidIssueKeys.push(issueKey);
 				}
-			} else {
-				//some unknow error,
-				//return true to continue processing the msg for the safe side
-				log.warn("Found other errors when fetching issue status", { err: e });
-				return true;
 			}
 		}
+		return invalidIssueKeys;
+	} catch (e) {
+		log.error({ err: e }, "Found some error when trying to get invalid issue keys");
+		return [];
 	}
-	//all issue keys within this commits NOT exist on jira, so should skip processing the msg itself.
-	return false;
+};
+
+const processIssueKeyStatusFromJiraApi = async (jiraHost: string, issueKey: string, jiraClient: JiraClient, log: Logger): Promise<"exist" | "not_exist" | "unknown"> => {
+	try {
+		const status = await getIssueStatusFromRedis(jiraHost, issueKey);
+		if (status === "not_exist") {
+			return "not_exist";
+		} else if (status === "exist") {
+			return "exist";
+		}
+		await jiraClient.issues.get(issueKey);
+		await saveIssueStatusToRedis(jiraHost, issueKey, "exist");
+		return "exist";
+	} catch (e) {
+		if (e instanceof JiraClientError) {
+			if (e.status === 404) {
+				//404, issue not exists
+				await saveIssueStatusToRedis(jiraHost, issueKey, "not_exist");
+				return "not_exist";
+			}
+		}
+		//some unknow error,
+		//return true to continue processing the msg for the safe side
+		log.warn({ err: e }, "Found other errors when fetching issue status");
+		return "unknown";
+	}
 };
