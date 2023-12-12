@@ -41,7 +41,8 @@ export enum NumberFlags {
 	PREEMPTIVE_RATE_LIMIT_THRESHOLD = "preemptive-rate-limit-threshold",
 	NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL = "number-of-build-to-fetch-in-parallel",
 	BACKFILL_PAGE_SIZE = "backfill-page-size",
-	INSTALLATION_TOKEN_CACHE_MAX_SIZE = "installation-token-cache-max-size"
+	INSTALLATION_TOKEN_CACHE_MAX_SIZE = "installation-token-cache-max-size",
+	SKIP_PROCESS_QUEUE_IF_ISSUE_NOT_FOUND_TIMEOUT = "skip-process-queue-when-issue-not-exists-timeout"
 }
 
 const createLaunchdarklyUser = (key?: string): LDUser => {

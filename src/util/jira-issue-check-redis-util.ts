@@ -1,5 +1,6 @@
 import IORedis  from "ioredis";
 import { getRedisInfo } from "config/redis-info";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 
 //five seconds
 const REDIS_CLEANUP_TIMEOUT = 5 * 1000;
@@ -12,7 +13,8 @@ export const saveIssueStatusToRedis = async (
 	status: "exist" | "not_exist"
 ) => {
 	const key = getKey(jiraHost, issueKey);
-	await redis.set(key, status, "px", REDIS_CLEANUP_TIMEOUT);
+	const timeout = await numberFlag(NumberFlags.SKIP_PROCESS_QUEUE_IF_ISSUE_NOT_FOUND_TIMEOUT, REDIS_CLEANUP_TIMEOUT, jiraHost);
+	await redis.set(key, status, "px", timeout);
 };
 
 export const getIssueStatusFromRedis = async (
