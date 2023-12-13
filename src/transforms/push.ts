@@ -1,5 +1,5 @@
 import Logger from "bunyan";
-import { uniq } from "lodash";
+import { compact, isEmpty, uniq } from "lodash";
 import { Subscription } from "models/subscription";
 import { getJiraClient, JiraClient } from "../jira/client/jira-client";
 import { JiraClientError } from "../jira/client/axios";
@@ -10,7 +10,6 @@ import { isBlocked, shouldSendAll, booleanFlag, BooleanFlags } from "config/feat
 import { sqsQueues } from "../sqs/queues";
 import { GitHubAppConfig, PushQueueMessagePayload } from "~/src/sqs/sqs.types";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { compact, isEmpty } from "lodash";
 import { GithubCommitFile, GitHubPushData } from "interfaces/github";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 import { saveIssueStatusToRedis, getIssueStatusFromRedis } from "utils/jira-issue-check-redis-util";
