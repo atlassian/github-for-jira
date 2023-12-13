@@ -183,7 +183,6 @@
 		"yaml-lint": "^1.2.4"
 	},
 	"optionalDependencies": {
-		"@atlassian/sqs-queue-dlq-service": "^2.1.1"
 	},
 	"volta": {
 		"node": "18.18.1",
