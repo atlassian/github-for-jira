@@ -173,7 +173,9 @@ test("Connect GitHub Screen - Checking the GitHub Cloud flow when authenticated 
 
 	// Clicking first connect button
 	await act(async () => { await userEvent.click(screen.getAllByRole("button", { name: "Connect" })[0]); });
-	expect(await screen.findAllByRole("button", { name: "Loading button" })).toHaveLength(1);
+
+	expect(await screen.findAllByRole("button", { name: /Loading/ })).toHaveLength(1);
+
 	expect(await screen.findAllByRole("button", { name: "Connect" })).toHaveLength(2);
 	expect(screen.getAllByRole("button", { name: "Connect" })[0]).toBeDisabled();
 	expect(screen.getAllByRole("button", { name: "Connect" })[1]).toBeDisabled();
