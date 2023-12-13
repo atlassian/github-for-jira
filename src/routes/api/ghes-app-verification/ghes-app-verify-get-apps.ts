@@ -5,6 +5,7 @@ import { Installation } from "models/installation";
 import { runCurl } from "utils/curl/curl-utils";
 import { AppTokenHolder } from "~/src/github/client/app-token-holder";
 
+const FIVE_MINUTES_IN_MILLI_SEC = 5 * 60 * 1000;
 export const GHESVerifyGetApps = async (req: Request, res: Response): Promise<void> => {
 
 	const gitHubAppId = parseInt(req.params["gitHubAppId"] || "");
@@ -36,7 +37,7 @@ export const GHESVerifyGetApps = async (req: Request, res: Response): Promise<vo
 			const output = await runCurl({
 				fullUrl: `${gitHubAppClient.restApiUrl}/app`,
 				method: "GET",
-				authorization: `Bearer ${AppTokenHolder.createAppJwt(await app.getDecryptedPrivateKey(installation.jiraHost), String(app.appId)).token}`
+				authorization: `Bearer ${AppTokenHolder.createAppJwt(await app.getDecryptedPrivateKey(installation.jiraHost), String(app.appId), FIVE_MINUTES_IN_MILLI_SEC).token}`
 			});
 			res.status(500).json({ error: e, output });
 			return;

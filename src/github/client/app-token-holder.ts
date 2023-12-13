@@ -3,6 +3,7 @@ import { AuthToken, ONE_MINUTE, TEN_MINUTES } from "./auth-token";
 import LRUCache from "lru-cache";
 import { InstallationId } from "./installation-id";
 import { keyLocator } from "~/src/github/client/key-locator";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 
 /**
  * Holds app tokens for all GitHub apps that are connected and creates new tokens if necessary.
@@ -31,9 +32,9 @@ export class AppTokenHolder {
 	/**
 	 * Generates a JWT using the private key of the GitHub app to authorize against the GitHub API.
 	 */
-	public static createAppJwt(key: string, appId: string): AuthToken {
+	public static createAppJwt(key: string, appId: string, expTimeInMillSec: number | undefined): AuthToken {
 
-		const expirationDate = new Date(Date.now() + TEN_MINUTES);
+		const expirationDate = new Date(Date.now() + (expTimeInMillSec || TEN_MINUTES));
 
 		const jwtPayload = {
 			// "issued at" date, 60 seconds into the past to allow for some time drift
@@ -60,7 +61,8 @@ export class AppTokenHolder {
 			if (!key) {
 				throw new Error(`No private key found for GitHub app ${appId.toString()}`);
 			}
-			currentToken = AppTokenHolder.createAppJwt(key, appId.appId.toString());
+			const expTimeInMillSec = await numberFlag(NumberFlags.APP_TOKEN_EXP_IN_MILLI_SEC, NaN, jiraHost);
+			currentToken = AppTokenHolder.createAppJwt(key, appId.appId.toString(), expTimeInMillSec);
 			this.appTokenCache.set(appId.toString(), currentToken);
 		}
 		return currentToken;

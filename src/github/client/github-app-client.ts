@@ -5,7 +5,7 @@ import { AppTokenHolder } from "./app-token-holder";
 import { AuthToken } from "~/src/github/client/auth-token";
 import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
 import { GitHubClient, GitHubConfig, Metrics } from "./github-client";
-
+import { numberFlag, NumberFlags } from "config/feature-flags";
 /**
  * A GitHub client that supports authentication as a GitHub app.
  * This is the top level app API: get all installations of this app, or get more info on this app
@@ -13,7 +13,8 @@ import { GitHubClient, GitHubConfig, Metrics } from "./github-client";
  * @see https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps
  */
 export class GitHubAppClient extends GitHubClient {
-	private readonly appToken: AuthToken;
+
+	private readonly getAppToken: () => Promise<AuthToken>;
 
 	constructor(
 		gitHubConfig: GitHubConfig,
@@ -24,14 +25,18 @@ export class GitHubAppClient extends GitHubClient {
 		privateKey: string
 	) {
 		super(gitHubConfig, jiraHost, metrics, logger);
-		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);
 
-		this.axios.interceptors.request.use((config: AxiosRequestConfig) => {
+		this.getAppToken = async () => {
+			const expTimeInMillSec = await numberFlag(NumberFlags.APP_TOKEN_EXP_IN_MILLI_SEC, NaN, jiraHost);
+			return AppTokenHolder.createAppJwt(privateKey, appId, expTimeInMillSec);
+		};
+
+		this.axios.interceptors.request.use(async (config: AxiosRequestConfig) => {
 			return {
 				...config,
 				headers: {
 					...config.headers,
-					...this.appAuthenticationHeaders()
+					...await this.appAuthenticationHeaders()
 				}
 			};
 		});
@@ -53,10 +58,10 @@ export class GitHubAppClient extends GitHubClient {
 	/**
 	 * Use this config in a request to authenticate with the app token.
 	 */
-	private appAuthenticationHeaders(): Partial<AxiosRequestHeaders> {
+	private async appAuthenticationHeaders(): Promise<Partial<AxiosRequestHeaders>> {
 		return {
 			Accept: GITHUB_ACCEPT_HEADER,
-			Authorization: `Bearer ${this.appToken.token}`
+			Authorization: `Bearer ${(await this.getAppToken()).token}`
 		};
 	}
 
