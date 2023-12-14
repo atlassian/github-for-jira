@@ -71,7 +71,7 @@ ApiRouter.use(slauthMiddleware);
 
 const rateLimitMiddleware = rateLimit({
 	store: new RedisStore({
-		client: new IORedis(getRedisInfo("express-rate-limit"))
+		client: new IORedis(getRedisInfo("express-rate-limit")) as any
 	}),
 	windowMs: 60 * 1000, // 1 minutes
 	max: 60 // limit each IP to 60 requests per windowMs
