@@ -1,52 +1,60 @@
 FROM node:18-alpine3.18 as build
 
 # adding python for node-gyp
-RUN apk add g++ make python3
+RUN time apk add g++ make python3
 
 # For coredumps
-RUN apk add gdb
-RUN apk add bash
+RUN time apk add gdb
+RUN time apk add bash
 
 # adding to solve vuln
-RUN apk add --update --upgrade busybox
-RUN apk add --update --upgrade libretls
-RUN apk add --update --upgrade openssl
-RUN apk add --update --upgrade zlib
+RUN time apk add --update --upgrade busybox
+RUN time apk add --update --upgrade libretls
+RUN time apk add --update --upgrade openssl
+RUN time apk add --update --upgrade zlib
 
+RUN echo "====> COPY APP $(date)"
 COPY . /app
+RUN echo "====> COPY APP DONE $(date)"
 
 WORKDIR /app
 
 # Installing packages
-RUN yarn add @atlassian/sqs-queue-dlq-service
-RUN yarn install --frozen-lockfile
-RUN yarn list
+RUN time yarn add @atlassian/sqs-queue-dlq-service
+RUN time yarn install --frozen-lockfile
+RUN time yarn list
 
 # Building TypeScript files
-RUN yarn run build:release
+RUN time yarn run build:release
 
 # https://stackoverflow.com/questions/57108751/docker-build-failed-when-copying-in-multi-step-build
-RUN chown root:root -R /app
+RUN time chown root:root -R /app
 
 FROM node:18-alpine3.18
 
 # adding to solve vuln
-RUN apk add --update --upgrade busybox
-RUN apk add --update --upgrade openssl
-RUN apk add --update --upgrade zlib
+RUN time apk add --update --upgrade busybox
+RUN time apk add --update --upgrade openssl
+RUN time apk add --update --upgrade zlib
 
 # For debugging curl command
-RUN apk add curl
+RUN time apk add curl
 
 # For coredumps
-RUN apk add gdb
-RUN apk add bash
+RUN time apk add gdb
+RUN time apk add bash
 
 USER node
+RUN echo "====> COPY APP CHOWN $(date)"
 COPY --chown=node:node --from=build /app /app
+RUN echo "====> COPY APP CHOWN DONE $(date)"
 # Add this the service Dockerfile, at the final stage if multi-stage
+RUN echo "====> COPY stress-ng $(date)"
 COPY --from=docker.atl-paas.net/sox/brahmos-deps/stress-ng:latest /usr/bin/stress-ng /usr/bin/stress-ng
+RUN echo "====> COPY stress-ng DONE $(date)"
+
 WORKDIR /app
+
 ENV NODE_ENV production
 
 #
