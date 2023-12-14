@@ -18,8 +18,7 @@ COPY . /app
 WORKDIR /app
 
 # Installing packages
-RUN rm .yarnrc
-RUN yarn add @atlassian/sqs-queue-dlq-service --frozen-file
+RUN yarn add @atlassian/sqs-queue-dlq-service
 RUN yarn install --frozen-lockfile
 RUN yarn list
 

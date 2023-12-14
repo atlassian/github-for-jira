@@ -18,10 +18,6 @@ jobs:
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
-      - name: remove internal package
-        run: |
-          sed -i '/sqs-queue-dlq-service/d' ./package.json
-          cat ./package.json
       - run: yarn install --frozen-lockfile
       - run: yarn run lint
       - run: yarn run build:release
@@ -35,10 +31,6 @@ jobs:
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
-      - name: remove internal package
-        run: |
-          sed -i '/sqs-queue-dlq-service/d' ./package.json
-          cat ./package.json
       - run: yarn install --frozen-lockfile
       - run: yarn run playwright install
       - name: create .env file
@@ -92,10 +84,6 @@ jobs:
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
-      - name: remove internal package
-        run: |
-          sed -i '/sqs-queue-dlq-service/d' ./package.json
-          cat ./package.json
       - run: yarn install --frozen-lockfile
       - run: yarn spa:build
       - name: create .env file
@@ -150,10 +138,6 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v1
-      - name: remove internal package
-        run: |
-          sed -i '/sqs-queue-dlq-service/d' ./package.json
-          cat ./package.json
       - name: Build Docker image
         uses: docker/build-push-action@v2.7.0
         with:
