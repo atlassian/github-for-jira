@@ -14,6 +14,8 @@ COPY . /app
 WORKDIR /app
 
 # Installing packages
+RUN sed -i '/sqs-queue-dlq-service/d' ./package.json
+RUN cat ./package.json
 RUN yarn install --frozen-lockfile
 
 # If you are going to remove this, please make sure that it doesn't break existing GitHubServerApps:
