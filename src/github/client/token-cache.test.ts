@@ -1,5 +1,5 @@
 import { InstallationTokenCache } from "./installation-token-cache";
-import { AuthToken, TEN_MINUTES } from "./auth-token";
+import { AuthToken, NINE_MINUTES_MSEC } from "./auth-token";
 import { AppTokenHolder } from "./app-token-holder";
 import { getInstallationId } from "./installation-id";
 import { keyLocator } from "./key-locator";
@@ -15,7 +15,7 @@ jest.mock("~/src/config/feature-flags");
 describe("InstallationTokenCache & AppTokenHolder", () => {
 	const githubInstallationId = 123456;
 	const date = new Date(2021, 10, 25, 10, 0);
-	const in10Minutes = new Date(date.getTime() + TEN_MINUTES);
+	const in10Minutes = new Date(date.getTime() + NINE_MINUTES_MSEC);
 
 	beforeEach(() => {
 		jest.useFakeTimers("modern");
