@@ -30,5 +30,5 @@ export const pushQueueMessageHandler: MessageHandler<PushQueueMessagePayload> = 
 		subTrigger: "push"
 	};
 	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, metrics, context.log, payload.gitHubAppConfig?.gitHubAppId);
-	await processPush(gitHubInstallationClient, payload, context.log);
+	await processPush(gitHubInstallationClient, context, payload, context.log);
 };
