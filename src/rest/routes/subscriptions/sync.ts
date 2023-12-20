@@ -7,7 +7,6 @@ import { determineSyncTypeAndTargetTasks } from "~/src/util/github-sync-helper";
 import { BaseLocals } from "..";
 import { InsufficientPermissionError, RestApiError } from "~/src/config/errors";
 import { RestSyncReqBody } from "~/src/rest-interfaces";
-// import { GitHubServerApp } from "~/src/models/github-server-app";
 
 const restSyncPost = async (
 	req: Request<ParamsDictionary, unknown, RestSyncReqBody>,
@@ -18,6 +17,9 @@ const restSyncPost = async (
 		source,
 		commitsFromDate: commitsFrmDate
 	} = req.body;
+	const {
+		installation: { jiraHost }
+	} = res.locals;
 
 	// A date to start fetching commit history(main and branch) from.
 	const commitsFromDate = commitsFrmDate ? new Date(commitsFrmDate) : undefined;
@@ -33,7 +35,7 @@ const restSyncPost = async (
 	if (!subscriptionId) {
 		req.log.info(
 			{
-				jiraHost: res.locals.installation.jiraHost,
+				jiraHost,
 				subscriptionId
 			},
 			"Subscription ID not found when retrying sync."
@@ -59,7 +61,7 @@ const restSyncPost = async (
 	if (!subscription) {
 		req.log.info(
 			{
-				jiraHost: res.locals.installation.jiraHost,
+				jiraHost,
 				subscriptionId
 			},
 			"Subscription not found when retrying sync."
@@ -71,12 +73,11 @@ const restSyncPost = async (
 		);
 	}
 
-	const localJiraHost = res.locals.installation.jiraHost;
+	const localJiraHost = jiraHost;
 
 	if (subscription.jiraHost !== localJiraHost) {
 		throw new InsufficientPermissionError("Forbidden - mismatched Jira Host");
 	}
-
 
 	const { syncType, targetTasks } = determineSyncTypeAndTargetTasks(
 		syncTypeFromReq,

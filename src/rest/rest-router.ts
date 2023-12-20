@@ -11,6 +11,8 @@ import { JiraAdminEnforceMiddleware } from "./middleware/jira-admin/jira-admin-c
 import { AnalyticsProxyHandler } from "./routes/analytics-proxy";
 import { SubscriptionsRouter } from "./routes/subscriptions";
 import { DeferredRouter } from "./routes/deferred";
+import { deleteEnterpriseServerHandler } from "./routes/enterprise";
+
 
 export const RestRouter = Router({ mergeParams: true });
 
@@ -39,6 +41,9 @@ subRouter.use("/deferred", DeferredRouter);
 //  have done authentication only)?
 subRouter.use(JwtHandler);
 subRouter.use(JiraAdminEnforceMiddleware);
+// This is to delete GHE server with specific UUID
+subRouter.delete("/", deleteEnterpriseServerHandler);
+
 
 subRouter.post("/analytics-proxy", AnalyticsProxyHandler);
 
