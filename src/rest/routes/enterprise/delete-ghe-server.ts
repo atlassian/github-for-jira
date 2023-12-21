@@ -38,7 +38,7 @@ const deleteEnterpriseServer = async (
 	);
 
 	if (!(await isConnected(installation.jiraHost))) {
-		await saveConfiguredAppProperties(jiraHost, req.log, false);
+		await saveConfiguredAppProperties(installation.jiraHost, req.log, false);
 	}
 	res.status(200).json("Success");
 };
