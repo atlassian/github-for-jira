@@ -7,7 +7,10 @@ import Modal, {
 	ModalTitle,
 } from "@atlaskit/modal-dialog";
 import Button, { LoadingButton } from "@atlaskit/button";
-import { BackfillPageModalTypes, GitHubEnterpriseApplication } from "../../../../../src/rest-interfaces";
+import {
+	BackfillPageModalTypes,
+	GitHubEnterpriseApplication,
+} from "../../../../../src/rest-interfaces";
 import SubscriptionManager from "../../../services/subscription-manager";
 
 /**
@@ -17,11 +20,11 @@ import SubscriptionManager from "../../../services/subscription-manager";
 const DisconnectGHEServerModal = ({
 	gheServer,
 	setIsModalOpened,
-    setSelectedModal,
+	setSelectedModal,
 }: {
 	gheServer: GitHubEnterpriseApplication;
 	setIsModalOpened: (x: boolean) => void;
-    setSelectedModal: (selectedModal:BackfillPageModalTypes) => void;
+	setSelectedModal: (selectedModal: BackfillPageModalTypes) => void;
 }) => {
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -81,18 +84,27 @@ const DeleteAppsInGitHubModal = ({
 	setIsModalOpened: (x: boolean) => void;
 	refetch: () => void;
 }) => {
-    const { gitHubAppName, gitHubBaseUrl } = gheServer;
+	const { gitHubAppName, gitHubBaseUrl } = gheServer;
 	return (
 		<Modal onClose={() => setIsModalOpened(false)}>
-			<ModalHeader><b>Server disconnected</b></ModalHeader>
+			<ModalHeader>
+				<b>Server disconnected</b>
+			</ModalHeader>
 			<ModalBody>
 				<p data-testid="disconnect-content">
 					You can now delete these unused apps from your GitHub server. Select
 					the app, then in GitHub select <b>Delete GitHub app</b>.
 				</p>
-                <ul>
-                    <li><a target="_blank" href={`${gitHubBaseUrl}/settings/apps/${gitHubAppName}/advanced`}>{gheServer.gitHubAppName}</a></li>
-                </ul>
+				<ul>
+					<li>
+						<a
+							target="_blank"
+							href={`${gitHubBaseUrl}/settings/apps/${gitHubAppName}/advanced`}
+						>
+							{gheServer.gitHubAppName}
+						</a>
+					</li>
+				</ul>
 			</ModalBody>
 			<ModalFooter>
 				<Button
