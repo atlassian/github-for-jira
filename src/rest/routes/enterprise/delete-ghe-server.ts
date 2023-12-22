@@ -14,13 +14,14 @@ const deleteEnterpriseServer = async (
 	const { installation } = res.locals;
 
 	const cloudOrUUID = req.params.cloudOrUUID;
-	if (!cloudOrUUID) {
+	const gheUUID = cloudOrUUID === "cloud" ? undefined : cloudOrUUID; //TODO: validate the uuid regex
+
+	if (!gheUUID) {
 		throw new InvalidArgumentError(
 			"Invalid route, couldn't determine UUID of enterprise server!"
 		);
 	}
 
-	// TODO: Check and add test cases for GHE later
 	const gitHubApp = await GitHubServerApp.getForUuidAndInstallationId(
 		cloudOrUUID,
 		installation.id

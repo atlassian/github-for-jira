@@ -13,7 +13,7 @@ import { DatabaseStateCreator } from "~/test/utils/database-state-creator";
 jest.mock("~/src/sqs/queues");
 jest.mock("config/feature-flags");
 
-describe("Checking the deferred request parsing route", () => {
+describe("Checking the sync request parsing route", () => {
 	let app: Express;
 	let installation: Installation;
 	const installationIdForCloud = 1;
