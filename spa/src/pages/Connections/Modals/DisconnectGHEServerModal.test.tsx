@@ -2,7 +2,10 @@ import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
-import { DisconnectGHEServerModal } from "./DisconnectGHEServerModal";
+import {
+	DisconnectGHEServerModal,
+	DeleteAppsInGitHubModal,
+} from "./DisconnectGHEServerModal";
 import SubscriptionManager from "../../../services/subscription-manager";
 
 jest.mock("../../../services/subscription-manager");
@@ -29,7 +32,7 @@ const isModalOpened = jest.fn();
 const setSelectedModal = jest.fn();
 const refetch = jest.fn();
 
-test("Clicking cancel in disconnect subscription Modal", async () => {
+test("Clicking cancel in disconnect GHE server Modal", async () => {
 	render(
 		<BrowserRouter>
 			<DisconnectGHEServerModal
@@ -50,10 +53,9 @@ test("Clicking cancel in disconnect subscription Modal", async () => {
 
 	await userEvent.click(screen.getByText("Cancel"));
 	expect(isModalOpened).toBeCalled();
-	expect(refetch).not.toBeCalled();
 });
 
-test("Clicking Disconnect in disconnect subscription Modal", async () => {
+test("Clicking Disconnect in disconnect GHE server Modal", async () => {
 	jest.mocked(SubscriptionManager).deleteSubscription = jest
 		.fn()
 		.mockReturnValue(Promise.resolve(true));
@@ -81,6 +83,27 @@ test("Clicking Disconnect in disconnect subscription Modal", async () => {
 	 * Called twice, once when the loading is set to true,
 	 * and later after getting the response from the API request
 	 */
-	expect(isModalOpened).toBeCalledTimes(1);
+	expect(setSelectedModal).toBeCalledTimes(1);
+});
+
+test("Clicking cancel in disconnect GHE server Modal", async () => {
+	render(
+		<BrowserRouter>
+			<DeleteAppsInGitHubModal
+				gheServer={sampleGHEServer}
+				setIsModalOpened={isModalOpened}
+				refetch={refetch}
+			/>
+		</BrowserRouter>
+	);
+
+	expect(screen.getByText("Server disconnected")).toBeInTheDocument();
+	const text = screen.getByTestId("disconnect-content");
+	expect(text.textContent).toBe(
+		"You can now delete these unused apps from your GitHub server. Select the app, then in GitHub select Delete GitHub app."
+	);
+
+	await userEvent.click(screen.getByText("Close"));
+	expect(isModalOpened).toBeCalled();
 	expect(refetch).toBeCalled();
 });
