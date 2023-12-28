@@ -73,12 +73,29 @@ async function deleteGHEServer(uuid: string): Promise<boolean | AxiosError> {
 		return e as AxiosError;
 	}
 }
+async function deleteGHEApp(uuid: string): Promise<boolean | AxiosError> {
+	try {
+		const response= await Api.subscriptions.deleteGHEApp(uuid);
+		const isSuccessful = response.status === 204;
+		if(!isSuccessful) {
+			reportError(
+				{ message: "Response status for deleting GHE server is not 204", status: response.status },
+				{ path: "deleteGHEApp" }
+			);
+		}
 
+		return isSuccessful;
+	} catch (e: unknown) {
+		reportError(new Error("Unable to delete GHE server", { cause: e }), { path: "deleteGHEApp" });
+		return e as AxiosError;
+	}
+}
 export default {
 	getSubscriptions,
 	deleteSubscription,
 	deleteGHEServer,
-	syncSubscription
+	syncSubscription,
+	deleteGHEApp,
 };
 
 

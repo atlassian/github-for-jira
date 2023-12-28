@@ -69,7 +69,6 @@ const GitHubEnterpriseConnections = ({
 	setDataForModal,
 	setSelectedModal,
 }: GitHubEnterpriseConnectionsProps) => {
-	console.log(":::::::::",JSON.stringify(ghEnterpriseServers));
 	return (
 		<>
 			{ghEnterpriseServers.map((connection) => {

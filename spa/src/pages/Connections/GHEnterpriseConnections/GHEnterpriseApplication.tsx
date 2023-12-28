@@ -1,6 +1,13 @@
 /** @jsxImportSource @emotion/react */
 import { DynamicTableStateless } from "@atlaskit/dynamic-table";
+import DropdownMenu, {
+	DropdownItem,
+	DropdownItemGroup,
+} from "@atlaskit/dropdown-menu";
 import { useState } from "react";
+import Button from "@atlaskit/button";
+import { Flex, xcss } from "@atlaskit/primitives";
+import MoreIcon from "@atlaskit/icon/glyph/more";
 import Heading from "@atlaskit/heading";
 import ChevronRightIcon from "@atlaskit/icon/glyph/chevron-right";
 import ChevronDownIcon from "@atlaskit/icon/glyph/chevron-down";
@@ -43,18 +50,21 @@ const applicationHeaderStyle = css`
 	align-items: center;
 	justify-content: flex-start;
 	width: 100%;
-	margin-bottom: 20px;
 `;
 
 const applicationContentStyle = css`
 	width: 100%;
 `;
 
+const appHeaderContainerStyle = xcss({
+	width: "100%",
+	justifyContent: "space-between",
+	marginBottom: "20px",
+});
+
 type GitHubEnterpriseApplicationProps = {
 	application: GitHubEnterpriseApplication;
-	setDataForModal: (
-		dataForModal: SuccessfulConnection | undefined
-	) => void;
+	setDataForModal: (dataForModal: SuccessfulConnection | GitHubEnterpriseApplication) => void;
 	setSelectedModal: (selectedModal: BackfillPageModalTypes) => void;
 	setIsModalOpened: (isModalOpen: boolean) => void;
 };
@@ -76,6 +86,7 @@ const GitHubEnterpriseApp = ({
 	setDataForModal,
 	setSelectedModal,
 }: GitHubEnterpriseApplicationProps) => {
+
 	const [showAppContent, setShowAppContent] = useState<boolean>(true);
 	const onConnectNewApp = () => {
 		return AP.context.getToken((token: string) => {
@@ -88,22 +99,55 @@ const GitHubEnterpriseApp = ({
 			}
 		});
 	};
+	const onEditGitHubApp = () =>{
+		const uuid = application.uuid;
+		AP.navigator.go(
+			"addonmodule",
+			{
+				moduleKey: "github-edit-app-page",
+				customData: { uuid }
+			}
+		);
+	};
 	return (
 		<div css={wrapperStyle}>
-			<div
-				css={applicationHeaderStyle}
-				onClick={() => {
-					setShowAppContent((prevState) => !prevState);
-				}}
-			>
-				{showAppContent ? (
-					<ChevronDownIcon label="" />
-				) : (
-					<ChevronRightIcon label="" />
-				)}
+			<Flex xcss={appHeaderContainerStyle}>
+				<div
+					css={applicationHeaderStyle}
+					onClick={() => {
+						setShowAppContent((prevState) => !prevState);
+					}}
+				>
+					{showAppContent ? (
+						<ChevronDownIcon label="" />
+					) : (
+						<ChevronRightIcon label="" />
+					)}
+					<Heading level="h400">{application.gitHubAppName}</Heading>
+				</div>
+				<div>
+					<DropdownMenu
+						trigger={({ triggerRef, ...props }) => (
+							<Button
+								{...props}
+								appearance="subtle"
+								iconBefore={<MoreIcon label="more" size="small" />}
+								ref={triggerRef}
+							/>
+						)}
+					>
+						<DropdownItemGroup>
+							<DropdownItem onClick={onEditGitHubApp}>Edit</DropdownItem>
+							<DropdownItem onClick={()=>{
+								setIsModalOpened(true);
+								setDataForModal(application);
+								setSelectedModal("DISCONNECT_SERVER_APP");
+							}}>Disconnect</DropdownItem>
+						</DropdownItemGroup>
+					</DropdownMenu>
+				</div>
+			</Flex>
 
-				<Heading level="h400">{application.gitHubAppName}</Heading>
-			</div>
 			{showAppContent && (
 				<>
 					{application.successfulConnections.length > 0 ? (

@@ -17,6 +17,63 @@ import SubscriptionManager from "../../../services/subscription-manager";
  * NOTE: While testing in dev mode, please disable the React.StrictMode first,
  * otherwise this modal won't show up.
  */
+
+const DisconnectGHEServerAppModal =  ({
+	gheServer,
+	setIsModalOpened,
+	setSelectedModal,
+}: {
+	gheServer: GitHubEnterpriseApplication;
+	setIsModalOpened: (x: boolean) => void;
+	setSelectedModal: (selectedModal: BackfillPageModalTypes) => void;
+}) => {
+	const [isLoading, setIsLoading] = useState<boolean>(false);
+
+	const disconnect = async () => {
+		setIsLoading(true);
+		const response: boolean | AxiosError =
+			await SubscriptionManager.deleteGHEApp(gheServer.uuid);
+		if (response instanceof AxiosError) {
+			// TODO: Handle the error once we have the designs
+			console.error("Error", response);
+		} else {
+			setSelectedModal("DELETE_GHE_APP");
+		}
+	};
+
+	return (
+		<Modal onClose={() => setIsModalOpened(false)}>
+			<ModalHeader>
+				<ModalTitle appearance="warning">
+					Are you sure you want to disconnect this app?
+				</ModalTitle>
+			</ModalHeader>
+			<ModalBody>
+				<p data-testid="disconnect-content">
+				To reconnect this app, you'll need to recreate it and import data about its organizations and repositories again.
+				</p>
+			</ModalBody>
+			<ModalFooter>
+				<Button
+					isDisabled={isLoading}
+					appearance="subtle"
+					onClick={() => setIsModalOpened(false)}
+				>
+					Cancel
+				</Button>
+				{isLoading ? (
+					<LoadingButton style={{ width: 80 }} isLoading>
+						Loading button
+					</LoadingButton>
+				) : (
+					<Button appearance="danger" onClick={disconnect}>
+						Disconnect
+					</Button>
+				)}
+			</ModalFooter>
+		</Modal>
+	);
+};
 const DisconnectGHEServerModal = ({
 	gheServer,
 	setIsModalOpened,
@@ -75,7 +132,7 @@ const DisconnectGHEServerModal = ({
 	);
 };
 
-const DeleteAppsInGitHubModal = ({
+const DeleteAppInGitHubModal = ({
 	gheServer,
 	setIsModalOpened,
 	refetch,
@@ -121,4 +178,4 @@ const DeleteAppsInGitHubModal = ({
 	);
 };
 
-export { DisconnectGHEServerModal, DeleteAppsInGitHubModal };
+export { DisconnectGHEServerModal, DeleteAppInGitHubModal, DisconnectGHEServerAppModal };

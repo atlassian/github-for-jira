@@ -4,7 +4,8 @@ import { BrowserRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
 import {
 	DisconnectGHEServerModal,
-	DeleteAppsInGitHubModal,
+	DeleteAppInGitHubModal,
+	DisconnectGHEServerAppModal
 } from "./DisconnectGHEServerModal";
 import SubscriptionManager from "../../../services/subscription-manager";
 
@@ -31,6 +32,60 @@ const sampleGHEServer = {
 const isModalOpened = jest.fn();
 const setSelectedModal = jest.fn();
 const refetch = jest.fn();
+
+test("Clicking cancel in disconnect GHE App Modal", async () => {
+	render(
+		<BrowserRouter>
+			<DisconnectGHEServerAppModal
+				gheServer={sampleGHEServer}
+				setIsModalOpened={isModalOpened}
+				setSelectedModal={setSelectedModal}
+			/>
+		</BrowserRouter>
+	);
+
+	expect(
+		screen.getByText("Are you sure you want to disconnect this app?")
+	).toBeInTheDocument();
+	const text = screen.getByTestId("disconnect-content");
+	expect(text.textContent).toBe(
+		"To reconnect this app, you'll need to recreate it and import data about its organizations and repositories again."
+	);
+
+	await userEvent.click(screen.getByText("Cancel"));
+	expect(isModalOpened).toBeCalled();
+});
+
+test("Clicking Disconnect in disconnect GHE App Modal", async () => {
+	jest.mocked(SubscriptionManager).deleteSubscription = jest
+		.fn()
+		.mockReturnValue(Promise.resolve(true));
+
+	render(
+		<BrowserRouter>
+			<DisconnectGHEServerAppModal
+				gheServer={sampleGHEServer}
+				setIsModalOpened={isModalOpened}
+				setSelectedModal={setSelectedModal}
+			/>
+		</BrowserRouter>
+	);
+
+	expect(
+		screen.getByText("Are you sure you want to disconnect this app?")
+	).toBeInTheDocument();
+	const text = screen.getByTestId("disconnect-content");
+	expect(text.textContent).toBe(
+		"To reconnect this app, you'll need to recreate it and import data about its organizations and repositories again."
+	);
+
+	await userEvent.click(screen.getByText("Disconnect"));
+	/**
+	 * Called twice, once when the loading is set to true,
+	 * and later after getting the response from the API request
+	 */
+	expect(setSelectedModal).toBeCalledTimes(1);
+});
 
 test("Clicking cancel in disconnect GHE server Modal", async () => {
 	render(
@@ -83,13 +138,13 @@ test("Clicking Disconnect in disconnect GHE server Modal", async () => {
 	 * Called twice, once when the loading is set to true,
 	 * and later after getting the response from the API request
 	 */
-	expect(setSelectedModal).toBeCalledTimes(1);
+	expect(setSelectedModal).toBeCalledTimes(2);
 });
 
 test("Clicking cancel in disconnect GHE server Modal", async () => {
 	render(
 		<BrowserRouter>
-			<DeleteAppsInGitHubModal
+			<DeleteAppInGitHubModal
 				gheServer={sampleGHEServer}
 				setIsModalOpened={isModalOpened}
 				refetch={refetch}

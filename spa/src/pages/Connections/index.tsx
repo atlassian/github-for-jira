@@ -17,7 +17,7 @@ import SkeletonForLoading from "./SkeletonForLoading";
 import SubscriptionManager from "../../services/subscription-manager";
 import RestartBackfillModal from "./Modals/RestartBackfillModal";
 import DisconnectSubscriptionModal from "./Modals/DisconnectSubscriptionModal";
-import { DisconnectGHEServerModal, DeleteAppsInGitHubModal } from "./Modals/DisconnectGHEServerModal";
+import { DisconnectGHEServerModal, DeleteAppInGitHubModal, DisconnectGHEServerAppModal } from "./Modals/DisconnectGHEServerModal";
 
 const hasGHCloudConnections = (subscriptions: GHSubscriptions): boolean =>
 	subscriptions?.ghCloudSubscriptions &&
@@ -26,7 +26,7 @@ const hasGHCloudConnections = (subscriptions: GHSubscriptions): boolean =>
 
 const Connections = () => {
 	const navigate = useNavigate();
-	//////////
+
 	const [isModalOpened, setIsModalOpened] = useState(false);
 	const [selectedModal, setSelectedModal] =
 		useState<BackfillPageModalTypes>("BACKFILL");
@@ -51,7 +51,6 @@ const Connections = () => {
 						refetch={fetchGHSubscriptions}
 					/>
 				);
-			// 	TODO: Create modals for GHE later
 			case "DISCONNECT_SERVER":
 				return (
 					<DisconnectGHEServerModal
@@ -62,18 +61,25 @@ const Connections = () => {
 				);
 			case "DELETE_GHE_APP":
 				return (
-					<DeleteAppsInGitHubModal
+					<DeleteAppInGitHubModal
 						gheServer={dataForModal as GitHubEnterpriseApplication}
 						setIsModalOpened={setIsModalOpened}
 						refetch={fetchGHSubscriptions}
 					/>
 				);
 			case "DISCONNECT_SERVER_APP":
+				return (
+					<DisconnectGHEServerAppModal
+						gheServer={dataForModal as GitHubEnterpriseApplication}
+						setIsModalOpened={setIsModalOpened}
+						setSelectedModal={setSelectedModal}
+					/>
+				);
 			default:
 				return <></>;
 		}
 	};
-	//////////
+
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [subscriptions, setSubscriptions] = useState<GHSubscriptions | null>(
 		null
