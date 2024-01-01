@@ -86,6 +86,13 @@ export class GithubClientNotFoundError extends GithubClientError {
 	}
 }
 
+export class GithubClientCommitNotFoundBySHAError extends GithubClientError {
+	constructor(cause: AxiosError) {
+		super("Commit not found by sha", cause);
+		this.uiErrorCode = "RESOURCE_NOT_FOUND";
+	}
+}
+
 
 /**
  * Type for errors section in GraphQL response

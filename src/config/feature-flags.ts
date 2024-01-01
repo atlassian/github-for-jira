@@ -26,7 +26,8 @@ export enum BooleanFlags {
 	USE_CUSTOM_ROOT_CA_BUNDLE = "use-custom-root-ca-bundle",
 	GENERATE_CORE_HEAP_DUMPS_ON_LOW_MEM = "generate-core-heap-dumps-on-low-mem",
 	USE_RATELIMIT_ON_JIRA_CLIENT = "use-ratelimit-on-jira-client",
-	SKIP_PROCESS_QUEUE_IF_ISSUE_NOT_FOUND = "skip-process-queue-when-issue-not-exists"
+	SKIP_PROCESS_QUEUE_IF_ISSUE_NOT_FOUND = "skip-process-queue-when-issue-not-exists",
+	SKIP_COMMIT_IF_SHA_NOT_FOUND_ON_LAST_TRY = "skip-commit-if-sha-not-found-on-last-try"
 }
 
 export enum StringFlags {
