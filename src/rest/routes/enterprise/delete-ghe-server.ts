@@ -13,20 +13,8 @@ const deleteEnterpriseServer = async (
 ): Promise<void> => {
 	const { installation } = res.locals;
 
-	const cloudOrUUID = req.params.cloudOrUUID;
-	const gheUUID = cloudOrUUID === "cloud" ? undefined : cloudOrUUID; //TODO: validate the uuid regex
-
-	if (!gheUUID) {
-		throw new InvalidArgumentError(
-			"Invalid route, couldn't determine UUID of enterprise server!"
-		);
-	}
-
-	const gitHubApp = await GitHubServerApp.getForUuidAndInstallationId(
-		cloudOrUUID,
-		installation.id
-	);
-	const gitHubBaseUrl = gitHubApp?.gitHubBaseUrl;
+	const encodedGHEBaseUrl = req.params.serverUrl;
+	const gitHubBaseUrl = decodeURIComponent(encodedGHEBaseUrl);
 	if (!gitHubBaseUrl) {
 		throw new InvalidArgumentError(
 			"Invalid route, couldn't determine gitHubBaseUrl for enterprise server!"

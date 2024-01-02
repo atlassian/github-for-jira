@@ -13,6 +13,7 @@ import {
 	SuccessfulConnection,
 } from "../../../rest-interfaces";
 import GHEnterpriseAppHeader from "./GHEnterpriseAppHeader";
+import { openChildWindow } from "../../../utils";
 
 const connectNewAppLinkStyle = css`
 	text-decoration: none;
@@ -47,38 +48,39 @@ type GitHubEnterpriseApplicationProps = {
 	) => void;
 	setSelectedModal: (selectedModal: BackfillPageModalTypes) => void;
 	setIsModalOpened: (isModalOpen: boolean) => void;
+	setIsLoading: (isLoading: boolean) => void;
 };
-
-function openChildWindow(url: string) {
-	const child: Window | null = window.open(url);
-	const interval = setInterval(function () {
-		if (child?.closed) {
-			clearInterval(interval);
-			AP.navigator.reload();
-		}
-	}, 100);
-	return child;
-}
 
 const GitHubEnterpriseApp = ({
 	application,
 	setIsModalOpened,
 	setDataForModal,
 	setSelectedModal,
+	setIsLoading,
 }: GitHubEnterpriseApplicationProps) => {
 	const [showAppContent, setShowAppContent] = useState<boolean>(true);
 	const toggleShowAppContent = () =>
 		setShowAppContent((prevState) => !prevState);
 	const onConnectNewApp = () => {
-		return AP.context.getToken((token: string) => {
-			const child: Window | null = openChildWindow(
-				`/session/github/${application.uuid}/configuration?ghRedirect=to`
-			);
-			if (child) {
-				/* eslint-disable @typescript-eslint/no-explicit-any*/
-				(child as any).window.jwt = token;
-			}
-		});
+		try{
+			setIsLoading(true);
+			return AP.context.getToken((token: string) => {
+				const child: Window | null = openChildWindow(
+					`/session/github/${application.uuid}/configuration?ghRedirect=to`
+				);
+				if (child) {
+					/* eslint-disable @typescript-eslint/no-explicit-any*/
+					(child as any).window.jwt = token;
+				}
+			});
+		}
+		catch(e){
+			// TODO: handle this error in UI/Modal ?
+			console.error("Could not get the token for GHE flow of connecting new App : ", e);
+		}
+		finally{
+			setIsLoading(false);
+		}
 	};
 
 	return (

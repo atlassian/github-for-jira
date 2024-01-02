@@ -39,7 +39,7 @@ type GitHubEnterpriseApplicationProps = {
 	toggleShowAppContent: () => void;
 };
 
-const GitHubEnterpriseApp = ({
+const GHEnterpriseAppHeader = ({
 	application,
 	setIsModalOpened,
 	setDataForModal,
@@ -47,7 +47,6 @@ const GitHubEnterpriseApp = ({
 	showAppContent,
 	toggleShowAppContent
 }: GitHubEnterpriseApplicationProps) => {
-
 
 	const onEditGitHubApp = () =>{
 		const uuid = application.uuid;
@@ -99,4 +98,4 @@ const GitHubEnterpriseApp = ({
 	);
 };
 
-export default GitHubEnterpriseApp;
+export default GHEnterpriseAppHeader;

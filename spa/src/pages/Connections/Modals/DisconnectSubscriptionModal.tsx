@@ -26,16 +26,25 @@ const DisconnectSubscriptionModal = ({
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
 	const disconnect = async () => {
-		setIsLoading(true);
-		const response: boolean | AxiosError =
-			await SubscriptionManager.deleteSubscription(subscription.subscriptionId);
-		if (response instanceof AxiosError) {
-			// TODO: Handle the error once we have the designs
-			console.error("Error", response);
-		} else {
-			await refetch();
+		try{
+			setIsLoading(true);
+			const response: boolean | AxiosError =
+				await SubscriptionManager.deleteSubscription(subscription.subscriptionId);
+			if (response instanceof AxiosError) {
+				// TODO: Handle the error once we have the designs
+				console.error("Error", response);
+			} else {
+				await refetch();
+			}
+			setIsModalOpened(false);
 		}
-		setIsModalOpened(false);
+		catch(e){
+			// TODO: handle this error in UI/Modal ?
+			console.error("Could not disconnect subscription : ", e);
+		}
+		finally{
+			setIsLoading(false);
+		}
 	};
 
 	return (

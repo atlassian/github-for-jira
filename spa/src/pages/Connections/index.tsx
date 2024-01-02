@@ -84,16 +84,24 @@ const Connections = () => {
 	const [subscriptions, setSubscriptions] = useState<GHSubscriptions | null>(
 		null
 	);
+
 	const fetchGHSubscriptions = async () => {
-		setIsLoading(true);
-		const response = await SubscriptionManager.getSubscriptions();
-		if (response instanceof AxiosError) {
-			// TODO: Handle the error once we have the designs
-			console.error("Error", response);
+		try {
+			setIsLoading(true);
+			const response = await SubscriptionManager.getSubscriptions();
+			if (response instanceof AxiosError) {
+				// TODO: Handle the error once we have the designs
+				console.error("Error", response);
+			}
+			setSubscriptions(response as GHSubscriptions);
+		} catch (e) {
+			// TODO: handle this error in UI/Modal ?
+			console.error("Could not fetch ghe subscriptions: ", e);
+		} finally {
+			setIsLoading(false);
 		}
-		setSubscriptions(response as GHSubscriptions);
-		setIsLoading(false);
 	};
+
 	useEffect(() => {
 		fetchGHSubscriptions();
 	}, []);
@@ -131,6 +139,7 @@ const Connections = () => {
 						subscriptions.ghEnterpriseServers?.length > 0 && (
 							<Step title="GitHub Enterprise Server">
 								<GitHubEnterpriseConnections
+									setIsLoading={setIsLoading}
 									ghEnterpriseServers={subscriptions.ghEnterpriseServers}
 									setIsModalOpened={setIsModalOpened}
 									setSelectedModal={setSelectedModal}

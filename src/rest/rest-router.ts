@@ -11,17 +11,21 @@ import { JiraAdminEnforceMiddleware } from "./middleware/jira-admin/jira-admin-c
 import { AnalyticsProxyHandler } from "./routes/analytics-proxy";
 import { SubscriptionsRouter } from "./routes/subscriptions";
 import { DeferredRouter } from "./routes/deferred";
-import { deleteEnterpriseServerHandler, deleteEnterpriseAppHandler } from "./routes/enterprise";
+import { deleteEnterpriseAppHandler, deleteEnterpriseServerHandler } from "./routes/enterprise";
 
 
 export const RestRouter = Router({ mergeParams: true });
 
 const subRouter = Router({ mergeParams: true });
+const gheServerRouter = Router({ mergeParams: true });
 
 /**
  * Separate route which returns the list of both cloud and server subscriptions
  */
 RestRouter.use("/subscriptions", JwtHandler, JiraAdminEnforceMiddleware, SubscriptionsRouter);
+
+RestRouter.use("/ghes-servers/:serverUrl",JwtHandler, JiraAdminEnforceMiddleware, gheServerRouter);
+gheServerRouter.delete("/", deleteEnterpriseServerHandler);
 
 /**
  * For cloud flow, the path will be `/rest/app/cloud/XXX`,
@@ -42,9 +46,9 @@ subRouter.use("/deferred", DeferredRouter);
 subRouter.use(JwtHandler);
 subRouter.use(JiraAdminEnforceMiddleware);
 // This is to delete GHE server with specific UUID
-subRouter.delete("/", deleteEnterpriseServerHandler);
+subRouter.delete("/", deleteEnterpriseAppHandler);
 // This is to delete GHE app which is associated with specific server having UUID
-subRouter.delete("/ghe-app", deleteEnterpriseAppHandler);
+// subRouter.delete("/ghe-app", deleteEnterpriseAppHandler);
 
 subRouter.post("/analytics-proxy", AnalyticsProxyHandler);
 

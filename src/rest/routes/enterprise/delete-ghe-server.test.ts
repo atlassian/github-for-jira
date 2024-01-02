@@ -76,22 +76,24 @@ describe("Checking the sync request parsing route", () => {
 
 	describe("cloud", () => {
 		it("should throw 401 error when no github token is passed", async () => {
+			const encodedGHEBaseUrl = encodeURIComponent(gitHubServerApp.gitHubBaseUrl);
 			const resp = await supertest(app).delete(
-				`/rest/app/${gitHubServerApp.uuid}`
+				`/rest/ghes-servers/${encodedGHEBaseUrl}`
 			);
 			expect(resp.status).toEqual(401);
 		});
 
 		it("should return 400 on no uuid", async () => {
 			const resp = await supertest(app)
-				.delete(`/rest/app/cloud`)
+				.delete(`/rest/ghes-servers/`)
 				.set("authorization", `${getToken()}`);
 			expect(resp.status).toEqual(400);
 		});
 
 		it("should return 200 on correct uuid", async () => {
+			const encodedGHEBaseUrl = encodeURIComponent(gitHubServerApp.gitHubBaseUrl);
 			const resp = await supertest(app)
-				.delete(`/rest/app/${gitHubServerApp.uuid}`)
+				.delete(`/rest/app/${encodedGHEBaseUrl}`)
 				.set("authorization", `${getToken()}`);
 			expect(resp.status).toEqual(200);
 		});

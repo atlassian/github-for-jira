@@ -30,14 +30,23 @@ const DisconnectGHEServerAppModal =  ({
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
 	const disconnect = async () => {
-		setIsLoading(true);
-		const response: boolean | AxiosError =
-			await SubscriptionManager.deleteGHEApp(gheServer.uuid);
-		if (response instanceof AxiosError) {
-			// TODO: Handle the error once we have the designs
-			console.error("Error", response);
-		} else {
-			setSelectedModal("DELETE_GHE_APP");
+		try{
+			setIsLoading(true);
+			const response: boolean | AxiosError =
+				await SubscriptionManager.deleteGHEApp(gheServer.uuid);
+			if (response instanceof AxiosError) {
+				// TODO: Handle the error once we have the designs
+				console.error("Error", response);
+			} else {
+				setSelectedModal("DELETE_GHE_APP");
+			}
+		}
+		catch(e){
+			// TODO: handle this error in UI/Modal ?
+			console.error("Could not disconnect GHE app : ", e);
+		}
+		finally{
+			setIsLoading(false);
 		}
 	};
 
@@ -86,14 +95,24 @@ const DisconnectGHEServerModal = ({
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
 	const disconnect = async () => {
-		setIsLoading(true);
-		const response: boolean | AxiosError =
-			await SubscriptionManager.deleteGHEServer(gheServer.uuid);
-		if (response instanceof AxiosError) {
-			// TODO: Handle the error once we have the designs
-			console.error("Error", response);
-		} else {
-			setSelectedModal("DELETE_GHE_APP");
+		try{
+			setIsLoading(true);
+			const encodedGHEBaseUrl = encodeURIComponent(gheServer.gitHubBaseUrl);
+			const response: boolean | AxiosError =
+				await SubscriptionManager.deleteGHEServer(encodedGHEBaseUrl);
+			if (response instanceof AxiosError) {
+				// TODO: Handle the error once we have the designs
+				console.error("Error", response);
+			} else {
+				setSelectedModal("DELETE_GHE_APP");
+			}
+		}
+		catch(e){
+			// TODO: handle this error in UI/Modal ?
+			console.error("Could not disconnect GHE server : ", e);
+		}
+		finally{
+			setIsLoading(false);
 		}
 	};
 

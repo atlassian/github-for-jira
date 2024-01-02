@@ -11,7 +11,7 @@ import {
 	SuccessfulConnection,
 	GitHubEnterpriseApplication
 } from "../../../rest-interfaces";
-import GHEApplication from "./GHEnterpriseApplication";
+import GitHubEnterpriseApp from "./GHEnterpriseApplication";
 
 const enterpriserServerHeaderStyle = css`
 	display: flex;
@@ -22,8 +22,8 @@ const enterpriserServerHeaderStyle = css`
 `;
 
 const enterpriserAppsHeaderStyle = css`
-	padding-left: 25px;
-	padding-bottom: 30px;
+	padding-left: ${token("space.300")};
+	padding-bottom: ${token("space.300")};
 `;
 
 const containerStyles = xcss({
@@ -62,12 +62,14 @@ type GitHubEnterpriseConnectionsProps = {
 	) => void;
 	setSelectedModal: (selectedModal: BackfillPageModalTypes) => void;
 	setIsModalOpened: (isModalOpen: boolean) => void;
+	setIsLoading: (isLoading: boolean) => void;
 };
 const GitHubEnterpriseConnections = ({
 	ghEnterpriseServers,
 	setIsModalOpened,
 	setDataForModal,
 	setSelectedModal,
+	setIsLoading,
 }: GitHubEnterpriseConnectionsProps) => {
 	return (
 		<>
@@ -95,11 +97,12 @@ const GitHubEnterpriseConnections = ({
 									<Heading level="h100">APPLICATIONS</Heading>
 								</div>
 								{connection.applications.map((application) => (
-									<GHEApplication
+									<GitHubEnterpriseApp
 										application={application}
 										setIsModalOpened={setIsModalOpened}
 										setDataForModal={setDataForModal}
 										setSelectedModal={setSelectedModal}
+										setIsLoading={setIsLoading}
 									/>
 								))}
 							</Box>
