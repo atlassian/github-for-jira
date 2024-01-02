@@ -81,6 +81,8 @@ Once you've set up your GitHub app and cloned this repo, copy the file `.env.dev
 + `ATLASSIAN_URL`: The URL for the Jira instance you're testing on. If you don't have one now, [please set the value of this variable from the steps mentioned here](#create-your-jira-instance).
 + `APP_KEY`: Your Jira app key - need to be unique for your development app
 + `WEBHOOK_SECRETS`: `["development"]` as previously set up in the GitHub app page.
++ `APP_URL`: The URL for the local domain obtained after tunneling. This should be the same as the `Domain` value set when you [configured your GitHub App](#configuring-a-github-app)
+(ex. `https://__MYDOMAIN__.public.atlastunnel.com` or `https://XXXX-XXX-XXX-XXX-xX.ngrok.io`)
 
 Lastly, you need to replace the value of the follow variables in the global `.env` file:
 
