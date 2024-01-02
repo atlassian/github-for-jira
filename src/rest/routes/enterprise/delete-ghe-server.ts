@@ -25,7 +25,7 @@ const deleteEnterpriseServer = async (
 		gitHubBaseUrl,
 		installation.id
 	);
-
+	// TODO: manually delete subscriptions after GHE server is removed
 	if (!(await isConnected(installation.jiraHost))) {
 		await saveConfiguredAppProperties(installation.jiraHost, req.log, false);
 	}

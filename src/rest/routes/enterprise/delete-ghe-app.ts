@@ -24,7 +24,7 @@ const deleteEnterpriseApp = async (
 	}
 
 	await GitHubServerApp.uninstallApp(gheUUID);
-
+	// TODO: manually delete subscriptions after GHE app is removed
 	if (!(await isConnected(installation.jiraHost))) {
 		await saveConfiguredAppProperties(installation.jiraHost, req.log, false);
 	}
