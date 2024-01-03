@@ -11,6 +11,7 @@ import { v4 as newUUID } from "uuid";
 describe("Checking the sync request parsing route", () => {
 	let app: Express;
 	let installation: Installation;
+	// const installationIdForCloud = 1;
 	const installationIdForServer = 2;
 	const uuid = newUUID();
 	let gitHubServerApp: GitHubServerApp;
@@ -64,24 +65,28 @@ describe("Checking the sync request parsing route", () => {
 		app.use(RootRouter);
 	});
 
-	describe("GHE server app delete", () => {
-		it("should throw 401 error when no github token is passed", async () => {
+	describe("GHE server delete", () => {
+		it("should throw 404 error when api path is not found", async () => {
 			const resp = await supertest(app).delete(
-				`/rest/app/${gitHubServerApp.uuid}`
+				`/rest/ghes-serverss/${gitHubServerApp.gitHubBaseUrl}`
 			);
-			expect(resp.status).toEqual(401);
+			expect(resp.status).toEqual(404);
 		});
-
-		it("should return 400 on no uuid", async () => {
+		it("should throw 401 error when no github token is passed", async () => {
+			const encodedGHEBaseUrl = encodeURIComponent(
+				gitHubServerApp.gitHubBaseUrl
+			);
 			const resp = await supertest(app)
-				.delete(`/rest/app/cloud`)
-				.set("authorization", `${getToken()}`);
-			expect(resp.status).toEqual(400);
+				.delete(`/rest/ghes-servers/${encodedGHEBaseUrl}`);
+			expect(resp.status).toEqual(500);
 		});
 
 		it("should return 204 on correct uuid", async () => {
+			const encodedGHEBaseUrl = encodeURIComponent(
+				gitHubServerApp.gitHubBaseUrl
+			);
 			const resp = await supertest(app)
-				.delete(`/rest/app/${gitHubServerApp.uuid}`)
+				.delete(`/rest/ghes-servers/${encodedGHEBaseUrl}`)
 				.set("authorization", `${getToken()}`);
 			expect(resp.status).toEqual(204);
 		});
