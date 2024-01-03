@@ -19,7 +19,7 @@ type Row = {
 
 type ConnectionsActionsCallback = {
 	setIsModalOpened: (x: boolean) => void;
-	setSubscriptionForModal: (sub: SuccessfulConnection) => void;
+	setDataForModal: (sub: SuccessfulConnection) => void;
 	setSelectedModal: (x: BackfillPageModalTypes) => void;
 };
 
@@ -63,17 +63,17 @@ const createHead = (withWidth: boolean) => {
 		cells: [
 			{
 				key: "name",
-				content: "Name",
+				content: "Connected organization",
 				width: withWidth ? 30 : undefined,
 			},
 			{
 				key: "repos",
-				content: "Repos",
+				content: "Repository access",
 				width: withWidth ? 30 : undefined,
 			},
 			{
 				key: "status",
-				content: "Status",
+				content: "Backfill status",
 				width: withWidth ? 30 : undefined,
 			},
 			{
@@ -180,7 +180,8 @@ export const getGHSubscriptionsRows = (
 							</div>
 						</div>
 					),
-				},{
+				},
+				{
 					key: cloudConnection.id,
 					content: (
 						<div css={rowWrapperStyle}>
@@ -204,7 +205,7 @@ export const getGHSubscriptionsRows = (
 									<DropdownItem
 										onClick={() => {
 											callbacks?.setIsModalOpened(true);
-											callbacks?.setSubscriptionForModal(cloudConnection);
+											callbacks?.setDataForModal(cloudConnection);
 											callbacks?.setSelectedModal("BACKFILL");
 										}}
 									>
@@ -213,7 +214,7 @@ export const getGHSubscriptionsRows = (
 									<DropdownItem
 										onClick={() => {
 											callbacks?.setIsModalOpened(true);
-											callbacks?.setSubscriptionForModal(cloudConnection);
+											callbacks?.setDataForModal(cloudConnection);
 											callbacks?.setSelectedModal("DISCONNECT_SUBSCRIPTION");
 										}}
 									>
