@@ -12,14 +12,14 @@ const deleteEnterpriseServer = async (
 	res: Response<string, BaseLocals>
 ): Promise<void> => {
 	const { installation } = res.locals;
-
 	const encodedGHEBaseUrl = req.params.serverUrl;
-	const gitHubBaseUrl = decodeURIComponent(encodedGHEBaseUrl);
-	if (!gitHubBaseUrl) {
+
+	if (!encodedGHEBaseUrl){
 		throw new InvalidArgumentError(
-			"Invalid route, couldn't determine gitHubBaseUrl for enterprise server!"
+			"Invalid route, couldn't find encodedGHEBaseUrl in rest api req params!"
 		);
 	}
+	const gitHubBaseUrl = decodeURIComponent(encodedGHEBaseUrl);
 
 	await GitHubServerApp.uninstallServer(
 		gitHubBaseUrl,
@@ -29,7 +29,7 @@ const deleteEnterpriseServer = async (
 	if (!(await isConnected(installation.jiraHost))) {
 		await saveConfiguredAppProperties(installation.jiraHost, req.log, false);
 	}
-	res.status(200).json("Success");
+	res.sendStatus(204);
 };
 
 export const deleteEnterpriseServerHandler = errorWrapper(

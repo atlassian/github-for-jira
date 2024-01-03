@@ -28,7 +28,7 @@ const deleteEnterpriseApp = async (
 	if (!(await isConnected(installation.jiraHost))) {
 		await saveConfiguredAppProperties(installation.jiraHost, req.log, false);
 	}
-	res.status(200).json("Success");
+	res.sendStatus(204);
 	req.log.debug("Jira Connect Enterprise App deleted successfully.");
 };
 
