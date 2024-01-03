@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { JwtHandler } from "./middleware/jwt/jwt-handler";
+import { errorWrapper } from "./helper";
 import { OAuthRouter } from "./routes/oauth";
 import { OAuthCallbackHandler, OrgsInstalledHandler, OrgsInstallRequestedHandler } from "./routes/github-callback";
 import { GitHubOrgsRouter } from "./routes/github-orgs";
@@ -12,7 +13,7 @@ import { AnalyticsProxyHandler } from "./routes/analytics-proxy";
 import { SubscriptionsRouter } from "./routes/subscriptions";
 import { gheServerRouter, deleteEnterpriseAppHandler } from "./routes/enterprise";
 import { DeferredRouter } from "./routes/deferred";
-
+import { GithubServerAppMiddleware } from "middleware/github-server-app-middleware";
 
 export const RestRouter = Router({ mergeParams: true });
 
@@ -47,10 +48,22 @@ subRouter.use("/deferred", DeferredRouter);
 subRouter.use(JwtHandler);
 subRouter.use(JiraAdminEnforceMiddleware);
 
+subRouter.post("/analytics-proxy", AnalyticsProxyHandler);
+
+subRouter.use(function tempReplaceUUID(req, _, next) {
+	//This only temporarily add the cloudOrUUID to uuid so that
+	//we don't have to modify the existing GithubServerAppMiddleware
+	//Once all migrated, we can remove this.
+	const cloudOrUUID = req.params.cloudOrUUID;
+	if (cloudOrUUID !== "cloud") {
+		req.params.uuid = cloudOrUUID;
+	}
+	next();
+}, errorWrapper("GithubServerAppMiddleware", GithubServerAppMiddleware));
+// This is to delete GHE server with specific UUID
+subRouter.delete("/", deleteEnterpriseAppHandler);
 // This is to delete GHE app which is associated with specific server having UUID
 subRouter.delete("/", deleteEnterpriseAppHandler);
-
-subRouter.post("/analytics-proxy", AnalyticsProxyHandler);
 
 subRouter.use("/installation", GitHubAppsRoute);
 
