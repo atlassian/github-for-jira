@@ -17,13 +17,13 @@ services:
       POSTGRES_HOST_AUTH_METHOD: trust
 
   ngrok:
-    image: wernight/ngrok
+    image: ngrok/ngrok:latest
     container_name: ngrok
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
       - "4040:4040"
-    command: ngrok http -log stdout --authtoken $NGROK_AUTHTOKEN host.docker.internal:8080
+    command: http --log stdout --authtoken=$NGROK_AUTHTOKEN host.docker.internal:8080
 
   localstack:
     image: localstack/localstack:1.0.4
