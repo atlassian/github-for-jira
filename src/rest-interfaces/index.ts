@@ -24,6 +24,10 @@ export type DeferredInstallationUrlParams = {
 	gitHubOrgName: string;
 };
 
+export type BackfillStatusUrlParams = {
+	subscriptionIds: string;
+};
+
 export type DeferralParsedRequest = {
 	orgName: string;
 	jiraHost: string;

@@ -12,23 +12,25 @@ import {
 	SubscriptionBackfillState,
 	BackfillStatusError
 } from "../../../../spa/src/rest-interfaces";
+import { BaseLocals } from "..";
 
-const GetSubscriptionsBackfillStatus = async (req: Request, res: Response) => {
+const GetSubscriptionsBackfillStatus = async (req: Request<unknown, unknown, unknown, { subscriptionIds?: string }, BaseLocals>, res: Response) => {
 	try {
 		const { jiraHost: localJiraHost } = res.locals;
-		const subscriptionIds = String(req.query.subscriptionIds)
+		const { subscriptionIds } = req.query;
+
+		const subIds = String(subscriptionIds)
 			.split(",")
 			.map(Number)
 			.filter(Boolean);
-
-		if (subscriptionIds.length === 0) {
+		if (subIds.length === 0) {
 			req.log.warn("Missing Subscription IDs");
 			res.status(400).send("Missing Subscription IDs");
 			return;
 		}
 
 		const subscriptions = await Subscription.findAllForSubscriptionIds(
-			subscriptionIds
+			subIds
 		);
 
 		const resultSubscriptionIds: Array<number> = subscriptions.map(
@@ -116,6 +118,6 @@ const getBackfillStatus = async (
 };
 
 export const GetSubBackfillStatusHandler = errorWrapper(
-	"SyncRouterHandler",
+	"GetSubBackfillStatusHandler",
 	GetSubscriptionsBackfillStatus
 );

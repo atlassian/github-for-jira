@@ -38,9 +38,9 @@ async function getSubscriptions(): Promise<GHSubscriptions | AxiosError> {
 	}
 }
 
-async function getSubscriptionsBackfillStatus(): Promise<BackfillStatusResp | AxiosError> {
+async function getSubscriptionsBackfillStatus(subscriptionIds: string): Promise<BackfillStatusResp | AxiosError> {
 	try {
-		const response= await Api.subscriptions.getSubscriptionsBackfillStatus();
+		const response= await Api.subscriptions.getSubscriptionsBackfillStatus({ subscriptionIds });
 		const isSuccessful = response.status === 200;
 		if(!isSuccessful) {
 			reportError(

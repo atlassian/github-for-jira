@@ -89,6 +89,7 @@ const Connections = () => {
 		try {
 			setIsLoading(true);
 			const response = await SubscriptionManager.getSubscriptions();
+			console.log(">>>>>",response);
 			if (response instanceof AxiosError) {
 				// TODO: Handle the error once we have the designs
 				console.error("Error", response);
@@ -102,9 +103,30 @@ const Connections = () => {
 		}
 	};
 
+	const fetchBackfillStatus = async () => {
+		try {
+			setIsLoading(true);
+			const response = await SubscriptionManager.getSubscriptionsBackfillStatus("41034311");
+			if (response instanceof AxiosError) {
+				// TODO: Handle the error once we have the designs
+				console.error("Error", response);
+			}
+		} catch (e) {
+			// TODO: handle this error in UI/Modal ?
+			console.error("Could not fetch ghe subscriptions: ", e);
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
 	useEffect(() => {
+		fetchBackfillStatus();
 		fetchGHSubscriptions();
 	}, []);
+
+	// useEffect(() => {
+	// 	fetchBackfillStatus();
+	// }, [subscriptions]);
 
 	// If there are no connections then go back to the start page
 	useEffect(() => {

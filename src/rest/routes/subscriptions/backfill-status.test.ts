@@ -42,7 +42,7 @@ describe("jira-get-connections-backfillStatus.test", () => {
 
 	it("should return 401 when no JWT was provided", async () => {
 		const resp = await supertest(app).get(
-			`/jira/subscriptions/backfill-status/?subscriptionIds=${subscription.id}`
+			`/rest/subscriptions/backfill-status?subscriptionIds=${subscription.id}`
 		);
 		expect(resp.status).toStrictEqual(401);
 		expect(resp.text).toBe("Unauthorised");
@@ -51,7 +51,7 @@ describe("jira-get-connections-backfillStatus.test", () => {
 	it("should return 403 when not an admin", async () => {
 		const resp = await supertest(app)
 			.get(
-				`/jira/subscriptions/backfill-status?subscriptionIds=${subscription.id}`
+				`/rest/subscriptions/backfill-status?subscriptionIds=${subscription.id}`
 			)
 			.set(
 				"authorization",
@@ -74,7 +74,7 @@ describe("jira-get-connections-backfillStatus.test", () => {
 		it("should return 400 when no subscriptions were found", async () => {
 			const resp = await supertest(app)
 				.get(
-					`/jira/subscriptions/backfill-status?subscriptionIds=${
+					`/rest/subscriptions/backfill-status?subscriptionIds=${
 						subscription.id + 1
 					}`
 				)
@@ -87,7 +87,7 @@ describe("jira-get-connections-backfillStatus.test", () => {
 
 		it("should return 400 when no Missing Subscription IDs were found in query", async () => {
 			const resp = await supertest(app)
-				.get(`/jira/subscriptions/backfill-status`)
+				.get(`/rest/subscriptions/backfill-status`)
 				.set("authorization", `JWT ${await generateJwt()}`);
 			expect(resp.status).toStrictEqual(400);
 			expect(resp.text).toBe("Missing Subscription IDs");
@@ -99,7 +99,7 @@ describe("jira-get-connections-backfillStatus.test", () => {
 				.create();
 			const resp = await supertest(app)
 				.get(
-					`/jira/subscriptions/backfill-status?subscriptionIds=${result.subscription.id}`
+					`/rest/subscriptions/backfill-status?subscriptionIds=${result.subscription.id}`
 				)
 				.set(
 					"authorization",
@@ -112,7 +112,7 @@ describe("jira-get-connections-backfillStatus.test", () => {
 		it("should return 200 if the subscription belongs to the same user", async () => {
 			const resp = await supertest(app)
 				.get(
-					`/jira/subscriptions/backfill-status?subscriptionIds=${subscription.id}`
+					`/rest/subscriptions/backfill-status?subscriptionIds=${subscription.id}`
 				)
 				.set(
 					"authorization",
@@ -159,7 +159,7 @@ describe("jira-get-connections-backfillStatus.test", () => {
 			it("should return 200 if the subscription belongs to the same user", async () => {
 				const resp = await supertest(app)
 					.get(
-						`/jira/subscriptions/backfill-status?subscriptionIds=${subscription.id}`
+						`/rest/subscriptions/backfill-status?subscriptionIds=${subscription.id}`
 					)
 					.set(
 						"authorization",
