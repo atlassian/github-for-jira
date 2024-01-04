@@ -3,6 +3,7 @@ import { RestSyncReqBody } from "~/src/rest-interfaces";
 
 export default {
 	getSubscriptions: () => axiosRest.get("/rest/subscriptions"),
+	getSubscriptionsBackfillStatus: () => axiosRest.get("/rest/subscriptions//backfill-status"),
 	deleteGHEServer: (serverUrl: string) =>
 		axiosRest.delete(`/rest/ghes-servers/${serverUrl}`),
 	deleteGHEApp: (uuid: string) =>

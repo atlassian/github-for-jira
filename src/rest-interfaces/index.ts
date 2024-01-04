@@ -187,3 +187,30 @@ export type GHSubscriptions = {
 };
 
 export type BackfillPageModalTypes = "BACKFILL" | "DISCONNECT_SUBSCRIPTION" | "DISCONNECT_SERVER_APP" | "DISCONNECT_SERVER" | "DELETE_GHE_APP";
+
+export type ConnectionSyncStatus = "IN PROGRESS" | "FINISHED" | "PENDING" | "FAILED" | undefined;
+
+export type SubscriptionBackfillState = {
+	totalRepos?: number;
+	syncedRepos?: number;
+	syncStatus: ConnectionSyncStatus;
+	isSyncComplete: boolean;
+	backfillSince?: Date;
+	failedSyncErrors?: Record<string, number>;
+	syncWarning?: string;
+};
+
+export type BackfillStatusError = {
+	subscriptionId: string;
+	error: string;
+};
+export type BackFillType = {
+	[key: string]: SubscriptionBackfillState;
+};
+
+export type BackfillStatusResp = {
+	subscriptions: BackFillType;
+	isBackfillComplete: boolean;
+	subscriptionIds: Array<number>;
+	errors: BackfillStatusError;
+};
