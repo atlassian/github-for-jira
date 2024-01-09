@@ -106,8 +106,9 @@ const getBackfillStatus = async (
 					subscription
 				),
 				failedSyncErrors,
-				backfillSince: subscription.backfillSince,
-				syncWarning: subscription.syncWarning
+				backfillSince: subscription.backfillSince?.toString(),
+				syncWarning: subscription.syncWarning,
+				gitHubAppId: subscription.gitHubAppId
 			};
 		} catch (error: unknown) {
 			errors.push({ subscriptionId, error: JSON.stringify(error) });
