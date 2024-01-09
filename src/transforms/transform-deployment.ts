@@ -16,7 +16,7 @@ import { Subscription } from "models/subscription";
 import minimatch from "minimatch";
 import { getRepoConfig } from "services/user-config-service";
 import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
-import { shouldSendAll } from "config/feature-flags";
+import { shouldSendAll, booleanFlag, BooleanFlags } from "config/feature-flags";
 import { findLastSuccessDeploymentFromCache } from "services/deployment-cache-service";
 import { statsd } from "config/statsd";
 import { metricDeploymentCache } from "config/metric-names";
@@ -367,10 +367,13 @@ export const transformDeployment = async (
 	}
 
 	const allCommitsMessages = extractMessagesFromCommitSummaries(commitSummaries);
+
+	const shouldSkipSendingCommitAssociations = await booleanFlag(BooleanFlags.SKIP_SENDING_COMMIT_ASSOCIATION, jiraHost);
+
 	const associations = mapJiraIssueIdsCommitsAndServicesToAssociationArray(
 		jiraIssueKeyParser(`${deployment.ref}\n${message}\n${allCommitsMessages}`),
 		transformRepositoryId(payload.repository.id, githubInstallationClient.baseUrl),
-		commitSummaries,
+		shouldSkipSendingCommitAssociations ? [] : commitSummaries,
 		config
 	);
 
