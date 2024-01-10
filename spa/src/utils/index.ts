@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/react";
 import { AxiosError } from "axios";
-import { BackfillStatusResp, GHSubscriptions } from "../rest-interfaces";
+import { BackfillStatusResp, GHSubscriptions, SubscriptionBackfillState } from "../rest-interfaces";
 
 export const getJiraJWT = (): Promise<string> => new Promise(resolve => {
 	return AP.context.getToken((token: string) => {
@@ -23,7 +23,7 @@ export function reportError(err: unknown, extra: {
 	try {
 
 		const cause = (err as Record<string, unknown>).cause || {};
-		delete (err as Record<string, unknown>).cause; //so that Sentry doesn't group all axios error together
+		delete (err as Record<string, unknown>).cause; //so that Sentry doesn"t group all axios error together
 
 		Sentry.captureException(err, {
 			extra: {
@@ -90,7 +90,112 @@ export const getInProgressSubIds = (response: GHSubscriptions): Array<number> =>
 	return [...inProgressCloudSubIds, ...inProgressGHESubIds];
 };
 
-export const getUpdatedSubscriptions = (response: BackfillStatusResp, subscriptions: GHSubscriptions): GHSubscriptions | undefined => {
+const getUpdatedCloudSubs = (
+	currentSubs: GHSubscriptions,
+	subscriptionId: number,
+	subscription: SubscriptionBackfillState
+) => {
+	let matchedIndex;
+	const successfulCloudConnections =
+		currentSubs?.ghCloudSubscriptions.successfulCloudConnections;
+	if (successfulCloudConnections) {
+		matchedIndex = successfulCloudConnections.findIndex(
+			(connection) => connection.subscriptionId === subscriptionId
+		);
+		successfulCloudConnections[matchedIndex] = {
+			...successfulCloudConnections[matchedIndex],
+			numberOfSyncedRepos: subscription.syncedRepos,
+			syncStatus: subscription.syncStatus,
+		};
+		if (subscription.backfillSince) {
+			successfulCloudConnections[matchedIndex]["backfillSince"] =
+				subscription.backfillSince;
+		}
+		return {
+			...currentSubs,
+			ghCloudSubscriptions: {
+				...currentSubs.ghCloudSubscriptions,
+				successfulCloudConnections: successfulCloudConnections,
+			},
+		};
+	}
+};
+
+const getUpdatedGHESubs = (
+	currentSubs: GHSubscriptions,
+	subscription: SubscriptionBackfillState
+) => {
+	const ghEnterpriseServers = currentSubs.ghEnterpriseServers;
+	let ghEnterpriseServerIndex;
+	let applicationIndex;
+	for (const [
+		ghEnterpriseServerI,
+		ghEnterpriseServer,
+	] of ghEnterpriseServers.entries()) {
+		const applications = ghEnterpriseServer.applications;
+
+		for (const [appIndex, app] of applications.entries()) {
+			if (app.id === subscription.gitHubAppId) {
+				ghEnterpriseServerIndex = ghEnterpriseServerI;
+				applicationIndex = appIndex;
+				break;
+			}
+		}
+	}
+	if (
+		typeof ghEnterpriseServerIndex === "number" &&
+		!isNaN(ghEnterpriseServerIndex) &&
+		typeof applicationIndex === "number" &&
+		!isNaN(applicationIndex)
+	) {
+		const newGHEnterpriseServers = ghEnterpriseServers;
+		const apps = ghEnterpriseServers[ghEnterpriseServerIndex].applications;
+		const newApps = [...apps];
+
+		if (subscription.gitHubAppId) {
+			const successfulConnections =
+				newApps[applicationIndex]?.successfulConnections;
+			const newSuccessfulConnections = successfulConnections.map(
+				(connection) => {
+					if (connection.subscriptionId === subscription.id) {
+						const result = {
+							...connection,
+							syncStatus: subscription.syncStatus,
+							numberOfSyncedRepos: subscription.syncedRepos,
+
+						};
+						if (subscription.backfillSince) {
+							result["backfillSince"] =
+								subscription.backfillSince;
+						}
+						return result;
+					}
+					return connection;
+				}
+			);
+
+			newApps[applicationIndex] = {
+				...newApps[applicationIndex],
+				successfulConnections: [...newSuccessfulConnections],
+			};
+		}
+
+		newGHEnterpriseServers[ghEnterpriseServerIndex] = {
+			...ghEnterpriseServers[ghEnterpriseServerIndex],
+			applications: newApps,
+		};
+		const result = {
+			...currentSubs,
+			ghEnterpriseServers: newGHEnterpriseServers,
+		};
+		return result;
+	}
+};
+
+export const getUpdatedSubscriptions = (
+	response: BackfillStatusResp,
+	subscriptions: GHSubscriptions
+): GHSubscriptions | undefined => {
 	const currentSubs = subscriptions;
 	let newSubs;
 	const subscriptionIds = response.subscriptionIds || [];
@@ -99,65 +204,13 @@ export const getUpdatedSubscriptions = (response: BackfillStatusResp, subscripti
 			const subscriptions = response.subscriptions;
 			const subscription = subscriptions[subscriptionId];
 			if (!subscription.gitHubAppId) {
-				let matchedIndex;
-				const successfulCloudConnections =
-					currentSubs?.ghCloudSubscriptions.successfulCloudConnections;
-				if (successfulCloudConnections) {
-					matchedIndex = successfulCloudConnections.findIndex(
-						(connection) => connection.subscriptionId === subscriptionId
-					);
-					successfulCloudConnections[matchedIndex] = {
-						...successfulCloudConnections[matchedIndex],
-						numberOfSyncedRepos: subscription.syncedRepos,
-						syncStatus: subscription.syncStatus,
-					};
-					if(subscription.backfillSince){
-						successfulCloudConnections[matchedIndex]["backfillSince"] = subscription.backfillSince;
-					}
-					newSubs = {
-						...currentSubs,
-						ghCloudSubscriptions: {
-							...currentSubs.ghCloudSubscriptions,
-							successfulCloudConnections: successfulCloudConnections,
-						},
-					};
-				}
+				newSubs = getUpdatedCloudSubs(
+					currentSubs,
+					subscriptionId,
+					subscription
+				);
 			} else {
-				const ghEnterpriseServers = currentSubs.ghEnterpriseServers;
-				let ghEnterpriseServerIndex;
-				let applicationIndex;
-				for (const [
-					ghEnterpriseServerI,
-					ghEnterpriseServer,
-				] of ghEnterpriseServers.entries()) {
-					const applications = ghEnterpriseServer.applications;
-					for (const [applicationI, app] of applications.entries()) {
-						if (app.id === subscription.gitHubAppId) {
-							ghEnterpriseServerIndex = ghEnterpriseServerI;
-							applicationIndex = applicationI;
-							break;
-						}
-					}
-				}
-				console.log("::::: ghEnterpriseServerIndex",ghEnterpriseServerIndex);
-				console.log("::::: applicationIndex", applicationIndex);
-				if (ghEnterpriseServerIndex && applicationIndex) {
-					const newGHEnterpriseServers = ghEnterpriseServers;
-					const newApps =
-						ghEnterpriseServers[ghEnterpriseServerIndex].applications;
-					newApps[applicationIndex] = {
-						...newApps[applicationIndex],
-						successfulConnections: [],
-					};
-					newGHEnterpriseServers[ghEnterpriseServerIndex] = {
-						...ghEnterpriseServers[ghEnterpriseServerIndex],
-						applications: newApps,
-					};
-					newSubs = {
-						...currentSubs,
-						ghEnterpriseServers: newGHEnterpriseServers,
-					};
-				}
+				newSubs = getUpdatedGHESubs(currentSubs, subscription);
 			}
 		}
 		return newSubs;

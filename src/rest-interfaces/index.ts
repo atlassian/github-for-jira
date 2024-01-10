@@ -195,6 +195,7 @@ export type BackfillPageModalTypes = "BACKFILL" | "DISCONNECT_SUBSCRIPTION" | "D
 export type ConnectionSyncStatus = "IN PROGRESS" | "FINISHED" | "PENDING" | "FAILED";
 
 export type SubscriptionBackfillState = {
+	id: number;
 	totalRepos?: number;
 	syncedRepos: number;
 	syncStatus: ConnectionSyncStatus;

@@ -22,7 +22,7 @@ import {
 	DeleteAppInGitHubModal,
 	DisconnectGHEServerAppModal,
 } from "./Modals/DisconnectGHEServerModal";
-import { getInProgressSubIds, getUpdatedSubscriptions } from "~/src/utils";
+import { getInProgressSubIds, getUpdatedSubscriptions } from "../../utils";
 
 const hasGHCloudConnections = (subscriptions: GHSubscriptions): boolean =>
 	subscriptions?.ghCloudSubscriptions &&

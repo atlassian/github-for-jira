@@ -98,6 +98,7 @@ const getBackfillStatus = async (
 
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			backfillStatus[subscriptionId] = {
+				id: parseInt(subscriptionId),
 				isSyncComplete,
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				syncStatus: mapSyncStatus(subscription.syncStatus),
