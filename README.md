@@ -268,3 +268,6 @@ Want to help improve the integration between GitHub and Jira? Check out the [con
 The project is available as open source under the terms of the [MIT License](./LICENSE).
 
 When using the GitHub logos, be sure to follow the [GitHub logo guidelines](https://github.com/logos).
+
+
+You can no longer push to this repo!
