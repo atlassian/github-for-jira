@@ -16,7 +16,7 @@ exports[`app getFrontendApp please review routes and update snapshot when adding
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/subscriptions/?(?=/|$)^/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,SubscriptionsGet
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/subscriptions/?(?=/|$)^/backfill-status/?$
-	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,SyncRouterHandler
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,GetSubBackfillStatusHandler
 :DELETE ^/?(?=/|$)^/rest/?(?=/|$)^/subscriptions/?(?=/|$)^/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,SubscriptionDelete
 :POST ^/?(?=/|$)^/rest/?(?=/|$)^/subscriptions/?(?=/|$)^/sync/?$
@@ -54,7 +54,7 @@ exports[`app getFrontendApp please review routes and update snapshot when adding
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/subscriptions/(?:([^/]+?))/?(?=/|$)^/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,tempReplaceUUID,GithubServerAppMiddleware,SubscriptionsGet
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/subscriptions/(?:([^/]+?))/?(?=/|$)^/backfill-status/?$
-	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,tempReplaceUUID,GithubServerAppMiddleware,SyncRouterHandler
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,tempReplaceUUID,GithubServerAppMiddleware,GetSubBackfillStatusHandler
 :DELETE ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/subscriptions/(?:([^/]+?))/?(?=/|$)^/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,tempReplaceUUID,GithubServerAppMiddleware,SubscriptionDelete
 :POST ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/subscriptions/(?:([^/]+?))/?(?=/|$)^/sync/?$

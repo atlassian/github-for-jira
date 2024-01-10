@@ -13,63 +13,55 @@ import {
 	BackfillStatusError
 } from "../../../../spa/src/rest-interfaces";
 import { BaseLocals } from "..";
+import { InsufficientPermissionError, InvalidArgumentError } from "~/src/config/errors";
 
 const GetSubscriptionsBackfillStatus = async (req: Request<unknown, unknown, unknown, { subscriptionIds?: string }, BaseLocals>, res: Response) => {
-	try {
-		const { jiraHost: localJiraHost } = res.locals;
-		const { subscriptionIds } = req.query;
+	const { jiraHost: localJiraHost } = res.locals;
+	const { subscriptionIds } = req.query;
 
-		const subIds = String(subscriptionIds)
-			.split(",")
-			.map(Number)
-			.filter(Boolean);
-		if (subIds.length === 0) {
-			req.log.warn("Missing Subscription IDs");
-			res.status(400).send("Missing Subscription IDs");
-			return;
-		}
-
-		const subscriptions = await Subscription.findAllForSubscriptionIds(
-			subIds
-		);
-
-		const resultSubscriptionIds: Array<number> = subscriptions.map(
-			(subscription) => subscription.id
-		);
-
-		if (subscriptions.length === 0) {
-			req.log.error("Missing Subscription");
-			res.status(400).send("Missing Subscription");
-			return;
-		}
-
-		const jiraHostsMatched = subscriptions.every(
-			(subscription) => subscription.jiraHost === localJiraHost
-		);
-
-		if (!jiraHostsMatched) {
-			req.log.error("mismatched Jira Host");
-			res.status(403).send("mismatched Jira Host");
-			return;
-		}
-		const subscriptionsById = groupBy(subscriptions, "id");
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const { backfillStatus, errors } = await getBackfillStatus(
-			subscriptionsById
-		);
-		const isBackfillComplete = getBackfillCompletionStatus(backfillStatus);
-		res.status(200).send({
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			subscriptions: backfillStatus,
-			isBackfillComplete,
-			subscriptionIds: resultSubscriptionIds,
-			errors
-		});
-	} catch (error) {
-		req.log.error(
-			"Failed to poll repo backfill status for provided subscription ID"
-		);
+	const subIds = String(subscriptionIds)
+		.split(",")
+		.map(Number)
+		.filter(Boolean);
+	if (subIds.length === 0) {
+		req.log.warn("Missing Subscription IDs");
+		throw new InvalidArgumentError("Missing Subscription IDs");
 	}
+
+	const subscriptions = await Subscription.findAllForSubscriptionIds(
+		subIds
+	);
+
+	const resultSubscriptionIds: Array<number> = subscriptions.map(
+		(subscription) => subscription.id
+	);
+
+	if (subscriptions.length === 0) {
+		req.log.error("Missing Subscription");
+		throw new InvalidArgumentError("Missing Subscription");
+	}
+
+	const jiraHostsMatched = subscriptions.every(
+		(subscription) => subscription.jiraHost === localJiraHost
+	);
+
+	if (!jiraHostsMatched) {
+		req.log.error("mismatched Jira Host");
+		throw new InsufficientPermissionError("mismatched Jira Host");
+	}
+	const subscriptionsById = groupBy(subscriptions, "id");
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+	const { backfillStatus, errors } = await getBackfillStatus(
+		subscriptionsById
+	);
+	const isBackfillComplete = getBackfillCompletionStatus(backfillStatus);
+	res.status(200).send({
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		subscriptions: backfillStatus,
+		isBackfillComplete,
+		subscriptionIds: resultSubscriptionIds,
+		errors
+	});
 };
 
 const getBackfillCompletionStatus = (backfillStatus: BackFillType): boolean =>
