@@ -38,7 +38,7 @@ export const RestErrorHandler = (err: Error, req: Request, res: Response<ApiErro
 
 const logErrorOrWarning = (err: Error, req: Request) => {
 
-	const httpStatus = parseInt(err["status"] as string ?? "") || parseInt(err["httpStatus"] as string ?? "") || 500;
+	const httpStatus = parseInt(err["status"] as string | undefined ?? "") || parseInt(err["httpStatus"] as string| undefined ?? "") || 500;
 	const extraInfo = {
 		httpStatus,
 		method: req.method,

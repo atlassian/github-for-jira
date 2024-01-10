@@ -6,7 +6,7 @@ const data = testData.github;
 export const githubLogin = async (page: Page, roleName: keyof GithubTestDataRoles, saveState = false) => {
 	const role = data.roles[roleName];
 	if (!role.username || !role.password) {
-		throw "github username or github password missing";
+		throw new Error("github username or github password missing");
 	}
 	await page.goto(data.urls.login);
 	await page.waitForLoadState();
@@ -40,10 +40,10 @@ export const githubAppUpdateURLs = async (page: Page) => {
 
 export const githubAppInstall = async (page: Page) => {
 	// TODO: add github app install
-	await page.goto(data.urls.apps);
+	return await page.goto(data.urls.apps);
 };
 
 export const githubAppUninstall = async (page: Page) => {
 	// TODO: add github app uninstall
-	await page.goto(data.urls.apps);
+	return await page.goto(data.urls.apps);
 };

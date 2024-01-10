@@ -48,7 +48,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 	/**
 	 * Context of the currently active listener, or the last active if the queue stopped
 	 */
-	listenerContext: SQSContext;
+	listenerContext: SQSContext | undefined;
 
 	public constructor(settings: QueueSettings, messageHandler: MessageHandler<MessagePayload>, errorHandler: ErrorHandler<MessagePayload>) {
 		this.queueUrl = settings.queueUrl;
@@ -159,7 +159,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 	private async waitUntilListenerStopped() {
 		const listenerContext = this.listenerContext;
 
-		if (!listenerContext.stopped) {
+		if (!listenerContext?.stopped) {
 			throw new Error("Listener is not stopped, nothing to await");
 		}
 
@@ -237,20 +237,20 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 		try {
 			await this.sqs.deleteMessage(deleteParams)
 				.promise();
-			statsd.increment(sqsQueueMetrics.deleted, this.metricsTags, { jiraHost: context.payload?.jiraHost });
+			statsd.increment(sqsQueueMetrics.deleted, this.metricsTags, { jiraHost: context.payload.jiraHost });
 			context.log.debug("Successfully deleted message from queue");
 		} catch (err: unknown) {
 			context.log.warn({ err }, "Error deleting message from the queue");
 		}
 	}
 
-	public async deleteStaleMessages(message: Message, context: SQSMessageContext<MessagePayload>): Promise<boolean> {
+	public async deleteStaleMessages(message: Message | undefined, context: SQSMessageContext<MessagePayload>): Promise<boolean> {
 		const TARGETED_QUEUES = ["deployment"];
 		if (!message?.Body || !TARGETED_QUEUES.includes(this.queueName)) {
 			return false;
 		}
 
-		const messageBody = JSON.parse(message.Body) as { webhookReceived?: number };
+		const messageBody = JSON.parse(message.Body) as { webhookReceived?: number } | undefined;
 		const webhookReceived = messageBody?.webhookReceived;
 		if (!webhookReceived) {
 			context.log.warn(
@@ -294,7 +294,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 		}
 
 		// Sets the log level depending on FF for the specific jira host
-		listenerContext.log.level(await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, payload?.jiraHost));
+		listenerContext.log.level(await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, payload.jiraHost));
 
 		const receiveCount = Number(message.Attributes?.ApproximateReceiveCount || "1");
 
@@ -306,10 +306,10 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 				messageId: message.MessageId,
 				executionId: uuidv4(),
 				queue: this.queueName,
-				jiraHost: payload?.jiraHost,
-				installationId: payload?.installationId,
-				gitHubAppId: payload?.gitHubAppConfig?.gitHubAppId,
-				webhookId: payload?.webhookId,
+				jiraHost: payload.jiraHost,
+				installationId: payload.installationId,
+				gitHubAppId: payload.gitHubAppConfig?.gitHubAppId,
+				webhookId: payload.webhookId,
 				receiveCount,
 				lastAttempt
 			}),
@@ -341,13 +341,13 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 			await this.changeVisibilityTimeout(message, this.timeoutSec + EXTRA_VISIBILITY_TIMEOUT_DELAY, context.log);
 
 			const timeoutPromise = new Promise((_, reject) =>
-				setTimeout(() => reject(new SqsTimeoutError()), this.timeoutSec * 1000)
+				setTimeout(() => { reject(new SqsTimeoutError()); }, this.timeoutSec * 1000)
 			);
 
 			await Promise.race([this.messageHandler(context), timeoutPromise]);
 
 			const messageProcessingDuration = Date.now() - messageProcessingStartTime;
-			this.sendProcessedMetrics(messageProcessingDuration, payload?.jiraHost);
+			this.sendProcessedMetrics(messageProcessingDuration, payload.jiraHost);
 			await this.deleteMessage(context);
 		} catch (err: unknown) {
 			await this.handleSqsMessageExecutionError(err, context);
@@ -358,12 +358,13 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 		try {
 			context.log.warn({ err }, "Failed message");
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-			const errorHandlingResult = await this.errorHandler(err as any, context);
+			const errorHandlingResult = await this.errorHandler(err as Error, context);
+			let visibilityChangedSec: number | undefined;
 
 			this.log.info({ errorHandlingResult }, "Error handling result");
 			if (errorHandlingResult.isFailure) {
 				context.log.error({ err }, "Error while executing SQS message");
-				statsd.increment(sqsQueueMetrics.failed, this.metricsTags, { jiraHost: context.payload?.jiraHost });
+				statsd.increment(sqsQueueMetrics.failed, this.metricsTags, { jiraHost: context.payload.jiraHost });
 			} else {
 				context.log.warn({ err }, "Expected exception while executing SQS message. Not an error, deleting the message.");
 			}
@@ -379,19 +380,37 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 				await this.deleteMessage(context);
 			} else {
 				context.log.warn({ err }, "SQS message visibility timeout changed");
-				await this.changeVisibilityTimeoutIfNeeded(errorHandlingResult, context.message, context.log);
+				visibilityChangedSec = await this.changeVisibilityTimeoutIfNeeded(errorHandlingResult, context.message, context.log);
 			}
+
+			statsd.increment(sqsQueueMetrics.exception, {
+				...this.metricsTags,
+				statusCode: String(errorHandlingResult.statusCode),
+				source: String(errorHandlingResult.source),
+				errorName: String(errorHandlingResult.errorName),
+				isFailure: String(errorHandlingResult.isFailure),
+				retryable: String(errorHandlingResult.retryable),
+				retryDelayInMin: String(errorHandlingResult.retryDelaySec && Math.floor(errorHandlingResult.retryDelaySec / 60)),
+				msgVisibilityChangedInMin: String(visibilityChangedSec && Math.floor(visibilityChangedSec / 60)),
+				skipDlq: String(errorHandlingResult.skipDlq),
+				receiveCount: String(context.receiveCount),
+				maxAttempts: String(this.maxAttempts),
+				remainingBeforeDlq: String(this.maxAttempts - context.receiveCount),
+				reachedRetryLimit: String(this.isMessageReachedRetryLimit(context))
+			}, { jiraHost: context.payload.jiraHost });
+
 		} catch (errorHandlingException: unknown) {
 			context.log.error({ err: errorHandlingException, originalError: err }, "Error while performing error handling on SQS message");
 		}
 	}
 
-	private async changeVisibilityTimeoutIfNeeded(errorHandlingResult: ErrorHandlingResult, message: Message, log: Logger) {
+	private async changeVisibilityTimeoutIfNeeded(errorHandlingResult: ErrorHandlingResult, message: Message, log: Logger): Promise<number | undefined> {
 		const retryDelaySec = errorHandlingResult.retryDelaySec;
 		if (retryDelaySec !== undefined /*zero seconds delay is also supported*/) {
 			log.info(`Delaying the retry for ${retryDelaySec} seconds`);
-			await this.changeVisibilityTimeout(message, retryDelaySec, log);
+			return await this.changeVisibilityTimeout(message, retryDelaySec, log);
 		}
+		return undefined;
 	}
 
 	private isMessageReachedRetryLimit(context: SQSMessageContext<MessagePayload>) {
@@ -399,15 +418,15 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 		return context.receiveCount >= this.maxAttempts;
 	}
 
-	public async changeVisibilityTimeout(message: Message, timeoutSec: number, logger: Logger): Promise<void> {
+	public async changeVisibilityTimeout(message: Message, timeoutSec: number, logger: Logger): Promise<number | undefined> {
 		if (!message.ReceiptHandle) {
 			logger.error(`No ReceiptHandle in message with ID = ${message.MessageId ?? ""}`);
-			return;
+			return undefined;
 		}
 
 		if (timeoutSec < 0) {
 			logger.error(`Timeout needs to be a positive number.`);
-			return;
+			return undefined;
 		}
 
 		if (timeoutSec >= MAX_MESSAGE_VISIBILITY_TIMEOUT_SEC) {
@@ -415,15 +434,18 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 			timeoutSec = MAX_MESSAGE_VISIBILITY_TIMEOUT_SEC;
 		}
 
+		const finalRoundedSec = Math.round(timeoutSec);
 		const params: ChangeMessageVisibilityRequest = {
 			QueueUrl: this.queueUrl,
 			ReceiptHandle: message.ReceiptHandle,
-			VisibilityTimeout: Math.round(timeoutSec)
+			VisibilityTimeout: finalRoundedSec
 		};
 		try {
 			await this.sqs.changeMessageVisibility(params).promise();
+			return finalRoundedSec;
 		} catch (err: unknown) {
 			logger.error("Message visibility timeout change failed");
+			return undefined;
 		}
 	}
 

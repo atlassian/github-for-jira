@@ -30,6 +30,7 @@ import { ApiReplyFailedEntitiesFromDataDepotPost } from "./api-replay-failed-ent
 import { RepoSyncState } from "models/reposyncstate";
 import { ApiResyncFailedTasksPost } from "./api-resync-failed-tasks";
 import { GHESVerificationRouter } from "./ghes-app-verification/ghes-app-verification-router";
+import { AuditLogApiRouter } from "./audit-log/audit-log-api-router";
 
 export const ApiRouter = Router();
 
@@ -226,6 +227,7 @@ ApiRouter.post("/reset-failed-pending-deployment-cursor", ResetFailedAndPendingD
 ApiRouter.post("/replay-rejected-entities-from-data-depot", ApiReplyFailedEntitiesFromDataDepotPost);
 ApiRouter.post("/resync-failed-tasks",ApiResyncFailedTasksPost);
 ApiRouter.use("/verify/githubapp/:gitHubAppId", GHESVerificationRouter);
+ApiRouter.use("/audit-log", AuditLogApiRouter);
 
 ApiRouter.use("/jira", ApiJiraRouter);
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);

@@ -53,7 +53,7 @@ export const JiraConnectEnterpriseAppsGet = async (
 
 		req.log.debug("Jira Connect Enterprise App page rendered successfully.");
 	} catch (error: unknown) {
-		return next(new Error(`Failed to render Jira Connect Enterprise App page: ${errorStringFromUnknown(error)}`));
+		next(new Error(`Failed to render Jira Connect Enterprise App page: ${errorStringFromUnknown(error)}`)); return;
 	}
 };
 

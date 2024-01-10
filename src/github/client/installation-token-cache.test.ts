@@ -1,5 +1,5 @@
 import { InstallationTokenCache } from "./installation-token-cache";
-import { AuthToken, ONE_MINUTE, TEN_MINUTES } from "./auth-token";
+import { AuthToken, ONE_MINUTE, NINE_MINUTES_MSEC } from "./auth-token";
 
 jest.unmock("lru-cache");
 
@@ -7,8 +7,8 @@ describe("InstallationTokenCache", () => {
 
 	const now = new Date(2021, 10, 25, 10, 0);
 	const in5Minutes = new Date(now.getTime() + 5 * ONE_MINUTE);
-	const in10Minutes = new Date(now.getTime() + TEN_MINUTES);
-	const in20Minutes = new Date(now.getTime() + 2 * TEN_MINUTES);
+	const in9Minutes = new Date(now.getTime() + NINE_MINUTES_MSEC);
+	const in18Minutes = new Date(now.getTime() + 2 * NINE_MINUTES_MSEC);
 
 	beforeAll(() => {
 		jest.useFakeTimers("modern");
@@ -22,8 +22,8 @@ describe("InstallationTokenCache", () => {
 
 		const GITHUB_INSTALLATION_ID = 1;
 		jest.setSystemTime(now);
-		const token1 = new AuthToken("token1", in10Minutes);
-		const token2 = new AuthToken("token2", in10Minutes);
+		const token1 = new AuthToken("token1", in9Minutes);
+		const token2 = new AuthToken("token2", in9Minutes);
 
 		const cache1 = InstallationTokenCache.getInstance();
 		const cache2 = InstallationTokenCache.getInstance();
@@ -40,8 +40,8 @@ describe("InstallationTokenCache", () => {
 		const GITHUB_INSTALLATION_ID = 1;
 		const GITHUB_APP_ID = 1;
 		jest.setSystemTime(now);
-		const token1 = new AuthToken("token1", in10Minutes);
-		const token2 = new AuthToken("token2", in10Minutes);
+		const token1 = new AuthToken("token1", in9Minutes);
+		const token2 = new AuthToken("token2", in9Minutes);
 
 		const cache1 = InstallationTokenCache.getInstance();
 		const cache2 = InstallationTokenCache.getInstance();
@@ -58,8 +58,8 @@ describe("InstallationTokenCache", () => {
 		const GITHUB_INSTALLATION_ID_1 = 21;
 		const GITHUB_INSTALLATION_ID_2 = 22;
 		jest.setSystemTime(now);
-		const token1 = new AuthToken("token1", in10Minutes);
-		const token2 = new AuthToken("token2", in10Minutes);
+		const token1 = new AuthToken("token1", in9Minutes);
+		const token2 = new AuthToken("token2", in9Minutes);
 
 		const cache1 = InstallationTokenCache.getInstance();
 		const cache2 = InstallationTokenCache.getInstance();
@@ -77,8 +77,8 @@ describe("InstallationTokenCache", () => {
 		const GITHUB_APP_ID_1 = 31;
 		const GITHUB_APP_ID_2 = 32;
 		jest.setSystemTime(now);
-		const token1 = new AuthToken("token1", in10Minutes);
-		const token2 = new AuthToken("token2", in10Minutes);
+		const token1 = new AuthToken("token1", in9Minutes);
+		const token2 = new AuthToken("token2", in9Minutes);
 
 		const cache1 = InstallationTokenCache.getInstance();
 		const cache2 = InstallationTokenCache.getInstance();
@@ -95,8 +95,8 @@ describe("InstallationTokenCache", () => {
 		const CONFLICTIN_GITHUB_INSTALLATION_ID = 41;
 		const GITHUB_APP_ID = 41;
 		jest.setSystemTime(now);
-		const token1 = new AuthToken("token1", in10Minutes);
-		const token2 = new AuthToken("token2", in10Minutes);
+		const token1 = new AuthToken("token1", in9Minutes);
+		const token2 = new AuthToken("token2", in9Minutes);
 
 		const cache1 = InstallationTokenCache.getInstance();
 		const cache2 = InstallationTokenCache.getInstance();
@@ -109,10 +109,10 @@ describe("InstallationTokenCache", () => {
 	});
 
 	it("Re-generates expired tokens", async () => {
-		const initialInstallationToken = new AuthToken("initial installation token", in10Minutes);
+		const initialInstallationToken = new AuthToken("initial installation token", in9Minutes);
 		const generateInitialInstallationToken = jest.fn().mockImplementation(() => Promise.resolve(initialInstallationToken));
 
-		const freshInstallationToken = new AuthToken("fresh installation token", in20Minutes);
+		const freshInstallationToken = new AuthToken("fresh installation token", in18Minutes);
 		const generateFreshInstallationToken = jest.fn().mockImplementation(() => Promise.resolve(freshInstallationToken));
 
 		const githubInstallationId = 123456;
@@ -132,7 +132,7 @@ describe("InstallationTokenCache", () => {
 		expect(generateFreshInstallationToken).toHaveBeenCalledTimes(0);
 
 		// after 10 minutes we expect a new token because the old one has expired
-		jest.setSystemTime(in10Minutes);
+		jest.setSystemTime(in9Minutes);
 		const token3 = await installationTokenCache.getInstallationToken(githubInstallationId, undefined, generateFreshInstallationToken);
 		expect(token3).toEqual(freshInstallationToken);
 		expect(generateInitialInstallationToken).toHaveBeenCalledTimes(1);

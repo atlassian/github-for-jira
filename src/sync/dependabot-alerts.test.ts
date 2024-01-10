@@ -53,6 +53,7 @@ describe("sync/dependabot-alerts", () => {
 			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 			nockDependabotAlertsRequest(dependabotAlerts);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			jiraNock
 				.post(
 					"/rest/security/1.0/bulk",
@@ -79,6 +80,7 @@ describe("sync/dependabot-alerts", () => {
 				"data": []
 			});
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			// No Jira Nock
 
 			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
@@ -91,6 +93,7 @@ describe("sync/dependabot-alerts", () => {
 			githubNock
 				.get("/repos/integrations/test-repo-name/dependabot/alerts?per_page=20&page=1&sort=created&direction=desc")
 				.reply(403, { message: "Dependabot alerts are disabled for this repository" });
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			// No Jira Nock
 
@@ -105,6 +108,7 @@ describe("sync/dependabot-alerts", () => {
 				.get("/repos/integrations/test-repo-name/dependabot/alerts?per_page=20&page=1&sort=created&direction=desc")
 				.reply(403, { message: "Dependabot alerts are not available for archived repositories" });
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			// No Jira Nock
 
 			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
@@ -118,6 +122,7 @@ describe("sync/dependabot-alerts", () => {
 				.get("/repos/integrations/test-repo-name/dependabot/alerts?per_page=20&page=1&sort=created&direction=desc")
 				.reply(404);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			// No Jira Nock
 
 			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
@@ -130,6 +135,7 @@ describe("sync/dependabot-alerts", () => {
 			githubNock
 				.get("/repos/integrations/test-repo-name/dependabot/alerts?per_page=20&page=1&sort=created&direction=desc")
 				.reply(451);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			// No Jira Nock
 
@@ -188,6 +194,7 @@ describe("sync/dependabot-alerts", () => {
 				}
 			};
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			nockDependabotAlertsRequest(dependabotAlerts);
 			jiraNock
 				.post(
@@ -214,6 +221,7 @@ describe("sync/dependabot-alerts", () => {
 					gitHubApiUrl: gitHubServerApp.gitHubBaseUrl + "/v3/api"
 				}
 			};
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			nockDependabotAlertsRequest({
 				"data": []

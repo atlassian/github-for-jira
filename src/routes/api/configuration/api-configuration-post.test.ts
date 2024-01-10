@@ -94,5 +94,27 @@ describe("GitHub Configured Get", () => {
 		expect(res.send).toHaveBeenCalledWith("Calm down Cowboy, keep it under 50 at a time!");
 	});
 
+	it("Should save true for installation if configuredState is set to true even if there are no subscriptions", async () => {
+		req.body.jiraHosts = [ JIRAHOST_C ];
+		req.body.configuredState = true;
+		await ApiConfigurationPost(req, res);
+		expect(saveConfiguredAppProperties).toBeCalledWith(JIRAHOST_C, expect.anything(), true);
+		expect(res.status).toBeCalledWith(200);
+	});
+
+	it("Should save false for installation if configuredState is set to false even if there are no subscriptions", async () => {
+		req.body.jiraHosts = [ JIRAHOST_C ];
+		req.body.configuredState = false;
+		await ApiConfigurationPost(req, res);
+		expect(saveConfiguredAppProperties).toBeCalledWith(JIRAHOST_C, expect.anything(), false);
+		expect(res.status).toBeCalledWith(200);
+	});
+
+	it("Should save false if configuredState is not passed is set and there are no subscriptions", async () => {
+		req.body.jiraHosts = [ JIRAHOST_C ];
+		await ApiConfigurationPost(req, res);
+		expect(saveConfiguredAppProperties).toBeCalledWith(JIRAHOST_C, expect.anything(), false);
+		expect(res.status).toBeCalledWith(200);
+	});
 });
 

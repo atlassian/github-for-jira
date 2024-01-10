@@ -494,7 +494,7 @@ describe("logger behaviour", () => {
 				b: { bar: "string" }
 			};
 			data.a = data as any;
-			expect(() => logger.warn(data, "log")).not.toThrow();
+			expect(() => { logger.warn(data, "log"); }).not.toThrow();
 		});
 	});
 

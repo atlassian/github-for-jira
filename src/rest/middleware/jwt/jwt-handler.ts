@@ -9,7 +9,7 @@ import { BaseLocals } from "../../routes";
 const INVALID_SECRET = "some-invalid-secret";
 const SKIP_PATHS = ["/spa/deferred"];
 
-export const JwtHandler = errorWrapper("JwtHandler", async (req: Request, res: Response<any, BaseLocals>, next: NextFunction) => {
+export const JwtHandler = errorWrapper("JwtHandler", async (req: Request, res: Response<unknown, BaseLocals>, next: NextFunction) => {
 
 	const token = req.headers["authorization"];
 
@@ -36,7 +36,8 @@ export const JwtHandlerWithoutQsh = errorWrapper("JwtHandlerWithoutQsh", async (
 	const path = req.originalUrl.split("?")[0];
 
 	if (SKIP_PATHS.includes(path)) {
-		return next();
+		next();
+		return;
 	}
 
 	if (!token) {

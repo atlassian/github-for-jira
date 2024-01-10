@@ -5,10 +5,30 @@ import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
 import { GitHubServerApp } from "models/github-server-app";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
-import { DatabaseStateCreator } from "test/utils/database-state-creator";
+import { DatabaseStateCreator, CreatorResult } from "test/utils/database-state-creator";
 import { RepoSyncState } from "models/reposyncstate";
 import { getPullRequestTask } from "./pull-request";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
+
+const lastMockedDevInfoRepoUpdateFn = jest.fn();
+jest.mock("../jira/client/jira-client", () => ({
+	getJiraClient: async (...args) => {
+		const actual = await jest.requireActual("../jira/client/jira-client").getJiraClient(...args);
+		return {
+			...actual,
+			devinfo: {
+				...actual.devinfo,
+				repository: {
+					...actual.devinfo.repository,
+					update: (...repoArgs) => {
+						lastMockedDevInfoRepoUpdateFn(...repoArgs);
+						return actual.devinfo.repository.update(...repoArgs);
+					}
+				}
+			}
+		};
+	}
+}));
 
 describe("sync/pull-request", () => {
 	const sentry: Hub = { setUser: jest.fn() } as any as Hub;
@@ -80,9 +100,9 @@ describe("sync/pull-request", () => {
 
 		const PRS_INITIAL_CURSOR = 21;
 
+		let db: CreatorResult;
 		beforeEach(async () => {
-
-			await new DatabaseStateCreator()
+			db = await new DatabaseStateCreator()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForPrs()
 				.withPrsCustomCursor(String(PRS_INITIAL_CURSOR))
@@ -93,6 +113,8 @@ describe("sync/pull-request", () => {
 			["[TES-15] Evernote Test" , "use-the-force"]
 		])("PR Title: %p, PR Head Ref: %p", (title, head) => {
 			it("should sync to Jira when Pull Request Nodes have jira references", async () => {
+
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 				githubNock
 					.post("/graphql")
@@ -168,10 +190,18 @@ describe("sync/pull-request", () => {
 					installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 					jiraHost
 				}, sentry, getLogger("test"))).toResolve();
+
+				expect(lastMockedDevInfoRepoUpdateFn).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+					auditLogsource: "BACKFILL",
+					entityAction: "PULL",
+					subscriptionId: db.subscription.id
+				}));
+
 			});
 		});
 
 		it("should not sync if nodes are empty", async () => {
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubNock
 				.post("/graphql")

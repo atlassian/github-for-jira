@@ -13,7 +13,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	const { issueKey } = req.query;
 
 	if (!issueKey) {
-		return next(new Error(Errors.MISSING_ISSUE_KEY));
+		next(new Error(Errors.MISSING_ISSUE_KEY)); return;
 	}
 
 	const jiraHost: string = res.locals.jiraHost;

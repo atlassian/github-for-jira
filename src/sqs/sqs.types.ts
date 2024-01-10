@@ -95,6 +95,24 @@ export interface ErrorHandlingResult {
 	 */
 	skipDlq?: boolean;
 
+	/**
+	 * the http status of error
+	 * For metrics only, NOT used for logic handling.
+	 */
+	statusCode?: number | string;
+
+	/**
+	 * the source of error
+	 * For metrics only, NOT used for logic handling.
+	 */
+	source?: "github" | "jira" | "other";
+
+	/**
+	 * name of error
+	 * For metrics only, NOT used for logic handling.
+	 */
+	errorName?: string;
+
 }
 
 export interface SQSContext {
@@ -148,7 +166,7 @@ export type DeploymentMessagePayload = BaseMessagePayload & {
 	// The original webhook payload from GitHub. We don't need to worry about the SQS size limit because metrics show
 	// that payload size for deployment_status webhooks maxes out at 13KB.
 	webhookPayload: DeploymentStatusEvent,
-	rateLimited?: boolean
+	rateLimited?: boolean,
 }
 
 export type PushQueueMessagePayload = BaseMessagePayload & {

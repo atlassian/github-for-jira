@@ -4,8 +4,9 @@ import { createHashWithoutSharedSecret } from "utils/encryption";
 import _ from "lodash";
 import { MicrosEnvTypeEnum } from "interfaces/common";
 import { isTestJiraHost } from "config/jira-test-site-check";
-import { SQS } from "aws-sdk";
+import { AWSError, SQS } from "aws-sdk";
 import { SendMessageRequest } from "aws-sdk/clients/sqs";
+import { PromiseResult } from "aws-sdk/lib/request";
 
 const logger = getLogger("analytics");
 
@@ -37,7 +38,7 @@ export const sendAnalyticsWithSqs = async (
 	eventProps: (ScreenEventProps | TrackOpUiEventProps)  & Record<string, unknown>,
 	attributes: Record<string, unknown> = {},
 	accountId?: string
-): Promise<void> => {
+): Promise<PromiseResult<SQS.SendMessageResult, AWSError> | undefined> => {
 
 	const payload: SQSAnalyticsMessagePayload = {
 		jiraHost,
@@ -58,9 +59,11 @@ export const sendAnalyticsWithSqs = async (
 		const sendMessageResult = await sqs.sendMessage(params)
 			.promise();
 		logger.debug({ sendMessageResult }, "Published an analytic event to SQS");
+		return sendMessageResult;
 	} catch (err: unknown) {
 		logger.error({ err }, "Cannot publish the event to SQS");
 	}
+	return undefined;
 };
 
 /**
@@ -72,13 +75,13 @@ export const sendAnalyticsWithSqs = async (
  * @param unsafeAttributes - free-form attributes, will be included as "attributes" property into the properties of the event
  */
 export const sendAnalytics: {
-	(jiraHost: string, eventType: "screen", eventProps: ScreenEventProps & Record<string, unknown>, attributes: Record<string, unknown>, accountId?: string);
-	(jiraHost: string, eventType: "ui" | "operational" | "track", eventProps: TrackOpUiEventProps  & Record<string, unknown>, attributes: Record<string, unknown>, accountId?: string);
-} = async (jiraHost: string, eventType: "screen" | "ui" | "operational" | "track", eventProps: (ScreenEventProps | TrackOpUiEventProps)  & Record<string, unknown>, unsafeAttributes: Record<string, unknown> = {}, accountId?: string): Promise<void> => {
+	(jiraHost: string, eventType: "screen", eventProps: ScreenEventProps & Record<string, unknown>, attributes: Record<string, unknown>, accountId?: string): Promise<PromiseResult<SQS.SendMessageResult, AWSError> | undefined>;
+	(jiraHost: string, eventType: "ui" | "operational" | "track", eventProps: TrackOpUiEventProps  & Record<string, unknown>, attributes: Record<string, unknown>, accountId?: string): Promise<PromiseResult<SQS.SendMessageResult, AWSError> | undefined>;
+} = async (jiraHost: string, eventType: "screen" | "ui" | "operational" | "track", eventProps: (ScreenEventProps | TrackOpUiEventProps)  & Record<string, unknown>, unsafeAttributes: Record<string, unknown> = {}, accountId?: string): Promise<PromiseResult<SQS.SendMessageResult, AWSError> | undefined> => {
 
 	if (isTestJiraHost(jiraHost) && envVars.MICROS_ENVTYPE === MicrosEnvTypeEnum.prod) {
 		logger.warn("Skip analytics for test jira in prod");
-		return;
+		return undefined;
 	}
 
 	const attributes = _.cloneDeep(unsafeAttributes);
@@ -88,5 +91,5 @@ export const sendAnalytics: {
 
 	attributes.appKey = envVars.APP_KEY;
 
-	await sendAnalyticsWithSqs(jiraHost, eventType, eventProps, attributes, accountId);
+	return await sendAnalyticsWithSqs(jiraHost, eventType, eventProps, attributes, accountId);
 };

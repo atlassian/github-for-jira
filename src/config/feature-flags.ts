@@ -22,15 +22,18 @@ export enum BooleanFlags {
 	ENABLE_GITHUB_SECURITY_IN_JIRA = "enable-github-security-in-jira",
 	DELETE_MESSAGE_ON_BACKFILL_WHEN_OTHERS_WORKING_ON_IT = "delete-message-on-backfill-when-others-working-on-it",
 	ENABLE_5KU_BACKFILL_PAGE = "enable-5ku-experience-backfill-page",
-	USE_INSTALLATION_CLIENT_CHECK_PERMISSION = "use-installation-client-to-check-permission",
+	USE_DYNAMODB_TO_PERSIST_AUDIT_LOG = "use-dynamodb-to-persist-audit-log",
 	USE_CUSTOM_ROOT_CA_BUNDLE = "use-custom-root-ca-bundle",
-	GENERATE_CORE_HEAP_DUMPS_ON_LOW_MEM = "generate-core-heap-dumps-on-low-mem"
+	GENERATE_CORE_HEAP_DUMPS_ON_LOW_MEM = "generate-core-heap-dumps-on-low-mem",
+	USE_RATELIMIT_ON_JIRA_CLIENT = "use-ratelimit-on-jira-client",
+	SKIP_PROCESS_QUEUE_IF_ISSUE_NOT_FOUND = "skip-process-queue-when-issue-not-exists",
+	SKIP_COMMIT_IF_SHA_NOT_FOUND_ON_LAST_TRY = "skip-commit-if-sha-not-found-on-last-try",
+	SKIP_SENDING_COMMIT_ASSOCIATION = "skip-sending-commit-association"
 }
 
 export enum StringFlags {
 	BLOCKED_INSTALLATIONS = "blocked-installations",
 	LOG_LEVEL = "log-level",
-	HEADERS_TO_ENCRYPT = "headers-to-encrypt",
 	SEND_ALL = "send-all"
 }
 
@@ -40,8 +43,8 @@ export enum NumberFlags {
 	PREEMPTIVE_RATE_LIMIT_THRESHOLD = "preemptive-rate-limit-threshold",
 	NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL = "number-of-build-to-fetch-in-parallel",
 	BACKFILL_PAGE_SIZE = "backfill-page-size",
-	BACKFILL_MAX_SUBTASKS = "backfill-max-subtasks",
-	INSTALLATION_TOKEN_CACHE_MAX_SIZE = "installation-token-cache-max-size"
+	INSTALLATION_TOKEN_CACHE_MAX_SIZE = "installation-token-cache-max-size",
+	SKIP_PROCESS_QUEUE_IF_ISSUE_NOT_FOUND_TIMEOUT = "skip-process-queue-when-issue-not-exists-timeout"
 }
 
 const createLaunchdarklyUser = (key?: string): LDUser => {

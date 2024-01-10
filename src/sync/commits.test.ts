@@ -10,13 +10,34 @@ import commitsNoKeys from "fixtures/api/graphql/commit-nodes-no-keys.json";
 import { getCommitsQueryWithChangedFiles } from "~/src/github/client/github-queries";
 import { waitUntil } from "test/utils/wait-until";
 import { GitHubServerApp } from "models/github-server-app";
-import { DatabaseStateCreator } from "test/utils/database-state-creator";
+import { DatabaseStateCreator, CreatorResult } from "test/utils/database-state-creator";
+
+const lastMockedDevInfoRepoUpdateFn = jest.fn();
+jest.mock("../jira/client/jira-client", () => ({
+	getJiraClient: async (...args) => {
+		const actual = await jest.requireActual("../jira/client/jira-client").getJiraClient(...args);
+		return {
+			...actual,
+			devinfo: {
+				...actual.devinfo,
+				repository: {
+					...actual.devinfo.repository,
+					update: (...repoArgs) => {
+						lastMockedDevInfoRepoUpdateFn(...repoArgs);
+						return actual.devinfo.repository.update(...repoArgs);
+					}
+				}
+			}
+		};
+	}
+}));
 
 describe("sync/commits", () => {
 	const sentry: Hub = { setUser: jest.fn() } as any;
 
 	beforeEach(() => {
 		mockSystemTime(12345678);
+		lastMockedDevInfoRepoUpdateFn && lastMockedDevInfoRepoUpdateFn.mockReset();
 	});
 
 	describe("for cloud", () => {
@@ -60,12 +81,14 @@ describe("sync/commits", () => {
 				.reply(200);
 		};
 
+		let db: CreatorResult;
 		beforeEach(async () => {
-			await new DatabaseStateCreator()
+			db = await new DatabaseStateCreator()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForCommits()
 				.create();
 
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		});
 
@@ -80,6 +103,7 @@ describe("sync/commits", () => {
 		};
 
 		it("should sync to Jira when Commit Nodes have jira references", async () => {
+
 			const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
 			createGitHubNock(commitNodesFixture);
@@ -106,6 +130,12 @@ describe("sync/commits", () => {
 
 			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			await verifyMessageSent(data);
+
+			expect(lastMockedDevInfoRepoUpdateFn).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+				auditLogsource: "BACKFILL",
+				entityAction: "COMMIT",
+				subscriptionId: db.subscription.id
+			}));
 		});
 
 		it("should send Jira all commits that have Issue Keys", async () => {
@@ -230,6 +260,7 @@ describe("sync/commits", () => {
 				.create();
 			gitHubServerApp = builderResult.gitHubServerApp!;
 
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		});
 

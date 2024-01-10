@@ -180,6 +180,17 @@ resources:
       TTLAttributeName: ExpiredAfter
       dataType:
         - UGC/PrimaryIdentifier    # Sha of a commit that point to user's code
+  - name: audit-log
+    type: dynamo-db
+    attributes: &audit-log-table-attributes
+      HashKeyName: Id
+      HashKeyType: "S"
+      RangeKeyName: CreatedAt
+      RangeKeyType: "N"
+      ReadWriteCapacityMode: ON_DEMAND
+      TTLAttributeName: ExpiredAfter
+      dataType:
+        - UGC/PrimaryIdentifier    # Sha of a commit that point to user's code
 
 scaling:
   instance: t2.small
@@ -432,6 +443,10 @@ environmentOverrides:
         type: dynamo-db
         attributes:
           <<: *table-attributes
+      - name: audit-log
+        type: dynamo-db
+        attributes:
+          <<: *audit-log-table-attributes
 
     alarms:
       overrides:
@@ -528,6 +543,7 @@ environmentOverrides:
         type: dedicated-rds
         attributes:
           parameters:
+            DBInstanceClass: db.t2.medium
             # Adding read replica in staging as it's not enabled by default so we can read state
             ReadReplica: true
 
@@ -535,6 +551,10 @@ environmentOverrides:
         type: dynamo-db
         attributes:
           <<: *table-attributes
+      - name: audit-log
+        type: dynamo-db
+        attributes:
+          <<: *audit-log-table-attributes
 
       - type: globaledge
         name: proxy
@@ -636,6 +656,10 @@ environmentOverrides:
         type: dynamo-db
         attributes:
           <<: *table-attributes
+      - name: audit-log
+        type: dynamo-db
+        attributes:
+          <<: *audit-log-table-attributes
 
       - type: globaledge
         name: proxy

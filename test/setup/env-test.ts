@@ -24,5 +24,6 @@ export const resetEnvVars = () => {
 	// Reset original keys back to process.env
 	originalKeys.forEach(key => process.env[key] = originalEnvVars[key]);
 	// Removing keys that's been added during the test
+	// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 	difference(newKeys, originalKeys).forEach(key => delete process.env[key]);
 };

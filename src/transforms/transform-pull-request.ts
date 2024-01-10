@@ -241,7 +241,7 @@ export const transformPullRequest = (repository: Repository, _jiraHost: string, 
 
 const mapReviews = (reviews: pullRequestNode["reviews"]["nodes"] = [], reviewRequests: pullRequestNode["reviewRequests"]["nodes"] = []): JiraReview[] => {
 	const allReviews = [...reviewRequests || [], ...reviews || []] as pullRequestNode["reviews"]["nodes"];
-	const usernames: Record<string, any> = {};
+	const usernames: Record<string, JiraReviewer> = {};
 
 	// The reduce function goes through all the reviews and creates an array of unique users
 	// (so users' avatars won't be duplicated on the dev panel in Jira)

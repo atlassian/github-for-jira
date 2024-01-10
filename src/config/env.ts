@@ -23,7 +23,7 @@ type Transforms<T, K extends keyof T = keyof T> = {
 };
 
 const transforms: Transforms<EnvVars> = {
-	MICROS_ENV: (value?: string) =>  EnvironmentEnum[value || ""] as EnvironmentEnum || EnvironmentEnum.development,
+	MICROS_ENV: (value?: string) =>  EnvironmentEnum[value || ""] as EnvironmentEnum | undefined || EnvironmentEnum.development,
 	MICROS_GROUP: (value?: string) => value || "",
 	NODE_ENV: () => nodeEnv,
 	S3_DUMPS_BUCKET_NAME: (value?: string) => value ?? "",
@@ -40,7 +40,7 @@ const transforms: Transforms<EnvVars> = {
 			if (!parsed) {
 				return [];
 			}
-			if (parsed && !Array.isArray(parsed)) {
+			if (!Array.isArray(parsed)) {
 				return [parsed];
 			}
 			return parsed;
@@ -141,6 +141,8 @@ export interface EnvVars {
 	//DyamoDB for deployment status history
 	DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_REGION: string;
 	DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME: string;
+	DYNAMO_AUDIT_LOG_TABLE_NAME: string;
+	DYNAMO_AUDIT_LOG_TABLE_REGION: string;
 
 	// Micros Lifecycle Env Vars
 	SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL?: string;

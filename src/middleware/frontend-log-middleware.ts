@@ -46,15 +46,16 @@ declare global {
 	}
 }
 
-export const LogMiddleware = async (req: Request<ParamsDictionary, any, { jiraHost?: string }>, res: Response, next: NextFunction): Promise<void> => {
+export const LogMiddleware = async (req: Request<ParamsDictionary, unknown, { jiraHost?: string }>, res: Response, next: NextFunction): Promise<void> => {
 	req.log = getLogger("frontend-log-middleware", {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-condition
 		fields: req.log?.fields,
 		level: await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, getUnvalidatedJiraHost(req)),
 		filterHttpRequests: true
 	});
 
 	req.addLogFields = (fields: Record<string, unknown>): void => {
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		if (req.log) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			req.log.fields = merge(req.log.fields, fields);
@@ -77,7 +78,8 @@ export const LogMiddleware = async (req: Request<ParamsDictionary, any, { jiraHo
 	next();
 };
 
-const getUnvalidatedJiraHost = (req: Request<ParamsDictionary, any, { jiraHost?: string }>): string | undefined =>
+const getUnvalidatedJiraHost = (req: Request<ParamsDictionary, unknown, { jiraHost?: string }>): string | undefined =>
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	req.session?.jiraHost || extractUnsafeJiraHost(req);
 
 /**
@@ -85,7 +87,7 @@ const getUnvalidatedJiraHost = (req: Request<ParamsDictionary, any, { jiraHost?:
  */
 const checkPathValidity = (url: string) => moduleUrls.some(moduleUrl => matchRouteWithPattern(moduleUrl, url));
 
-const extractUnsafeJiraHost = (req: Request<ParamsDictionary, any, { jiraHost?: string }>): string | undefined => {
+const extractUnsafeJiraHost = (req: Request<ParamsDictionary, unknown, { jiraHost?: string } | undefined>): string | undefined => {
 	if (checkPathValidity(req.path) && req.method == "GET") {
 		// Only save xdm_e query when on the GET post install url (iframe url)
 		return req.query.xdm_e as string;
@@ -95,7 +97,7 @@ const extractUnsafeJiraHost = (req: Request<ParamsDictionary, any, { jiraHost?: 
 		return req.body?.jiraHost;
 	}
 
-	const cookies = req.cookies as { jiraHost?: string };
+	const cookies = req.cookies as { jiraHost?: string } | undefined;
 	if (cookies && cookies.jiraHost) {
 		return cookies.jiraHost;
 	}

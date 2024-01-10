@@ -6,12 +6,13 @@ import { errorWrapper } from "../../helper";
 import { BaseLocals } from "../../routes";
 
 const ADMIN_PERMISSION = "ADMINISTER";
-export const JiraAdminEnforceMiddleware = errorWrapper("jiraAdminEnforceMiddleware", async (req: Request, res: Response<any, BaseLocals>, next: NextFunction): Promise<void>  => {
+export const JiraAdminEnforceMiddleware = errorWrapper("jiraAdminEnforceMiddleware", async (req: Request, res: Response<unknown, BaseLocals>, next: NextFunction): Promise<void>  => {
 
 	const { accountId, installation, jiraHost } = res.locals;
 
 	if (!(await booleanFlag(BooleanFlags.JIRA_ADMIN_CHECK, jiraHost))) {
-		return next();
+		next();
+		return;
 	}
 
 	if (!accountId) {

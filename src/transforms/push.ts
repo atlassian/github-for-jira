@@ -1,16 +1,21 @@
 import Logger from "bunyan";
+import { uniq } from "lodash";
+import { createHashWithSharedSecret } from "utils/encryption";
 import { Subscription } from "models/subscription";
-import { getJiraClient } from "../jira/client/jira-client";
+import { getJiraClient, JiraClient } from "../jira/client/jira-client";
+import { JiraClientError } from "../jira/client/axios";
 import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { JiraCommit, JiraCommitFile, JiraCommitFileChangeTypeEnum } from "interfaces/jira";
-import { isBlocked, shouldSendAll } from "config/feature-flags";
+import { isBlocked, shouldSendAll, booleanFlag, BooleanFlags } from "config/feature-flags";
 import { sqsQueues } from "../sqs/queues";
-import { GitHubAppConfig, PushQueueMessagePayload } from "~/src/sqs/sqs.types";
+import { GitHubAppConfig, PushQueueMessagePayload, SQSMessageContext } from "~/src/sqs/sqs.types";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
+import { GithubClientCommitNotFoundBySHAError } from "../github/client/github-client-errors";
 import { compact, isEmpty } from "lodash";
 import { GithubCommitFile, GitHubPushData } from "interfaces/github";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
+import { saveIssueStatusToRedis, getIssueStatusFromRedis } from "utils/jira-issue-check-redis-util";
 
 const MAX_COMMIT_HISTORY = 10;
 // TODO: define better types for this file
@@ -84,7 +89,7 @@ export const createJobData = async (payload: GitHubPushData, jiraHost: string, l
 export const enqueuePush = async (payload: GitHubPushData, jiraHost: string, logger: Logger, gitHubAppConfig?: GitHubAppConfig) =>
 	await sqsQueues.push.sendMessage(await createJobData(payload, jiraHost, logger, gitHubAppConfig), 0, logger);
 
-export const processPush = async (github: GitHubInstallationClient, payload: PushQueueMessagePayload, rootLogger: Logger) => {
+export const processPush = async (github: GitHubInstallationClient, context: SQSMessageContext<PushQueueMessagePayload>, payload: PushQueueMessagePayload, rootLogger: Logger) => {
 	const {
 		repository,
 		repository: { owner, name: repo },
@@ -138,9 +143,21 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		}
 
 		const recentShas = shas.slice(0, MAX_COMMIT_HISTORY);
+
+		const invalidIssueKeys = await tryGetInvalidIssueKeys(recentShas, subscription, jiraClient, log);
+		const shouldSkipCommitIfShaNotFound = context.lastAttempt &&  await booleanFlag(BooleanFlags.SKIP_COMMIT_IF_SHA_NOT_FOUND_ON_LAST_TRY, jiraHost);
+
 		const commitPromises: Promise<JiraCommit | null>[] = recentShas.map(async (sha): Promise<JiraCommit | null> => {
-			log.info("Calling GitHub to fetch commit info " + sha.id);
 			try {
+				if (await booleanFlag(BooleanFlags.SKIP_PROCESS_QUEUE_IF_ISSUE_NOT_FOUND, jiraHost)) {
+					if (sha.issueKeys.every(k => invalidIssueKeys.includes(k))) {
+						log.info("Issue key not found on jira, skip processing commits");
+						return null;
+					}
+				}
+
+				log.info("Calling GitHub to fetch commit info " + sha.id);
+
 				const commitResponse = await github.getCommit(owner.login, repo, sha.id);
 				const {
 					files,
@@ -179,6 +196,12 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 					flags: isMergeCommit ? ["MERGE_COMMIT"] : undefined
 				};
 			} catch (err: unknown) {
+
+				if (shouldSkipCommitIfShaNotFound && err instanceof GithubClientCommitNotFoundBySHAError) {
+					log.warn({ err, commitSha: createHashWithSharedSecret(sha.id) }, "Skip for commit not found by sha error on last try");
+					return null;
+				}
+
 				log.warn({ err }, "Failed to fetch data from GitHub");
 				throw err;
 			}
@@ -203,15 +226,25 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 
 			log.info("Sending data to Jira");
 			try {
-				const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
-				webhookReceived && emitWebhookProcessedMetrics(
-					webhookReceived,
-					"push",
-					jiraHost,
-					log,
-					jiraResponse?.status,
-					gitHubAppId
+				const jiraResponse = await jiraClient.devinfo.repository.update(
+					jiraPayload,
+					{
+						preventTransitions: false,
+						operationType: "NORMAL",
+						auditLogsource: "WEBHOOK",
+						entityAction: "COMMIT_PUSH",
+						subscriptionId: subscription.id
+					}
 				);
+				webhookReceived &&
+					emitWebhookProcessedMetrics(
+						webhookReceived,
+						"push",
+						jiraHost,
+						log,
+						jiraResponse?.status,
+						gitHubAppId
+					);
 			} catch (err: unknown) {
 				log.warn({ err }, "Failed to send data to Jira");
 				throw err;
@@ -221,5 +254,55 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 	} catch (err: unknown) {
 		log.warn({ err }, "Push has failed");
 		throw err;
+	}
+};
+
+const tryGetInvalidIssueKeys = async(
+	recentShas: PushQueueMessagePayload["shas"],
+	subscription: Subscription,
+	jiraClient: JiraClient,
+	log: Logger
+): Promise<string[]> => {
+	try {
+		const invalidIssueKeys: string[] = [];
+		if (await booleanFlag(BooleanFlags.SKIP_PROCESS_QUEUE_IF_ISSUE_NOT_FOUND, subscription.jiraHost)) {
+			const issueKeys = uniq(recentShas.flatMap(sha => sha.issueKeys));
+			for (const issueKey of issueKeys) {
+				const status = await processIssueKeyStatusFromJiraApi(subscription.jiraHost, issueKey, jiraClient, log);
+				if (status === "not_exist") {
+					invalidIssueKeys.push(issueKey);
+				}
+			}
+		}
+		return invalidIssueKeys;
+	} catch (e) {
+		log.error({ err: e }, "Found some error when trying to get invalid issue keys");
+		return [];
+	}
+};
+
+const processIssueKeyStatusFromJiraApi = async (jiraHost: string, issueKey: string, jiraClient: JiraClient, log: Logger): Promise<"exist" | "not_exist" | "unknown"> => {
+	try {
+		const status = await getIssueStatusFromRedis(jiraHost, issueKey);
+		if (status === "not_exist") {
+			return "not_exist";
+		} else if (status === "exist") {
+			return "exist";
+		}
+		await jiraClient.issues.get(issueKey);
+		await saveIssueStatusToRedis(jiraHost, issueKey, "exist");
+		return "exist";
+	} catch (e) {
+		if (e instanceof JiraClientError) {
+			if (e.status === 404) {
+				//404, issue not exists
+				await saveIssueStatusToRedis(jiraHost, issueKey, "not_exist");
+				return "not_exist";
+			}
+		}
+		//some unknow error,
+		//return true to continue processing the msg for the safe side
+		log.warn({ err: e }, "Found other errors when fetching issue status");
+		return "unknown";
 	}
 };

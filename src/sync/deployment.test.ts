@@ -12,7 +12,7 @@ import deploymentNodesFixture from "fixtures/api/graphql/deployment-nodes.json";
 import mixedDeploymentNodes from "fixtures/api/graphql/deployment-nodes-mixed.json";
 import { DeploymentQueryNode, getDeploymentsQueryWithStatuses } from "~/src/github/client/github-queries";
 import { waitUntil } from "test/utils/wait-until";
-import { DatabaseStateCreator } from "test/utils/database-state-creator";
+import { DatabaseStateCreator, CreatorResult } from "test/utils/database-state-creator";
 import { GitHubServerApp } from "models/github-server-app";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getDeploymentTask } from "./deployment";
@@ -21,6 +21,22 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 
 jest.mock("config/feature-flags");
 const logger = getLogger("test");
+const lastMockedDeploymentSubmitFn = jest.fn();
+jest.mock("../jira/client/jira-client", () => ({
+	getJiraClient: async (...args) => {
+		const actual = await jest.requireActual("../jira/client/jira-client").getJiraClient(...args);
+		return {
+			...actual,
+			deployment: {
+				...actual.deployment,
+				submit: (...repoArgs) => {
+					lastMockedDeploymentSubmitFn(...repoArgs);
+					return actual.deployment.submit(...repoArgs);
+				}
+			}
+		};
+	}
+}));
 
 describe("sync/deployments", () => {
 	const installationId = DatabaseStateCreator.GITHUB_INSTALLATION_ID;
@@ -244,12 +260,13 @@ describe("sync/deployments", () => {
 		};
 
 		let repoSyncState: RepoSyncState;
+		let dbState: CreatorResult;
 
 		beforeEach(async () => {
 
 			mockSystemTime(12345678);
 
-			const dbState = await new DatabaseStateCreator()
+			dbState = await new DatabaseStateCreator()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForDeployments()
 				.create();
@@ -299,6 +316,7 @@ describe("sync/deployments", () => {
 		it("should sync to Jira when Deployment messages have jira references", async () => {
 			const data: BackfillMessagePayload = { installationId, jiraHost };
 
+			githubUserTokenNock(installationId);
 			githubUserTokenNock(installationId);
 			githubUserTokenNock(installationId);
 			githubUserTokenNock(installationId);
@@ -418,6 +436,13 @@ describe("sync/deployments", () => {
 
 			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			await verifyMessageSent(data);
+
+			expect(lastMockedDeploymentSubmitFn).toHaveBeenCalledWith(expect.anything(), 1, "test-repo-name", expect.objectContaining({
+				auditLogsource: "BACKFILL",
+				operationType: "BACKFILL",
+				preventTransitions: true,
+				subscriptionId: dbState.subscription.id
+			}));
 		});
 
 		it("should send Jira all deployments that have Issue Keys", async () => {
@@ -430,6 +455,7 @@ describe("sync/deployments", () => {
 			["51e16759cdac67b0d2a94e0674c9603b75a840f6", "7544f2fec0321a32d5effd421682463c2ebd5018"]
 				.forEach((commitId, index) => {
 					index++;
+					githubUserTokenNock(installationId);
 					githubUserTokenNock(installationId);
 					githubUserTokenNock(installationId);
 					githubUserTokenNock(installationId);
@@ -597,6 +623,7 @@ describe("sync/deployments", () => {
 			createGitHubNock({ data: { repository: { deployments: { edges: [] } } } }, lastEdges[lastEdges.length -1].cursor);
 
 			githubUserTokenNock(installationId);
+			githubUserTokenNock(installationId);
 			githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/51e16759cdac67b0d2a94e0674c9603b75a840f6`)
 				.reply(200, {
 					commit: {
@@ -626,6 +653,7 @@ describe("sync/deployments", () => {
 		it("should not call Jira if no data is returned", async () => {
 			const data = { installationId, jiraHost };
 
+			githubUserTokenNock(installationId);
 			createGitHubNock({
 				data: {
 					repository: {
@@ -704,6 +732,7 @@ describe("sync/deployments", () => {
 				uuid: gitHubServerApp.uuid
 			} };
 
+			gheUserTokenNock(installationId);
 			gheUserTokenNock(installationId);
 			gheUserTokenNock(installationId);
 			gheUserTokenNock(installationId);

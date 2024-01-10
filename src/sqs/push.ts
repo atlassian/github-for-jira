@@ -5,6 +5,8 @@ import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const pushQueueMessageHandler: MessageHandler<PushQueueMessagePayload> = async (context: SQSMessageContext<PushQueueMessagePayload>) => {
 	const { payload } = context;
+	// validate payload before using it
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	if (payload.repository === undefined || payload.repository.full_name === undefined || payload.shas === undefined || payload.webhookId === undefined) {
 		context.log.error({ payload }, "Missing required fields");
 		return;
@@ -28,5 +30,5 @@ export const pushQueueMessageHandler: MessageHandler<PushQueueMessagePayload> = 
 		subTrigger: "push"
 	};
 	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, metrics, context.log, payload.gitHubAppConfig?.gitHubAppId);
-	await processPush(gitHubInstallationClient, payload, context.log);
+	await processPush(gitHubInstallationClient, context, payload, context.log);
 };

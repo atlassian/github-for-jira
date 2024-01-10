@@ -4,7 +4,44 @@ import { isEmpty, union } from "lodash";
 import { generateCreatePullRequestUrl } from "../../transforms/util/pull-request-link-generator";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 import { Repository } from "models/subscription";
-import { Branch } from "~/src/github/client/github-client.types";
+import { Branch, Commit } from "~/src/github/client/github-client.types";
+import { JiraAuthor } from "~/src/interfaces/jira";
+
+interface JiraBranch {
+	createPullRequestUrl: string,
+	id: string,
+	issueKeys: string[],
+	lastCommit: {
+		author: JiraAuthor,
+		authorTimestamp: string,
+		displayId: string,
+		fileCount: number,
+		hash: string,
+		id: string,
+		issueKeys: string[],
+		message: string,
+		url?: string,
+		updateSequenceId: number
+	},
+	name: string,
+	url: string,
+	updateSequenceId: number
+}
+
+interface JiraCommit {
+	author: JiraAuthor,
+	authorTimestamp: string,
+	displayId: string,
+	fileCount: number,
+	hash: string,
+	id: string,
+	issueKeys: string[],
+	message: string,
+	timestamp: string,
+	url: string,
+	updateSequenceId: number
+}
+
 
 // TODO: better typing in file
 /**
@@ -16,7 +53,7 @@ import { Branch } from "~/src/github/client/github-client.types";
  *  - Title of the last associated Pull Request
  *  - Message from the last commit in that branch
  */
-const mapBranch = (branch: Branch, repository: Repository, alwaysSend: boolean) => {
+const mapBranch = (branch: Branch, repository: Repository, alwaysSend: boolean): JiraBranch | undefined => {
 	const branchKeys = jiraIssueKeyParser(branch.name);
 	const pullRequestKeys = jiraIssueKeyParser(
 		branch.associatedPullRequests.nodes.length ? branch.associatedPullRequests.nodes[0].title : ""
@@ -57,7 +94,7 @@ const mapBranch = (branch: Branch, repository: Repository, alwaysSend: boolean) 
  * of commits we got from the GraphQL response and maps the data
  * to the structure needed for the DevInfo API
  */
-const mapCommit = (commit, alwaysSend: boolean) => {
+const mapCommit = (commit: Commit, alwaysSend: boolean): JiraCommit | undefined => {
 	const issueKeys = jiraIssueKeyParser(commit.message);
 
 	if (isEmpty(issueKeys) && !alwaysSend) {
@@ -85,17 +122,17 @@ const mapCommit = (commit, alwaysSend: boolean) => {
  * @param payload
  * @param gitHubBaseUrl - can be undefined for Cloud
  */
-export const transformBranches = (payload: { branches: any, repository: Repository }, gitHubBaseUrl: string | undefined, alwaysSendBranches: boolean, alwaysSendCommits: boolean) => {
+export const transformBranches = (payload: { branches: Branch[], repository: Repository }, gitHubBaseUrl: string | undefined, alwaysSendBranches: boolean, alwaysSendCommits: boolean) => {
 	// TODO: use reduce instead of map/filter
 	const branches = payload.branches
-		.map((branch) => mapBranch(branch, payload.repository, alwaysSendBranches))
-		.filter((branch) => !!branch);
+		.map((branch: Branch) => mapBranch(branch, payload.repository, alwaysSendBranches))
+		.filter((branch: JiraBranch | undefined) => !!branch);
 
 	// TODO: use reduce instead of map/filter
-	const commits = payload.branches.flatMap((branch) =>
+	const commits = payload.branches.flatMap((branch: Branch) =>
 		branch.target.history.nodes
-			.map((commit) => mapCommit(commit, alwaysSendCommits))
-			.filter((branch) => !!branch)
+			.map((commit: Commit) => mapCommit(commit, alwaysSendCommits))
+			.filter((commit: JiraCommit | undefined) => !!commit)
 	);
 
 	if ((!commits || !commits.length) && (!branches || !branches.length)) {

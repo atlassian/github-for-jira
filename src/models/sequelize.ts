@@ -17,7 +17,7 @@ const config = dbConfig[getNodeEnv()] as ExtendedConfig;
 config.benchmark = true;
 config.logging = config.disable_sql_logging
 	? undefined
-	: (query, ms) => logger.trace({ ms }, query);
+	: (query, ms) => { logger.trace({ ms }, query); };
 
 // TODO: need to move this into a function
 if (!process.env.STORAGE_SECRET) {

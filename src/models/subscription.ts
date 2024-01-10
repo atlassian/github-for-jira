@@ -50,12 +50,12 @@ export class Subscription extends Model {
 	isSecurityPermissionsAccepted: boolean;
 
 	static async getAllForHost(jiraHost: string, gitHubAppId?: number): Promise<Subscription[]> {
-		return this.findAll({
+		return await this.findAll({
 			where: {
 				...(gitHubAppId !== undefined && { gitHubAppId }), // Add gitHubAppId only if passed
 				jiraHost
 			}
-		});
+		}) || [];
 	}
 
 	static getAllForInstallation(

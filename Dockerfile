@@ -14,6 +14,7 @@ COPY . /app
 WORKDIR /app
 
 # Installing packages
+RUN cat ./package.json
 RUN yarn install --frozen-lockfile
 
 # If you are going to remove this, please make sure that it doesn't break existing GitHubServerApps:
