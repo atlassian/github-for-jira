@@ -1,4 +1,4 @@
-FROM node:14.21-alpine3.16 as build
+FROM node:18-alpine3.18 as build
 
 # adding python for node-gyp
 RUN apk add g++ make python3
@@ -18,7 +18,7 @@ COPY . /app
 WORKDIR /app
 
 # Installing packages
-RUN rm .yarnrc
+RUN yarn add @atlassian/sqs-queue-dlq-service
 RUN yarn install --frozen-lockfile
 RUN yarn list
 
@@ -28,7 +28,7 @@ RUN yarn run build:release
 # https://stackoverflow.com/questions/57108751/docker-build-failed-when-copying-in-multi-step-build
 RUN chown root:root -R /app
 
-FROM node:14.21-alpine3.16
+FROM node:18-alpine3.18
 
 # adding to solve vuln
 RUN apk add --update --upgrade busybox

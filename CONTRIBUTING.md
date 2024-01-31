@@ -16,7 +16,7 @@ Please note that this project has a [Contributor Code of Conduct](CODE_OF_CONDUC
 
 ## Getting Started
 
-This app is written in [Typescript](https://www.typescriptlang.org/) and runs on [Node.js](https://nodejs.org/) **v14.x**. 
+This app is written in [Typescript](https://www.typescriptlang.org/) and runs on [Node.js](https://nodejs.org/) **v18.x**. 
 
 Please install [Docker](https://www.docker.com/get-started) and [Docker Compose](https://docs.docker.com/compose/install/) to easily run the project locally.
 
@@ -32,7 +32,7 @@ Create a new [GitHub App](https://github.com/settings/apps), setting the followi
 
 - **GitHub App name**: Anything you want, but it must be unique across GitHub
 - **Homepage URL**: `https://github.com/apps/GITHUB_APP_NAME` (The full URL to your GitHub App’s website)
-- **Callback URL**: `https://DOMAIN/github/callback`
+- **Callback URL**: `https://DOMAIN/rest/app/cloud/github-callback`
 - **Setup URL**: `https://DOMAIN/github/setup`
 - **Webhook URL**: `https://DOMAIN/github/webhooks`
 - **Webhook Secret**: `development`
@@ -43,10 +43,12 @@ Your new GitHub app will need the following repository permissions & events:
 + Actions: Read-only
 + Code scanning alerts: Read-only
 + Contents: Read & Write
++ Dependabot alerts: Read-only
 + Deployments: Read-only
 + Issues: Read & write
 + Metadata: Read-only
 + Pull requests: Read & write
++ Secret scanning alerts: Read-only
 
 **Organization Permissions**:
 + Members: Read-Only
@@ -56,6 +58,7 @@ Your new GitHub app will need the following repository permissions & events:
 + Commit comment
 + Create
 + Delete
++ Dependabot alert
 + Deployment status
 + Issue comment
 + Issues
@@ -63,6 +66,7 @@ Your new GitHub app will need the following repository permissions & events:
 + Pull request review
 + Push
 + Repository
++ Secret scanning alert
 + Workflow run
 
 ### Setting up your environment file
@@ -77,6 +81,8 @@ Once you've set up your GitHub app and cloned this repo, copy the file `.env.dev
 + `ATLASSIAN_URL`: The URL for the Jira instance you're testing on. If you don't have one now, [please set the value of this variable from the steps mentioned here](#create-your-jira-instance).
 + `APP_KEY`: Your Jira app key - need to be unique for your development app
 + `WEBHOOK_SECRETS`: `["development"]` as previously set up in the GitHub app page.
++ `APP_URL`: The URL for the local domain obtained after tunneling. This should be the same as the `Domain` value set when you [configured your GitHub App](#configuring-a-github-app)
+(ex. `https://__MYDOMAIN__.public.atlastunnel.com` or `https://XXXX-XXX-XXX-XXX-xX.ngrok.io`)
 
 Lastly, you need to replace the value of the follow variables in the global `.env` file:
 

@@ -3,7 +3,7 @@ import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { GithubCreateBranchPost } from "./github-create-branch-post";
 import { getLogger } from "config/logger";
-import { mocked } from "ts-jest/utils";
+import { mocked } from "jest-mock";
 
 jest.mock("models/subscription");
 
@@ -79,6 +79,7 @@ describe("github-create-branch", () => {
 
 	it.each(["owner", "repo", "sourceBranchName", "newBranchName"])("Should 400 when missing required fields", async (attribute) => {
 		res.status.mockReturnValue(res);
+		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 		delete req.body[attribute];
 		await GithubCreateBranchPost(req , res);
 		expect(res.status).toHaveBeenCalledWith(400);
@@ -108,7 +109,7 @@ describe("github-create-branch", () => {
 
 		expect(res.status).toHaveBeenCalledWith(403);
 		expect(res.json).toBeCalledWith({
-			error: "We couldn’t create this branch, possibly because this GitHub repository hasn't been configured to your Jira site."
+			error: "We couldn’t create this branch, because GitHub for Jira app does not have permission to write to the GitHub repository. If you want to enable this feature, please contact your GitHub admin to grant permission."
 		});
 	});
 

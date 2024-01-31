@@ -25,19 +25,25 @@ if (isNodeProd()) {
 	throng({
 		worker: () => {
 			listenForClusterCommand(ClusterCommand.start, start);
-			listenForClusterCommand(ClusterCommand.stop, stop);
+			listenForClusterCommand(ClusterCommand.stop, () => {
+				stop().catch((e: unknown) => {
+					getLogger("worker").error({ err: e }, "Error stopping worker");
+				});
+			});
 		},
 		master: () => {
 			initialize();
 			// Listen to micros lifecycle event to know when to start/stop
 			listenToMicrosLifecycle(
 				// When 'active' event is triggered, start queue processing
-				() => sendCommandToCluster(ClusterCommand.start),
+				() => { sendCommandToCluster(ClusterCommand.start); },
 				// When 'inactive' event is triggered, stop queue processing
-				() => sendCommandToCluster(ClusterCommand.stop)
+				() => { sendCommandToCluster(ClusterCommand.stop); }
 			);
 		},
 		lifetime: Infinity
+	}).catch((err: unknown) => {
+		getLogger("worker").error({ err }, "Error running worker");
 	});
 } else {
 	initialize();

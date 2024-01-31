@@ -14,15 +14,15 @@ const redis = new IORedis(getRedisInfo("oauth-state-nonce"));
 /*
  * security method: https://auth0.com/docs/secure/attack-protection/state-parameters
  */
-const generateNonce = async (jiraHost: string): Promise<string> => {
+const generateNonce = async (): Promise<string> => {
 	const nonce = crypto.randomBytes(16).toString("base64");
 	await redis.set(nonce, JSON.stringify({
-		jiraHost
+		nonce
 	}), "px", FIVE_MINUTE_IN_MS);
 	return nonce;
 };
 
-export const getRedirectUrl = async (jiraHost: string, gheUUID: string | undefined): Promise<GetRedirectUrlResponse> => {
+export const getRedirectUrl = async (gheUUID: string | undefined): Promise<GetRedirectUrlResponse> => {
 
 	let callbackPath: string, hostname: string, clientId: string;
 
@@ -42,7 +42,7 @@ export const getRedirectUrl = async (jiraHost: string, gheUUID: string | undefin
 
 	const scopes = [ "user", "repo" ];
 	const callbackURI = `${envVars.APP_URL}${callbackPath}`;
-	const nonce = await generateNonce(jiraHost);
+	const nonce = await generateNonce();
 
 	return {
 		redirectUrl: `${hostname}/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${encodeURIComponent(nonce)}`,
@@ -51,7 +51,6 @@ export const getRedirectUrl = async (jiraHost: string, gheUUID: string | undefin
 };
 
 export const finishOAuthFlow = async (
-	jiraHost: string,
 	gheUUID: string | undefined,
 	code: string,
 	state: string,
@@ -77,7 +76,7 @@ export const finishOAuthFlow = async (
 
 	try {
 		await redis.unlink(state);
-	} catch (e) {
+	} catch (e: unknown) {
 		log.warn({ err: e }, "Failed to unlink redis state on oauth callback");
 		//continue the flow as unlink is optional from user's point of view
 	}
@@ -87,11 +86,11 @@ export const finishOAuthFlow = async (
 		throw new InvalidArgumentError("No redis state found for exchange github token");
 	}
 
-	const parsedState = JSON.parse(redisState);
+	const parsedState = JSON.parse(redisState) as { nonce?: string };
 
-	if (jiraHost !== parsedState.jiraHost) {
-		log.warn("Parsed redis state jiraHost doesn't match the jiraHost provided in jwt token");
-		throw new InvalidArgumentError("Parsed redis state jiraHost doesn't match the jiraHost provided in jwt token");
+	if (state !== parsedState.nonce) {
+		log.warn("Parsed redis state doesn't match the nonce");
+		throw new InvalidArgumentError("Parsed redis state doesn't match the nonce");
 	}
 
 	const githubClient = await createAnonymousClientByGitHubAppId(
@@ -101,12 +100,17 @@ export const finishOAuthFlow = async (
 		log
 	);
 
-	const { accessToken, refreshToken } = await githubClient.exchangeGitHubToken({
+	const gitHubTokens = await githubClient.exchangeGitHubToken({
 		clientId: envVars.GITHUB_CLIENT_ID,
 		clientSecret: envVars.GITHUB_CLIENT_SECRET,
 		code,
 		state
 	});
+	if (gitHubTokens === undefined) {
+		log.warn("Failed to exchange token");
+		throw new InvalidArgumentError("Failed to exchange token");
+	}
+	const { accessToken, refreshToken } = gitHubTokens;
 
 	return {
 		accessToken,

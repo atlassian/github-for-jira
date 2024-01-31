@@ -42,7 +42,7 @@ export const preemptiveRateLimitCheck = async <T extends BaseMessagePayload>(con
 				resetTimeInSeconds
 			};
 		}
-	} catch (err) {
+	} catch (err: unknown) {
 		context.log.error({ err, gitHubServerAppId: context.payload.gitHubAppConfig?.gitHubAppId }, "Failed to fetch Rate Limit");
 	}
 
@@ -62,6 +62,7 @@ const getRateRateLimitStatus = async (context: SQSMessageContext<BaseMessagePayl
 
 const getRateResetTimeInSeconds = (rateLimitResponse: Octokit.RateLimitGetResponse): number => {
 	// Get the furthest away rate reset to ensure we don't exhaust the other one too quickly
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	const resetEpochDateTimeInSeconds = Math.max(rateLimitResponse?.resources?.core?.reset, rateLimitResponse?.resources?.graphql?.reset);
 	const timeToResetInSeconds = resetEpochDateTimeInSeconds - (Date.now()/1000);
 	//sometimes, possibly a bug in github?, the timeToResetInSeconds is almost 0. To avoid reschdule to task too soon, adding a minimum of 10 minutes.

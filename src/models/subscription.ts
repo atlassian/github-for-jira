@@ -50,12 +50,12 @@ export class Subscription extends Model {
 	isSecurityPermissionsAccepted: boolean;
 
 	static async getAllForHost(jiraHost: string, gitHubAppId?: number): Promise<Subscription[]> {
-		return this.findAll({
+		return await this.findAll({
 			where: {
 				...(gitHubAppId !== undefined && { gitHubAppId }), // Add gitHubAppId only if passed
 				jiraHost
 			}
-		});
+		}) || [];
 	}
 
 	static getAllForInstallation(
@@ -159,6 +159,8 @@ export class Subscription extends Model {
 
 
 	static async findForRepoNameAndOwner(repoName: string, repoOwner: string, jiraHost: string, isServer: boolean): Promise<Subscription | null> {
+		// sequelize is always set in this class but is optional in the base class
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const results = await this.sequelize!.query(
 			"SELECT * " +
 			"FROM \"Subscriptions\" s " +
@@ -176,6 +178,8 @@ export class Subscription extends Model {
 	}
 
 	static async findForRepoOwner(repoOwner: string, jiraHost: string, isServer: boolean): Promise<Subscription | null> {
+		// sequelize is always set in this class but is optional in the base class
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const results = await this.sequelize!.query(
 			"SELECT * " +
 			"FROM \"Subscriptions\" s " +
@@ -224,6 +228,8 @@ export class Subscription extends Model {
 	 * Returns array with sync status counts. [ { syncStatus: 'COMPLETED', count: 123 }, ...]
 	 */
 	static async syncStatusCounts(): Promise<SyncStatusCount[]> {
+		// sequelize is always set in this class but is optional in the base class
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const results = await this.sequelize!.query(
 			`SELECT "syncStatus", COUNT(*)
 			 FROM "Subscriptions"

@@ -7,7 +7,6 @@ import { AWSError, Request as AwsRequest, Service, Response } from "aws-sdk";
 import { BaseMessagePayload, SQSMessageContext } from "~/src/sqs/sqs.types";
 import { preemptiveRateLimitCheck } from "utils/preemptive-rate-limit";
 import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { SendMessageResult } from "aws-sdk/clients/sqs";
 
 jest.mock("config/feature-flags");
@@ -58,14 +57,10 @@ describe("SQS", () => {
 		when(jest.mocked(preemptiveRateLimitCheck))
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			.calledWith(expect.anything(), expect.anything()) .mockResolvedValue({ isExceedThreshold: false });
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.REMOVE_STALE_MESSAGES,
-			jiraHost
-		).mockResolvedValue(true);
 	});
 
 	afterEach(async () => {
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		if (queue) {
 			await queue.stop();
 			await queue.purgeQueue();
@@ -85,6 +80,7 @@ describe("SQS", () => {
 
 		it("Message gets received", async () => {
 			await queue.sendMessage(payload);
+			// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 			await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toBeCalledTimes(1)));
 			expect(mockRequestHandler).toBeCalledWith(expect.objectContaining({ payload }));
 		});
@@ -93,6 +89,7 @@ describe("SQS", () => {
 			await queue.stop();
 			queue.start();
 			await queue.sendMessage(payload);
+			// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 			await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toBeCalledTimes(1)));
 			expect(mockRequestHandler).toBeCalledWith(expect.objectContaining({ payload }));
 		});
@@ -100,6 +97,7 @@ describe("SQS", () => {
 		it("Message received with delay", async () => {
 			const startTime = Date.now();
 			await queue.sendMessage(payload, 1);
+			// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 			await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toHaveBeenCalledTimes(1)));
 			expect(Date.now() - startTime).toBeGreaterThanOrEqual(1000);
 		});
@@ -128,6 +126,7 @@ describe("SQS", () => {
 			await queue.sendMessage(payload);
 			const time = Date.now();
 			await delay(1000);
+			// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 			await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toHaveBeenCalledTimes(1)));
 			expect(mockRequestHandler).toBeCalledWith(expect.objectContaining({ payload }));
 			expect(Date.now() - time).toBeGreaterThanOrEqual(1000); // wait 1 second to make sure everything's processed
@@ -142,6 +141,7 @@ describe("SQS", () => {
 				queue.sendMessage(payload),
 				queue.sendMessage(payload)
 			]);
+			// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 			await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toHaveBeenCalledTimes(2)));
 			await expect(mockRequestHandler).toHaveResolved();
 			expect(Date.now() - time).toBeGreaterThanOrEqual(2000);
@@ -153,6 +153,7 @@ describe("SQS", () => {
 				mockErrorHandler.mockReturnValue({ retryable: true, retryDelaySec: timeout, isFailure: true });
 				const time = Date.now();
 				await queue.sendMessage(payload);
+				// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 				await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toHaveBeenCalledTimes(2)));
 				await expect(mockRequestHandler).toHaveResolvedTimes(1);
 				expect(Date.now() - time).toBeGreaterThanOrEqual(timeout * 1000);
@@ -177,6 +178,7 @@ describe("SQS", () => {
 			mockRequestHandler.mockRejectedValue("Something bad happened");
 			mockErrorHandler.mockReturnValue({ isFailure: false });
 			await queue.sendMessage(payload);
+			// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 			await waitUntil(() => Promise.resolve(expect(queueDeletionSpy).toBeCalledTimes(1)));
 			expect(statsdIncrementSpy).not.toBeCalledWith(sqsQueueMetrics.failed, expect.anything());
 		});
@@ -196,6 +198,7 @@ describe("SQS", () => {
 			await queue.sendMessage(payload);
 			const time = Date.now();
 			await delay(2000);
+			// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 			await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toHaveBeenCalled()));
 			expect(mockRequestHandler).toBeCalledWith(expect.objectContaining({ payload }));
 			expect(Date.now() - time).toBeGreaterThanOrEqual(1000); // wait 1 second to make sure everything's processed
@@ -209,8 +212,11 @@ describe("SQS", () => {
 			await queue.sendMessage(payload);
 			const time = Date.now();
 			await delay(2000);
+			// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 			await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toHaveBeenCalledTimes(0)));
+			// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 			await waitUntil(() => Promise.resolve(expect(queueDeletionSpy).toBeCalledTimes(1)));
+			// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 			await waitUntil(() => Promise.resolve(expect(queueSendSpy).toBeCalledWith(expect.objectContaining({
 				DelaySeconds: 123,
 				MessageBody: JSON.stringify({ ...payload, rateLimited: true })
@@ -245,6 +251,7 @@ describe("SQS", () => {
 				});
 
 			await queue.sendMessage(payload);
+			// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 			await waitUntil(() => Promise.resolve(expect(mockRequestHandler).toHaveBeenCalledTimes(3)));
 			expect(mockRequestHandler).lastCalledWith(expect.objectContaining({
 				receiveCount: 3,
@@ -266,27 +273,6 @@ describe("SQS", () => {
 		beforeEach(() => {
 			queue = createSqsQueue(1);
 			queue.start();
-			when(booleanFlag).calledWith(
-				BooleanFlags.REMOVE_STALE_MESSAGES,
-				jiraHost
-			).mockResolvedValue(true);
-		});
-
-		// Test case for when feature flag is turned off
-		it("should return false when feature flag is false", async () => {
-			when(booleanFlag).calledWith(
-				BooleanFlags.REMOVE_STALE_MESSAGES,
-				jiraHost
-			).mockResolvedValue(false);
-			const message = {
-				Body: JSON.stringify({
-					webhookReceived: Date.now() - 2 * 24 * 60 * 60 * 1000 // Two days ago
-				}),
-				MessageId: "12345"
-			};
-
-			const result = await queue.deleteStaleMessages(message, context, jiraHost);
-			expect(result).toBe(false);
 		});
 
 		// Test case for when the message is not from the targeted queue
@@ -295,7 +281,7 @@ describe("SQS", () => {
 				Body: JSON.stringify({}),
 				MessageId: "12345"
 			};
-			const result = await queue.deleteStaleMessages(message, context, jiraHost);
+			const result = await queue.deleteStaleMessages(message, context);
 			expect(result).toBe(false);
 		});
 
@@ -304,7 +290,7 @@ describe("SQS", () => {
 			const message = {
 				MessageId: "12345"
 			};
-			const result = await queue.deleteStaleMessages(message, context, jiraHost);
+			const result = await queue.deleteStaleMessages(message, context);
 			expect(result).toBe(false);
 		});
 
@@ -321,7 +307,7 @@ describe("SQS", () => {
 				queueName: "deployment",
 				deleteMessage
 			};
-			const result = await queue.deleteStaleMessages.call(mockThis, message, context, jiraHost);
+			const result = await queue.deleteStaleMessages.call(mockThis, message, context);
 			expect(result).toBe(true);
 			expect(deleteMessage).toHaveBeenCalledWith(context);
 			// eslint-disable-next-line @typescript-eslint/unbound-method
@@ -339,7 +325,7 @@ describe("SQS", () => {
 				}),
 				MessageId: "12345"
 			};
-			const result = await queue.deleteStaleMessages(message, context, jiraHost);
+			const result = await queue.deleteStaleMessages(message, context);
 			expect(result).toBe(false);
 		});
 
@@ -356,7 +342,7 @@ describe("SQS", () => {
 				queueName: "deployment",
 				deleteMessage
 			};
-			const result = await queue.deleteStaleMessages.call(mockThis, message, context, jiraHost);
+			const result = await queue.deleteStaleMessages.call(mockThis, message, context);
 			expect(result).toBe(false);
 			expect(deleteMessage).toHaveBeenCalledWith(context);
 			// eslint-disable-next-line @typescript-eslint/unbound-method

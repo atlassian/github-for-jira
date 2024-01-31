@@ -17,7 +17,6 @@ import {
 	GetRepositoriesResponse,
 	ViewerRepositoryCountQuery,
 	getDeploymentsResponse,
-	getDeploymentsQuery,
 	getDeploymentsQueryWithStatuses,
 	SearchedRepositoriesResponse,
 	getPullRequests,
@@ -33,8 +32,7 @@ import {
 	PaginatedAxiosResponse,
 	ReposGetContentsResponse,
 	SecretScanningAlertResponseItem,
-	CodeScanningAlertResponseItem,
-	CodeScanningAlertInstanceResponseItem
+	CodeScanningAlertResponseItem
 } from "./github-client.types";
 import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
 import { GitHubClient, GitHubConfig, Metrics } from "./github-client";
@@ -107,8 +105,8 @@ export class GitHubInstallationClient extends GitHubClient {
 		});
 	}
 
-	public async getCodeScanningAlertInstances(owner: string, repo: string, alertNumber: number): Promise<AxiosResponse<CodeScanningAlertInstanceResponseItem[]>> {
-		return await this.get<CodeScanningAlertInstanceResponseItem[]>(`/repos/{owner}/{repo}/code-scanning/alerts/{alertNumber}/instances`, { }, {
+	public async getCodeScanningAlert(owner: string, repo: string, alertNumber: number): Promise<AxiosResponse<CodeScanningAlertResponseItem>> {
+		return await this.get<CodeScanningAlertResponseItem>(`/repos/{owner}/{repo}/code-scanning/alerts/{alertNumber}`, {}, {
 			owner,
 			repo,
 			alertNumber
@@ -239,13 +237,13 @@ export class GitHubInstallationClient extends GitHubClient {
 				cursor
 			}, { graphQuery: "GetRepositoriesQuery" });
 			return response.data.data;
-		} catch (err) {
-			err.isRetryable = true;
+		} catch (err: unknown) {
+			(err as any).isRetryable = true;
 			throw err;
 		}
 	};
 
-	public getRepository = async (id: number): Promise<AxiosResponse<any>> => {
+	public getRepository = async (id: number): Promise<AxiosResponse> => {
 		return await this.get<Octokit.GitGetRefResponse>(`/repositories/{id}`, {}, {
 			id
 		});
@@ -271,7 +269,7 @@ export class GitHubInstallationClient extends GitHubClient {
 				...response,
 				hasNextPage
 			};
-		} catch (err) {
+		} catch (err: unknown) {
 			try {
 				if (await booleanFlag(BooleanFlags.LOG_CURLV_OUTPUT, this.jiraHost)) {
 					this.logger.warn("Found error listing repos, run curl commands to get more details");
@@ -355,7 +353,7 @@ export class GitHubInstallationClient extends GitHubClient {
 				{ environment, per_page },
 				{ owner, repo }
 			);
-		} catch (e) {
+		} catch (e: unknown) {
 			try {
 				if (await booleanFlag(BooleanFlags.LOG_CURLV_OUTPUT, this.jiraHost)) {
 					this.logger.warn("Found error listing deployments, run curl commands to get more details");
@@ -410,6 +408,14 @@ export class GitHubInstallationClient extends GitHubClient {
 		});
 	}
 
+	public async getDependabotAlert(owner: string, repo: string, alertNumber: number): Promise<AxiosResponse<DependabotAlertResponseItem>> {
+		return await this.get<DependabotAlertResponseItem>(`/repos/{owner}/{repo}/dependabot/alerts/{alertNumber}`, {}, {
+			owner,
+			repo,
+			alertNumber
+		});
+	}
+
 	public async getBranchesPage(owner: string, repoName: string, perPage = 1, commitSince?: Date, cursor?: string): Promise<getBranchesResponse> {
 		const variables = {
 			owner,
@@ -455,12 +461,9 @@ export class GitHubInstallationClient extends GitHubClient {
 		return response?.data?.data;
 	}
 
-	public async getDeploymentsPage(jiraHost: string, owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getDeploymentsResponse> {
+	public async getDeploymentsPage(owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getDeploymentsResponse> {
 
-		const useDyanmoForBackfill = await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost);
-		const graphQuery = useDyanmoForBackfill ? getDeploymentsQueryWithStatuses : getDeploymentsQuery;
-
-		const response = await this.graphql<getDeploymentsResponse>(graphQuery,
+		const response = await this.graphql<getDeploymentsResponse>(getDeploymentsQueryWithStatuses,
 			await this.installationAuthenticationHeaders(),
 			{
 				owner,
@@ -523,11 +526,13 @@ export class GitHubInstallationClient extends GitHubClient {
 			});
 
 			return response.data.content;
-		} catch (err) {
-			if (err.status == 404) {
+		} catch (e: unknown) {
+			const err = e as { status?: number };
+			if (err?.status == 404) {
 				this.logger.debug({ err, owner, repo, path }, "could not find file in repo");
 				return undefined;
 			}
+			// eslint-disable-next-line @typescript-eslint/no-throw-literal
 			throw err;
 		}
 	}

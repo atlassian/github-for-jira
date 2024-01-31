@@ -60,7 +60,7 @@ let certs: Buffer | undefined = undefined;
 try {
 	certs = fs.readFileSync("node_modules/node_extra_ca_certs_mozilla_bundle/ca_bundle/ca_intermediate_root_bundle.pem");
 	getLogger("github-client").warn("the bundle is loaded");
-} catch (err) {
+} catch (err: unknown) {
 	getLogger("github-client").error({ err }, "cannot read certificate bundle");
 }
 
@@ -74,7 +74,7 @@ export class GitHubClient {
 	// For Cloud must always be equal to GITHUB_CLOUD_BASEURL
 	public readonly baseUrl: string;
 
-	protected readonly restApiUrl: string;
+	public readonly restApiUrl: string;
 	protected readonly graphqlUrl: string;
 	protected readonly axios: AxiosInstance;
 	protected readonly metrics: Metrics;
@@ -111,7 +111,7 @@ export class GitHubClient {
 								ca: certs
 							});
 					}
-				} catch (err) {
+				} catch (err: unknown) {
 					this.logger.error({ err }, "HOT-105065: should never happen, but just in case cause we don't have test for this");
 				}
 				return config;

@@ -1,10 +1,12 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import express, { Express, NextFunction, Request, Response } from "express";
 import path from "path";
 import { registerHandlebarsPartials } from "utils/handlebars/handlebar-partials";
 import { registerHandlebarsHelpers } from "utils/handlebars/handlebar-helpers";
 import crypto from "crypto";
 import { elapsedTimeMetrics } from "config/statsd";
-import sslify from "express-sslify";
+import { HTTPS } from "express-sslify";
 import helmet from "helmet";
 import { RootRouter } from "routes/router";
 import { proxyLocalUIForDev } from "~/src/spa-proxy";
@@ -37,16 +39,17 @@ const secureHeaders = (app: Express) => {
 		next();
 	});
 
+	const appUrl = process.env.APP_URL || "";
 	// Content Security Policy
 	app.use(helmet.contentSecurityPolicy({
 		useDefaults: true,
 		directives: {
 			defaultSrc: ["'self'"],
 			// Allow <script> tags hosted by ourselves and from atlassian when inserted into an iframe
-			scriptSrc: ["'self'", process.env.APP_URL, "https://*.atlassian.net", "https://*.jira.com", "https://connect-cdn.atl-paas.net/",
+			scriptSrc: ["'self'", appUrl, "https://*.atlassian.net", "https://*.jira.com", "https://connect-cdn.atl-paas.net/",
 				"'unsafe-inline'", "'strict-dynamic'", (_: Request, res: Response): string => `'nonce-${res.locals.nonce as string}'`],
 			// Allow XMLHttpRequest/fetch requests
-			connectSrc: ["'self'", process.env.APP_URL],
+			connectSrc: ["'self'", appUrl],
 			// Allow <style> tags hosted by ourselves as well as style="" attributes
 			styleSrc: ["'self'", "'unsafe-inline'"],
 			// Allow using github-for-jira pages as iframes only in jira
@@ -89,7 +92,7 @@ export const getFrontendApp = (): Express => {
 	app.use(elapsedTimeMetrics);
 
 	if (process.env.FORCE_HTTPS) {
-		app.use(sslify.HTTPS({ trustProtoHeader: true }));
+		app.use(HTTPS({ trustProtoHeader: true }));
 	}
 
 	setupFrontendApp(app);

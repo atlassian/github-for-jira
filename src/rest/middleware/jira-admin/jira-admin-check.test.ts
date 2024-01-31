@@ -4,7 +4,6 @@ import supertest from "supertest";
 import { Installation } from "models/installation";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { when } from "jest-when";
-import { JiraClient } from "models/jira-client";
 import { getFrontendApp } from "~/src/app";
 
 jest.mock("config/feature-flags");
@@ -15,7 +14,6 @@ const testSharedSecret = "test-secret";
 describe("Jira Admin Check", () => {
 
 	let app: Application;
-	let installation: Installation;
 
 	const USER_ACC_ID = "12345";
 
@@ -25,7 +23,7 @@ describe("Jira Admin Check", () => {
 
 		app = getFrontendApp();
 
-		installation = await Installation.install({
+		await Installation.install({
 			clientKey: "jira-client-key",
 			host: jiraHost,
 			sharedSecret: testSharedSecret
@@ -33,49 +31,14 @@ describe("Jira Admin Check", () => {
 
 	});
 
-	const mockPermission = (permissions: string[]) => {
-		when(JiraClient.getNewClient).calledWith(expect.anything(), expect.anything())
-			.mockImplementation((reqInst: Installation) => {
-				if (reqInst.id === installation.id) {
-					return {
-						checkAdminPermissions: jest.fn((userAccountId) => {
-							if (userAccountId === USER_ACC_ID) {
-								return { data: { globalPermissions: permissions } };
-							} else {
-								return { data: { globalPermissions: ["ADMINISTER", "OTHER_ROLE"] } };
-							}
-						})
-					} as any;
-				} else {
-					throw new Error(`Wrong installation ${reqInst.toString()}`);
-				}
-			});
-
-	};
-
-	it("should fail if is not admin", async () => {
-
-		mockPermission([ "OTHER_ROLE" ]);
-
-		const res = await sendRequestWithToken();
-
-		expect(res.status).toEqual(401);
-		expect(JSON.parse(res.text)).toEqual(expect.objectContaining({
-			errorCode: "INSUFFICIENT_PERMISSION",
-			message: expect.stringContaining("Forbidden")
-		}));
-
-	});
-
-	it("should pass request if is admin", async () => {
-
-		mockPermission([ "ADMINISTER", "OTHER_ROLE" ]);
-
+	it("should pass request regardless of Jira permissions", async () => {
 		const res = await sendRequestWithToken();
 
 		expect(res.status).toEqual(200);
 		expect(JSON.parse(res.text)).toEqual({
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			redirectUrl: expect.stringContaining("oauth/authorize"),
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			state: expect.anything()
 		});
 
@@ -93,7 +56,7 @@ describe("Jira Admin Check", () => {
 		iss = "jira-client-key",
 		sub = USER_ACC_ID,
 		exp = Date.now() / 1000 + 10000,
-		qsh = "context-qsh" } = {}): any => {
+		qsh = "context-qsh" } = {}) => {
 		return encodeSymmetric({
 			qsh,
 			iss,

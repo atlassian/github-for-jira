@@ -2,7 +2,7 @@
 import { getLogger } from "config/logger";
 import { GithubBranchesGet } from "~/src/routes/github/create-branch/github-branches-get";
 import { Subscription } from "models/subscription";
-import { mocked } from "ts-jest/utils";
+import { mocked } from "jest-mock";
 
 jest.mock("models/subscription");
 
@@ -56,6 +56,7 @@ describe("GitHub Branches Get", () => {
 
 	it.each(["owner", "repo"])("Should 400 when missing required fields", async (attribute) => {
 		res.status.mockReturnValue(res);
+		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 		delete req.params[attribute];
 		await GithubBranchesGet(req, res);
 		expect(res.status).toHaveBeenCalledWith(400);

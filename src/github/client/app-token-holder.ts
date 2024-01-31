@@ -1,5 +1,5 @@
 import { AsymmetricAlgorithm, encodeAsymmetric } from "atlassian-jwt";
-import { AuthToken, ONE_MINUTE, TEN_MINUTES } from "./auth-token";
+import { AuthToken, ONE_MINUTE, NINE_MINUTES_MSEC } from "./auth-token";
 import LRUCache from "lru-cache";
 import { InstallationId } from "./installation-id";
 import { keyLocator } from "~/src/github/client/key-locator";
@@ -33,7 +33,7 @@ export class AppTokenHolder {
 	 */
 	public static createAppJwt(key: string, appId: string): AuthToken {
 
-		const expirationDate = new Date(Date.now() + TEN_MINUTES);
+		const expirationDate = new Date(Date.now() + NINE_MINUTES_MSEC);
 
 		const jwtPayload = {
 			// "issued at" date, 60 seconds into the past to allow for some time drift

@@ -39,7 +39,7 @@ const sendErrorMetricAndAnalytics = (jiraHost: string, errorCode: ErrorResponseC
 	}, {
 		jiraHost,
 		...errorCodeAndStatusObj
-	});
+	}).catch(() => { /* ignore */ });
 };
 
 const isResponseFromGhe = (logger: Logger, response?: AxiosResponse) => {
@@ -159,8 +159,8 @@ export const JiraConnectEnterprisePost = async (
 		}, {
 			jiraHost: jiraHost
 		});
-	} catch (err) {
-		const axiosError: AxiosError = (err instanceof GithubClientError) ? err.cause : err;
+	} catch (err: unknown) {
+		const axiosError: AxiosError = ((err instanceof GithubClientError) ? err.cause : err) as AxiosError;
 
 		req.log.info({ err }, `Error from GHE... but did we hit GHE?!`);
 		if (isResponseFromGhe(req.log, axiosError.response)) {
@@ -179,7 +179,7 @@ export const JiraConnectEnterprisePost = async (
 		const codeOrStatus = (axiosError.code || axiosError.response?.status?.toString() || "undefined");
 		req.log.warn({ err, gheServerURL }, `Couldn't access GHE host`);
 
-		const reasons = [err.message];
+		const reasons = [(err as Error).message];
 		reasons.push(axiosError.message || "");
 
 		reasons.push(

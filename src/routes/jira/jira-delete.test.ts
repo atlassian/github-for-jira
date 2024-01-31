@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
-import { mocked } from "ts-jest/utils";
+import { mocked } from "jest-mock";
 import { JiraDelete } from "./jira-delete";
 import { getLogger } from "config/logger";
 import { when } from "jest-when";
@@ -19,7 +19,7 @@ describe("DELETE /jira/configuration", () => {
 
 	beforeEach(async () => {
 		subscription = {
-			githubInstallationId: 15,
+			gitHubInstallationId: 15,
 			jiraHost,
 			destroy: jest.fn().mockResolvedValue(undefined)
 		};
@@ -34,23 +34,24 @@ describe("DELETE /jira/configuration", () => {
 		};
 
 		mocked(Subscription.getSingleInstallation).mockResolvedValue(subscription);
+		mocked(Subscription.getAllForHost).mockResolvedValue([]);
 		mocked(Installation.getForHost).mockResolvedValue(installation);
 	});
 
 	it("Delete Jira Configuration", async () => {
 		jiraNock
 			.delete("/rest/devinfo/0.10/bulkByProperties")
-			.query({ installationId: subscription.githubInstallationId })
+			.query({ installationId: subscription.gitHubInstallationId })
 			.reply(200, "OK");
 
 		jiraNock
 			.delete("/rest/builds/0.1/bulkByProperties")
-			.query({ gitHubInstallationId: subscription.githubInstallationId })
+			.query({ gitHubInstallationId: subscription.gitHubInstallationId })
 			.reply(200, "OK");
 
 		jiraNock
 			.delete("/rest/deployments/0.1/bulkByProperties")
-			.query({ gitHubInstallationId: subscription.githubInstallationId })
+			.query({ gitHubInstallationId: subscription.gitHubInstallationId })
 			.reply(200, "OK");
 
 		jiraNock
@@ -66,7 +67,7 @@ describe("DELETE /jira/configuration", () => {
 				jiraHost: subscription.jiraHost
 			},
 			params: {
-				installationId: subscription.githubInstallationId
+				installationId: subscription.gitHubInstallationId
 			}
 		};
 
@@ -80,17 +81,17 @@ describe("DELETE /jira/configuration", () => {
 		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
 		jiraNock
 			.delete("/rest/devinfo/0.10/bulkByProperties")
-			.query({ installationId: subscription.githubInstallationId })
+			.query({ installationId: subscription.gitHubInstallationId })
 			.reply(200, "OK");
 
 		jiraNock
 			.delete("/rest/builds/0.1/bulkByProperties")
-			.query({ gitHubInstallationId: subscription.githubInstallationId })
+			.query({ gitHubInstallationId: subscription.gitHubInstallationId })
 			.reply(200, "OK");
 
 		jiraNock
 			.delete("/rest/deployments/0.1/bulkByProperties")
-			.query({ gitHubInstallationId: subscription.githubInstallationId })
+			.query({ gitHubInstallationId: subscription.gitHubInstallationId })
 			.reply(200, "OK");
 
 		jiraNock
@@ -114,7 +115,7 @@ describe("DELETE /jira/configuration", () => {
 				jiraHost: subscription.jiraHost
 			},
 			params: {
-				installationId: subscription.githubInstallationId
+				installationId: subscription.gitHubInstallationId
 			}
 		};
 
@@ -131,7 +132,7 @@ describe("DELETE /jira/configuration", () => {
 				jiraHost: subscription.jiraHost
 			},
 			params: {
-				installationId: subscription.githubInstallationId
+				installationId: subscription.gitHubInstallationId
 			}
 		};
 

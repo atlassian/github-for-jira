@@ -130,7 +130,7 @@ export const JiraConnectedReposGet = async (
 
 	} catch (err: unknown) {
 		req.log.warn({ err }, "Failed to render connected repos");
-		return next(new Error(`Failed to render connected repos: ${errorStringFromUnknown(err)}`));
+		next(new Error(`Failed to render connected repos: ${errorStringFromUnknown(err)}`)); return;
 	}
 };
 

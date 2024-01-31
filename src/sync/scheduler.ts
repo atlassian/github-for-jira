@@ -4,7 +4,7 @@ import { RepoSyncState } from "models/reposyncstate";
 import { getTargetTasks } from "~/src/sync/installation";
 import { createInstallationClient } from "utils/get-github-client-config";
 import Logger from "bunyan";
-import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { Op } from "sequelize";
 import { without } from "lodash";
 
@@ -16,14 +16,10 @@ const RATE_LIMIT_QUOTA_PER_TASK_RESERVE = 500;
 // Coefficient to determine pool size of the selection for the subtasks
 const SUBTASKS_POOL_COEF = 10;
 
+const MAX_SUBTASKS = 100;
+
 const estimateNumberOfSubtasks = async (subscription: Subscription, logger: Logger) => {
 	try {
-		const maxNumberOfSubtasks = await numberFlag(NumberFlags.BACKFILL_MAX_SUBTASKS, 0, subscription.jiraHost);
-		if (!maxNumberOfSubtasks) {
-			logger.info({ nSubTasks: 0 }, `Using subtasks: 0`);
-			return 0;
-		}
-
 		const metrics = {
 			trigger: "ratelimit_check_backfill"
 		};
@@ -35,11 +31,11 @@ const estimateNumberOfSubtasks = async (subscription: Subscription, logger: Logg
 		const availQuotaForSubtasks = Math.max(0, availQuota - RATE_LIMIT_QUOTA_PER_TASK_RESERVE);
 		const allowedSubtasks = Math.floor(availQuotaForSubtasks / RATE_LIMIT_QUOTA_PER_TASK_RESERVE);
 
-		const nSubTasks = Math.min(allowedSubtasks, maxNumberOfSubtasks);
+		const nSubTasks = Math.min(allowedSubtasks, MAX_SUBTASKS);
 
 		logger.info({ nSubTasks, rateLimitData }, `Using subtasks: ${nSubTasks}`);
 		return nSubTasks;
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.warn({ err }, "Cannot determine rate limit, return only main task");
 		return 0;
 	}

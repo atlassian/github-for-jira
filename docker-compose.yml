@@ -17,13 +17,13 @@ services:
       POSTGRES_HOST_AUTH_METHOD: trust
 
   ngrok:
-    image: wernight/ngrok
+    image: ngrok/ngrok:latest
     container_name: ngrok
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
       - "4040:4040"
-    command: ngrok http -log stdout --authtoken $NGROK_AUTHTOKEN host.docker.internal:8080
+    command: http --log stdout --authtoken=$NGROK_AUTHTOKEN host.docker.internal:8080
 
   localstack:
     image: localstack/localstack:1.0.4
@@ -31,7 +31,9 @@ services:
     environment:
       - DEFAULT_REGION=us-west-1
       - DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME=deployment-history-cache
+      - DYNAMO_AUDIT_LOG_TABLE_NAME=audit-log
       - DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_REGION=us-west-1
+      - DYNAMO_AUDIT_LOG_TABLE_REGION=us-west-1
       - LAMBDA_REMOTE_DOCKER=false
       - LAMBDA_EXECUTOR=local # runs lambda inside temp directory instead of new docker container
       - SQS_ENDPOINT_STRATEGY=off # sets the SQS queue domain/path to the legacy version

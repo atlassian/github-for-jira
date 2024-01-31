@@ -1,224 +1,233 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Maintenance Frontend Atlassian Connect should return Atlassian Connect JSON in maintenance mode 1`] = `
-Object {
-  "apiMigrations": Object {
+{
+  "apiMigrations": {
     "gdpr": false,
     "signed-install": true,
   },
   "apiVersion": 1,
-  "authentication": Object {
+  "authentication": {
     "type": "jwt",
   },
   "description": "Connect your code and your project with ease.",
-  "lifecycle": Object {
+  "lifecycle": {
     "disabled": "/jira/events/disabled",
     "enabled": "/jira/events/enabled",
     "installed": "/jira/events/installed",
     "uninstalled": "/jira/events/uninstalled",
   },
-  "modules": Object {
-    "adminPages": Array [
-      Object {
-        "conditions": Array [
-          Object {
+  "modules": {
+    "adminPages": [
+      {
+        "conditions": [
+          {
             "condition": "user_is_admin",
           },
         ],
         "key": "gh-addon-admin",
         "location": "admin_plugins_menu/gh-addon-admin-section",
-        "name": Object {
+        "name": {
           "value": "Configure",
         },
         "url": "/jira",
       },
-      Object {
-        "conditions": Array [
-          Object {
+      {
+        "conditions": [
+          {
             "condition": "user_is_admin",
           },
         ],
         "key": "gh-addon-admin-old",
         "location": "none",
-        "name": Object {
+        "name": {
           "value": "Configure",
         },
         "url": "/jira/configuration",
       },
     ],
-    "generalPages": Array [
-      Object {
-        "conditions": Array [
-          Object {
+    "generalPages": [
+      {
+        "conditions": [
+          {
             "condition": "user_is_admin",
           },
         ],
         "key": "github-select-product-page",
         "location": "none",
-        "name": Object {
+        "name": {
           "value": "GitHub Select Product",
         },
         "url": "/jira/connect",
       },
-      Object {
-        "conditions": Array [
-          Object {
+      {
+        "conditions": [
+          {
             "condition": "user_is_admin",
           },
         ],
         "key": "github-server-url-page",
         "location": "none",
-        "name": Object {
+        "name": {
           "value": "GitHub Server Url",
         },
         "url": "/jira/connect/enterprise?new={ac.new}",
       },
-      Object {
-        "conditions": Array [
-          Object {
+      {
+        "conditions": [
+          {
             "condition": "user_is_admin",
           },
         ],
         "key": "github-list-servers-page",
         "location": "none",
-        "name": Object {
+        "name": {
           "value": "GitHub Enterprise Servers",
         },
         "url": "/jira/connect/enterprise",
       },
-      Object {
-        "conditions": Array [
-          Object {
+      {
+        "conditions": [
+          {
             "condition": "user_is_admin",
           },
         ],
         "key": "github-app-creation-page",
         "location": "none",
-        "name": Object {
+        "name": {
           "value": "GitHub App Creation",
         },
         "url": "/jira/connect/enterprise/{ac.connectConfigUuid}/app?new={ac.new}",
       },
-      Object {
-        "conditions": Array [
-          Object {
+      {
+        "conditions": [
+          {
             "condition": "user_is_admin",
           },
         ],
         "key": "github-list-server-apps-page",
         "location": "none",
-        "name": Object {
+        "name": {
           "value": "GitHub Server Apps",
         },
         "url": "/jira/connect/enterprise/{ac.connectConfigUuid}/app",
       },
-      Object {
-        "conditions": Array [
-          Object {
+      {
+        "conditions": [
+          {
             "condition": "user_is_admin",
           },
         ],
         "key": "github-manual-app-page",
         "location": "none",
-        "name": Object {
+        "name": {
           "value": "GitHub Manual App",
         },
         "url": "/jira/connect/enterprise/{ac.connectConfigUuid}/app/new",
       },
-      Object {
-        "conditions": Array [
-          Object {
+      {
+        "conditions": [
+          {
             "condition": "user_is_admin",
           },
         ],
         "key": "github-edit-app-page",
         "location": "none",
-        "name": Object {
+        "name": {
           "value": "GitHub Edit App",
         },
         "url": "/jira/connect/enterprise/app/{ac.uuid}",
       },
-      Object {
-        "conditions": Array [
-          Object {
+      {
+        "conditions": [
+          {
             "condition": "user_is_admin",
           },
         ],
         "key": "spa-index-page",
         "location": "none",
-        "name": Object {
+        "name": {
           "value": "GitHub for Jira SPA Index Page",
         },
-        "url": "/spa",
+        "url": "/spa?from={ac.from}",
       },
-      Object {
-        "conditions": Array [
-          Object {
+      {
+        "conditions": [
+          {
             "condition": "user_is_admin",
           },
         ],
         "key": "gh-addon-subscription-repos",
         "location": "none",
-        "name": Object {
+        "name": {
           "value": "Sync status",
         },
         "url": "/jira/subscription/{ac.subscriptionId}/repos?pageNumber={ac.pageNumber}&repoName={ac.repoName}&syncStatus={ac.syncStatus}",
       },
     ],
-    "jiraBuildInfoProvider": Object {
+    "jiraBuildInfoProvider": {
       "homeUrl": "https://github.com/features/actions",
       "key": "github-actions",
       "logoUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
-      "name": Object {
+      "name": {
         "value": "GitHub Actions",
       },
     },
-    "jiraDeploymentInfoProvider": Object {
+    "jiraDeploymentInfoProvider": {
       "homeUrl": "https://github.com/features/actions",
       "key": "github-deployments",
       "logoUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
-      "name": Object {
+      "name": {
         "value": "GitHub Actions",
       },
     },
-    "jiraDevelopmentTool": Object {
-      "actions": Object {
-        "createBranch": Object {
+    "jiraDevelopmentTool": {
+      "actions": {
+        "associateRepository": {
+          "templateUrl": "https://test-github-app-instance.com/jira/workspaces/repositories/associate",
+        },
+        "createBranch": {
           "templateUrl": "https://test-github-app-instance.com/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&jwt={jwt}&addonkey=com.github.integration.test-atlassian-instance",
         },
+        "searchConnectedWorkspaces": {
+          "templateUrl": "https://test-github-app-instance.com/jira/workspaces/search",
+        },
+        "searchRepositories": {
+          "templateUrl": "https://test-github-app-instance.com/jira/workspaces/repositories/search",
+        },
       },
-      "application": Object {
+      "application": {
         "value": "GitHub",
       },
-      "capabilities": Array [
+      "capabilities": [
         "branch",
         "commit",
         "pull_request",
       ],
       "key": "github-development-tool",
       "logoUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
-      "name": Object {
+      "name": {
         "value": "GitHub",
       },
       "url": "https://github.com",
     },
-    "jiraRemoteLinkInfoProvider": Object {
+    "jiraRemoteLinkInfoProvider": {
       "homeUrl": "https://github.com",
       "key": "github-remotelinks-integration",
       "logoUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
-      "name": Object {
+      "name": {
         "value": "GitHub",
       },
     },
-    "jiraSecurityInfoProvider": Object {
-      "actions": Object {
-        "fetchContainers": Object {
+    "jiraSecurityInfoProvider": {
+      "actions": {
+        "fetchContainers": {
           "templateUrl": "https://test-github-app-instance.com/jira/security/workspaces/containers",
         },
-        "fetchWorkspaces": Object {
+        "fetchWorkspaces": {
           "templateUrl": "https://test-github-app-instance.com/jira/security/workspaces",
         },
-        "searchContainers": Object {
+        "searchContainers": {
           "templateUrl": "https://test-github-app-instance.com/jira/security/workspaces/containers/search",
         },
       },
@@ -226,49 +235,49 @@ Object {
       "homeUrl": "https://github.com",
       "key": "github-security",
       "logoUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
-      "name": Object {
+      "name": {
         "value": "GitHub Security",
       },
     },
-    "postInstallPage": Object {
-      "conditions": Array [
-        Object {
+    "postInstallPage": {
+      "conditions": [
+        {
           "condition": "user_is_admin",
         },
       ],
       "key": "github-post-install-page",
-      "name": Object {
+      "name": {
         "value": "GitHub Configuration",
       },
       "url": "/jira",
     },
-    "webSections": Array [
-      Object {
+    "webSections": [
+      {
         "key": "gh-addon-admin-section",
         "location": "admin_plugins_menu",
-        "name": Object {
+        "name": {
           "value": "GitHub for Jira (test-atlassian-instance)",
         },
       },
     ],
   },
-  "scopes": Array [
+  "scopes": [
     "READ",
     "WRITE",
     "DELETE",
   ],
-  "vendor": Object {
+  "vendor": {
     "name": "Atlassian",
     "url": "https://atlassian.com",
   },
 }
 `;
 
-exports[`Maintenance Frontend Maintenance should return maintenance page on '/maintenance' even if maintenance mode is off 1`] = `Object {}`;
+exports[`Maintenance Frontend Maintenance should return maintenance page on '/maintenance' even if maintenance mode is off 1`] = `{}`;
 
 exports[`Maintenance Frontend Maintenance should still be able to get static assets in maintenance mode 1`] = `
-Object {
-  "data": Array [
+{
+  "data": [
     60,
     115,
     118,

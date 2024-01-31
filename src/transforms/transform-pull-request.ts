@@ -13,14 +13,10 @@ import { booleanFlag, BooleanFlags, shouldSendAll } from "config/feature-flags";
 import { getLogger } from "config/logger";
 import { Repository } from "models/subscription";
 
-export const mapStatus = (status: string, draft: boolean, isDraftPrFfOn: boolean, merged_at?: string) => {
+export const mapStatus = (status: string, draft: boolean, merged_at?: string) => {
 	if (status.toLowerCase() === "merged") return "MERGED";
-	if (isDraftPrFfOn) {
-		if (status.toLowerCase() === "open" && !draft) return "OPEN";
-		if (status.toLowerCase() === "open" && draft) return "DRAFT";
-	} else {
-		if (status.toLowerCase() === "open") return "OPEN";
-	}
+	if (status.toLowerCase() === "open" && !draft) return "OPEN";
+	if (status.toLowerCase() === "open" && draft) return "DRAFT";
 	if (status.toLowerCase() === "closed" && merged_at) return "MERGED";
 	if (status.toLowerCase() === "closed" && !merged_at) return "DECLINED";
 	if (status.toLowerCase() === "declined") return "DECLINED";
@@ -139,13 +135,11 @@ export const transformPullRequestRest = async (
 		return undefined;
 	}
 
-	const isDraftPrFfOn = await booleanFlag(BooleanFlags.INNO_DRAFT_PR);
-
 	const branches = await getBranches(gitHubInstallationClient, pullRequest, issueKeys, log);
 	// Need to get full name from a REST call as `pullRequest.user.login` doesn't have it
 	const author = getJiraAuthor(user, await getGithubUser(gitHubInstallationClient, user?.login, log));
 	const reviewers = await mapReviewsRest(reviews, gitHubInstallationClient, log);
-	const status = mapStatus(state, draft, isDraftPrFfOn, merged_at);
+	const status = mapStatus(state, draft, merged_at);
 
 	return {
 		...transformRepositoryDevInfoBulk(base.repo, gitHubInstallationClient.baseUrl),
@@ -177,9 +171,7 @@ export const transformPullRequestRest = async (
 // Reason: If "Automatically delete head branches" is enabled, the branch deleted and PR merged events might be sent out
 // “at the same time” and received out of order, which causes the branch being created again.
 const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, issueKeys: string[], logger: Logger) => {
-	const isDraftPrFfOn = await booleanFlag(BooleanFlags.INNO_DRAFT_PR);
-
-	if (mapStatus(pullRequest.state, pullRequest.draft, isDraftPrFfOn, pullRequest.merged_at) === "MERGED") {
+	if (mapStatus(pullRequest.state, pullRequest.draft, pullRequest.merged_at) === "MERGED") {
 		return [];
 	}
 
@@ -208,7 +200,7 @@ const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, p
 	];
 };
 
-export const transformPullRequest = (repository: Repository, _jiraHost: string, pullRequest: pullRequestNode, alwaysSend: boolean, log: Logger, isDraftPrFfOn: boolean) => {
+export const transformPullRequest = (repository: Repository, _jiraHost: string, pullRequest: pullRequestNode, alwaysSend: boolean, log: Logger) => {
 	const issueKeys = extractIssueKeysFromPr(pullRequest);
 
 	if (isEmpty(issueKeys) && !alwaysSend) {
@@ -219,7 +211,7 @@ export const transformPullRequest = (repository: Repository, _jiraHost: string, 
 		return undefined;
 	}
 
-	const status = mapStatus(pullRequest.state, pullRequest.draft, isDraftPrFfOn, pullRequest.mergedAt);
+	const status = mapStatus(pullRequest.state, pullRequest.draft, pullRequest.mergedAt);
 
 	return {
 		author: getJiraAuthor(pullRequest.author),
@@ -249,7 +241,7 @@ export const transformPullRequest = (repository: Repository, _jiraHost: string, 
 
 const mapReviews = (reviews: pullRequestNode["reviews"]["nodes"] = [], reviewRequests: pullRequestNode["reviewRequests"]["nodes"] = []): JiraReview[] => {
 	const allReviews = [...reviewRequests || [], ...reviews || []] as pullRequestNode["reviews"]["nodes"];
-	const usernames: Record<string, any> = {};
+	const usernames: Record<string, JiraReviewer> = {};
 
 	// The reduce function goes through all the reviews and creates an array of unique users
 	// (so users' avatars won't be duplicated on the dev panel in Jira)

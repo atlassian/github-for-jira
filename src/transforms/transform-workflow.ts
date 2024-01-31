@@ -62,12 +62,13 @@ export const transformWorkflow = async (
 			head_branch,
 			html_url,
 			name,
+			workflow_id,
 			pull_requests,
 			repository,
 			run_number,
 			status,
 			updated_at
-		}, workflow
+		}
 	} = payload;
 
 	const workflowHasPullRequest = !!pull_requests?.length;
@@ -95,7 +96,7 @@ export const transformWorkflow = async (
 		builds: [
 			{
 				schemaVersion: "1.0",
-				pipelineId: workflow.id,
+				pipelineId: String(workflow_id),
 				buildNumber: run_number,
 				updateSequenceNumber: Date.now(),
 				displayName: name,

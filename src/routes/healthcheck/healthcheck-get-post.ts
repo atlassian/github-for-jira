@@ -38,7 +38,7 @@ export const HealthcheckGetPost = async (req: Request, res: Response): Promise<v
 			logger.info("Cryptor is already ready, no further checks");
 			cryptorState = CryptorState.READY_FULL_STOP;
 		}
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.warn(err, "Cryptor deepcheck failed.");
 		res.status(500).send("NOT OK");
 		return;

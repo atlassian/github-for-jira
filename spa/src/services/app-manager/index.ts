@@ -10,7 +10,7 @@ async function fetchOrgs(): Promise<OrganizationsResponse | AxiosError> {
 	try {
 		const response = await Api.orgs.getOrganizations();
 		return response.data;
-	} catch (e) {
+	} catch (e: unknown) {
 		reportError(new Error("Fail fetchOrgs", { cause: e } ), { path: "fetchOrgs" });
 		return e as AxiosError;
 	}
@@ -37,7 +37,7 @@ async function connectOrg(orgId: number): Promise<boolean | AxiosError> {
 
 		return ret;
 
-	} catch (e) {
+	} catch (e: unknown) {
 		reportError(new Error("Fail connectOrg", { cause: e }), { path: "connectOrg" });
 		return e as AxiosError;
 	}
@@ -46,7 +46,8 @@ async function connectOrg(orgId: number): Promise<boolean | AxiosError> {
 let lastOpenWin: WindowProxy | null = null;
 async function installNewApp(callbacks: {
 	onFinish: (gitHubInstallationId: number | undefined) => void,
-	onRequested: (setupAction: string) => void
+	onRequested: (setupAction: string) => void,
+	onPopupBlocked: () => void
 }): Promise<void> {
 
 	const app = await Api.app.getAppNewInstallationUrl();
@@ -56,7 +57,13 @@ async function installNewApp(callbacks: {
 		return;
 	}
 
-	const winInstall = lastOpenWin = popup(app.data.appInstallationUrl);
+	const newPopWin = popup(app.data.appInstallationUrl);
+	if (newPopWin === null) {
+		callbacks.onPopupBlocked();
+		return;
+	}
+
+	const winInstall = lastOpenWin = newPopWin;
 
 	const handler = async (event: MessageEvent) => {
 		lastOpenWin = null;
@@ -85,7 +92,7 @@ async function installNewApp(callbacks: {
 			try {
 				lastOpenWin = null;
 				setTimeout(() => window.removeEventListener("message", handler), 1000); //give time for above message handler to kick off
-			} catch (e) {
+			} catch (e: unknown) {
 				reportError(new Error("Fail remove listener", { cause: e }), { path: "installNewApp", reason: "Fail remove message listener" });
 			} finally {
 				clearInterval(hdlWinInstall);

@@ -22,13 +22,25 @@
     ]
   },
   "dependencies": {
+    "@atlaskit/avatar": "^21.3.9",
+    "@atlaskit/badge": "^15.1.14",
     "@atlaskit/button": "^16.8.0",
+    "@atlaskit/checkbox": "^13.0.1",
     "@atlaskit/css-reset": "^6.5.2",
+    "@atlaskit/dropdown-menu": "^12.1.8",
+    "@atlaskit/datetime-picker": "^13.0.3",
+    "@atlaskit/dynamic-table": "^14.11.5",
     "@atlaskit/form": "^8.11.8",
     "@atlaskit/heading": "^1.3.7",
     "@atlaskit/icon": "^21.12.4",
+    "@atlaskit/lozenge": "^11.4.3",
+    "@atlaskit/modal-dialog": "^12.8.3",
+    "@atlaskit/page-header": "^10.4.4",
     "@atlaskit/select": "^16.5.7",
     "@atlaskit/skeleton": "^0.2.3",
+    "@atlaskit/spinner": "^15.6.1",
+    "@atlaskit/textarea": "^4.7.7",
+    "@atlaskit/textfield": "^6.0.0",
     "@atlaskit/tokens": "^1.11.1",
     "@atlaskit/tooltip": "^17.8.3",
     "@emotion/styled": "^11.11.0",
@@ -36,21 +48,22 @@
     "axios": "^1.4.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.14.1"
+    "react-router-dom": "^6.14.1",
+    "simplebar-react": "^3.2.4"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/jest-dom": "^6.1.4",
     "@testing-library/react": "^14.0.0",
     "@testing-library/user-event": "^14.4.3",
     "@types/jest": "^29.5.2",
     "@types/react": "^18.2.14",
     "@types/react-dom": "^18.2.6",
     "@types/react-router-dom": "^5.3.3",
-    "@typescript-eslint/eslint-plugin": "^5.59.0",
-    "@typescript-eslint/parser": "^5.59.0",
-    "eslint": "^8.38.0",
+    "@typescript-eslint/eslint-plugin": "^6.10.0",
+    "@typescript-eslint/parser": "^6.10.0",
+    "eslint": "^8.53.0",
     "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.3.4",
+    "eslint-plugin-react-refresh": "^0.4.4",
     "jest": "^29.5.0",
     "jest-environment-jsdom": "^29.5.0",
     "nock": "^13.3.2",
@@ -58,6 +71,5 @@
     "react-scripts": "^5.0.1",
     "ts-jest": "^29.1.1",
     "typescript": "^5.0.2"
-  },
-  "optionalDependencies": {}
+  }
 }

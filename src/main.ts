@@ -32,7 +32,7 @@ const CONF_WORKER_DUMP_LOW_HEAP_PCT = 25;
 const handleErrorsGracefully = (logger: Logger, intervalsToClear: NodeJS.Timeout[]) => {
 	process.on("uncaughtExceptionMonitor", (err, origin) => {
 		logger.error({ err, origin }, "looks like the process is about to die");
-		intervalsToClear.forEach(it => clearInterval(it));
+		intervalsToClear.forEach(it => { clearInterval(it); });
 	});
 
 	process.on("unhandledRejection", (err) => {
@@ -41,13 +41,13 @@ const handleErrorsGracefully = (logger: Logger, intervalsToClear: NodeJS.Timeout
 
 	process.on("SIGTERM", (signal) => {
 		logger.error({ signal }, `SIGTERM was received, exit with status 1`);
-		intervalsToClear.forEach(it => clearInterval(it));
+		intervalsToClear.forEach(it => { clearInterval(it); });
 		process.exit(1);
 	});
 
 	process.on("SIGINT", (signal) => {
 		logger.error({ signal }, `SIGINT was received, exit with status 1`);
-		intervalsToClear.forEach(it => clearInterval(it));
+		intervalsToClear.forEach(it => { clearInterval(it); });
 		process.exit(1);
 	});
 };
@@ -73,7 +73,7 @@ const troubleshootUnresponsiveWorkers_master = () => {
 	);
 };
 
-const start = async () => {
+const start = () => {
 	initializeSentry();
 	const app: Express = getFrontendApp();
 	const port = Number(process.env.TUNNEL_PORT) || Number(process.env.PORT) || 8080;
@@ -90,11 +90,13 @@ if (isNodeProd()) {
 	// Production clustering (one process per core)
 	throng({
 		master: troubleshootUnresponsiveWorkers_master,
-		worker: async () => {
-			await start();
+		worker: () => {
+			start();
 			troubleshootUnresponsiveWorkers_worker();
 		},
 		lifetime: Infinity
+	}).catch((err: unknown) => {
+		getLogger("frontend-app").error({ err }, "Error running frontend-app");
 	});
 } else {
 	// Dev/test single process, don't need clustering

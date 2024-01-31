@@ -96,7 +96,6 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 
 const webhookRouter = async (context: WebhookContext) => {
 	const VALID_PULL_REQUEST_ACTIONS = ["opened", "reopened", "closed", "edited", "converted_to_draft", "ready_for_review"];
-
 	switch (context.name) {
 		case "push":
 			await GithubWebhookMiddleware(pushWebhookHandler)(context);
@@ -166,7 +165,7 @@ const getWebhookSecrets = async (uuid?: string): Promise<{ webhookSecrets: Array
 		if (!gitHubServerApp) {
 			throw new Error(`GitHub app not found for uuid ${uuid}`);
 		}
-		const installation: Installation = (await Installation.findByPk(gitHubServerApp.installationId))!;
+		const installation: Installation | null = (await Installation.findByPk(gitHubServerApp.installationId));
 		if (!installation) {
 			throw new Error(`Installation not found for gitHubApp with uuid ${uuid}`);
 		}

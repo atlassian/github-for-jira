@@ -1,6 +1,6 @@
 import { Subscription } from "models/subscription";
 import { NextFunction, Request, Response } from "express";
-import { getInstallations, InstallationResults } from "routes/jira/jira-get";
+import { getInstallations, InstallationResults } from "utils/github-installations-helper";
 import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import Logger from "bunyan";
@@ -89,7 +89,6 @@ export const getInstallationsWithAdmin = async (
 		//  all orgs the user is a member of and cross reference with the installation org
 		const checkAdmin = isUserAdminOfOrganization(
 			gitHubUserClient,
-			jiraHost,
 			gitHubClient,
 			installation.account.login,
 			login,
@@ -177,13 +176,16 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	});
 
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, { trigger: "github-configuration-get" }, log, gitHubAppId);
+	req.log.info(`githubUserClient created in ${(new Date().getTime() - requestStartTime) / 1000} seconds`);
 
 	const { data: { login } } = await gitHubUserClient.getUser();
 	req.log.debug(`got login name: ${login}`);
+	req.log.info(`getUser fetched in ${(new Date().getTime() - requestStartTime) / 1000} seconds`);
 
 	try {
 
 		const { data: { installations }, headers } = await gitHubUserClient.getInstallations();
+		req.log.info(`installations fetched in ${(new Date().getTime() - requestStartTime) / 1000} seconds`);
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost)) {
 			log.info({ installations, headers }, `verbose logging: listInstallationsForAuthenticatedUser`);
@@ -195,6 +197,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			res.locals.installation.id,
 			gitHubUserClient, log, login, installations, jiraHost, gitHubAppId, gitHubAppConfig.uuid
 		);
+		req.log.info(`installationsWithAdmin fetched in ${(new Date().getTime() - requestStartTime) / 1000} seconds`);
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost)) {
 			log.info(`verbose logging: installationsWithAdmin: ${JSON.stringify(installationsWithAdmin)}`);
@@ -208,6 +211,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			log,
 			gitHubAppId
 		);
+		req.log.info(`connectedInstallations fetched in ${(new Date().getTime() - requestStartTime) / 1000} seconds`);
 
 		// Sort to that orgs ready to be connected are at the top
 		const rankInstallation = (i: MergedInstallation) => Number(i.isAdmin) - Number(i.isIPBlocked) + 3 * Number(i.syncStatus !== "FINISHED" && i.syncStatus !== "IN PROGRESS" && i.syncStatus !== "PENDING");
@@ -234,12 +238,12 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		req.log.info({ method: req.method, requestUrl: req.originalUrl }, `Request finished in ${(new Date().getTime() - requestStartTime) / 1000} seconds`);
 		req.log.debug(`rendered page`);
 
-	} catch (err) {
+	} catch (err: unknown) {
 		// If we get here, there was either a problem decoding the JWT
 		// or getting the data we need from GitHub, so we'll show the user an error.
 		req.log.debug(`Error while getting github configuration page`);
 		log.error({ err, req, res }, "Error while getting github configuration page");
-		return next(err);
+		next(err); return;
 	}
 };
 

@@ -4,12 +4,15 @@ import { RestApiError } from "config/errors";
 import * as GH from "~/src/github/client/github-client-errors";
 
 /*eslint-disable @typescript-eslint/no-explicit-any */
-export const RestErrorHandler = (err: any, req: Request, res: Response<ApiError>, _next: NextFunction) => {
+export const RestErrorHandler = (err: Error, req: Request, res: Response<ApiError>, _next: NextFunction) => {
 
 	logErrorOrWarning(err, req);
 
+	const reqTraceId = (res.locals as { reqTraceId: string }).reqTraceId;
+
 	if (err instanceof RestApiError) {
 		res.status(err.httpStatus).json({
+			reqTraceId,
 			errorCode: err.errorCode,
 			message: err.message
 		});
@@ -18,6 +21,7 @@ export const RestErrorHandler = (err: any, req: Request, res: Response<ApiError>
 
 	if (err instanceof GH.GithubClientError) {
 		res.status(err.status || 500).json({
+			reqTraceId,
 			errorCode: err.uiErrorCode,
 			message: err.message
 		});
@@ -25,15 +29,16 @@ export const RestErrorHandler = (err: any, req: Request, res: Response<ApiError>
 	}
 
 	res.status(500).json({
+		reqTraceId,
 		message: "Unknown Error",
 		errorCode: "UNKNOWN"
 	});
 
 };
 
-const logErrorOrWarning = (err: any, req: Request) => {
+const logErrorOrWarning = (err: Error, req: Request) => {
 
-	const httpStatus = parseInt(err.status) || parseInt(err.httpStatus) || 500;
+	const httpStatus = parseInt(err["status"] as string | undefined ?? "") || parseInt(err["httpStatus"] as string| undefined ?? "") || 500;
 	const extraInfo = {
 		httpStatus,
 		method: req.method,

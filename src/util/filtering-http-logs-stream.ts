@@ -13,14 +13,14 @@ import { Writable } from "stream";
  * @function
  * @param filteringLoggerName - the name of the logger to watch
  * @param out {Stream} original stream
- * @return {WritableStream} that you can pipe bunyan output into
+ * @return {Writable} that you can pipe bunyan output into
  */
-export const filteringHttpLogsStream = (filteringLoggerName: string, out: Writable = process.stdout) =>
+export const filteringHttpLogsStream = (filteringLoggerName: string, out: Writable = process.stdout): Writable =>
 	new Writable({
-		write: (chunk, encoding, next) => {
+		write: (chunk: unknown, encoding: BufferEncoding, next) => {
 			//TODO Remove this code when there will be convenient way to do it in Probot.
 			//See https://github.com/probot/probot/issues/1577
-			if (!chunk.toString().match(`${filteringLoggerName}.*(GET|POST|DELETE|PUT|PATCH) /`)) {
+			if (String(chunk).match(`${filteringLoggerName}.*(GET|POST|DELETE|PUT|PATCH) /`)) {
 				out.write(chunk, encoding);
 			}
 			next();

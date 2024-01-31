@@ -61,7 +61,8 @@ export const RecoverClientKeyPost = async (req: Request, res: Response): Promise
 						log.info({ id: installation.id, subId: sub.id }, `Saved plainClientKey successfully for subscription`);
 					}
 					successCount++;
-				} catch (e) {
+				} catch (err: unknown) {
+					const e = err as { msg?: string };
 					errors.push({ id: installation.id, err: e });
 				}
 			})();
@@ -86,6 +87,7 @@ export const RecoverClientKeyPost = async (req: Request, res: Response): Promise
 const getAndVerifyplainClientKey = async ({ id, jiraHost, clientKey: hashedClientKeyInDB }: Installation): Promise<string>  => {
 
 	if (!jiraHost) {
+		// eslint-disable-next-line @typescript-eslint/no-throw-literal
 		throw { msg: `JiraHost missing`, id };
 	}
 
@@ -102,21 +104,26 @@ const getAndVerifyplainClientKey = async ({ id, jiraHost, clientKey: hashedClien
 			proxy: false
 		}).get("/plugins/servlet/oauth/consumer-info");
 		text = result.data;
-	} catch (e) {
+	} catch (err: unknown) {
+		const e = err as { message?: string };
+		// eslint-disable-next-line @typescript-eslint/no-throw-literal
 		throw { msg: e.message, jiraHost, id };
 	}
 
 	if (!text) {
+		// eslint-disable-next-line @typescript-eslint/no-throw-literal
 		throw { msg: `Empty consumer-info`, jiraHost, id };
 	}
 
 	const plainClientKey = extractClientKey(text);
 	if (!plainClientKey) {
+		// eslint-disable-next-line @typescript-eslint/no-throw-literal
 		throw { msg: `Client key xml extraction failed`, jiraHost, id, text };
 	}
 
 	const hashedplainClientKey = getHashedKey(plainClientKey);
 	if (hashedClientKeyInDB !== hashedplainClientKey) {
+		// eslint-disable-next-line @typescript-eslint/no-throw-literal
 		throw { msg: `keys not match after hashing`, jiraHost, id, hashedClientKeyInDB, hashedplainClientKey, plainClientKey };
 	}
 

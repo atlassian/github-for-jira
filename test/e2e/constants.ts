@@ -65,7 +65,7 @@ export interface TestData {
 	state: string;
 	appUrl: string;
 	projectId: () => string;
-	jira: TestDataEntry<JiraTestDataURLs, JiraTestDataRoles>;
+	jira: TestDataEntry<JiraTestDataURLs>;
 	github: TestDataEntry<GithubTestDataURLs>;
 }
 

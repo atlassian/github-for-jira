@@ -84,7 +84,7 @@ export const getJiraUtil = (jiraClient: JiraClient) => {
 			if (linkifiedBody === text) return undefined;
 
 			return linkifiedBody;
-		} catch (err) {
+		} catch (err: unknown) {
 			logger.warn({ err, issueText: text }, "Error getting all JIRA issues");
 			return undefined;
 		}

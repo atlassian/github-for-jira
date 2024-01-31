@@ -16,5 +16,6 @@ export const matchRouteWithPattern = (pattern: string, route: string): boolean =
 	pattern = pattern.split("?")[0]; // Removing the query parameters
 	route = route.split("?")[0]; // Removing the query parameters
 
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 	return matchstick(pattern, "template").match(route);
 };

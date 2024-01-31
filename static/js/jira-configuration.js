@@ -16,15 +16,7 @@ function openChildWindow(url) {
 
 $(".add-organization-link").click(function(event) {
 	event.preventDefault();
-	if(document.body.dataset["useNewSpaExperience"] === "true") {
-		AP.navigator.go( "addonmodule", { moduleKey: "spa-index-page" });
-		return;
-	}
-	const queryParameter = $(this).data("gh-cloud") ? "?resetSession=true" : "?ghRedirect=to&resetSession=true";
-	AP.context.getToken(function(token) {
-		const child = openChildWindow("/session/github/configuration" + queryParameter);
-		child.window.jwt = token;
-	});
+	AP.navigator.go( "addonmodule", { moduleKey: "spa-index-page" });
 });
 
 // TODO: passing JWT in query param is a security risk, we must either populate a session (if not already) or use cookies
@@ -51,18 +43,7 @@ $(".add-enterprise-link").click(function(event) {
 
 $(".select-github-product-link").click(function(event) {
 	event.preventDefault();
-
-	if(document.body.dataset["useNewSpaExperience"] === "true") {
-		AP.navigator.go( "addonmodule", { moduleKey: "spa-index-page" });
-		return;
-	}
-
-	AP.navigator.go(
-		'addonmodule',
-		{
-			moduleKey: "github-select-product-page"
-		}
-	);
+	AP.navigator.go( "addonmodule", { moduleKey: "spa-index-page" });
 });
 
 $(".configure-connection-link").click(function(event) {
@@ -191,17 +172,61 @@ if (syncStatusCloseBtn != null) {
 	};
 }
 
-const handleDisconnectRequest = (path, data) => {
+const handleDisconnectRequest = (path, data, callback) => {
+	$(".modal__header__container").hide();
+	$(".modal__information").hide();
+	$(".modal__footer").hide();
+	$(".modal__spinner").removeClass("hidden");
+
 	$.ajax({
 		type: "DELETE",
 		url: path,
 		data,
 		success: function() {
-			AP.navigator.reload();
+			// For deleting GH server or a GH server app
+			if (callback) {
+				callback();
+				$(".modal__spinner").addClass("hidden");
+				$(".modal__information").show();
+				$(".modal__header__container").show();
+				$(".modal__footer").show();
+			} else { // For deleting an individual GH server app connection
+				AP.navigator.reload();
+			}
 		},
 		error: function (error) {
 			// TODO - we should render an error here when the app fails to delete
-		},
+			console.error("Failed: ", error);
+		}
+	});
+}
+
+const deleteAppsInGitHub = (GHEServerUrl, appName) => {
+	$(".modal__header__icon").remove();
+	let content = "";
+	if (!appName) {
+		// Get the list of all the apps within the GH Enterprise server
+		const apps = $(`.jiraConfiguration__enterpriseServer__header__container[data-server-baseurl='${GHEServerUrl}'] + .jiraConfiguration__enterpriseConnections > details`);
+		if ($(apps).length > 0) {
+			$(".modal__header__title").empty().append("Server disconnected");
+			content += "<p style='margin-bottom: 12px;'>You can now delete these unused apps from your GitHub server. Select the app, then in GitHub select <b>Delete GitHub app</b>.</p>";
+			$(apps).map((index, app) => {
+				const serverAppName = $(app).find(".jiraConfiguration__optionHeader").text();
+				content += `<span style="margin-right: 12px">&#8226;</span><a target="_blank" href="${GHEServerUrl}/settings/apps/${serverAppName}/advanced">${serverAppName}</a><br/>`;
+			});
+		}
+	} else {
+		$(".modal__header__title").empty().append("App disconnected");
+		content += `<p style='margin-bottom: 12px;'>To delete this app from your GitHub server, <a target=\"_blank\" href=\"${GHEServerUrl}/settings/apps/${appName}/advanced\">go to the app in GitHub</a> and select <b>Delete GitHub App</b>.</p>`;
+	}
+
+	$(".modal__information").empty().append(content);
+
+	// Adding a close button which refreshes the iframe
+	$(".modal__footer").empty()
+		.append("<button class=\"aui-button aui-button-primary modal__footer__close\">Close</button>");
+	$(".modal__footer__close").click(() => {
+		AP.navigator.reload();
 	});
 }
 
@@ -211,19 +236,26 @@ const mapDisconnectRequest = (disconnectType, data) => {
 			jwt: token,
 			jiraHost
 		}
+		// Replacing single quotes by double in order to parse the JSON properly
+		const parsedData = JSON.parse(data.replace(/'/g, '"'));
 
 		switch (disconnectType) {
 			case "server":
-				payload.serverUrl = data.disconnectData;
-				handleDisconnectRequest(`/jira/connect/enterprise`, payload);
+				payload.serverUrl = parsedData.serverUrl;
+				handleDisconnectRequest(`/jira/connect/enterprise`, payload, () => {
+					deleteAppsInGitHub(parsedData.serverUrl);
+				});
 				return;
 			case "app":
-				payload.uuid = data.disconnectData;
-				handleDisconnectRequest(`/jira/connect/enterprise/app/${payload.uuid}`, payload);
+				payload.uuid = parsedData.uuid;
+				handleDisconnectRequest(`/jira/connect/enterprise/app/${payload.uuid}`, payload, () => {
+					deleteAppsInGitHub(parsedData.serverUrl, parsedData.appName);
+				});
+				deleteAppsInGitHub(parsedData);
 				return;
 			default:
-				payload.gitHubInstallationId = data.disconnectData;
-				payload.appId = data.optionalDisconnectData;
+				payload.gitHubInstallationId = parsedData.gitHubInstallationId;
+				payload.appId = parsedData.appId;
 				handleDisconnectRequest("/jira/configuration", payload);
 				return;
 		}
@@ -234,9 +266,7 @@ if (genericModalAction != null) {
 	$(genericModalAction).click((event) => {
 		event.preventDefault();
 		const disconnectType = $(event.target).data("disconnect-type");
-		const disconnectData = $(event.target).data("modal-data");
-		const optionalDisconnectData = $(event.target).data("optional-modal-data");
-		const data = { disconnectData, optionalDisconnectData }
+		const data = $(event.target).data("modal-data");
 		mapDisconnectRequest(disconnectType, data);
 	});
 }
@@ -246,24 +276,25 @@ const handleModalDisplay = (title, info, type, data) => {
 	$(".modal__header__icon").addClass("aui-iconfont-warning").empty().append("Warning icon");
 	$(".modal__header__title").empty().append(title);
 	$(".modal__information").empty().append(info);
+
+	// Modal data is a JSON, so stringified using single quotes
+	const stringifiedData = JSON.stringify(data.modalData).replace(/"/g, "'");
 	$(".modal__footer__actionBtn")
 		.empty()
 		.append("Disconnect")
 		.attr("data-disconnect-type", type)
-		.attr("data-modal-data", data.modalData)
-		.attr("data-optional-modal-data", data.appId);
+		.attr("data-modal-data", stringifiedData);
 }
 
 if (disconnectServerBtn != null) {
 	$(disconnectServerBtn).click((event) => {
 		event.preventDefault();
 		const serverUrl = $(event.target).data("server-baseurl");
-		const modalTitle = "Disconnect server?";
-		const modalInfo = "Are you sure you want to disconnect your server? You'll need to recreate your GitHub apps and backfill historical data from your GitHub organisations and repositories again if you ever want to reconnect."
+		const modalTitle = "Are you sure you want to disconnect this server?";
+		const modalInfo = "To reconnect this server, you'll need to create new GitHub apps and import data about its organizations and repositories again."
 		const disconnectType = "server";
-		const data = { modalData: serverUrl }
+		const data = { modalData: { serverUrl } }
 		handleModalDisplay(modalTitle, modalInfo, disconnectType, data);
-		$(".modal__additionalContent").append(serverUrl).css('font-weight', 'bold');
 	});
 }
 
@@ -272,10 +303,11 @@ if (disconnectAppBtn != null) {
 		event.preventDefault();
 		const appName = $(event.target).data("app-name");
 		const uuid = $(event.target).data("app-uuid");
-		const modalTitle = `Disconnect ${appName}?`;
-		const modalInfo = `Are you sure you want to delete your application, ${appName}? You’ll need to backfill your historical data again if you ever want to reconnect.`;
+		const serverUrl = $(event.target).data("app-server-url");
+		const modalTitle = `Are you sure you want to disconnect this app?`;
+		const modalInfo = `To reconnect this app, you'll need to recreate it and import data about its organizations and repositories again.`;
 		const disconnectType = "app";
-		const data = { modalData: uuid }
+		const data = { modalData: { uuid, appName, serverUrl } }
 		handleModalDisplay(modalTitle, modalInfo, disconnectType, data);
 	});
 }
@@ -290,7 +322,7 @@ if (disconnectOrgBtn != null) {
 		const modalTitle = `Disconnect ${displayName}?`;
 		const modalInfo = `Are you sure you want to disconnect your organization ${displayName}? This means that you will have to redo the backfill of historical data if you ever want to reconnect.`;
 		const disconnectType = "org";
-		const data = { modalData: gitHubInstallationId, appId };
+		const data = { modalData: { gitHubInstallationId, appId } };
 		handleModalDisplay(modalTitle, modalInfo, disconnectType, data);
 	});
 }
@@ -300,7 +332,6 @@ if (genericModalClose != null) {
 		event.preventDefault();
 		$(genericModal).hide();
 		$(".modal__footer__actionBtn").removeAttr("data-disconnect-type");
-		$(".modal__additionalContent").empty();
 	});
 }
 

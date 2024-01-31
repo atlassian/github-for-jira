@@ -9,12 +9,8 @@ import {
 	jiraSymmetricJwtMiddleware
 } from "~/src/middleware/jira-symmetric-jwt-middleware";
 import { Installation } from "~/src/models/installation";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { generateSignedSessionCookieHeader } from "test/utils/cookies";
 
-
-jest.mock("config/feature-flags");
 const testSharedSecret = "test-secret";
 
 const getToken = ({
@@ -224,10 +220,6 @@ describe("jiraSymmetricJwtMiddleware", () => {
 				host: jiraHost,
 				sharedSecret: testSharedSecret
 			});
-
-			when(booleanFlag).calledWith(
-				BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
-			).mockResolvedValue(true);
 		});
 
 		it("should return true for search workspaces", async () => {
@@ -248,8 +240,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 					authorization: `JWT ${await generateJwt()}`
 				});
 
-			expect(await checkGenericContainerActionUrl(
-				"https://test-github-app-instance.com/jira/workspaces/search"))
+			expect(checkGenericContainerActionUrl("https://test-github-app-instance.com/jira/workspaces/search"))
 				.toBeTruthy();
 		});
 
@@ -275,8 +266,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 					)}`
 				});
 
-			expect(await checkGenericContainerActionUrl(
-				"https://test-github-app-instance.com/jira/workspaces/repositories/search?searchQuery=atlas"))
+			expect(checkGenericContainerActionUrl("https://test-github-app-instance.com/jira/workspaces/repositories/search?searchQuery=atlas"))
 				.toBeTruthy();
 		});
 
@@ -298,7 +288,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 					authorization: `JWT ${await generateJwt()}`
 				});
 
-			expect(await checkGenericContainerActionUrl("https://test-github-app-instance.com/jira/workspaces/repositories/associate")).toBeTruthy();
+			expect(checkGenericContainerActionUrl("https://test-github-app-instance.com/jira/workspaces/repositories/associate")).toBeTruthy();
 		});
 
 		it("should return false for create branch", async () => {
@@ -310,8 +300,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 						githubToken: "random-token"
 					}));
 
-			expect(await checkGenericContainerActionUrl(
-				"https://test-github-app-instance.com/create-branch-options"))
+			expect(checkGenericContainerActionUrl("https://test-github-app-instance.com/create-branch-options"))
 				.toBeFalsy();
 		});
 	});
@@ -327,10 +316,6 @@ describe("jiraSymmetricJwtMiddleware", () => {
 				host: jiraHost,
 				sharedSecret: testSharedSecret
 			});
-
-			when(booleanFlag).calledWith(
-				BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
-			).mockResolvedValue(true);
 		});
 
 		it("should return normal tokenType for search workspaces", async () => {
@@ -351,7 +336,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 					authorization: `JWT ${await generateJwt()}`
 				});
 
-			expect(await getTokenType("/jira/workspaces/search", "GET", jiraHost)).toEqual("normal");
+			expect(getTokenType("/jira/workspaces/search", "GET")).toEqual("normal");
 		});
 
 		it("should return normal tokenType for search repositories", async () => {
@@ -376,7 +361,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 					)}`
 				});
 
-			expect(await getTokenType("/jira/workspaces/repositories/search?searchQuery=atlas", "GET", jiraHost)).toEqual("normal");
+			expect(getTokenType("/jira/workspaces/repositories/search?searchQuery=atlas", "GET")).toEqual("normal");
 		});
 
 		it("should return normal tokenType for associate repository", async () => {
@@ -397,7 +382,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 					authorization: `JWT ${await generateJwt()}`
 				});
 
-			expect(await getTokenType("/jira/workspaces/repositories/associate", "POST", jiraHost)).toEqual("normal");
+			expect(getTokenType("/jira/workspaces/repositories/associate", "POST")).toEqual("normal");
 		});
 
 		it("should return context tokenType for create branch", async () => {
@@ -409,7 +394,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 						githubToken: "random-token"
 					}));
 
-			expect(await getTokenType("/create-branch-options", "GET", jiraHost)).toEqual("context");
+			expect(getTokenType("/create-branch-options", "GET")).toEqual("context");
 		});
 	});
 

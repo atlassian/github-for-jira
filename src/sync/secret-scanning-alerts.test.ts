@@ -51,6 +51,7 @@ describe("sync/secret-scanning-alerts", () => {
 				.get("/repos/integrations/test-repo-name/secret-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
 				.reply(200, secretScanningAlerts);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			jiraNock
 				.post("/rest/security/1.0/bulk", expectedResponseCloudServer(subscription))
 				.reply(200);
@@ -68,11 +69,53 @@ describe("sync/secret-scanning-alerts", () => {
 		});
 
 		it("should not call Jira if no secret scanning alerts are found", async () => {
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
 			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 			githubNock
 				.get("/repos/integrations/test-repo-name/secret-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
 				.reply(200, []);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			// No Jira Nock
+
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
+			await verifyMessageSent(data);
+		});
+
+		it("should handle secret scanning disabled error", async () => {
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
+			githubNock
+				.get("/repos/integrations/test-repo-name/secret-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
+				.reply(404, { message: "Secret scanning is disabled on this repository" });
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			// No Jira Nock
+
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
+			await verifyMessageSent(data);
+		});
+
+		it("should handle 404 error", async () => {
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
+			githubNock
+				.get("/repos/integrations/test-repo-name/secret-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
+				.reply(404);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			// No Jira Nock
+
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
+			await verifyMessageSent(data);
+		});
+		it("should handle 451 error", async () => {
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
+			githubNock
+				.get("/repos/integrations/test-repo-name/secret-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
+				.reply(451, { message: "Not Found" });
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			// No Jira Nock
 
@@ -126,6 +169,7 @@ describe("sync/secret-scanning-alerts", () => {
 				}
 			};
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			gheNock
 				.get("/api/v3/repos/integrations/test-repo-name/secret-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
 				.reply(200, secretScanningAlerts);
@@ -139,6 +183,7 @@ describe("sync/secret-scanning-alerts", () => {
 
 		it("should not call Jira if no secret scanning alerts are found", async () => {
 			when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			const data = {
 				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 				jiraHost,

@@ -24,7 +24,7 @@ const JiraEnabledPost = async (req: Request, res: Response) => {
 			await saveConfiguredAppProperties(baseUrl, req.log, false);
 			req.log.info("App property set to false after installation for ", baseUrl);
 		}
-	} catch (err) {
+	} catch (err: unknown) {
 		req.log.error({ err }, "Failed to set app property after installation");
 	}
 

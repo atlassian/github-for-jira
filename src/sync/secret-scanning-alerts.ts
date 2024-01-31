@@ -35,14 +35,29 @@ export const getSecretScanningAlertTask = async (
 			direction: SortDirection.DES
 		});
 		secretScanningAlerts = response.data;
-	} catch (err) {
+	} catch (e: unknown) {
+		const err = e as { cause?: { response?: { status?: number, statusText?: string, data?: { message?: string } } } };
 		if (err.cause?.response?.status == 404 && err.cause?.response?.data?.message?.includes("Secret scanning is disabled on this repository")) {
 			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Secret scanning disabled, so marking backfill task complete");
 			return {
 				edges: [],
 				jiraPayload: undefined
 			};
+		} else if (err.cause?.response?.status == 404) {
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Repo not found, so marking backfill task complete");
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
+		} else if (err.cause?.response?.status == 451) {
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Repo not available due to legal reasons, so marking backfill task complete");
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
 		}
+		logger.error({ err, reason: err.cause?.response?.data }, "Secret scanning backfill failed");
+		// eslint-disable-next-line @typescript-eslint/no-throw-literal
 		throw err;
 	}
 
@@ -87,7 +102,7 @@ const areAllBuildsEarlierThanFromDate = (alerts: SecretScanningAlertResponseItem
 };
 
 
-const transformSecretScanningAlert = async (
+export const transformSecretScanningAlert = async (
 	alerts: SecretScanningAlertResponseItem[],
 	repository: Repository,
 	jiraHost: string,

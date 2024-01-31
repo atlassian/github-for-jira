@@ -11,7 +11,7 @@
  * @param {string} ip - The IP to convert to an integer
  * @returns {number} Integer representation of the IP Address
  */
-const ip4ToInt = (ip) =>
+const ip4ToInt = (ip: string): number =>
 	ip.split(".").reduce((int, oct) => (int << 8) + parseInt(oct, 10), 0) >>> 0;
 
 /**
@@ -20,9 +20,9 @@ const ip4ToInt = (ip) =>
  * @param {string} ip - The IP Address in question
  * @returns {Function} A function to compare an IP to the CIDR
  */
-const isIp4InCidr = (ip) => (cidr) => {
-	const [range, bits = 32] = cidr.split("/");
-	const mask = ~(2 ** (32 - bits) - 1);
+const isIp4InCidr = (ip: string) => (cidr: string) => {
+	const [range, bits = "32"] = cidr.split("/");
+	const mask = ~(2 ** (32 - parseInt(bits)) - 1);
 	return (ip4ToInt(ip) & mask) === (ip4ToInt(range) & mask);
 };
 

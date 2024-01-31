@@ -56,7 +56,7 @@ export const ApiInstallationDeleteForPollinator = async (req: Request, res: Resp
 		});
 		await RepoSyncState.deleteFromSubscription(subscription);
 		res.status(200).send(`DevInfo deleted for jiraHost: ${jiraHost} gitHubInstallationId: ${gitHubInstallationId}`);
-	} catch (err) {
+	} catch (err: unknown) {
 		res.status(500).json(err);
 	}
 };

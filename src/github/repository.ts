@@ -37,7 +37,7 @@ export const createRepositoryWebhookHandler = async (context: WebhookContext, gi
 		await updateRepoCount(subscription);
 		await findOrStartSync(subscription, context.log, "partial", subscription.backfillSince,undefined, { source: "create-repo-webhook" });
 		webhookProcessComplete(context, 200, subscription.jiraHost);
-	} catch (err) {
+	} catch (err: unknown) {
 		context.log.error({ err }, "Error processing create repository webhook");
 		webhookProcessComplete(context, 500, subscription.jiraHost);
 	}
@@ -68,7 +68,7 @@ export const deleteRepositoryWebhookHandler = async (context: WebhookContext, ji
 		await	updateRepoCount(subscription);
 
 		webhookProcessComplete(context, jiraResponse?.status, subscription.jiraHost);
-	} catch (err) {
+	} catch (err: unknown) {
 		context.log.error({ err }, "Error processing delete repository webhook");
 		webhookProcessComplete(context, 500, subscription.jiraHost);
 	}

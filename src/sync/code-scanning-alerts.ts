@@ -31,7 +31,7 @@ export const getCodeScanningAlertTask = async (
 	const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 	const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
 
-	let codeScanningAlerts:  CodeScanningAlertResponseItem[];
+	let codeScanningAlerts: CodeScanningAlertResponseItem[];
 	try {
 
 		const response = await gitHubClient.getCodeScanningAlerts(repository.owner.login, repository.name, {
@@ -41,21 +41,41 @@ export const getCodeScanningAlertTask = async (
 			direction: SortDirection.DES
 		});
 		codeScanningAlerts = response.data;
-	} catch (err) {
+	} catch (e: unknown) {
+		const err = e as { cause?: { response?: { status?: number, statusText?: string, data?: { message?: string } } } };
 		if (err.cause?.response?.status == 403 && err.cause?.response?.data?.message?.includes("Advanced Security must be enabled for this repository to use code scanning")) {
 			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Advanced Security disabled, so marking code scanning backfill task complete");
 			return {
 				edges: [],
 				jiraPayload: undefined
 			};
-		}
-		if (err.cause?.response?.status == 404 && err.cause?.response?.data?.message?.includes("no analysis found")) {
+		} else if (err.cause?.response?.status == 403 && err.cause?.response?.data?.message?.includes("Code scanning is not enabled for this repository")) {
 			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Code scanning is not configured, so marking backfill task complete");
 			return {
 				edges: [],
 				jiraPayload: undefined
 			};
+		} else if (err.cause?.response?.status == 404 && err.cause?.response?.data?.message?.includes("no analysis found")) {
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Code scanning is not configured, so marking backfill task complete");
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
+		} else if (err.cause?.response?.status == 404) {
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Repo not found, so marking backfill task complete");
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
+		} else if (err.cause?.response?.status == 451) {
+			logger.info({ err, githubInstallationId: gitHubClient.githubInstallationId }, "Code scanning not available due to legal reasons, so marking backfill task complete");
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
 		}
+		logger.error({ err, reason: err.cause?.response?.data }, "Code Scanning backfill failed");
+		// eslint-disable-next-line @typescript-eslint/no-throw-literal
 		throw err;
 	}
 
@@ -78,7 +98,7 @@ export const getCodeScanningAlertTask = async (
 	const nextPageCursorStr = smartCursor.copyWithPageNo(smartCursor.pageNo + 1).serialise();
 	const edgesWithCursor = [{ codeScanningAlerts: codeScanningAlerts, cursor: nextPageCursorStr }];
 
-	const jiraPayload = await transformCodeScanningAlert(codeScanningAlerts, repository, jiraHost, logger,  messagePayload.gitHubAppConfig?.gitHubAppId, gitHubClient);
+	const jiraPayload = await transformCodeScanningAlert(codeScanningAlerts, repository, jiraHost, logger, messagePayload.gitHubAppConfig?.gitHubAppId);
 	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload?.vulnerabilities?.length }, "Backfill task complete");
 	return {
 		edges: edgesWithCursor,
@@ -98,22 +118,20 @@ const areAllBuildsEarlierThanFromDate = (alerts: CodeScanningAlertResponseItem[]
 };
 
 
-const transformCodeScanningAlert = async (
+export const transformCodeScanningAlert = async (
 	alerts: CodeScanningAlertResponseItem[],
 	repository: Repository,
 	jiraHost: string,
 	logger: Logger,
-	gitHubAppId: number | undefined,
-	gitHubClient: GitHubInstallationClient
+	gitHubAppId: number | undefined
 ): Promise<JiraVulnerabilityBulkSubmitData> => {
 
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
 
-	const handleUnmappedState = (state: string) => logger.info(`Received unmapped state from code_scanning_alert sync: ${state}`);
-	const handleUnmappedSeverity = (severity: string | null) => logger.info(`Received unmapped severity from code_scanning_alert sync: ${severity ?? "Missing Severity"}`);
+	const handleUnmappedState = (state: string) => { logger.info(`Received unmapped state from code_scanning_alert sync: ${state}`); };
+	const handleUnmappedSeverity = (severity: string | null) => { logger.info(`Received unmapped severity from code_scanning_alert sync: ${severity ?? "Missing Severity"}`); };
 
-	const vulnerabilities = await Promise.all(alerts.map(async (alert) => {
-		const { data: alertInstances } = await gitHubClient.getCodeScanningAlertInstances(repository.owner.login, repository.name, alert.number);
+	const vulnerabilities = alerts.map((alert) => {
 		const identifiers = transformRuleTagsToIdentifiers(alert.rule.tags);
 
 		return {
@@ -122,8 +140,8 @@ const transformCodeScanningAlert = async (
 			updateSequenceNumber: Date.now(),
 			containerId: transformRepositoryId(repository.id, gitHubClientConfig.baseUrl),
 			// display name cannot exceed 255 characters
-			displayName: truncate(alert.rule.description || alert.rule.name, { length: 254 }),
-			description: getCodeScanningVulnDescription(alert, identifiers, alertInstances, logger),
+			displayName: truncate(alert.rule.description || alert.rule.name || `Code scanning alert #${alert.number}`, { length: 254 }),
+			description: getCodeScanningVulnDescription(alert, identifiers, logger),
 			url: alert.html_url,
 			type: "sast",
 			introducedDate: alert.created_at,
@@ -134,10 +152,10 @@ const transformCodeScanningAlert = async (
 			...(identifiers ? { identifiers } : null),
 			status: transformGitHubStateToJiraStatus(alert.state, handleUnmappedState),
 			additionalInfo: {
-				content: alert.tool.name
+				content: truncate(alert.tool.name, { length: 254 })
 			}
 		};
-	}));
+	});
 	return { vulnerabilities };
 
 };

@@ -3,7 +3,7 @@ import Logger from "bunyan";
 import cluster from "cluster";
 import { exec } from "child_process";
 import { logInfoSampled } from "utils/log-sampled";
-import glob from "glob";
+import G from "glob";
 import fs from "fs";
 import AWS from "aws-sdk";
 import { v4 as UUID } from "uuid";
@@ -12,6 +12,7 @@ import { GenerateOnceCoredumpGenerator } from "services/generate-once-coredump-g
 import { GenerateOncePerNodeHeadumpGenerator } from "services/generate-once-per-node-headump-generator";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import oom from "node-oom-heapdump";
+import { ManagedUpload } from "aws-sdk/clients/s3";
 
 const SHUTDOWN_MSG = "shutdown";
 const HEAPDUMP_ON_CRASH_MSG = "heapdump_on_crash";
@@ -37,8 +38,12 @@ export const startMonitorOnWorker = (parentLogger: Logger, workerConfig: {
 
 	// Not invoking inline because "maybeGenerateDump()" are synchronous calls, don't want to make it asynchronous just
 	// because of the flag: much more difficult to test.
-	const flagInterval = setInterval(async () => {
-		dumpsFlagValue = await booleanFlag(BooleanFlags.GENERATE_CORE_HEAP_DUMPS_ON_LOW_MEM);
+	const flagInterval = setInterval(() => {
+		booleanFlag(BooleanFlags.GENERATE_CORE_HEAP_DUMPS_ON_LOW_MEM).then((value) => {
+			dumpsFlagValue = value;
+		}).catch((err: unknown) => {
+			logger.error({ err }, "cannot get flag value");
+		});
 	}, 1000);
 
 	const coredumpInterval = setInterval(() => {
@@ -67,6 +72,7 @@ export const startMonitorOnWorker = (parentLogger: Logger, workerConfig: {
 		if (msg === HEAPDUMP_ON_CRASH_MSG) {
 			if (dumpsFlagValue) {
 				logger.warn("charging heapdump on crash");
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 				oom({
 					path: generateHeapdumpPathOnOom(process.pid.toString())
 				});
@@ -90,7 +96,7 @@ export const startMonitorOnWorker = (parentLogger: Logger, workerConfig: {
 const logRunningProcesses = (logger: Logger) => {
 	exec("ps aux", (err, stdout) => {
 		if (err) {
-			logger.error({ err }, `exec error: ${err.toString()}`);
+			logger.error({ err }, `exec error: ${err.message}`);
 			return;
 		}
 
@@ -111,7 +117,7 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 	logger.info(config, "master config");
 
 	const registeredWorkers: Record<string, boolean> = { }; // pid => true
-	const liveWorkers: Record<string, number> = { }; // pid => timestamp
+	const liveWorkers: Map<string, number> = new Map(); // pid => timestamp
 
 	const registerNewWorkers = () => {
 		logInfoSampled(logger, "monRegWorkers", `registering workers`, 100);
@@ -124,10 +130,10 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 					registeredWorkers[workerPid] = true;
 					worker.on("message", () => {
 						logInfoSampled(logger, "workerIsAlive:" + workerPid.toString(), `received message from worker ${workerPid}, marking as live`, 100);
-						liveWorkers[workerPid] = Date.now();
+						liveWorkers.set(String(workerPid), Date.now());
 					});
 					worker.on("exit", (code, signal) => {
-						glob("/tmp/*", (err: Error, tmpFiles: Array<string>) => {
+						G("/tmp/*", (err: Error | null, tmpFiles: string[]) => {
 							if (err) {
 								logger.error("Cannot get /tmp files using glob");
 								return;
@@ -204,14 +210,14 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 			logInfoSampled(logger, `removing dead workers`, `removing dead workers`, 100);
 			const keysToKill: Array<string> = [];
 			const now = Date.now();
-			Object.keys(liveWorkers).forEach((key) => {
-				if (now - liveWorkers[key] > config.workerUnresponsiveThresholdMsecs) {
+			liveWorkers.forEach((value, key) => {
+				if (now - value > config.workerUnresponsiveThresholdMsecs) {
 					keysToKill.push(key);
 				}
 			});
 			keysToKill.forEach((key) => {
 				logger.info(`remove worker with pid=${key} from live workers`);
-				delete liveWorkers[key];
+				liveWorkers.delete(key);
 				logRunningProcesses(logger);
 			});
 		} else {
@@ -220,7 +226,7 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 	};
 
 	const maybeSendShutdownToAllWorkers = () => {
-		const nLiveWorkers = Object.keys(liveWorkers).length;
+		const nLiveWorkers = liveWorkers.size;
 		if (areWorkersReady() && (nLiveWorkers < config.numberOfWorkersThreshold)) {
 			logger.info({
 				nLiveWorkers
@@ -240,7 +246,7 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 	const maybeUploadeDumpFiles = () => {
 		const now = new Date(); // fix time early for testing, while timers are still frozen
 
-		glob("/tmp/dump*.ready", (err: Error, dumpFiles: Array<string>) => {
+		G("/tmp/dump*.ready", (err: Error | null, dumpFiles: string[]) => {
 			if (err) {
 				logger.error("Cannot get dump files using glob");
 				return;
@@ -265,7 +271,7 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 
 				uploadLogger.info({ uploadParams }, "about to upload dump");
 
-				s3.upload(uploadParams, (err, data) => {
+				s3.upload(uploadParams, (err: unknown, data: ManagedUpload.SendData) => {
 					if (err) {
 						uploadLogger.error({ err }, `cannot upload ${uploadInProgressFile}`);
 					} else {

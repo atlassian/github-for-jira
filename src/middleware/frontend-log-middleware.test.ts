@@ -25,13 +25,14 @@ describe("frontend-log-middleware", () => {
 		} as Request;
 
 		response = {
-			once: jest.fn()
+			once: jest.fn(),
+			locals: {}
 		} as unknown as Response;
 	});
 
 	it("preserves old fields", async () => {
 		await LogMiddleware(request, response, next);
-		expect(request.log?.fields?.foo).toBe(123);
+		expect(request.log.fields?.foo).toBe(123);
 	});
 
 	describe("log level FF", () => {

@@ -30,6 +30,7 @@ const DELAY = isNodeTest() ? 10 : 500;
  *   const encrypted = await EncryptionClient.encrypt(EncryptionSecretKeyEnum.GITHUB_SERVER_APP, "super-secret-secret");
  *
  */
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class EncryptionClient {
 
 	protected static readonly axios: AxiosInstance = axios.create({

@@ -19,7 +19,7 @@ const logger = getLogger("url-params");
 export const urlParamsMiddleware = (config: AxiosRequestConfig): AxiosRequestConfig => {
 	const uri = () => `${config.baseURL || ""}${config.url || ""}`;
 	// If uri is empty and there's no url params, just skip this middleware
-	if (!uri()?.length) {
+	if (!uri().length) {
 		return config;
 	}
 
@@ -28,13 +28,14 @@ export const urlParamsMiddleware = (config: AxiosRequestConfig): AxiosRequestCon
 
 	Object.entries(config.urlParams || {})
 		.forEach(([k, v]) => {
-			if (!k || !v?.toString) {
+			if (!k || !v || !String(v)) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				logger.error({ k, v, config }, "Cannot use undefined or an unstringable key/value for URL Params");
 				return;
 			}
 			const key = `{${k}}`;
-			const value = encodeURIComponent(v.toString());
-			if (!value.length || !uri()?.includes(key)) {
+			const value = encodeURIComponent(String(v));
+			if (!value.length || !uri().includes(key)) {
 				logger.error({ key, value, config }, "URL Param doesn't exist in url path - ignoring");
 				return;
 			}

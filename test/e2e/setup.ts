@@ -24,6 +24,6 @@ export default async function setup() {
 
 	// Check to make sure state exists before continuing
 	if (!stateExists(testData.jira.roles.admin) || !stateExists(testData.github.roles.admin)) {
-		throw "Missing state";
+		throw new Error("Missing state");
 	}
 }

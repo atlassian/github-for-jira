@@ -1,6 +1,7 @@
 import { AxiosResponse } from "axios";
 import { GraphQLError } from "./github-client-errors";
 import { Octokit } from "@octokit/rest";
+import { JiraAuthor } from "~/src/interfaces/jira";
 
 export enum SortDirection {
 	ASC = "asc",
@@ -151,6 +152,14 @@ export type CodeScanningAlertResponseItem = {
 	most_recent_instance: CodeScanningAlertResponseItemMostRecentInstance;
 };
 
+export interface Commit {
+	author: JiraAuthor;
+	authoredDate: string;
+	message: string;
+	oid: string;
+	url: string;
+}
+
 export interface Branch {
 	associatedPullRequests: {
 		nodes: {
@@ -169,7 +178,9 @@ export interface Branch {
 		oid: string;
 		message: string;
 		url: string;
-		history: any;
+		history: {
+			nodes: Commit[];
+		}
 	};
 }
 
@@ -198,12 +209,4 @@ type CodeScanningAlertResponseItemMostRecentInstance = {
 	state: string;
 	commit_sha: string;
 	html_url: string;
-}
-
-export type CodeScanningAlertInstanceResponseItem = {
-	ref: string;
-	environment: string;
-	category: string;
-	state: string;
-	commit_sha: string;
 }

@@ -1,4 +1,4 @@
-export const TEN_MINUTES = 10 * 60 * 1000;
+export const NINE_MINUTES_MSEC = 9 * 60 * 1000;
 export const ONE_MINUTE = 60 * 1000;
 
 export class AuthToken {

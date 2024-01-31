@@ -5,7 +5,8 @@ import {
 	GithubClientInvalidPermissionsError,
 	GithubClientRateLimitingError,
 	GithubClientNotFoundError,
-	GithubClientSSOLoginError
+	GithubClientSSOLoginError,
+	GithubClientCommitNotFoundBySHAError
 } from "./github-client-errors";
 import Logger from "bunyan";
 import { statsd } from "config/statsd";
@@ -164,6 +165,17 @@ export const handleFailedRequest = (rootLogger: Logger) =>
 					remote: response.data.message
 				}, "not found");
 				return Promise.reject(mappedError);
+			}
+
+			if (status === 422) {
+				if ((String(err.response?.data?.message) || "").toLocaleLowerCase().includes("no commit found for sha")) {
+					const mappedError = new GithubClientCommitNotFoundBySHAError(err);
+					logger.warn({
+						err: mappedError,
+						remote: response.data.message
+					}, "commit not found by sha");
+					return Promise.reject(mappedError);
+				}
 			}
 
 			const isWarning = status && (status >= 300 && status < 500 && status !== 400);

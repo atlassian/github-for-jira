@@ -55,7 +55,7 @@ export class GitHubUserClient extends GitHubClient {
 				cursor
 			}, { graphQuery: "GetRepositoriesQuery" });
 			return response.data.data;
-		} catch (err) {
+		} catch (err: unknown) {
 			this.logger.error({ err }, "Could not fetch repositories");
 			throw err;
 		}
@@ -67,7 +67,7 @@ export class GitHubUserClient extends GitHubClient {
 				first
 			}, { graphQuery: "UserOrganizationsQuery" });
 			return response.data.data;
-		} catch (err) {
+		} catch (err: unknown) {
 			this.logger.error({ err }, "Could not fetch organizations");
 			throw err;
 		}

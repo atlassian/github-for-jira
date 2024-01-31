@@ -42,7 +42,7 @@ const transformSubscriptions = async (
 						url: omitRepoNameFromUrl(repoUrl, repoName),
 						avatarUrl: avatarUrl || DEFAULT_AVATAR
 					};
-				} catch (error) {
+				} catch (error: unknown) {
 					logger.error(e);
 					return undefined;
 				}

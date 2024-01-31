@@ -27,7 +27,7 @@ describe("heapdump-generator", () => {
 		try {
 			fs.unlinkSync(path);
 			// eslint-disable-next-line no-empty
-		} catch (err) {
+		} catch (err: unknown) {
 
 		}
 	};
@@ -49,7 +49,7 @@ describe("heapdump-generator", () => {
 		expect(generator.maybeGenerateDump()).toBeTruthy();
 		expect(v8.getHeapSnapshot).toBeCalled();
 		await waitUntil(() => {
-			return Promise.resolve(expect(fs.readFileSync("/tmp/dump_heap.ready").toLocaleString()).toStrictEqual("the heapdump"));
+			return Promise.resolve(() => { expect(fs.readFileSync("/tmp/dump_heap.ready").toLocaleString()).toStrictEqual("the heapdump"); });
 		});
 	});
 
@@ -57,7 +57,7 @@ describe("heapdump-generator", () => {
 		(hasEnoughFreeHeap as jest.Mock).mockReturnValue(false);
 		expect(generator.maybeGenerateDump()).toBeTruthy();
 		await waitUntil(() => {
-			return Promise.resolve(expect(fs.readFileSync("/tmp/dump_heap.ready")).toBeTruthy());
+			return Promise.resolve(() => { expect(fs.readFileSync("/tmp/dump_heap.ready")).toBeTruthy(); });
 		});
 		expect(generator.maybeGenerateDump()).toBeFalsy();
 		expect(v8.getHeapSnapshot).toBeCalledTimes(1);

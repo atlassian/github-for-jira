@@ -174,7 +174,7 @@ export const verifySymmetricJwtTokenMiddleware = (secret: string, tokenType: Tok
 		validateSymmetricJwt(secret, getJWTRequest(req), tokenType, token);
 		req.log.info("JWT Token Verified Successfully!");
 		next();
-	} catch (error) {
+	} catch (error: unknown) {
 		req.log.error(error, "Error happened when validating JWT token");
 		sendError(res, 401, "Unauthorized");
 		return;
@@ -190,7 +190,7 @@ const isStagingTenant = (req: Request): boolean => {
 			const host = new URL(hostBaseUrl).hostname;
 			return /\.jira-dev\.com$/.test(host);
 		}
-	} catch (err) {
+	} catch (err: unknown) {
 		req.log.error(err, "Error determining Jira instance environment");
 	}
 	return false;
@@ -202,7 +202,7 @@ export const validateAsymmetricJwtTokenMiddleware = async (req: Request, res: Re
 		await validateAsymmetricJwtToken(getJWTRequest(req), token, isStagingTenant(req));
 		req.log.info("JWT Token Verified Successfully!");
 		next();
-	} catch (err) {
+	} catch (err: unknown) {
 		req.log.info(err, "Could not validate JWT token");
 		res.status(401).json({
 			message: "Unauthorized"

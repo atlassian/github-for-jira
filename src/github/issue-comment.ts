@@ -47,7 +47,7 @@ export const issueCommentWebhookHandler = async (
 			context.log.debug("Halting further execution for issueComment since linkifiedBody is empty");
 			return;
 		}
-	} catch (err) {
+	} catch (err: unknown) {
 		context.log.warn(
 			{ err, linkifiedBody, body: comment.body },
 			"Error while trying to find Jira keys in comment body"
@@ -66,7 +66,7 @@ export const issueCommentWebhookHandler = async (
 	try {
 		const githubResponse: GitHubIssue = await gitHubInstallationClient.updateIssueComment(updatedIssueComment);
 		status = githubResponse.status;
-	} catch (err) {
+	} catch (err: unknown) {
 		context.log.warn({ err }, "Cannot modify issue comment");
 	}
 	const { webhookReceived, name, log } = context;

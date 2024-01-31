@@ -54,7 +54,7 @@ export const transformBranch = async (gitHubInstallationClient: GitHubInstallati
 				}
 			]
 		};
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.warn(err, "Could not get latest commit from branch as the branch is not available yet on the API. Retrying later.");
 		throw err;
 	}

@@ -14,7 +14,6 @@ import {
 	transformGitHubSeverityToJiraSeverity,
 	transformGitHubStateToJiraStatus, transformRuleTagsToIdentifiers
 } from "~/src/transforms/util/github-security-alerts";
-import { CodeScanningAlertInstanceResponseItem } from "../github/client/github-client.types";
 
 const MAX_STRING_LENGTH = 255;
 
@@ -125,10 +124,9 @@ export const transformCodeScanningAlertToJiraSecurity = async (context: WebhookC
 		subTrigger: "code_scanning_alert"
 	};
 	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraHost, metrics, context.log, context.gitHubAppConfig?.gitHubAppId);
-	const { data: alertInstances } = await gitHubInstallationClient.getCodeScanningAlertInstances(repository.owner.login, repository.name, alert.number);
 
-	const handleUnmappedState = (state: string) => context.log.info(`Received unmapped state from code_scanning_alert webhook: ${state}`);
-	const handleUnmappedSeverity = (severity: string | null) => context.log.info(`Received unmapped severity from code_scanning_alert webhook: ${severity ?? "Missing Severity"}`);
+	const handleUnmappedState = (state: string) => { context.log.info(`Received unmapped state from code_scanning_alert webhook: ${state}`); };
+	const handleUnmappedSeverity = (severity: string | null) => { context.log.info(`Received unmapped severity from code_scanning_alert webhook: ${severity ?? "Missing Severity"}`); };
 
 	const identifiers = transformRuleTagsToIdentifiers(alert.rule.tags);
 
@@ -139,8 +137,9 @@ export const transformCodeScanningAlertToJiraSecurity = async (context: WebhookC
 			updateSequenceNumber: Date.now(),
 			containerId: transformRepositoryId(repository.id, gitHubInstallationClient.baseUrl),
 			// display name cannot exceed 255 characters
-			displayName: truncate(alert.rule.description || alert.rule.name, { length: 254 }),
-			description: getCodeScanningVulnDescription(alert, identifiers, alertInstances, context.log),
+			// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+			displayName: truncate(alert.rule.description || alert.rule.name || `Code scanning alert #${alert.number}`, { length: 254 }),
+			description: getCodeScanningVulnDescription(alert, identifiers, context.log),
 			url: alert.html_url,
 			type: "sast",
 			introducedDate: alert.created_at,
@@ -151,7 +150,7 @@ export const transformCodeScanningAlertToJiraSecurity = async (context: WebhookC
 			...(identifiers ? { identifiers } : null),
 			status: transformGitHubStateToJiraStatus(alert.state, handleUnmappedState),
 			additionalInfo: {
-				content: alert.tool.name
+				content: truncate(alert.tool.name, { length: 254 })
 			}
 		}]
 	};
@@ -161,37 +160,17 @@ export const transformCodeScanningAlertToJiraSecurity = async (context: WebhookC
 export const getCodeScanningVulnDescription = (
 	alert,
 	identifiers: { displayName: string, url: string; }[] | null,
-	alertInstances: CodeScanningAlertInstanceResponseItem[],
 	logger: Logger) => {
 	try {
-		const branches = getBranches(alertInstances);
 		const identifiersText = getIdentifiersText(identifiers);
 		// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-		const description = `**Vulnerability:** ${alert.rule.description}\n\n**Impact:** The vulnerability in ${alert.tool.name} impacts ${toSentence(branches)}.\n\n**Severity:** ${capitalize(alert.rule?.security_severity_level)}\n\nGitHub uses  [Common Vulnerability Scoring System (CVSS)](https://www.atlassian.com/trust/security/security-severity-levels) data to calculate security severity.\n\n**Status:** ${capitalize(alert.state)}\n\n**Weaknesses:** ${identifiersText}\n\nVisit the vulnerability’s [code scanning alert page](${alert.html_url}) in GitHub for a recommendation and relevant example.`;
+		const description = `**Vulnerability:** ${alert.rule.description}\n\n**Severity:** ${capitalize(alert.rule?.security_severity_level)}\n\nGitHub uses  [Common Vulnerability Scoring System (CVSS)](https://www.atlassian.com/trust/security/security-severity-levels) data to calculate security severity.\n\n**Status:** ${capitalize(alert.state)}\n\n**Weaknesses:** ${identifiersText}\n\nVisit the vulnerability’s [code scanning alert page](${alert.html_url}) in GitHub for impact, a recommendation, and a relevant example.`;
 		// description cannot exceed 5000 characters
 		return truncate(description, { length: 4999 });
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.warn({ err }, "Failed to construct vulnerability description");
 		return alert.rule?.description;
 	}
-};
-
-const toSentence = (branches: string[]) => {
-	if (!branches) {
-		return "";
-	}
-	if (branches.length == 1) {
-		return `${branches[0]} branch`;
-	}
-	const last = branches.pop();
-	return `${branches.join(" branch, ")} branch and ${last} branch`;
-};
-
-const getBranches = (alertInstances: CodeScanningAlertInstanceResponseItem[]): string[] => {
-	const branchesAlertInstances = alertInstances.filter(alertInstance => alertInstance.ref?.startsWith("refs/heads"));
-	return branchesAlertInstances.map(alertInstance => {
-		return alertInstance.ref.replace("refs/heads/", "");
-	});
 };
 
 const getIdentifiersText = (identifiers: { displayName: string, url: string; }[] | null): string => {

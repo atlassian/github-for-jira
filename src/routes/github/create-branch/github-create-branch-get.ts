@@ -23,7 +23,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	if (!jiraHost) {
 		logger.warn(Errors.MISSING_JIRA_HOST);
 		res.status(400).send(Errors.MISSING_JIRA_HOST);
-		return next();
+		next(); return;
 	}
 
 	const multiGHInstance = req.query.multiGHInstance;
@@ -33,7 +33,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	if (!issueKey) {
 		logger.error(Errors.MISSING_ISSUE_KEY);
 		res.status(400).send(Errors.MISSING_ISSUE_KEY);
-		return next(new Error(Errors.MISSING_ISSUE_KEY));
+		next(new Error(Errors.MISSING_ISSUE_KEY)); return;
 	}
 	const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppConfig.gitHubAppId || null);
 
@@ -42,7 +42,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	if (!subscriptions) {
 		res.render("no-configuration.hbs", {
 			nonce: res.locals.nonce,
-			configurationUrl: `${jiraHost}/plugins/servlet/ac/${envVars.APP_KEY}/github-select-product-page`
+			configurationUrl: `${jiraHost}/plugins/servlet/ac/${envVars.APP_KEY}/spa-index-page`
 		});
 
 		await sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {
@@ -119,7 +119,7 @@ const getReposBySubscriptions = async (subscriptions: Subscription[], logger: Lo
 			const repoOwners = await RepoSyncState.findAllRepoOwners(subscription);
 			const filteredRepos =  response.viewer.repositories.edges.filter(edge => repoOwners.has(edge.node.owner.login));
 			return filteredRepos.slice(0, MAX_REPOS_RETURNED);
-		} catch (err) {
+		} catch (err: unknown) {
 			logger.error({ err }, "Create branch - Failed to fetch repos for installation");
 			throw err;
 		}

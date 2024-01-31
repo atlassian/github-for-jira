@@ -33,11 +33,10 @@ class RawLogStream extends Writable {
 		this.writeStream = bformat({ outputMode, levelInString: true, color: isNodeDev() });
 	}
 
-	public async _write(record: ChunkData, encoding: BufferEncoding, next: Callback): Promise<void> {
-
+	public _write(record: ChunkData, encoding: BufferEncoding, next: Callback): void {
 		// Skip unwanted logs
 		if (filterHttpRequests(record)) {
-			return next();
+			next(); return;
 		}
 
 		const chunk = `${safeJsonStringify(record)}\n`;
@@ -48,13 +47,13 @@ class RawLogStream extends Writable {
 
 export class SafeRawLogStream extends RawLogStream {
 
-	public async _write(record: ChunkData, encoding: BufferEncoding, next: Callback): Promise<void> {
+	public _write(record: ChunkData, encoding: BufferEncoding, next: Callback): void {
 		// Skip unsafe data
 		if (record.unsafe) {
-			return next();
+			next(); return;
 		}
 		const hashedRecord = this.hashSensitiveData(record);
-		await super._write(hashedRecord, encoding, next);
+		super._write(hashedRecord, encoding, next);
 	}
 
 	private hashSensitiveData(record: ChunkData): Record<string, string | undefined> {
@@ -62,7 +61,7 @@ export class SafeRawLogStream extends RawLogStream {
 
 		Object.keys(recordClone).forEach(key => {
 			if (SENSITIVE_DATA_FIELDS.includes(key)) {
-				recordClone[key] = createHashWithSharedSecret(recordClone[key]);
+				recordClone[key] = createHashWithSharedSecret(recordClone[key] as string | undefined);
 			}
 		});
 

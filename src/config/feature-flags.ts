@@ -13,33 +13,27 @@ const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {
 
 export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
-	INNO_DRAFT_PR = "inno-draft-pr",
 	VERBOSE_LOGGING = "verbose-logging",
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
 	JIRA_ADMIN_CHECK = "jira-admin-check",
-	REMOVE_STALE_MESSAGES = "remove-stale-messages",
-	USE_NEW_PULL_ALGO = "use-new-pull-algo",
-	USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK = "use-dynamodb-for-deployment-webhook",
-	USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL = "use-dynamodb-for-deployment-backfill",
 	LOG_CURLV_OUTPUT = "log-curlv-output",
-	SKIP_REQUESTED_REVIEWERS = "skip-requested-reviewers",
 	ENABLE_SUBSCRIPTION_DEFERRED_INSTALL = "enable-subscription-deferred-install",
-	EARLY_EXIT_ON_VALIDATION_FAILED = "early-exit-on-validation-failed",
-	ENABLE_CONNECTED_REPOS_VIEW="enable-connected-repos-view",
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery-again",
-	ENABLE_GENERIC_CONTAINERS = "enable-generic-containers",
 	ENABLE_GITHUB_SECURITY_IN_JIRA = "enable-github-security-in-jira",
 	DELETE_MESSAGE_ON_BACKFILL_WHEN_OTHERS_WORKING_ON_IT = "delete-message-on-backfill-when-others-working-on-it",
-	USE_NEW_5KU_SPA_EXPERIENCE = "enable-5ku-experience--cloud-connect",
-	USE_INSTALLATION_CLIENT_CHECK_PERMISSION = "use-installation-client-to-check-permission",
+	ENABLE_5KU_BACKFILL_PAGE = "enable-5ku-experience-backfill-page",
+	USE_DYNAMODB_TO_PERSIST_AUDIT_LOG = "use-dynamodb-to-persist-audit-log",
 	USE_CUSTOM_ROOT_CA_BUNDLE = "use-custom-root-ca-bundle",
-	GENERATE_CORE_HEAP_DUMPS_ON_LOW_MEM = "generate-core-heap-dumps-on-low-mem"
+	GENERATE_CORE_HEAP_DUMPS_ON_LOW_MEM = "generate-core-heap-dumps-on-low-mem",
+	USE_RATELIMIT_ON_JIRA_CLIENT = "use-ratelimit-on-jira-client",
+	SKIP_PROCESS_QUEUE_IF_ISSUE_NOT_FOUND = "skip-process-queue-when-issue-not-exists",
+	SKIP_COMMIT_IF_SHA_NOT_FOUND_ON_LAST_TRY = "skip-commit-if-sha-not-found-on-last-try",
+	SKIP_SENDING_COMMIT_ASSOCIATION = "skip-sending-commit-association"
 }
 
 export enum StringFlags {
 	BLOCKED_INSTALLATIONS = "blocked-installations",
 	LOG_LEVEL = "log-level",
-	HEADERS_TO_ENCRYPT = "headers-to-encrypt",
 	SEND_ALL = "send-all"
 }
 
@@ -47,11 +41,10 @@ export enum NumberFlags {
 	GITHUB_CLIENT_TIMEOUT = "github-client-timeout",
 	SYNC_MAIN_COMMIT_TIME_LIMIT = "sync-main-commit-time-limit",
 	PREEMPTIVE_RATE_LIMIT_THRESHOLD = "preemptive-rate-limit-threshold",
-	NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL = "number-of-pr-pages-to-fetch-in-parallel",
 	NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL = "number-of-build-to-fetch-in-parallel",
 	BACKFILL_PAGE_SIZE = "backfill-page-size",
-	BACKFILL_MAX_SUBTASKS = "backfill-max-subtasks",
-	INSTALLATION_TOKEN_CACHE_MAX_SIZE = "installation-token-cache-max-size"
+	INSTALLATION_TOKEN_CACHE_MAX_SIZE = "installation-token-cache-max-size",
+	SKIP_PROCESS_QUEUE_IF_ISSUE_NOT_FOUND_TIMEOUT = "skip-process-queue-when-issue-not-exists-timeout"
 }
 
 const createLaunchdarklyUser = (key?: string): LDUser => {
@@ -70,8 +63,8 @@ const getLaunchDarklyValue = async <T = boolean | string | number>(flag: Boolean
 	try {
 		await launchdarklyClient.waitForInitialization();
 		const user = createLaunchdarklyUser(key);
-		return launchdarklyClient.variation(flag, user, defaultValue);
-	} catch (err) {
+		return launchdarklyClient.variation(flag, user, defaultValue) as Promise<T>;
+	} catch (err: unknown) {
 		logger.error({ flag, err }, "Error resolving value for feature flag");
 		return defaultValue;
 	}
@@ -102,9 +95,9 @@ export const shouldSendAll = async (type: ShouldSendAllStringTypes, jiraHost: st
 		// Full set:
 		// ["branches-backfill", "builds-backfill", "commits-backfill", "deployments-backfill", "prs-backfill", "branches", "builds", "commits", "deployments", "prs"]
 		const sendAllString = await stringFlag(StringFlags.SEND_ALL, "[]", jiraHost);
-		const sendAllArray: string[] = JSON.parse(sendAllString);
+		const sendAllArray: string[] = JSON.parse(sendAllString) as string[];
 		return Array.isArray(sendAllArray) && sendAllArray.includes(type);
-	} catch (e) {
+	} catch (e: unknown) {
 		logger.error({ err: e, type }, "Cannot define if should send all");
 		return false;
 	}
@@ -113,9 +106,9 @@ export const shouldSendAll = async (type: ShouldSendAllStringTypes, jiraHost: st
 export const isBlocked = async (jiraHost: string, installationId: number, logger: Logger): Promise<boolean> => {
 	try {
 		const blockedInstallationsString = await stringFlag(StringFlags.BLOCKED_INSTALLATIONS, "[]", jiraHost);
-		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString);
+		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString) as number[];
 		return Array.isArray(blockedInstallations) && blockedInstallations.includes(installationId);
-	} catch (e) {
+	} catch (e: unknown) {
 		logger.error({ err: e, installationId }, "Cannot define if isBlocked");
 		return false;
 	}

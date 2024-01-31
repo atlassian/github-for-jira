@@ -4,6 +4,9 @@ import userEvent from "@testing-library/user-event";
 import { BrowserRouter } from "react-router-dom";
 import StartConnection from "./index";
 
+jest.mock("./../../feature-flags", () => ({
+	enableBackfillStatusPage: false
+}));
 jest.mock("../../analytics/analytics-proxy-client", () => {
 	return {
 		analyticsProxyClient: {
@@ -12,6 +15,7 @@ jest.mock("../../analytics/analytics-proxy-client", () => {
 		}
 	};
 });
+(global as unknown as { FRONTEND_FEATURE_FLAGS: Record<string, boolean> }).FRONTEND_FEATURE_FLAGS = { ENABLE_5KU_BACKFILL_PAGE: false };
 
 test("Entry Config Screen", async () => {
 	render(

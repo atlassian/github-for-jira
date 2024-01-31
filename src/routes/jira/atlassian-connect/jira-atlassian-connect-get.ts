@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { envVars } from "config/env";
 import { compact, map } from "lodash";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 const instance = envVars.APP_KEY.split(".").pop();
 const isProd = instance === "production";
@@ -37,7 +36,7 @@ const SEARCH_CONNECTED_WORKSPACES_ENDPOINT = `${envVars.APP_URL}/jira/workspaces
 const SEARCH_REPOSITORIES_ENDPOINT = `${envVars.APP_URL}/jira/workspaces/repositories/search`;
 const ASSOCIATE_REPOSITORY_ENDPOINT = `${envVars.APP_URL}/jira/workspaces/repositories/associate`;
 
-export const getGenericContainerUrls = async (): Promise<string[]> => {
+export const getGenericContainerUrls = (): string[] => {
 	return [
 		SEARCH_CONNECTED_WORKSPACES_ENDPOINT,
 		SEARCH_REPOSITORIES_ENDPOINT,
@@ -45,29 +44,21 @@ export const getGenericContainerUrls = async (): Promise<string[]> => {
 	];
 };
 
-export const defineJiraDevelopmentToolModuleActions = async (jiraHost: string): Promise<JiraDevelopmentToolActions> => {
-	if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost)) {
-		return {
-			createBranch: {
-				templateUrl: CREATE_BRANCH_ENDPOINT
-			},
-			searchConnectedWorkspaces: {
-				templateUrl: SEARCH_CONNECTED_WORKSPACES_ENDPOINT
-			},
-			searchRepositories: {
-				templateUrl: SEARCH_REPOSITORIES_ENDPOINT
-			},
-			associateRepository: {
-				templateUrl: ASSOCIATE_REPOSITORY_ENDPOINT
-			}
-		};
-	} else {
-		return {
-			createBranch: {
-				templateUrl: CREATE_BRANCH_ENDPOINT
-			}
-		};
-	}
+export const defineJiraDevelopmentToolModuleActions = (): JiraDevelopmentToolActions => {
+	return {
+		createBranch: {
+			templateUrl: CREATE_BRANCH_ENDPOINT
+		},
+		searchConnectedWorkspaces: {
+			templateUrl: SEARCH_CONNECTED_WORKSPACES_ENDPOINT
+		},
+		searchRepositories: {
+			templateUrl: SEARCH_REPOSITORIES_ENDPOINT
+		},
+		associateRepository: {
+			templateUrl: ASSOCIATE_REPOSITORY_ENDPOINT
+		}
+	};
 };
 
 const	modules = {
@@ -215,10 +206,11 @@ const	modules = {
 			name: {
 				value: "GitHub for Jira SPA Index Page"
 			},
-			url: "/spa",
+			url: "/spa?from={ac.from}",
 			location: "none",
 			conditions: adminCondition
-		}, {
+		},
+		{
 			url: "/jira/subscription/{ac.subscriptionId}/repos?pageNumber={ac.pageNumber}&repoName={ac.repoName}&syncStatus={ac.syncStatus}",
 			name: {
 				value: "Sync status"
@@ -265,8 +257,7 @@ export const getSecurityContainerActionUrls = [
 ];
 
 export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promise<void> => {
-	const { jiraHost } =  res.locals;
-	modules.jiraDevelopmentTool.actions = await defineJiraDevelopmentToolModuleActions(jiraHost);
+	modules.jiraDevelopmentTool.actions = defineJiraDevelopmentToolModuleActions();
 
 	res.status(200).json({
 		apiMigrations: {

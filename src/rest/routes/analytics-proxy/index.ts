@@ -1,6 +1,7 @@
 import { errorWrapper } from "~/src/rest/helper";
 import { Request, Response } from "express";
 import { ScreenEventProps, sendAnalytics, TrackOpUiEventProps } from "~/src/util/analytics-client";
+import { BaseLocals } from "..";
 
 type AnalyticsScreenPayload = {
 	eventType: "screen";
@@ -39,7 +40,7 @@ const isAnalyticsTrackUiPayload = (obj: unknown): obj is AnalyticsTrackUiPayload
 	isTrackUiEventProps(obj.eventProperties) &&
 	(obj.eventAttributes === undefined || isRecord(obj.eventAttributes));
 
-export const AnalyticsProxyHandler = errorWrapper("AnalyticsProxyHandler", async function AnalyticsProxyPost(req: Request, res: Response<string>) {
+export const AnalyticsProxyHandler = errorWrapper("AnalyticsProxyHandler", async function AnalyticsProxyPost(req: Request, res: Response<string, BaseLocals>) {
 	if (isAnalyticsScreenPayload(req.body)) {
 		await sendAnalytics(res.locals.jiraHost, "screen", req.body.eventProperties, req.body.eventAttributes || {}, res.locals.accountId);
 		res.sendStatus(202);

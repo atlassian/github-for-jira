@@ -65,7 +65,7 @@ export const getSecretScanningVulnDescription = (alert: SecretScanningAlertRespo
 		const description = `**Vulnerability:** Fix ${alert.secret_type_display_name}\n\n**State:** ${capitalize(alert.state)}\n\n**Secret type:** ${alert.secret_type}\n\nVisit the vulnerability’s [secret scanning alert page](${alert.html_url}) in GitHub to learn more about the potential active secret and remediation steps.`;
 		// description cannot exceed 5000 characters
 		return truncate(description, { length: 4999 });
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.warn({ err }, "Failed to construct vulnerability description");
 		return alert.secret_type_display_name;
 	}

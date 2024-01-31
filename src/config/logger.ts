@@ -1,3 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import Logger, { createLogger, LogLevel, Serializers, Stream } from "bunyan";
 import { isArray, isString, merge, omit, mapKeys } from "lodash";
 import { SafeRawLogStream } from "utils/logger-utils";
@@ -8,7 +13,7 @@ const REPO_URL_REGEX = /^(\/api\/v3)?\/repos\/([^/]+)\/([^/]+)\/(.*)$/;
 
 const maybeRemoveOrgAndRepo = (url: string) => {
 	if (url.match(REPO_URL_REGEX)) {
-		return url.replace(REPO_URL_REGEX, (_, maybeV3Prefix, org, repo, rest) => {
+		return url.replace(REPO_URL_REGEX, (_, maybeV3Prefix: string, org: string, repo: string, rest: string) => {
 			return [
 				maybeV3Prefix,
 				"repos",
@@ -26,7 +31,7 @@ const COMPARE_URL_REGEX = /^(.*)\/compare\/(.*)\.\.\.(.*)$/;
 const isCompareUrl = (url: string) => url.match(COMPARE_URL_REGEX);
 
 const removeBranchesFromCompareUrl = (url: string) =>
-	url.replace(COMPARE_URL_REGEX, (_, prefix, branch1, branch2) => {
+	url.replace(COMPARE_URL_REGEX, (_, prefix: string, branch1: string, branch2: string) => {
 		return [
 			prefix,
 			"compare",
@@ -40,7 +45,7 @@ const GIT_REF_URL_REGEX = /^(.*)\/git\/ref\/([^/]+)$/;
 const isGitRefUrl = (url: string) => url.match(GIT_REF_URL_REGEX);
 
 const removeGitRefFromUrl = (url: string) =>
-	url.replace(GIT_REF_URL_REGEX, (_, prefix: string, gitRef) =>
+	url.replace(GIT_REF_URL_REGEX, (_, prefix: string, gitRef: string) =>
 		`${prefix}/git/ref/${createHashWithSharedSecret(decodeURIComponent(gitRef))}`
 	);
 
@@ -49,7 +54,7 @@ const USERS_URL_REGEX = /^(\/api\/v3)?\/users\/([^/]+)$/;
 const isUsersUrl = (url: string) => url.match(USERS_URL_REGEX);
 
 const removeUserFromUrl = (url: string) =>
-	url.replace(USERS_URL_REGEX, (_, maybeV3Prefix, userName) =>
+	url.replace(USERS_URL_REGEX, (_, maybeV3Prefix: string, userName: string) =>
 		[
 			maybeV3Prefix,
 			"users",
@@ -62,7 +67,7 @@ const REST_DEVINFO_BRANCH_URL_REGEX = /^\/rest\/devinfo\/([^/]+)\/repository\/([
 const isDevInfoBranchUrl = (url: string) => url.match(REST_DEVINFO_BRANCH_URL_REGEX);
 
 const removeBranchFromDevInfoUrl = (url: string) =>
-	url.replace(REST_DEVINFO_BRANCH_URL_REGEX, (_, version, repoNo, branchaName, updateSequenceId: string) =>
+	url.replace(REST_DEVINFO_BRANCH_URL_REGEX, (_, version: string, repoNo: string, branchaName: string, updateSequenceId: string) =>
 		[
 			"/rest/devinfo",
 			version,
@@ -85,7 +90,7 @@ const JIRA_HOST_QUERY_PARAM_REGEX = /jiraHost=(https%3A%2F%2F[\w-]+\.atlassian\.
 
 const maybeCensorJiraHostInQueryParams = (url: string) => {
 	if (url.match(JIRA_HOST_QUERY_PARAM_REGEX)) {
-		return url.replace(JIRA_HOST_QUERY_PARAM_REGEX, (_, jiraHostEncoded) =>
+		return url.replace(JIRA_HOST_QUERY_PARAM_REGEX, (_, jiraHostEncoded: string) =>
 			`jiraHost=${createHashWithSharedSecret(decodeURIComponent(jiraHostEncoded))}`);
 	}
 	return url;
@@ -93,7 +98,7 @@ const maybeCensorJiraHostInQueryParams = (url: string) => {
 
 
 const removeOwnersAndReposFromUrl = (url: string) =>
-	url.replace(CREATE_BRANCH_PAGE_BRANCHES_URL_REGEX, (_, prefix, owners, repos, suffix) =>
+	url.replace(CREATE_BRANCH_PAGE_BRANCHES_URL_REGEX, (_, prefix: string, owners: string, repos: string, suffix: string) =>
 		[
 			prefix,
 			"owners",
@@ -101,10 +106,10 @@ const removeOwnersAndReposFromUrl = (url: string) =>
 			"repos",
 			createHashWithSharedSecret(decodeURIComponent(repos)),
 			"branches"
-		].join("/") + (suffix as string)
+		].join("/") + suffix
 	);
 
-const censorUrl = (url) => {
+const censorUrl = (url: string): string => {
 	if (!url) {
 		return url;
 	}
@@ -146,13 +151,13 @@ const censorUrl = (url) => {
 
 const MSG_WITH_REPO_NAME_REGEX = /^(.*) Repository with the name '(.*)\/(.*)'.$/;
 
-const censorMessage = (msg) => {
+const censorMessage = (msg: string): string => {
 	if (!msg) {
 		return msg;
 	}
 	if (typeof msg === "string") {
 		if (msg.match(MSG_WITH_REPO_NAME_REGEX)) {
-			return msg.replace(MSG_WITH_REPO_NAME_REGEX, (_, prefix, orgName, repoName) => {
+			return msg.replace(MSG_WITH_REPO_NAME_REGEX, (_, prefix: string, orgName: string, repoName: string) => {
 				return [
 					prefix,
 					"Repository with the name",
@@ -215,7 +220,7 @@ const requestSerializer = (req) => req && ({
 	remotePort: req.socket?.remotePort
 });
 
-const graphQlErrorsSerializer = (errors: Array<any>) => (
+const graphQlErrorsSerializer = (errors: Array<Error>) => (
 	{
 		errors: errors.map(error => errorSerializer(error))
 	}

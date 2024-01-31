@@ -3,7 +3,9 @@ import { getLogger } from "config/logger";
 import {
 	GithubClientBlockedIpError,
 	GithubClientInvalidPermissionsError,
-	GithubClientNotFoundError, GithubClientSSOLoginError
+	GithubClientNotFoundError,
+	GithubClientSSOLoginError,
+	GithubClientCommitNotFoundBySHAError
 } from "~/src/github/client/github-client-errors";
 
 describe("github-client-interceptors", () => {
@@ -17,8 +19,8 @@ describe("github-client-interceptors", () => {
 		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
 		try {
 			await client.getPage(1000);
-		} catch (err) {
-			error = err;
+		} catch (err: unknown) {
+			error = err as Error;
 		}
 		expect(error!).toBeInstanceOf(GithubClientInvalidPermissionsError);
 	});
@@ -33,8 +35,8 @@ describe("github-client-interceptors", () => {
 		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
 		try {
 			await client.getPage(1000);
-		} catch (err) {
-			error = err;
+		} catch (err: unknown) {
+			error = err as Error;
 		}
 		expect(error!).toBeInstanceOf(GithubClientNotFoundError);
 	});
@@ -48,8 +50,8 @@ describe("github-client-interceptors", () => {
 		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
 		try {
 			await client.getPage(1000);
-		} catch (err) {
-			error = err;
+		} catch (err: unknown) {
+			error = err as Error;
 		}
 		expect(error!).toBeInstanceOf(GithubClientBlockedIpError);
 	});
@@ -61,9 +63,25 @@ describe("github-client-interceptors", () => {
 		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
 		try {
 			await client.getPage(1000);
-		} catch (err) {
-			error = err;
+		} catch (err: unknown) {
+			error = err as Error;
 		}
 		expect(error!).toBeInstanceOf(GithubClientSSOLoginError);
+	});
+
+	it("correctly maps commits not found by sha error", async () => {
+		gheNock.get("/").reply(422, {
+			"message": "No commit found for SHA: whatever the sha is",
+			"documentation_url": "https://docs.github.com"
+		});
+
+		let error: Error;
+		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
+		try {
+			await client.getPage(1000);
+		} catch (err: unknown) {
+			error = err as Error;
+		}
+		expect(error!).toBeInstanceOf(GithubClientCommitNotFoundBySHAError);
 	});
 });

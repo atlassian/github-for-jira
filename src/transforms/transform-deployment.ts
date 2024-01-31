@@ -16,7 +16,7 @@ import { Subscription } from "models/subscription";
 import minimatch from "minimatch";
 import { getRepoConfig } from "services/user-config-service";
 import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
-import { booleanFlag, BooleanFlags, shouldSendAll } from "config/feature-flags";
+import { shouldSendAll, booleanFlag, BooleanFlags } from "config/feature-flags";
 import { findLastSuccessDeploymentFromCache } from "services/deployment-cache-service";
 import { statsd } from "config/statsd";
 import { metricDeploymentCache } from "config/metric-names";
@@ -45,7 +45,7 @@ const getLastSuccessfulDeployCommitSha = async (
 				return deployment.sha;
 			}
 		}
-	} catch (e) {
+	} catch (e: unknown) {
 		logger?.debug(`Failed to get deployment statuses.`);
 	}
 
@@ -117,7 +117,7 @@ const getLastSuccessDeploymentShaFromCache = async (
 			return lastSuccessful.commitSha;
 		}
 
-	} catch (e) {
+	} catch (e: unknown) {
 		statsd.increment(metricDeploymentCache.failed, { failType: "lookup", ...tags }, info);
 		logger.error({ err: e }, "Error look up deployment information from dynamodb");
 		throw e;
@@ -140,11 +140,11 @@ const getCommitsSinceLastSuccessfulDeploymentFromCache = async (
 
 	let lastSuccessfullyDeployedCommit: string | undefined = undefined;
 
-	if (type === "webhook" && await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, jiraHost)) {
+	if (type === "webhook") {
 		lastSuccessfullyDeployedCommit = await getLastSuccessDeploymentShaFromCache(type, jiraHost, repoId, currentDeployEnv, currentDeployDate, githubInstallationClient, logger);
 	}
 
-	if (type === "backfill" && await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost)) {
+	if (type === "backfill") {
 		lastSuccessfullyDeployedCommit = await getLastSuccessDeploymentShaFromCache(type, jiraHost, repoId, currentDeployEnv, currentDeployDate, githubInstallationClient, logger);
 	}
 
@@ -367,10 +367,13 @@ export const transformDeployment = async (
 	}
 
 	const allCommitsMessages = extractMessagesFromCommitSummaries(commitSummaries);
+
+	const shouldSkipSendingCommitAssociations = await booleanFlag(BooleanFlags.SKIP_SENDING_COMMIT_ASSOCIATION, jiraHost);
+
 	const associations = mapJiraIssueIdsCommitsAndServicesToAssociationArray(
 		jiraIssueKeyParser(`${deployment.ref}\n${message}\n${allCommitsMessages}`),
 		transformRepositoryId(payload.repository.id, githubInstallationClient.baseUrl),
-		commitSummaries,
+		shouldSkipSendingCommitAssociations ? [] : commitSummaries,
 		config
 	);
 

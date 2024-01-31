@@ -74,7 +74,7 @@ export const ApiInstallationSyncstateGet = async (req: Request, res: Response): 
 				"repoCreatedAt"
 			))
 		});
-	} catch (err) {
+	} catch (err: unknown) {
 		res.status(500).json(err);
 	}
 };

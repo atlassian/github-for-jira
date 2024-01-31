@@ -11,7 +11,7 @@ const isAlreadyEncryptedWithJiraHost = async (app: GitHubServerApp, field: strin
 	try {
 		await EncryptionClient.decrypt(app[field], { jiraHost });
 		return true;
-	} catch (e) {
+	} catch (e: unknown) {
 		return false;
 	}
 };
@@ -88,7 +88,7 @@ export const ReEncryptGitHubServerAppKeysPost = async (req: Request, res: Respon
 				gitHubClientSecret: originGitHubClientSecret
 			}, jiraHost);
 
-			const updatedApp: GitHubServerApp = (await GitHubServerApp.findByPk(app.id))!;
+			const updatedApp: GitHubServerApp | null = (await GitHubServerApp.findByPk(app.id));
 			if (
 				originWebhookSecret !== await updatedApp?.getDecryptedWebhookSecret(jiraHost)
 				|| originPrivateKey !== await updatedApp?.getDecryptedPrivateKey(jiraHost)

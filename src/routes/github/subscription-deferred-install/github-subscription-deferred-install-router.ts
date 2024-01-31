@@ -24,7 +24,7 @@ const validatePayloadAndPopulateJiraHost = async (req: Request, res: Response, n
 	let parsedPayload: SubscriptionDeferredInstallPayload | undefined;
 	try {
 		parsedPayload = await extractSubscriptionDeferredInstallPayload(req.params["requestId"]);
-	} catch (err) {
+	} catch (err: unknown) {
 		req.log.warn({ err }, "Cannot deserialize");
 		res.status(400).json({ error: INVALID_PAYLOAD_ERR });
 		return;
@@ -46,7 +46,7 @@ const validatePayloadAndPopulateJiraHost = async (req: Request, res: Response, n
 	res.locals.installation = installation;
 	// DO NOT PUT jiraHost to session! This router is invoked by jira non-admins, that would give them admin perms!
 
-	return next();
+	next();
 };
 
 const validateGitHubConfig = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -58,7 +58,7 @@ const validateGitHubConfig = async (req: Request, res: Response, next: NextFunct
 		return;
 	}
 
-	return next();
+	next();
 };
 
 subRouter.use(validatePayloadAndPopulateJiraHost);

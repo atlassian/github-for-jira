@@ -11,7 +11,7 @@ const ignoredPaths = [
 
 const maintenanceMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	if (!ignoredPaths.includes(req.path) && await booleanFlag(BooleanFlags.MAINTENANCE_MODE, res.locals.jiraHost)) {
-		return MaintenanceGet(req, res);
+		MaintenanceGet(req, res); return;
 	}
 	next();
 };

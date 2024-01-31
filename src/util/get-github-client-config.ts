@@ -18,7 +18,7 @@ interface GitHubClientConfig extends GitHubConfig {
 	gitHubClientSecret: string;
 }
 
-const buildGitHubServerConfig = async (githubServerBaseUrl: string, apiKeyConfig?: GitHubClientApiKeyConfig): Promise<GitHubConfig> => {
+const buildGitHubServerConfig = (githubServerBaseUrl: string, apiKeyConfig?: GitHubClientApiKeyConfig): GitHubConfig => {
 	return {
 		hostname: githubServerBaseUrl,
 		baseUrl: githubServerBaseUrl,
@@ -42,7 +42,7 @@ const buildGitHubCloudConfig = (): GitHubConfig => {
 const buildGitHubClientServerConfig = async (gitHubServerApp: GitHubServerApp, jiraHost: string): Promise<GitHubClientConfig> => (
 	{
 		...(
-			await buildGitHubServerConfig(gitHubServerApp.gitHubBaseUrl,
+			buildGitHubServerConfig(gitHubServerApp.gitHubBaseUrl,
 				gitHubServerApp.apiKeyHeaderName
 					? {
 						headerName: gitHubServerApp.apiKeyHeaderName,
@@ -110,14 +110,14 @@ export const createUserClient = async (githubToken: string, jiraHost: string, me
 	return new GitHubUserClient(githubToken, gitHubClientConfig, jiraHost, metrics, logger);
 };
 
-export const createAnonymousClient = async (
+export const createAnonymousClient = (
 	gitHubBaseUrl: string,
 	jiraHost: string | undefined,
 	metrics: Metrics,
 	logger: Logger,
 	apiKeyConfig?: GitHubClientApiKeyConfig
-): Promise<GitHubAnonymousClient> =>
-	new GitHubAnonymousClient(await buildGitHubServerConfig(gitHubBaseUrl, apiKeyConfig), jiraHost, metrics, logger);
+): GitHubAnonymousClient =>
+	new GitHubAnonymousClient(buildGitHubServerConfig(gitHubBaseUrl, apiKeyConfig), jiraHost, metrics, logger);
 
 export const createAnonymousClientByGitHubAppId = async (gitHubAppId: number | undefined, jiraHost: string | undefined, metrics: Metrics, logger: Logger): Promise<GitHubAnonymousClient> => {
 	const config = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);

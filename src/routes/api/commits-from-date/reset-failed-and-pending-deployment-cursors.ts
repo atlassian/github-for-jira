@@ -59,7 +59,8 @@ export const ResetFailedAndPendingDeploymentCursorPost = async (req: Request, re
 
 		res.end();
 
-	} catch (e) {
+	} catch (err: unknown) {
+		const e = err as { statusCode?: number };
 		log.error({ err: e }, "Error happen when reseting deployment cursor");
 		res.end(`Error happen when reseting deployment cursor: ${safeJsonStringify(e)}`);
 	}

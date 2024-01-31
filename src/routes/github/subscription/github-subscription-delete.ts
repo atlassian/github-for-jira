@@ -40,7 +40,6 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 		// Only show the page if the logged in user is an admin of this installation
 		if (!await isUserAdminOfOrganization(
 			gitHubUserClient,
-			jiraHost,
 			gitHubInstallationClient ,
 			installation.account.login,
 			login,
@@ -61,12 +60,12 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 			}
 			await subscription.destroy();
 			res.sendStatus(202);
-		} catch (err) {
+		} catch (err: unknown) {
 			logger.warn("Cannot delete subscription");
 			res.status(403).json({ err: `Failed to delete subscription.` });
 		}
 
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.error({ err, req, res, gitHubProduct }, "Error while processing delete subscription request");
 		res.sendStatus(500);
 	}

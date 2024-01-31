@@ -3,9 +3,10 @@ import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
 import { envVars } from "config/env";
 import { GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
+import { BaseLocals } from "../rest/routes";
 
-export const GithubServerAppMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const { jiraHost } = res.locals;
+export const GithubServerAppMiddleware = async (req: Request, res: Response<unknown, BaseLocals>, next: NextFunction): Promise<void> => {
+	const jiraHost = res.locals.jiraHost;
 	const { uuid } = req.params;
 
 	req.addLogFields({ uuid, jiraHost });
@@ -39,7 +40,7 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 		res.locals.gitHubAppId = gitHubServerApp.id;
 		res.locals.gitHubAppConfig = {
 			gitHubAppId: gitHubServerApp.id,
-			appId: gitHubServerApp.appId,
+			appId: String(gitHubServerApp.appId),
 			uuid: gitHubServerApp.uuid,
 			hostname: gitHubServerApp.gitHubBaseUrl,
 			clientId: gitHubServerApp.gitHubClientId

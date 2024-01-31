@@ -1,4 +1,4 @@
-FROM node:14.21-alpine3.16 as build
+FROM node:18-alpine3.18 as build
 
 # adding python for node-gyp
 RUN apk add g++ make python3
@@ -14,6 +14,7 @@ COPY . /app
 WORKDIR /app
 
 # Installing packages
+RUN cat ./package.json
 RUN yarn install --frozen-lockfile
 
 # If you are going to remove this, please make sure that it doesn't break existing GitHubServerApps:

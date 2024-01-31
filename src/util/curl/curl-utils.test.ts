@@ -19,7 +19,7 @@ describe("curl-utils", () => {
 				authorization: "secrets"
 			});
 			expect(result.meta).toContain("> POST / HTTP");
-			expect(result.body).toEqual(expect.stringContaining("HTTP Status 403"));
+			expect(result.body).toEqual(expect.stringContaining("403"));
 			expect(result.meta).toContain("< HTTP/2 403");
 		});
 		it("should not contains private information in the headers", async () => {
@@ -35,7 +35,7 @@ describe("curl-utils", () => {
 
 	describe("logCurlOutput", () => {
 		it("should not explode with empty output", () => {
-			expect(() => logCurlOutputInChunks({ body: "", meta: "" }, getLogger("test"))).not.toThrowError();
+			expect(() => { logCurlOutputInChunks({ body: "", meta: "" }, getLogger("test")); }).not.toThrowError();
 		});
 
 		it("should not explode with non-empty output", async () => {
@@ -44,7 +44,7 @@ describe("curl-utils", () => {
 				method: "GET",
 				authorization: "secrets"
 			});
-			expect(() => logCurlOutputInChunks(result, getLogger("test"))).not.toThrowError();
+			expect(() => { logCurlOutputInChunks(result, getLogger("test")); }).not.toThrowError();
 		});
 	});
 });

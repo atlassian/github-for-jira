@@ -106,12 +106,6 @@ describe("sync/installation", () => {
 		};
 
 		when(numberFlag).calledWith(
-			NumberFlags.BACKFILL_MAX_SUBTASKS,
-			0,
-			jiraHost
-		).mockResolvedValue(0);
-
-		when(numberFlag).calledWith(
 			NumberFlags.BACKFILL_PAGE_SIZE,
 			expect.anything(),
 			expect.anything()
@@ -119,11 +113,10 @@ describe("sync/installation", () => {
 	});
 
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
+	// @ts-expect-error
 	const sentry: Hub = { setUser: jest.fn() } as Hub;
 
 	describe("isRetryableWithSmallerRequest()", () => {
-
 		it("should return false for error without isRetryable flag", () => {
 			const err = {
 				errors: [
@@ -202,128 +195,134 @@ describe("sync/installation", () => {
 			expect((await Subscription.findByPk(subscription?.id))?.syncStatus).toEqual(SyncStatus.COMPLETE);
 		});
 
-		it("should update cursor and continue sync", async () => {
-			const sendSqsMessage = jest.fn();
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			githubNock
-				.post("/graphql", branchesNoLastCursor())
-				.query(true)
-				.reply(200, branchNodesFixture);
-			jiraNock.post("/rest/devinfo/0.10/bulk").reply(200);
+		describe("with scheduler", () => {
+			beforeEach(async () => {
+				configureRateLimit(10, 10); // no subtasks by default, please
+			});
 
-			dedupCallThrough = true;
-			await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
+			it("should update cursor and continue sync", async () => {
+				const sendSqsMessage = jest.fn();
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+				githubNock
+					.post("/graphql", branchesNoLastCursor())
+					.query(true)
+					.reply(200, branchNodesFixture);
+				jiraNock.post("/rest/devinfo/0.10/bulk").reply(200);
 
-			expect(sendSqsMessage).toBeCalledTimes(1);
-			await repoSyncState.reload();
-			expect(repoSyncState.branchCursor).toEqual("MQ");
-			expect(repoSyncState.branchStatus).toEqual("pending");
-		});
-
-		it("should mark task as finished and continue sync", async () => {
-			const sendSqsMessage = jest.fn();
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			const fixture = cloneDeep(branchNodesFixture);
-			fixture.data.repository.refs.edges = [];
-			githubNock
-				.post("/graphql", branchesNoLastCursor())
-				.query(true)
-				.reply(200, fixture);
-
-			dedupCallThrough = true;
-			await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
-
-			expect(sendSqsMessage).toBeCalledTimes(1);
-			await repoSyncState.reload();
-			expect(repoSyncState.branchStatus).toEqual("complete");
-		});
-
-		it("should use page size from FF", async () => {
-			when(numberFlag).calledWith(
-				NumberFlags.BACKFILL_PAGE_SIZE,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(90);
-
-			const sendSqsMessage = jest.fn();
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			const query = branchesNoLastCursor();
-			query.variables.per_page = 90;
-			githubNock
-				.post("/graphql", query)
-				.query(true)
-				.reply(200, branchNodesFixture);
-			jiraNock.post("/rest/devinfo/0.10/bulk").reply(200);
-
-			dedupCallThrough = true;
-			await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
-
-			expect(sendSqsMessage).toBeCalledTimes(1);
-		});
-
-		it("should not allow page sizes larger than 100", async () => {
-			when(numberFlag).calledWith(
-				NumberFlags.BACKFILL_PAGE_SIZE,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(120);
-
-			const sendSqsMessage = jest.fn();
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			const query = branchesNoLastCursor();
-			query.variables.per_page = 100;
-			githubNock
-				.post("/graphql", query)
-				.query(true)
-				.reply(200, branchNodesFixture);
-			jiraNock.post("/rest/devinfo/0.10/bulk").reply(200);
-
-			dedupCallThrough = true;
-			await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
-
-			expect(sendSqsMessage).toBeCalledTimes(1);
-		});
-
-		it("should rethrow GitHubClient error", async () => {
-			const sendSqsMessage = jest.fn();
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			githubNock
-				.post("/graphql")
-				.query(true)
-				.reply(404, {});
-
-			let err: TaskError;
-			try {
+				dedupCallThrough = true;
 				await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
-				await mockedExecuteWithDeduplication.mock.calls[0][1]();
-			} catch (caught) {
-				err = caught;
-			}
-			expect(err!).toBeInstanceOf(TaskError);
-			expect(err!.task.task).toEqual("branch");
-			expect(err!.cause).toBeInstanceOf(GithubClientNotFoundError);
-		});
 
-		it("should rethrow Jira error", async () => {
-			const sendSqsMessage = jest.fn();
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			githubNock
-				.post("/graphql", branchesNoLastCursor())
-				.query(true)
-				.reply(200, branchNodesFixture);
-			jiraNock.post("/rest/devinfo/0.10/bulk").reply(500);
+				expect(sendSqsMessage).toBeCalledTimes(1);
+				await repoSyncState.reload();
+				expect(repoSyncState.branchCursor).toEqual("MQ");
+				expect(repoSyncState.branchStatus).toEqual("pending");
+			});
 
-			let err: TaskError;
-			try {
+			it("should mark task as finished and continue sync", async () => {
+				const sendSqsMessage = jest.fn();
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+				const fixture = cloneDeep(branchNodesFixture);
+				fixture.data.repository.refs.edges = [];
+				githubNock
+					.post("/graphql", branchesNoLastCursor())
+					.query(true)
+					.reply(200, fixture);
+
+				dedupCallThrough = true;
 				await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
-				await mockedExecuteWithDeduplication.mock.calls[0][1]();
 
-			} catch (caught) {
-				err = caught;
-			}
-			expect(err!).toBeInstanceOf(TaskError);
-			expect(err!.task.task).toEqual("branch");
-			expect(err!.cause).toBeInstanceOf(JiraClientError);
+				expect(sendSqsMessage).toBeCalledTimes(1);
+				await repoSyncState.reload();
+				expect(repoSyncState.branchStatus).toEqual("complete");
+			});
+
+			it("should use page size from FF", async () => {
+				when(numberFlag).calledWith(
+					NumberFlags.BACKFILL_PAGE_SIZE,
+					expect.anything(),
+					expect.anything()
+				).mockResolvedValue(90);
+
+				const sendSqsMessage = jest.fn();
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+				const query = branchesNoLastCursor();
+				query.variables.per_page = 90;
+				githubNock
+					.post("/graphql", query)
+					.query(true)
+					.reply(200, branchNodesFixture);
+				jiraNock.post("/rest/devinfo/0.10/bulk").reply(200);
+
+				dedupCallThrough = true;
+				await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
+
+				expect(sendSqsMessage).toBeCalledTimes(1);
+			});
+
+			it("should not allow page sizes larger than 100", async () => {
+				when(numberFlag).calledWith(
+					NumberFlags.BACKFILL_PAGE_SIZE,
+					expect.anything(),
+					expect.anything()
+				).mockResolvedValue(120);
+
+				const sendSqsMessage = jest.fn();
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+				const query = branchesNoLastCursor();
+				query.variables.per_page = 100;
+				githubNock
+					.post("/graphql", query)
+					.query(true)
+					.reply(200, branchNodesFixture);
+				jiraNock.post("/rest/devinfo/0.10/bulk").reply(200);
+
+				dedupCallThrough = true;
+				await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
+
+				expect(sendSqsMessage).toBeCalledTimes(1);
+			});
+
+			it("should rethrow GitHubClient error", async () => {
+				const sendSqsMessage = jest.fn();
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+				githubNock
+					.post("/graphql")
+					.query(true)
+					.reply(404, {});
+
+				let err: TaskError;
+				try {
+					await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
+					await mockedExecuteWithDeduplication.mock.calls[0][1]();
+				} catch (caught) {
+					err = caught;
+				}
+				expect(err!).toBeInstanceOf(TaskError);
+				expect(err!.task.task).toEqual("branch");
+				expect(err!.cause).toBeInstanceOf(GithubClientNotFoundError);
+			});
+
+			it("should rethrow Jira error", async () => {
+				const sendSqsMessage = jest.fn();
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+				githubNock
+					.post("/graphql", branchesNoLastCursor())
+					.query(true)
+					.reply(200, branchNodesFixture);
+				jiraNock.post("/rest/devinfo/0.10/bulk").reply(500);
+
+				let err: TaskError;
+				try {
+					await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
+					await mockedExecuteWithDeduplication.mock.calls[0][1]();
+
+				} catch (caught) {
+					err = caught;
+				}
+				expect(err!).toBeInstanceOf(TaskError);
+				expect(err!.task.task).toEqual("branch");
+				expect(err!.cause).toBeInstanceOf(JiraClientError);
+			});
 		});
 	});
 
@@ -343,34 +342,59 @@ describe("sync/installation", () => {
 
 		it("should return set of target tasks and filter out invalid values", async () => {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
+			// @ts-expect-error
 			expect(getTargetTasks(["pull", "commit", "cats"])).toEqual(["pull", "commit"]);
 		});
 	});
 
 	describe("markCurrentTaskAsFailedAndContinue", () => {
 		const mockError = new Error("Oh noes, An error occurred");
-		it("does nothing when there's no subscription", async () => {
-			const sendMessageMock = jest.fn();
-			await markCurrentTaskAsFailedAndContinue({
-				...MESSAGE_PAYLOAD,
-				installationId: (MESSAGE_PAYLOAD.installationId as number) + 1
-			}, TASK, false, sendMessageMock, getLogger("test"), mockError);
 
-			const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
-			const refreshedSubscription = await Subscription.findByPk(subscription?.id);
-			expect(repoSyncState.get({ plain: true })).toStrictEqual(refreshedRepoSyncState?.get({ plain: true }));
-			expect(refreshedSubscription?.get({ plain: true })).toStrictEqual(subscription?.get({ plain: true }));
-			expect(sendMessageMock).toBeCalledTimes(0);
-		});
+		describe("common", () => {
+			it("does nothing when there's no subscription", async () => {
+				const sendMessageMock = jest.fn();
+				await markCurrentTaskAsFailedAndContinue({
+					...MESSAGE_PAYLOAD,
+					installationId: (MESSAGE_PAYLOAD.installationId as number) + 1
+				}, TASK, false, sendMessageMock, getLogger("test"), mockError);
 
-		it("updates status in RepoSyncState table", async () => {
-			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, jest.fn(), getLogger("test"), mockError);
+				const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
+				const refreshedSubscription = await Subscription.findByPk(subscription?.id);
+				expect(repoSyncState.get({ plain: true })).toStrictEqual(refreshedRepoSyncState?.get({ plain: true }));
+				expect(refreshedSubscription?.get({ plain: true })).toStrictEqual(subscription?.get({ plain: true }));
+				expect(sendMessageMock).toBeCalledTimes(0);
+			});
 
-			const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
-			const refreshedSubscription = await Subscription.findByPk(subscription?.id);
-			expect(refreshedRepoSyncState?.branchStatus).toEqual("failed");
-			expect(refreshedSubscription?.get({ plain: true })).toStrictEqual(subscription?.get({ plain: true }));
+			it("updates status in RepoSyncState table", async () => {
+				await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, jest.fn(), getLogger("test"), mockError);
+
+				const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
+				const refreshedSubscription = await Subscription.findByPk(subscription?.id);
+				expect(refreshedRepoSyncState?.branchStatus).toEqual("failed");
+				expect(refreshedSubscription?.get({ plain: true })).toStrictEqual(subscription?.get({ plain: true }));
+			});
+
+			it("does not update cursor in RepoSyncState table", async () => {
+				await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, jest.fn(), getLogger("test"), mockError);
+
+				const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
+				expect(refreshedRepoSyncState?.branchCursor).toEqual(repoSyncState.branchCursor);
+			});
+
+			it("schedules next message", async () => {
+				const sendMessageMock = jest.fn();
+				await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, sendMessageMock, getLogger("test"), mockError);
+
+				expect(sendMessageMock).toBeCalledTimes(1);
+			});
+
+			it("sets up sync warning on permission error", async () => {
+				const sendMessageMock = jest.fn();
+				await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, true, sendMessageMock, getLogger("test"), mockError);
+
+				const refreshedSubscription = await Subscription.findByPk(subscription?.id);
+				expect(refreshedSubscription?.syncWarning).toEqual("Invalid permissions for branch task");
+			});
 		});
 
 		// TODO: bgvozdev to finish off before enabling the FF for everyone
@@ -386,8 +410,8 @@ describe("sync/installation", () => {
 				const	newRepoSyncStatesData: any[] = [];
 				for (let newRepoStateNo = 1; newRepoStateNo < 50; newRepoStateNo++) {
 					const newRepoSyncState = { ...repoSyncState.get() };
-					delete newRepoSyncState["id"];
-					delete newRepoSyncState["branchStatus"];
+					delete newRepoSyncState.id;
+					delete newRepoSyncState.branchStatus;
 					newRepoSyncState["repoId"] = repoSyncState.repoId + newRepoStateNo;
 					if (newRepoStateNo < 49) {
 						// the last one should be main
@@ -400,12 +424,6 @@ describe("sync/installation", () => {
 					newRepoSyncStatesData.push(newRepoSyncState);
 				}
 				await RepoSyncState.bulkCreate(newRepoSyncStatesData);
-
-				when(numberFlag).calledWith(
-					NumberFlags.BACKFILL_MAX_SUBTASKS,
-					0,
-					jiraHost
-				).mockResolvedValue(100);
 
 				// That would give 2 tasks: one main and one subtask
 				configureRateLimit(1000, 1000);
@@ -420,7 +438,7 @@ describe("sync/installation", () => {
 				try {
 					// Both tasks will fail because no nock was not setup
 					await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD_BRANCHES_ONLY, sentry, TEST_LOGGER);
-				} catch (err) {
+				} catch (err: unknown) {
 					capturedError = err;
 				}
 				expect(capturedError).toBeInstanceOf(TaskError);
@@ -484,28 +502,6 @@ describe("sync/installation", () => {
 				} });
 				expect(updatedRows.length).toEqual(1);
 			});
-		});
-
-		it("does not update cursor in RepoSyncState table", async () => {
-			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, jest.fn(), getLogger("test"), mockError);
-
-			const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
-			expect(refreshedRepoSyncState?.branchCursor).toEqual(repoSyncState.branchCursor);
-		});
-
-		it("schedules next message", async () => {
-			const sendMessageMock = jest.fn();
-			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, sendMessageMock, getLogger("test"), mockError);
-
-			expect(sendMessageMock).toBeCalledTimes(1);
-		});
-
-		it("sets up sync warning on permission error", async () => {
-			const sendMessageMock = jest.fn();
-			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, true, sendMessageMock, getLogger("test"), mockError);
-
-			const refreshedSubscription = await Subscription.findByPk(subscription?.id);
-			expect(refreshedSubscription?.syncWarning).toEqual("Invalid permissions for branch task");
 		});
 	});
 

@@ -26,6 +26,11 @@ import { ResetFailedAndPendingDeploymentCursorPost } from "./commits-from-date/r
 import { ApiRecryptPost } from "./api-recrypt-post";
 import { GenerateOnceCoredumpGenerator } from "services/generate-once-coredump-generator";
 import { GenerateOncePerNodeHeadumpGenerator } from "services/generate-once-per-node-headump-generator";
+import { ApiReplyFailedEntitiesFromDataDepotPost } from "./api-replay-failed-entities-from-data-depot";
+import { RepoSyncState } from "models/reposyncstate";
+import { ApiResyncFailedTasksPost } from "./api-resync-failed-tasks";
+import { GHESVerificationRouter } from "./ghes-app-verification/ghes-app-verification-router";
+import { AuditLogApiRouter } from "./audit-log/audit-log-api-router";
 
 export const ApiRouter = Router();
 
@@ -154,6 +159,20 @@ const FillMemAndGenerateCoreDump = (req: Request, res: Response) => {
 
 ApiRouter.post("/fill-mem-and-generate-coredump", FillMemAndGenerateCoreDump);
 
+const AbortPost = (_req: Request, res: Response) => {
+	res.json({ message: "should never happen" });
+	process.abort();
+};
+
+ApiRouter.post("/abort", AbortPost);
+
+const DropAllPrCursor = async (_req: Request, res: Response) => {
+	await RepoSyncState.update({ pullCursor: null }, { where: { } });
+	res.json({ ok: true });
+};
+
+ApiRouter.post("/drop-all-pr-cursor", DropAllPrCursor);
+
 // TODO: remove once move to DELETE /:installationId/:jiraHost
 ApiRouter.delete(
 	"/deleteInstallation/:installationId/:jiraHost/github-app-id/:gitHubAppId",
@@ -205,6 +224,10 @@ ApiRouter.post("/re-encrypt-ghes-app", ReEncryptGitHubServerAppKeysPost);
 ApiRouter.use("/data-cleanup", DataCleanupRouter);
 ApiRouter.post("/recover-commits-from-date", RecoverCommitsFromDatePost);
 ApiRouter.post("/reset-failed-pending-deployment-cursor", ResetFailedAndPendingDeploymentCursorPost);
+ApiRouter.post("/replay-rejected-entities-from-data-depot", ApiReplyFailedEntitiesFromDataDepotPost);
+ApiRouter.post("/resync-failed-tasks",ApiResyncFailedTasksPost);
+ApiRouter.use("/verify/githubapp/:gitHubAppId", GHESVerificationRouter);
+ApiRouter.use("/audit-log", AuditLogApiRouter);
 
 ApiRouter.use("/jira", ApiJiraRouter);
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);

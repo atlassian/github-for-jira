@@ -34,7 +34,6 @@
           </td>
           {{! Repos Synced }}
           <td class="jiraConfiguration__table__cell">
-            {{#if ../enableRepoConnectedPage}}
               <a href="#" class="jiraConfiguration__table__repo_access" data-subscription-id="{{subscriptionId}}">
                 {{#if connection.isGlobalInstall}}
                 <span>All repos</span>
@@ -42,20 +41,13 @@
                 <span>Only select repos</span>
                 {{/if}}
               </a>
-            {{else}}
-              {{#if connection.isGlobalInstall}}
-              <span>All repos</span>
-              {{else}}
-              <span>Only select repos</span>
-              {{/if}}
-            {{/if}}
 
-            {{#if connection.totalNumberOfRepos}}
+            {{#if (checkRepoCount connection.totalNumberOfRepos)}}
               <span class="jiraConfiguration__table__syncCount">
-                {{ifAllReposSynced
-                    connection.numberOfSyncedRepos
-                    connection.totalNumberOfRepos
-                }}
+                  {{ifAllReposSynced
+                      connection.numberOfSyncedRepos
+                      connection.totalNumberOfRepos
+                  }}
               </span>
             {{/if}}
             <a
@@ -183,7 +175,7 @@
           host=host
           html_url=html_url
           syncErrors=connection.failedSyncErrors
-          csrfToken=csrfToken
+          csrfToken=../csrfToken
         }}
 
       {{/each}}
