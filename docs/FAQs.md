@@ -61,6 +61,10 @@ When an organization contains a small amount of data, the backfilling process is
 
 - **Self-signed certificate** - There is a problem with your SSL certificate.
 
+<h3>Q: Do you support reverse proxies?</h3>
+
+**A:** Yes! For more information, please see our documentation about [integrating Jira Software with GitHub Enterprise Server](https://support.atlassian.com/jira-cloud-administration/docs/connect-a-github-enterprise-server-account-to-jira-software/).
+
 <h3>Q: Can I connect multiple GitHub Enterprise Servers or GitHub Apps to Jira?</h3>
 
 **A:** Yes. The GitHub for Jira app allows you to connect multiple GitHub servers. So you can connect more than one internal GitHub instance to a single Jira account.
