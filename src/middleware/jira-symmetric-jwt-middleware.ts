@@ -19,10 +19,8 @@ export const jiraSymmetricJwtMiddleware = async (req: Request<ParamsDictionary, 
 	const authHeader = req.headers["authorization"] as string;
 	const authHeaderPrefix = "JWT ";
 	const cookies = req.cookies as { jwt?: string };
-	const token = req.query?.jwt
-		|| cookies?.jwt
-		|| req.body?.jwt
-		|| authHeader?.startsWith(authHeaderPrefix) && authHeader.substring(authHeaderPrefix.length);
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+	const token = req.query?.jwt || cookies?.jwt || req.body?.jwt || authHeader?.startsWith(authHeaderPrefix) && authHeader.substring(authHeaderPrefix.length);
 	if (token) {
 		let issuer: string | undefined;
 		try {
@@ -55,8 +53,9 @@ export const jiraSymmetricJwtMiddleware = async (req: Request<ParamsDictionary, 
 			res.clearCookie("jwt");
 		}
 		req.addLogFields({ jiraHost: installation.jiraHost });
-		return next();
+		next(); return;
 
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	} else if (req.session?.jiraHost) {
 
 		const installation = await Installation.getForHost(req.session.jiraHost);
@@ -69,7 +68,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request<ParamsDictionary, 
 		res.locals.installation = installation;
 		res.locals.jiraHost = installation.jiraHost;
 		req.addLogFields({ jiraHost: installation.jiraHost });
-		return next();
+		next(); return;
 	}
 
 	req.log.warn("No token found and session cookie has no jiraHost");
@@ -96,9 +95,9 @@ const getIssuer = (token: string, logger: Logger): string | undefined => {
 	return unverifiedClaims.iss;
 };
 
-export const getTokenType = async (url: string, method: string): Promise<TokenType> =>
+export const getTokenType = (url: string, method: string): TokenType =>
 	checkPathValidity(url) && method == "GET"
-		|| await checkGenericContainerActionUrl(`${envVars.APP_URL}${url}`)
+		|| checkGenericContainerActionUrl(`${envVars.APP_URL}${url}`)
 		|| checkSecurityContainerActionUrl(`${envVars.APP_URL}${url}`) ? TokenType.normal
 		: TokenType.context;
 
@@ -108,7 +107,7 @@ const verifySymmetricJwt = async (req: Request, token: string, installation: Ins
 
 	try {
 		const claims = decodeSymmetric(token, secret, algorithm, false) as Record<string, string | number>;
-		const tokenType = await getTokenType(req.originalUrl, req.method);
+		const tokenType = getTokenType(req.originalUrl, req.method);
 
 		verifyJwtClaims(claims, tokenType, req);
 		return claims;
@@ -147,10 +146,10 @@ const checkPathValidity = (url: string) => {
 	});
 };
 
-export const checkGenericContainerActionUrl = async (url: string): Promise<boolean | undefined> => {
-	const genericContainerActionUrls = await getGenericContainerUrls();
+export const checkGenericContainerActionUrl = (url: string): boolean | undefined => {
+	const genericContainerActionUrls = getGenericContainerUrls();
 
-	return genericContainerActionUrls?.some(moduleUrl => {
+	return genericContainerActionUrls.some(moduleUrl => {
 		return matchRouteWithPattern(moduleUrl, url);
 	});
 };

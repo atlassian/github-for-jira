@@ -208,7 +208,9 @@ describe("delete-github-subscription", () => {
 	});
 
 	it.each([["installationId"], ["jiraHost"]])("Should 400 when missing body.%s", async (property) => {
+		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 		delete req.body[property];
+		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 		delete res.locals[property];
 
 		res.status.mockReturnValue(res);

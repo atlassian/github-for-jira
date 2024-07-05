@@ -16,7 +16,27 @@
 			"method": "GET",
 			"mechanism": "asap",
 			"principals": [
+				"pollinator-check/0afb3a4c-1ab2-4475-b7bd-4b197eb4e7c0"
+			],
+			"allowed": true
+		},
+		{
+			"name": "Allow Stg Backfill Critical Pollinator Test to call Get Audit Log endpoints",
+			"path": "/api/audit-log/subscription/12345",
+			"method": "GET",
+			"mechanism": "asap",
+			"principals": [
 				"pollinator-check/06673b3a-7d8f-4f6e-8b72-0527695e241b"
+			],
+			"allowed": true
+		},
+		{
+			"name": "Allow Stg Backfill GHE Critical Pollinator Test to call Get Audit Log endpoints",
+			"path": "/api/audit-log/subscription/12345",
+			"method": "GET",
+			"mechanism": "asap",
+			"principals": [
+				"pollinator-check/293a7fe8-9dc7-4f0b-9785-852c104f98d2"
 			],
 			"allowed": true
 		},
@@ -36,7 +56,27 @@
 			"method": "DELETE",
 			"mechanism": "asap",
 			"principals": [
+				"pollinator-check/0afb3a4c-1ab2-4475-b7bd-4b197eb4e7c0"
+			],
+			"allowed": true
+		},
+		{
+			"name": "Allow Stg Backfill Critical Pollinator Test to call Delete Installation endpoints",
+			"path": "/api/deleteInstallation/21266506/https%3A%2F%2Ffusion-arc-pollinator-staging-app.atlassian.net",
+			"method": "DELETE",
+			"mechanism": "asap",
+			"principals": [
 				"pollinator-check/06673b3a-7d8f-4f6e-8b72-0527695e241b"
+			],
+			"allowed": true
+		},
+		{
+			"name": "Allow Stg Backfill GHE Critical Pollinator Test to call Delete Installation endpoints",
+			"path": "/api/deleteInstallation/21266506/https%3A%2F%2Ffusion-arc-pollinator-staging-app.atlassian.net",
+			"method": "DELETE",
+			"mechanism": "asap",
+			"principals": [
+				"pollinator-check/293a7fe8-9dc7-4f0b-9785-852c104f98d2"
 			],
 			"allowed": true
 		},
@@ -116,7 +156,27 @@
 			"method": "DELETE",
 			"mechanism": "asap",
 			"principals": [
+				"pollinator-check/0afb3a4c-1ab2-4475-b7bd-4b197eb4e7c0"
+			],
+			"allowed": false
+		},
+		{
+			"name": "Not allow Stg Backfill Check Critical Pollinator Test to call other admin endpoints",
+			"path": "/api/jira/13453453/verify",
+			"method": "DELETE",
+			"mechanism": "asap",
+			"principals": [
 				"pollinator-check/06673b3a-7d8f-4f6e-8b72-0527695e241b"
+			],
+			"allowed": false
+		},
+		{
+			"name": "Not allow Stg Backfill Check GHE Critical Pollinator Test to call other admin endpoints",
+			"path": "/api/jira/13453453/verify",
+			"method": "DELETE",
+			"mechanism": "asap",
+			"principals": [
+				"pollinator-check/293a7fe8-9dc7-4f0b-9785-852c104f98d2"
 			],
 			"allowed": false
 		},
@@ -137,6 +197,36 @@
 			"mechanism": "asap",
 			"principals": [
 				"pollinator-check/72b41d2e-7612-4ad2-afa1-6affe7e527b9"
+			],
+			"allowed": false
+		},
+		{
+			"name": "Allow Pollinator Pollinator test to call API configuration POST endpoint",
+			"path": "/api/configuration",
+			"method": "POST",
+			"mechanism": "asap",
+			"principals": [
+				"pollinator-check/897e3991-4fc8-462e-9753-9946c4b84cc2"
+			],
+			"allowed": true
+		},
+		{
+			"name": "Not allow Pollinator Pollinator test to call API configuration POST endpoint for any other principals",
+			"path": "/api/configuration",
+			"method": "POST",
+			"mechanism": "asap",
+			"principals": [
+				"pollinator-check/random-one"
+			],
+			"allowed": false
+		},
+		{
+			"name": "Not allow Pollinator Pollinator test to call any API configuration endpoint except POST",
+			"path": "/api/configuration",
+			"method": "GET",
+			"mechanism": "asap",
+			"principals": [
+				"pollinator-check/random-one"
 			],
 			"allowed": false
 		}

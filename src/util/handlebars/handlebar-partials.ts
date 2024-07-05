@@ -4,7 +4,7 @@ import * as path from "path";
 
 export const registerHandlebarsPartials = (partialPath: string) => {
 	fs.readdirSync(partialPath)
-		?.filter(file => file.endsWith(".hbs"))
+		.filter(file => file.endsWith(".hbs"))
 		.forEach(file => {
 			hbs.registerPartial(
 				file.replace(/\.hbs$/, ""), // removes extension of file

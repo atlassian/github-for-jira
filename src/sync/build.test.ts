@@ -10,14 +10,30 @@ import buildFixture from "fixtures/api/build.json";
 import multiBuildFixture from "fixtures/api/build-multi.json";
 import noKeysBuildFixture from "fixtures/api/build-no-keys.json";
 import compareReferencesFixture from "fixtures/api/compare-references.json";
-import { DatabaseStateCreator } from "test/utils/database-state-creator";
+import { DatabaseStateCreator, CreatorResult } from "test/utils/database-state-creator";
 import { when } from "jest-when";
 import { numberFlag, NumberFlags } from "config/feature-flags";
 import { RepoSyncState } from "models/reposyncstate";
 import { getBuildTask } from "./build";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 
+const lastMockedWorkflowSubmit = jest.fn();
 jest.mock("config/feature-flags");
+jest.mock("../jira/client/jira-client", () => ({
+	getJiraClient: async (...args) => {
+		const actual = await jest.requireActual("../jira/client/jira-client").getJiraClient(...args);
+		return {
+			...actual,
+			workflow: {
+				...actual.workflow,
+				submit: (...repoArgs) => {
+					lastMockedWorkflowSubmit(...repoArgs);
+					return actual.workflow.submit(...repoArgs);
+				}
+			}
+		};
+	}
+}));
 
 describe("sync/builds", () => {
 	const sentry: Hub = { setUser: jest.fn() } as any;
@@ -43,11 +59,12 @@ describe("sync/builds", () => {
 	let repoSyncState: RepoSyncState;
 	const ORIGINAL_BUILDS_CURSOR = 21;
 
+	let db: CreatorResult;
 	beforeEach(async () => {
 
 		mockSystemTime(12345678);
 
-		repoSyncState = (await new DatabaseStateCreator()
+		repoSyncState = (db = await new DatabaseStateCreator()
 			.withActiveRepoSyncState()
 			.repoSyncStatePendingForBuilds()
 			.withBuildsCustomCursor(String(ORIGINAL_BUILDS_CURSOR))
@@ -66,6 +83,7 @@ describe("sync/builds", () => {
 
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 		githubNock
 			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=21`)
@@ -77,7 +95,7 @@ describe("sync/builds", () => {
 		createJiraNock([
 			{
 				"schemaVersion": "1.0",
-				"pipelineId": 2152266464,
+				"pipelineId": "19236895",
 				"buildNumber": 59,
 				"updateSequenceNumber": 12345678,
 				"displayName": "Build",
@@ -104,11 +122,23 @@ describe("sync/builds", () => {
 
 		await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 		expect(mockBackfillQueueSendMessage).toBeCalledWith(data, 0, expect.anything());
+
+		expect(lastMockedWorkflowSubmit).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.anything(),
+			"test-repo-name",
+			expect.objectContaining({
+				auditLogsource: "BACKFILL",
+				entityAction: "WORKFLOW_RUN",
+				subscriptionId: db.subscription.id
+			})
+		);
 	});
 
 	it("should not explode when returned payload doesn't have head_commit", async () => {
 		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
@@ -174,6 +204,7 @@ describe("sync/builds", () => {
 			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(NUMBER_OF_PARALLEL_FETCHES);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
@@ -197,6 +228,7 @@ describe("sync/builds", () => {
 		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		githubNock
 			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=6`)
 			.reply(200, []);
@@ -210,6 +242,7 @@ describe("sync/builds", () => {
 
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 		githubNock
 			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=21`)
@@ -221,7 +254,7 @@ describe("sync/builds", () => {
 		createJiraNock([
 			{
 				"schemaVersion": "1.0",
-				"pipelineId": 2152266464,
+				"pipelineId": "19236895",
 				"buildNumber": 59,
 				"updateSequenceNumber": 12345678,
 				"displayName": "Build",
@@ -246,7 +279,7 @@ describe("sync/builds", () => {
 			},
 			{
 				"schemaVersion": "1.0",
-				"pipelineId": 2152266464,
+				"pipelineId": "19236895",
 				"buildNumber": 59,
 				"updateSequenceNumber": 12345678,
 				"displayName": "Build",
@@ -280,6 +313,7 @@ describe("sync/builds", () => {
 
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 		githubNock
 			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=21`)
@@ -301,6 +335,7 @@ describe("sync/builds", () => {
 	it("should not call Jira if no data is returned", async () => {
 		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		githubNock
 			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=21`)

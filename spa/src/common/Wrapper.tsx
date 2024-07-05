@@ -9,16 +9,16 @@ const navHeight = 56;
 const wrapperStyle = css`
 	padding: 20px 40px 0px 40px;
 `;
-const wrapperCenterStyle = css`
+const getWrapperCenterStyle = (width: string | undefined) => css`
 	margin: 0 auto;
-	max-width: 580px;
+	max-width: ${width ? width: "580px"};
 	height: calc(100vh - ${navHeight * 2}px);
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
 `;
 
-export const Wrapper = (attr: { hideClosedBtn?: boolean, children?: ReactNode | undefined }) => {
+export const Wrapper = (attr: { hideClosedBtn?: boolean, children?: ReactNode | undefined, width?:string }) => {
 	const navigateToHomePage = () => {
 		analyticsClient.sendUIEvent({ actionSubject: "dropExperienceViaBackButton", action: "clicked" });
 		AP.getLocation((location: string) => {
@@ -26,6 +26,7 @@ export const Wrapper = (attr: { hideClosedBtn?: boolean, children?: ReactNode | 
 			AP.navigator.go( "site", { absoluteUrl: `${locationUrl.origin}/jira/marketplace/discover/app/com.github.integration.production` });
 		});
 	};
+	const wrapperCenterStyle = getWrapperCenterStyle(attr.width || undefined);
 
 	return (
 		<div css={wrapperStyle}>
@@ -37,7 +38,6 @@ export const Wrapper = (attr: { hideClosedBtn?: boolean, children?: ReactNode | 
 					onClick={navigateToHomePage}
 				/>
 			}
-
 			<div css={wrapperCenterStyle}>{attr.children}</div>
 		</div>
 	);

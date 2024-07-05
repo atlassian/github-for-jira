@@ -67,6 +67,7 @@ export const getDependabotAlertTask = async (
 			};
 		}
 		logger.error({ err, reason: err.cause?.response?.data }, "Dependabot alert backfill failed");
+		// eslint-disable-next-line @typescript-eslint/no-throw-literal
 		throw err;
 	}
 
@@ -120,8 +121,8 @@ export const transformDependabotAlerts = async (
 
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
 
-	const handleUnmappedState = (state: string) => logger.info(`Received unmapped state from dependabot_alerts sync: ${state}`);
-	const handleUnmappedSeverity = (severity: string | null) => logger.info(`Received unmapped severity from dependabot_alerts sync: ${severity ?? "Missing Severity"}`);
+	const handleUnmappedState = (state: string) => { logger.info(`Received unmapped state from dependabot_alerts sync: ${state}`); };
+	const handleUnmappedSeverity = (severity: string | null) => { logger.info(`Received unmapped severity from dependabot_alerts sync: ${severity ?? "Missing Severity"}`); };
 
 	const vulnerabilities = alerts.map((alert) => {
 		const identifiers = mapVulnIdentifiers(alert.security_advisory.identifiers, alert.security_advisory.references, alert.html_url);

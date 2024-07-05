@@ -20,6 +20,7 @@ const logger = getLogger("DBMigration");
 export const getTargetScript = (req: Request) : string => {
 	const targetScript: string | null = (req.body || {}).targetScript;
 	if (!targetScript) {
+		// eslint-disable-next-line @typescript-eslint/no-throw-literal
 		throw {
 			statusCode: 400,
 			message: `"targetScript" is mandatory in the request body, but found none.`
@@ -40,6 +41,7 @@ export const validateScriptLocally = async (targetScript: string) => {
 	const latestScriptsInRepo = scripts[scripts.length-1];
 
 	if (targetScript !== latestScriptsInRepo) {
+		// eslint-disable-next-line @typescript-eslint/no-throw-literal
 		throw {
 			statusCode: 400,
 			message: `"targetScript: ${targetScript}" doesn't match latest scripts in db/migrations ${latestScriptsInRepo}`
@@ -69,6 +71,7 @@ export const runDbMigration = async (targetScript: string, ops: DBMigrationType)
 			cmd = `./node_modules/.bin/sequelize db:migrate:undo:all --to ${targetScript} --env ${env}`;
 			break;
 		default:
+			// eslint-disable-next-line @typescript-eslint/no-throw-literal
 			throw {
 				statusCode: 500,
 				message: `Fail to execute db migration type`
@@ -91,6 +94,7 @@ const getDbConfigEnvForMigration = () => {
 	if (isNodeDev()) return "development";
 	if (isNodeTest()) return "test";
 	if (isNodeProd()) return "production-migrate";
+	// eslint-disable-next-line @typescript-eslint/no-throw-literal
 	throw {
 		statusCode: 500,
 		message: `Cannot determin node env for [${getNodeEnv()}]`

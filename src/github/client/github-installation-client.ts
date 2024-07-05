@@ -532,6 +532,7 @@ export class GitHubInstallationClient extends GitHubClient {
 				this.logger.debug({ err, owner, repo, path }, "could not find file in repo");
 				return undefined;
 			}
+			// eslint-disable-next-line @typescript-eslint/no-throw-literal
 			throw err;
 		}
 	}

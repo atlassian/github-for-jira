@@ -4,7 +4,7 @@ import { Subscription } from "models/subscription";
 import { getLogger } from "config/logger";
 import { RepoSyncState } from "models/reposyncstate";
 import { when } from "jest-when";
-import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 jest.mock("config/feature-flags");
 
@@ -18,17 +18,15 @@ describe("scheduler", () => {
 		const newRepoSyncStatesData: any[] = [];
 		for (let newRepoStateNo = 1; newRepoStateNo < 500; newRepoStateNo++) {
 			const newRepoSyncState = { ...repoSyncState.get() };
-			delete newRepoSyncState["id"];
-			delete newRepoSyncState["commitStatus"];
-			delete newRepoSyncState["branchStatus"];
+			delete newRepoSyncState.id;
+			delete newRepoSyncState.commitStatus;
+			delete newRepoSyncState.branchStatus;
 			newRepoSyncState["repoId"] = repoSyncState.repoId + newRepoStateNo;
 			newRepoSyncState["repoName"] = repoSyncState.repoName + newRepoStateNo.toString();
 			newRepoSyncState["repoFullName"] = repoSyncState.repoFullName + newRepoStateNo.toString();
 			newRepoSyncStatesData.push(newRepoSyncState);
 		}
 		await RepoSyncState.bulkCreate(newRepoSyncStatesData);
-
-		when(numberFlag).calledWith(NumberFlags.BACKFILL_MAX_SUBTASKS, 0, expect.anything()).mockResolvedValue(100);
 	});
 
 	const configureRateLimit = (coreQuotaRemainig: number, graphQlQuotaRemaining: number) => {
@@ -92,14 +90,6 @@ describe("scheduler", () => {
 		const tasks = await getNextTasks(subscription, [], getLogger("test"));
 		expect(tasks.mainTask).toBeDefined();
 		expect(tasks.otherTasks.length).toEqual(100);
-	});
-
-	it("should only return mask task when number of subtasks is set to 0 in FF", async () => {
-		when(numberFlag).calledWith(NumberFlags.BACKFILL_MAX_SUBTASKS, 0, expect.anything()).mockResolvedValue(0);
-
-		const tasks = await getNextTasks(subscription, [], getLogger("test"));
-		expect(tasks.mainTask).toBeDefined();
-		expect(tasks.otherTasks.length).toStrictEqual(0);
 	});
 
 	it("does not blow up when quota is higher than available number of tasks", async () => {

@@ -25,7 +25,10 @@
     "@atlaskit/avatar": "^21.3.9",
     "@atlaskit/badge": "^15.1.14",
     "@atlaskit/button": "^16.8.0",
+    "@atlaskit/checkbox": "^13.0.1",
     "@atlaskit/css-reset": "^6.5.2",
+    "@atlaskit/dropdown-menu": "^12.1.8",
+    "@atlaskit/datetime-picker": "^13.0.3",
     "@atlaskit/dynamic-table": "^14.11.5",
     "@atlaskit/form": "^8.11.8",
     "@atlaskit/heading": "^1.3.7",
@@ -37,6 +40,7 @@
     "@atlaskit/skeleton": "^0.2.3",
     "@atlaskit/spinner": "^15.6.1",
     "@atlaskit/textarea": "^4.7.7",
+    "@atlaskit/textfield": "^6.0.0",
     "@atlaskit/tokens": "^1.11.1",
     "@atlaskit/tooltip": "^17.8.3",
     "@emotion/styled": "^11.11.0",
@@ -67,6 +71,5 @@
     "react-scripts": "^5.0.1",
     "ts-jest": "^29.1.1",
     "typescript": "^5.0.2"
-  },
-  "optionalDependencies": {}
+  }
 }

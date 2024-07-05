@@ -1,3 +1,8 @@
+export type RestSyncReqBody = {
+	syncType: string;
+	source: string;
+	commitsFromDate: string;
+}
 
 export type GetRedirectUrlResponse = {
 	redirectUrl: string;
@@ -118,6 +123,8 @@ export type SuccessfulConnection = {
 	jiraHost: string;
 	isGlobalInstall: boolean;
 	backfillSince: string | null;
+	html_url: string;
+	subscriptionId: number;
 };
 
 export type FailedCloudConnection = {
@@ -178,3 +185,5 @@ export type GHSubscriptions = {
 	ghCloudSubscriptions: GhCloudSubscriptions;
 	ghEnterpriseServers: GhEnterpriseServer[];
 };
+
+export type BackfillPageModalTypes = "BACKFILL" | "DISCONNECT_SUBSCRIPTION" | "DISCONNECT_SERVER_APP" | "DISCONNECT_SERVER" | "DELETE_GHE_APP";

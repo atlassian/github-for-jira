@@ -47,3 +47,14 @@ function extractKeyErrorInfo(e: AxiosError) {
 		errBody: e.response?.data
 	};
 }
+
+export function openChildWindow(url: string) {
+	const child: Window | null = window.open(url);
+	const interval = setInterval(function () {
+		if (child?.closed) {
+			clearInterval(interval);
+			AP.navigator.reload();
+		}
+	}, 100);
+	return child;
+}

@@ -14,8 +14,8 @@ type BuildWithCursor = { cursor: string } & Octokit.ActionsListRepoWorkflowRunsR
 
 // TODO: add types
 const getTransformedBuilds = async (workflowRun, gitHubInstallationClient, alwaysSend: boolean, logger) => {
-	const transformTasks = workflowRun.map(workflow => {
-		const workflowItem = { workflow_run: workflow, workflow: { id: workflow.id } } as GitHubWorkflowPayload;
+	const transformTasks = workflowRun.map(workflowRun => {
+		const workflowItem = { workflow_run: workflowRun } as GitHubWorkflowPayload;
 		return transformWorkflow(gitHubInstallationClient, workflowItem, alwaysSend, logger);
 	});
 

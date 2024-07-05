@@ -56,6 +56,7 @@ describe("GitHub Branches Get", () => {
 
 	it.each(["owner", "repo"])("Should 400 when missing required fields", async (attribute) => {
 		res.status.mockReturnValue(res);
+		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 		delete req.params[attribute];
 		await GithubBranchesGet(req, res);
 		expect(res.status).toHaveBeenCalledWith(400);

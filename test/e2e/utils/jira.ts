@@ -7,7 +7,7 @@ const data = testData.jira;
 export const jiraLogin = async (page: Page, roleName: keyof JiraTestDataRoles, saveState = false): Promise<Page> => {
 	const role = data.roles[roleName];
 	if (!role.username || !role.password) {
-		throw "Jira username or password missing";
+		throw new Error("Jira username or password missing");
 	}
 	await page.goto(data.urls.login);
 	await page.waitForLoadState();

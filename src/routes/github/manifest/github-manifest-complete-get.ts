@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { ParamsDictionary } from "express-serve-static-core";
 import { GitHubServerApp } from "~/src/models/github-server-app";
 import { Errors } from "config/errors";
 import { createAnonymousClient } from "utils/get-github-client-config";
@@ -6,7 +7,7 @@ import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 import { GheConnectConfigTempStorage } from "utils/ghe-connect-config-temp-storage";
 
-export const GithubManifestCompleteGet = async (req: Request, res: Response) => {
+export const GithubManifestCompleteGet = async (req: Request<ParamsDictionary, unknown, unknown, { code: string }>, res: Response) => {
 	const uuid = req.params.uuid;
 
 	const tempStorage = new GheConnectConfigTempStorage();

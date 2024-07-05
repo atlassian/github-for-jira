@@ -37,8 +37,8 @@ export const transformDependabotAlert = async (context: WebhookContext<Dependabo
 
 	const githubClientConfig = await getGitHubClientConfigFromAppId(context.gitHubAppConfig?.gitHubAppId, jiraHost);
 
-	const handleUnmappedState = (state: string) => context.log.info(`Received unmapped state from dependabot_alert webhook: ${state}`);
-	const handleUnmappedSeverity = (severity: string | null) => context.log.info(`Received unmapped severity from dependabot_alert webhook: ${severity ?? "Missing Serverity"}`);
+	const handleUnmappedState = (state: string) => { context.log.info(`Received unmapped state from dependabot_alert webhook: ${state}`); };
+	const handleUnmappedSeverity = (severity: string | null) => { context.log.info(`Received unmapped severity from dependabot_alert webhook: ${severity ?? "Missing Serverity"}`); };
 	const identifiers = mapVulnIdentifiers(alert.security_advisory.identifiers, alert.security_advisory.references, alert.html_url);
 
 	return {
