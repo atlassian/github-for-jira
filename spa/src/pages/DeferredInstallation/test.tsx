@@ -38,7 +38,7 @@ test("Default/Start Deferred installation screen", async () => {
 		</BrowserRouter>
 	);
 
-	expect(screen.getByText("Connect Github to Jira")).toBeTruthy();
+	expect(screen.getByText("Connect GitHub to Jira")).toBeTruthy();
 	expect(screen.getByText("Connect a GitHub organization to Jira Software")).toBeTruthy();
 	expect(screen.getByText("A Jira administrator has asked for approval to connect a GitHub organization to a Jira site.")).toBeTruthy();
 	expect(screen.getByText("Sign in")).toBeTruthy();

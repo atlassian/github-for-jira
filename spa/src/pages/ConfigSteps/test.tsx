@@ -77,7 +77,7 @@ const UnAuthenticated = {
 window.open = jest.fn();
 
 // String values
-const CONNECT_GITHUB_TO_JIRA = "Connect Github to Jira";
+const CONNECT_GITHUB_TO_JIRA = "Connect GitHub to Jira";
 const GITHUB_CLOUD = "GitHub Cloud";
 const GITHUB_ENTERPRISE = "GitHub Enterprise Server";
 const SELECT_GH_PRODUCT = "Select your GitHub product";

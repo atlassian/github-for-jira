@@ -2,7 +2,7 @@ blank_issues_enabled: false
 contact_links:
   - name: Github for Jira Documentation
     url: https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/
-    about: Learn more about how to install, configure and use Github for Jira
+    about: Learn more about how to install, configure and use GitHub for Jira
   - name: Support Requests and Bug Reports
     url: https://support.atlassian.com/contact/#/
     about: Need some help? Please submit a support request or bug report via Jira Software Support portal

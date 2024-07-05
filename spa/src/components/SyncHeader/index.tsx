@@ -53,7 +53,7 @@ const SyncHeader = () => {
 					alt=""
 				/>
 			</div>
-			<h2 css={titleStyle}>Connect Github to Jira</h2>
+			<h2 css={titleStyle}>Connect GitHub to Jira</h2>
 		</div>
 	);
 };

@@ -37,7 +37,7 @@ test("Connect State screen", async () => {
 		</BrowserRouter>
 	);
 
-	expect(screen.getByText("Connect Github to Jira")).toBeTruthy();
+	expect(screen.getByText("Connect GitHub to Jira")).toBeTruthy();
 	expect(screen.getByText("Connect GitHub organization myOrg to Jira Software")).toBeTruthy();
 	expect(screen.getByText("A Jira administrator has asked for approval to connect the GitHub organization myOrg to the Jira site https://myJirahost.com.")).toBeTruthy();
 	expect(screen.getByText("This will make all repositories in myOrg available to all projects in https://myJirahost.com. Import work from those GitHub repositories into Jira.")).toBeTruthy();

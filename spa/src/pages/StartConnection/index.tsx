@@ -114,7 +114,7 @@ const StartConnection = () => {
 							position="right-end"
 							content={InlineDialogContent}
 						>
-							{(props) => <a css={inlineDialogLinkStyle} {...props}>Learn how to check Github permissions</a>}
+							{(props) => <a css={inlineDialogLinkStyle} {...props}>Learn how to check GitHub permissions</a>}
 						</Tooltip>
 					</div>
 				</div>

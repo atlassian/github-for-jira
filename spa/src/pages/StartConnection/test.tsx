@@ -24,7 +24,7 @@ test("Entry Config Screen", async () => {
 		</BrowserRouter>
 	);
 
-	expect(screen.getByText("Connect Github to Jira")).toBeTruthy();
+	expect(screen.getByText("Connect GitHub to Jira")).toBeTruthy();
 	expect(screen.getByText("Before you start, you should have:")).toBeTruthy();
 	expect(screen.getByText("A GitHub account")).toBeTruthy();
 	expect(screen.getByText("Owner permission for a GitHub organization")).toBeTruthy();

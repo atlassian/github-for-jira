@@ -56,7 +56,7 @@ If you're still having troubles after reading through this file, look up your pr
 
 - **Atlassian IP address ranges need whitelisting** - Please see the above FAQ  - <TODO - Link to above question>
 
-- **GitHub Enterprise Server Edition does not currently support application access via SAML SSO** - Only Github Enterprise Cloud offers this ability. [Learn more about authentication with SAML single sign-on](https://docs.github.com/en/enterprise-cloud@latest/authentication/authenticating-with-saml-single-sign-on/about-authentication-with-saml-single-sign-on#about-oauth-apps-github-apps-and-saml-sso).
+- **GitHub Enterprise Server Edition does not currently support application access via SAML SSO** - Only GitHub Enterprise Cloud offers this ability. [Learn more about authentication with SAML single sign-on](https://docs.github.com/en/enterprise-cloud@latest/authentication/authenticating-with-saml-single-sign-on/about-authentication-with-saml-single-sign-on#about-oauth-apps-github-apps-and-saml-sso).
 
 - **Reverse proxy support** - GitHub for Jira does not support reverse proxies.
 

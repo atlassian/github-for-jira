@@ -28,7 +28,7 @@ test("Error State screen", async () => {
 		</BrowserRouter>
 	);
 
-	expect(screen.getByText("Connect Github to Jira")).toBeTruthy();
+	expect(screen.getByText("Connect GitHub to Jira")).toBeTruthy();
 	expect(screen.getByText("Connect a GitHub organization to Jira software")).toBeTruthy();
 	expect(screen.getByText("This is the error message")).toBeTruthy();
 	expect(screen.getByText("Please inform the person who sent you the link that the link has expired and send a new link.")).toBeTruthy();
