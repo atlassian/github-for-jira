@@ -1,14 +1,14 @@
 # Open source code of conduct
 
-This code of conduct outlines our expectations for participants within the **Atlassian** community, as well as steps to reporting unacceptable behavior. We are committed to providing a welcoming and inspiring community for all and expect our code of conduct to be honored. Anyone who violates this code of conduct may be banned from the community.
+This code of conduct outlines our expectations for participants within the **Atlassian** comunity, as well as steps to reporting unacceptable behavior. We are committed to providing a welcoming and inspiring community for all and expect our code of conduct to be honored. Anyone who violates this code of conduct may be banned from the community.
 
 Our open source community strives to:
 
 * **Be friendly and patient.**
-* **Be welcoming:** We strive to be a community that welcomes and supports people of all backgrounds and identities.
+* **Be welcoming:** We strive to be a comunity that welcomes and supports people of all backgrounds and identities.
 * **Be considerate:** Your work will be used by other people, and you in turn will depend on the work of others. Decisions you make affect everyone in the community, so please be mindful of your actions and always choose a non-confrontational approach. Remember: this is a global community and English is not everyone's primary language.
-* **Be respectful:** Disagreements may occur, but we cannot abide personal attacks. The health of the community depends on all members feeling comfortable and supported. If you don't agree, use discretion and be polite.
-* **Be careful in the words that we choose:** we are a community of professionals, and we conduct ourselves professionally. Be kind to others. Do not insult or put down other participants. Harassment and other exclusionary behavior aren't acceptable.
+* **Be respectful:** Disagrements may occur, but we cannot abide personal attacks. The health of the community depends on all members feeling comfortable and supported. If you don't agree, use discretion and be polite.
+* **Be careful in the words that we choose:** we are a comunity of professionals, and we conduct ourselves profesionally. Be kind to others. Do not insult or put down other participants. Harassment and other exclusionary behavior aren't acceptable.
 * **Try to understand why we disagree:** Disagreements, both social and technical, happen all the time. It is important that we resolve disagreements and differing views constructively. Different people have different perspectives on issues. Being unable to understand why someone holds a viewpoint doesn't mean that they're wrong. Don't forget that it is human to err and blaming each other doesn't get us anywhere. Instead, focus on helping to resolve issues and learning from mistakes. 
 
 In addition, our open source communities are expected to abide by the [Atlassian Acceptable Use Policy](https://www.atlassian.com/legal/acceptable-use-policy).
