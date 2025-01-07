@@ -1,4 +1,5 @@
-# GitHub For Jira
+# ⛔️ DEPRECATED - GitHub For Jira
+> This repository has been deprecated in favour of a private repository. The application is still available to download on the Atlassian marketplace.
 
 ## About
 
