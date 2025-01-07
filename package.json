@@ -73,7 +73,7 @@
 		"@types/yaml": "^1.9.7",
 		"atlassian-jwt": "^2.0.0",
 		"aws-sdk": "^2.1015.0",
-		"axios": "^0.26.0",
+		"axios": "^1.6.0",
 		"body-parser": "^1.19.2",
 		"bottleneck": "^2.19.5",
 		"bunyan": "^1.8.15",
