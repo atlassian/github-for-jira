@@ -82,7 +82,7 @@
 		"cookie-session": "^2.0.0",
 		"csurf": "^1.11.0",
 		"date-fns": "^1.29.0",
-		"dotenv": "^16.0.1",
+		"dotenv": "^16.4.7",
 		"dotenv-expand": "^8.0.3",
 		"dumpme": "^1.0.3",
 		"event-loop-lag": "^1.4.0",
