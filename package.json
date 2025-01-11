@@ -59,7 +59,7 @@
 	"dependencies": {
 		"@atlaskit/css-reset": "^2.0.5",
 		"@atlaskit/reduced-ui-pack": "^8.19.0",
-		"@atlassian/aui": "^9.4.0",
+		"@atlassian/aui": "^9.12.6",
 		"@octokit/auth-app": "^2.6.0",
 		"@octokit/graphql-schema": "^10.73.0",
 		"@sentry/node": "^6.8.0",
