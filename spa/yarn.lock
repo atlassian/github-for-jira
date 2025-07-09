@@ -2050,9 +2050,9 @@
   integrity sha512-x/rqGMdzj+fWZvCOYForTghzbtqPDZ5gPwaoNGHdgDfF2QA/XZbCBp4Moo5scrkAMPhB7z26XM/AaHuIJdgauA==
 
 "@babel/runtime-corejs2@^7.6.3":
-  version "7.22.11"
-  resolved "https://registry.yarnpkg.com/@babel/runtime-corejs2/-/runtime-corejs2-7.22.11.tgz#3854832f1e7e87f90eb17db505ae5b88140aa0a5"
-  integrity sha512-6z+Y7otDbBpPbg+eXnYVnrR7J3bq5Xp31QiGf7bJzbBOYUXLDGXnCdmxzH3xGxczTvaSXV/oeXFV4PNq3f64Sg==
+  version "7.26.10"
+  resolved "https://registry.yarnpkg.com/@babel/runtime-corejs2/-/runtime-corejs2-7.26.10.tgz#46c1289c6f181391235fb00af13e6c246cb5c8ae"
+  integrity sha512-JfoPiD7f/vvd/PaOfu5cr9CyzwDMPg4T0nX3MQr6IgTq49DhjvUcmjmjA7j6+xih1Evq+QKZnge1SoIlYozv/Q==
   dependencies:
     core-js "^2.6.12"
     regenerator-runtime "^0.14.0"
