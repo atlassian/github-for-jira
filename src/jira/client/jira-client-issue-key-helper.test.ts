@@ -303,7 +303,9 @@ describe("findIssueKeyAssociation", () => {
 		});
 	});
 
+
 	it("should return undefined if no 'issueIdOrKeys' association type exists", () => {
+
 		const resource: IssueKeyObject = {
 			associations: [
 				{
