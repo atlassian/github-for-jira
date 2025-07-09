@@ -8,6 +8,7 @@ import { RepoSyncState } from "models/reposyncstate";
 import { statsd } from "config/statsd";
 import { metricError } from "config/metric-names";
 import { groupBy, countBy } from "lodash";
+import { ConnectionSyncStatus } from "~/spa/src/rest-interfaces";
 
 interface FailedConnection {
 	id: number;
@@ -30,8 +31,7 @@ interface GitHubCloudObj {
 	failedConnections: FailedConnection[]
 }
 
-export type ConnectionSyncStatus = "IN PROGRESS" | "FINISHED" | "PENDING" | "FAILED" | undefined;
-const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): ConnectionSyncStatus => {
+export const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): ConnectionSyncStatus => {
 	switch (syncStatus) {
 		case "ACTIVE":
 			return "IN PROGRESS";
@@ -76,6 +76,7 @@ const getInstallation = async (subscription: Subscription, gitHubAppId: number |
 		return {
 			...response.data,
 			subscriptionId: subscription.id,
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			syncStatus: mapSyncStatus(subscription.syncStatus),
 			syncWarning: subscription.syncWarning,
 			totalNumberOfRepos: subscription.totalNumberOfRepos,

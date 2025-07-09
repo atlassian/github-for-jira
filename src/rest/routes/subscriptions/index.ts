@@ -6,6 +6,7 @@ import { removeSubscription } from "utils/jira-utils";
 import { GitHubServerApp } from "models/github-server-app";
 import { InvalidArgumentError } from "config/errors";
 import { SyncRouterHandler } from "./sync";
+import { GetSubBackfillStatusHandler } from "./backfill-status";
 
 export const SubscriptionsRouter = Router({ mergeParams: true  });
 
@@ -18,6 +19,8 @@ SubscriptionsRouter.get("/", errorWrapper("SubscriptionsGet", async (req: Reques
 		ghEnterpriseServers
 	});
 }));
+
+SubscriptionsRouter.get("/backfill-status", GetSubBackfillStatusHandler);
 
 /**
  * This delete endpoint only handles Github cloud subscriptions

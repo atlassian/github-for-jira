@@ -1,6 +1,6 @@
 import hbs from "hbs";
 import { isPlainObject } from "lodash";
-import { ConnectionSyncStatus } from "utils/github-installations-helper";
+import { ConnectionSyncStatus } from "~/spa/src/rest-interfaces";
 
 export const concatStringHelper = (...strings: string[]) => strings.filter((arg: unknown) => typeof arg !== "object").join(" ");
 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
