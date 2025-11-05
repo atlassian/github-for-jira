@@ -7,11 +7,9 @@ be configured properly for the GitHub for Jira app to be able to communicate wit
 
 ## IP address range
 
-The servers of the GitHub for Jira app operate from IP addresses in:
+The servers of the GitHub for Atlassian app operates following Atlassian defined addresses. Please refer to the support documentation on the specific ranges: https://support.atlassian.com/organization-administration/docs/ip-addresses-and-domains-for-atlassian-cloud-products/
 
-- CIDR range `104.192.142.240/28` (i.e. from the IP addresses starting with `104.192.142.240` and ending with `104.192.142.255`).
-
-A machine-readable version of the IP addresses that stays up-to-date is available at [https://ip-ranges.atlassian.com/](https://ip-ranges.atlassian.com/).
+The allow list configuration in GitHub should work with both IPv4 and IPv6.
 
 ## Automatically load IP addresses from the GitHub for Jira app
 
@@ -43,4 +41,4 @@ Your GitHub organization is now accessible from the GitHub for Jira app's server
 
 ## If problems persist
 
-Feel free to [raise an issue](https://github.com/atlassian/github-for-jira/issues) [contact Atlassian support](https://support.atlassian.com/contact/#/?inquiry_category=technical_issues&is_cloud=true&product_key=third-party-product) for guidance and extra help.
+Feel free to [contact Atlassian support](https://support.atlassian.com/contact/#/?inquiry_category=technical_issues&is_cloud=true&product_key=third-party-product) for guidance and extra help.

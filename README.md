@@ -1,5 +1,5 @@
 # ⛔️ DEPRECATED - GitHub For Jira
-> This repository has been deprecated in favour of a private repository. The application is still available to download on the Atlassian marketplace.
+> This repository has been deprecated in favour of a private repository. The application is still available to download on the Atlassian marketplace: https://marketplace.atlassian.com/apps/1219592/github-for-atlassian
 
 ## About
 
@@ -64,7 +64,7 @@ Next, you will need to [configure the app](#configure-app).
 
 ## Install from Atlassian Marketplace
 
-1. Go to [Atlassian Marketplace](https://marketplace.atlassian.com/apps/1219592/github-for-jira?hosting=cloud&tab=overview).
+1. Go to [Atlassian Marketplace](https://marketplace.atlassian.com/apps/1219592/github-for-atlassian?hosting=cloud&tab=overview).
 2. Sign in to your Atlassian account and click **Get it now**.
 3. Select your site to install this app, click **Install app**.
 4. You will be taken to the app listing on your Jira site, click **Get app**.
@@ -79,7 +79,7 @@ Next, you will need to [configure the app](#configure-app).
 3. Choose which repositories you want to use with the Jira Integration on the installation settings screen, and click
    **Install**.
 4. You will be directed to a setup page to select your Jira site.
-5. Once installation completes you will be redirected to [Atlassian Marketplace](https://marketplace.atlassian.com/apps/1219592/github-for-jira?hosting=cloud&tab=overview) to install the GitHub for Jira app.
+5. Once installation completes you will be redirected to [Atlassian Marketplace](https://marketplace.atlassian.com/apps/1219592/github-for-atlassian?hosting=cloud&tab=overview) to install the GitHub for Jira app.
 6. From there, follow the instructions above to [install from Atlassian Marketplace](#install-from-atlassian-marketplace).
 
 ## Configure app
