@@ -1,5 +1,7 @@
 # ⛔️ DEPRECATED - GitHub For Jira
-> This repository has been deprecated in favour of a private repository. The application is still available to download on the Atlassian marketplace: https://marketplace.atlassian.com/apps/1219592/github-for-atlassian
+> This repository has been deprecated in favour of a private repository. The application is still available to download on the Atlassian marketplace: https://marketplace.atlassian.com/apps/1219592/github-for-atlassian.
+> 
+> The official updated documentation can be found here: https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github.
 
 ## About
 
@@ -157,7 +159,7 @@ Read, Write, and Admin for Development Information (branches, commits, and pull 
 | Secret scanning alert                 | Secret scanning alert created, resolved, or reopened                                                                           |
 | Workflow run                          | When a GitHub Actions workflow run is requested or completed                                                |
 
-Have more questions about permissions? Please see our [FAQ documentation](https://github.com/atlassian/github-for-jira/blob/main/docs/FAQs.md). If you can’t find the answer to a question, please feel free to [open an issue](https://github.com/atlassian/github-for-jira/issues/new) and send your question to our team. We’ll be more than happy to answer and will update our FAQ doc accordingly.
+Have more questions about permissions? Please see our [FAQ documentation](https://support.atlassian.com/jira-cloud-administration/docs/github-integration-faq/). If you can’t find the answer to a question, please feel free to [open an issue](https://github.com/atlassian/github-for-jira/issues/new) and send your question to our team. We’ll be more than happy to answer and will update our FAQ doc accordingly.
 
 ### Manage Jira subscriptions
 Additionally, admins of an installation can view and delete GitHub subscriptions to other Jira instances, without having to log in to the Jira instance itself. This is useful if your installation is set up to send Development information to a Jira instance you no longer have access to, or to audit instances that other admins in your org may have previously configured.
@@ -233,7 +235,7 @@ Existing users of Jira's built-in DVCS connector that meet the [requirements](#r
 ### IP Allow List
 
 GitHub has the ability to limit who can communicate with your organization's GitHub API which we now fully support.
-To enable this feature or to debug any issues, please refer to our [GitHub IP Allow List documentation](./docs/ip-allowlist.md).
+To enable this feature or to debug any issues, please refer to our [GitHub IP Allow List documentation](https://support.atlassian.com/jira-cloud-administration/docs/set-up-a-github-ip-allow-list/).
 
 ### Known issues
 
