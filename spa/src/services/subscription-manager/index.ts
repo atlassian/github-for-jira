@@ -2,7 +2,7 @@ import Api from "../../api";
 import { AxiosError } from "axios";
 import { reportError } from "../../utils";
 import { GHSubscriptions } from "../../../../src/rest-interfaces";
-import { RestSyncReqBody } from "~/src/rest-interfaces";
+import { BackfillStatusResp, RestSyncReqBody } from "~/src/rest-interfaces";
 
 async function syncSubscription(subscriptionId:number, reqBody: RestSyncReqBody): Promise<void | AxiosError> {
 	try {
@@ -26,14 +26,32 @@ async function getSubscriptions(): Promise<GHSubscriptions | AxiosError> {
 		const isSuccessful = response.status === 200;
 		if(!isSuccessful) {
 			reportError(
-				{ message: "Response status for getting subscriptions is not 204", status: response.status },
+				{ message: "Response status for getting subscriptions is not 200", status: response.status },
 				{ path: "getSubscriptions" }
 			);
 		}
 
 		return response.data;
 	} catch (e: unknown) {
-		reportError(new Error("Unable to delete subscription", { cause: e }), { path: "getSubscriptions" });
+		reportError(new Error("Unable to get subscription", { cause: e }), { path: "getSubscriptions" });
+		return e as AxiosError;
+	}
+}
+
+async function getSubscriptionsBackfillStatus(subscriptionIds: string): Promise<BackfillStatusResp | AxiosError> {
+	try {
+		const response= await Api.subscriptions.getSubscriptionsBackfillStatus({ subscriptionIds });
+		const isSuccessful = response.status === 200;
+		if(!isSuccessful) {
+			reportError(
+				{ message: "Response status for getting subscriptions backfill status is not 200", status: response.status },
+				{ path: "getSubscriptionsBackfillStatus" }
+			);
+		}
+
+		return response.data;
+	} catch (e: unknown) {
+		reportError(new Error("Unable to Get subscription backfill status update", { cause: e }), { path: "getSubscriptionsBackfillStatus" });
 		return e as AxiosError;
 	}
 }
@@ -92,6 +110,7 @@ async function deleteGHEApp(uuid: string): Promise<boolean | AxiosError> {
 }
 export default {
 	getSubscriptions,
+	getSubscriptionsBackfillStatus,
 	deleteSubscription,
 	deleteGHEServer,
 	syncSubscription,

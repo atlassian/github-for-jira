@@ -11,13 +11,18 @@ import {
 	GHSubscriptions,
 	BackfillPageModalTypes,
 	SuccessfulConnection,
-	GitHubEnterpriseApplication,
+	GitHubEnterpriseApplication
 } from "../../rest-interfaces";
 import SkeletonForLoading from "./SkeletonForLoading";
 import SubscriptionManager from "../../services/subscription-manager";
 import RestartBackfillModal from "./Modals/RestartBackfillModal";
 import DisconnectSubscriptionModal from "./Modals/DisconnectSubscriptionModal";
-import { DisconnectGHEServerModal, DeleteAppInGitHubModal, DisconnectGHEServerAppModal } from "./Modals/DisconnectGHEServerModal";
+import {
+	DisconnectGHEServerModal,
+	DeleteAppInGitHubModal,
+	DisconnectGHEServerAppModal,
+} from "./Modals/DisconnectGHEServerModal";
+import { getInProgressSubIds, getUpdatedSubscriptions } from "../../utils";
 
 const hasGHCloudConnections = (subscriptions: GHSubscriptions): boolean =>
 	subscriptions?.ghCloudSubscriptions &&
@@ -33,6 +38,13 @@ const Connections = () => {
 	const [dataForModal, setDataForModal] = useState<
 		SuccessfulConnection | GitHubEnterpriseApplication | undefined
 	>(undefined);
+	const [isLoading, setIsLoading] = useState<boolean>(false);
+	const [subscriptions, setSubscriptions] = useState<GHSubscriptions | null>(
+		null
+	);
+	const [inProgressSubs, setInProgressSubs] = useState<Array<number> | null>(
+		null
+	);
 	const openedModal = () => {
 		switch (selectedModal) {
 			case "BACKFILL":
@@ -80,11 +92,6 @@ const Connections = () => {
 		}
 	};
 
-	const [isLoading, setIsLoading] = useState<boolean>(false);
-	const [subscriptions, setSubscriptions] = useState<GHSubscriptions | null>(
-		null
-	);
-
 	const fetchGHSubscriptions = async () => {
 		try {
 			setIsLoading(true);
@@ -92,8 +99,13 @@ const Connections = () => {
 			if (response instanceof AxiosError) {
 				// TODO: Handle the error once we have the designs
 				console.error("Error", response);
+			} else {
+				const inProgressSubIds = getInProgressSubIds(response);
+				if (inProgressSubIds && inProgressSubIds.length > 0) {
+					setInProgressSubs(inProgressSubIds);
+				}
+				setSubscriptions(response as GHSubscriptions);
 			}
-			setSubscriptions(response as GHSubscriptions);
 		} catch (e) {
 			// TODO: handle this error in UI/Modal ?
 			console.error("Could not fetch ghe subscriptions: ", e);
@@ -101,6 +113,39 @@ const Connections = () => {
 			setIsLoading(false);
 		}
 	};
+
+	const fetchBackfillStatus = async (inProgressSubs: Array<number>) => {
+		try {
+			const response = await SubscriptionManager.getSubscriptionsBackfillStatus(
+				inProgressSubs.toString()
+			);
+			if (response instanceof AxiosError) {
+				// TODO: Handle the error once we have the designs
+				console.error("Error", response);
+			} else {
+				if(subscriptions){
+					const newSubscriptions = getUpdatedSubscriptions(response, subscriptions);
+					if(newSubscriptions) {
+						setSubscriptions(newSubscriptions);
+					}
+				}
+				if (!response.isBackfillComplete) {
+					setTimeout(() => {
+						fetchBackfillStatus(inProgressSubs);
+					}, 3000);
+				}
+			}
+		} catch (e) {
+			// TODO: handle this error in UI/Modal ?
+			console.error("Could not fetch ghe subscriptions: ", e);
+		}
+	};
+
+	useEffect(() => {
+		if (inProgressSubs && inProgressSubs.length > 0) {
+			fetchBackfillStatus(inProgressSubs);
+		}
+	}, [inProgressSubs]);
 
 	useEffect(() => {
 		fetchGHSubscriptions();
