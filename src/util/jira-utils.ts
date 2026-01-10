@@ -91,7 +91,7 @@ const jiraIssueRegex = (): RegExp => {
  * This regex is used when adding links to Jira issues in GitHub PR issue/descriptions.
  */
 export const jiraIssueInSquareBracketsRegex = (): RegExp => {
-	return /(^|[^A-Z\d])\[([A-Z][A-Z\d]{1,255}-[1-9]\d{0,255})\]/giu;
+	return /(^|[^A-Z\d])\[([A-Z][A-Z\d]{1,255}-[1-9]\d{0,255})\](?!\()/giu;
 };
 
 /**

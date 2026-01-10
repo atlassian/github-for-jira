@@ -89,6 +89,27 @@ describe("Jira util", () => {
 			expect(result).toBe(rendered);
 		});
 
+		it("should not add reference to existing markdown links", () => {
+			const { source, rendered } = loadFixture("existing-markdown-links");
+			const issues = [
+				{
+					key: "TEST-2019",
+					fields: {
+						summary: "Example Issue"
+					}
+				},
+				{
+					key: "TEST-2020",
+					fields: {
+						summary: "Another Example Issue"
+					}
+				}
+			];
+
+			const result = util.addJiraIssueLinks(source, issues);
+			expect(result).toBe(rendered);
+		});
+
 		it("should not linkify Jira references to invalid issues", () => {
 			const text = "Should not linkify [TEST-123] as a link";
 			const issues = [];
